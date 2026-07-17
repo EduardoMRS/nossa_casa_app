@@ -1,0 +1,36 @@
+# Laravel
+/vendor/
+npm-debug.log
+yarn-error.log
+bootstrap/
+app/storage/
+public/storage
+public/hot
+storage/*.key
+storage/pail
+.env
+Homestead.yaml
+Homestead.json
+/.vagrant
+.phpunit*.cache
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+composer.lock
+
+# IDEs
+.idea/
+.vscode/
+*.meta.*
+_ide_*
+
+# Vue.js / Frontend
+dist/
+*.log
+logs
+node_modules/
+package-lock
+
+# macOS
+.DS_Store   
+
