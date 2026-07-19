@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('user_relationships', function (Blueprint $table) {
             $table->id();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUlid('related_user_id')->constrained('users')->cascadeOnDelete();
             $table->string('relationship_type'); // Ex: 'friend', 'follower
             $table->timestamps();

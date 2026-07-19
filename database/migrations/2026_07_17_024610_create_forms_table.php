@@ -16,15 +16,15 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->string('title');
             $table->string('description')->nullable();
-            $table->fopenoreignUlid('church_id')->constrained()->cascadeOnDelete();
-            $table->fopenoreignUlid('category_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
+            $table->foreignUlid('category_id')->constrained('categories')->cascadeOnDelete();
             $table->json('schema'); // Onde guardamos a estrutura do form (labels, inputs, validations)
             $table->timestamps();
         });
 
         // form_relations (Polimórfica: vincular a Event ou Post)
         Schema::create('form_relations', function (Blueprint $table) {
-            $table->foreignUlid('form_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('form_id')->constrained('forms')->cascadeOnDelete();
             $table->ulidMorphs('formable'); // formable_id e formable_type
             $table->timestamps();
         });
@@ -32,8 +32,8 @@ return new class extends Migration
         // form_responses
         Schema::create('form_responses', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('form_id')->constrained();
-            $table->foreignUlid('user_id')->constrained();
+            $table->foreignUlid('form_id')->constrained('forms')->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->json('answers'); // Onde guardamos as respostas do usuário
             $table->timestamps();
         });

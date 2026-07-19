@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('communities', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('name');
+            $table->text('description');
             $table->string('slug')->unique();
             $table->date('found_date')->nullable();
+            $table->string('logo_path')->nullable();
             $table->timestamps();
         });
     }

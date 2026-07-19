@@ -47,13 +47,14 @@ class User extends Authenticatable implements PasskeyUser
 
     public function church()
     {
-        return $this->belongsTo(Church::class);
+        return $this->hasOneThrough(Church::class, UserProfile::class, 'user_id', 'id', 'id', 'church_id');
     }
 
     public function profile()
     {
         return $this->hasOne(UserProfile::class);
     }
+    
 
     public function posts()
     {
@@ -67,7 +68,7 @@ class User extends Authenticatable implements PasskeyUser
 
     public function comments()
     {
-        return $this->hasMany(Comment::class, 'author_id');
+        return $this->hasMany(Comment::class);
     }
 
     public function reactions()
@@ -93,4 +94,11 @@ class User extends Authenticatable implements PasskeyUser
             $q->where('relationship_type', UserRelationships::BLOCKED);
         });
     }
+
+    public function assignRole(string $role): void
+    {
+        $this->role = UserRole::from($role);
+        $this->save();
+    }
+    
 }

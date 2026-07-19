@@ -18,6 +18,10 @@ class Comment extends Model
 
     protected $table = 'comments';
 
+    protected $appends = [
+        'metrics',
+    ];
+
     public function post()
     {
         return $this->morphTo(Post::class, 'commentable');
@@ -48,5 +52,13 @@ class Comment extends Model
     public function reactions()
     {
         return $this->morphMany(Reaction::class, 'reactionable');
+    }
+    
+    public function getMetricsAttribute()
+    {
+        return [
+            'replies_count' => $this->replies()->count(),
+            'reactions_count' => $this->reactions()->count(),
+        ];
     }
 }

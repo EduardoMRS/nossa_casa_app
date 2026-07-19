@@ -15,8 +15,7 @@ return new class extends Migration
             $table->ulid('id')->primary();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->foreignUlid('address_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignUlid('community_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('community_id')->nullable()->constrained('communities')->nullOnDelete();
             $table->string('status')->default(\App\Enums\ChurchStatus::ACTIVE->value);
             $table->date('found_date')->nullable();
             $table->timestamps();
@@ -28,6 +27,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropForeign(['church_id']);
+            $table->dropColumn('church_id');
+        });
         Schema::dropIfExists('churches');
     }
 };

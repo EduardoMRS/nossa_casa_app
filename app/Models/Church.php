@@ -29,17 +29,33 @@ class Church extends Model
 
     public function address()
     {
-        return $this->belongsTo(Address::class);
+        return $this->morphMany(Address::class, 'addressable');
     }
 
     public function members()
     {
-        return $this->hasMany(User::class);
+        return $this->hasManyThrough(User::class, UserProfile::class, 'church_id', 'id', 'id', 'user_id');
+    }
+
+    public function assignMember(User $user): void
+    {
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['church_id' => $this->id]
+        );
     }
 
     public function categories()
     {
         return $this->hasMany(Category::class);
+    }
+
+    public function assignCategory(Category $category): void
+    {
+        Categorizable::updateOrCreate(
+            ['categorizable_id' => $this->id, 'categorizable_type' => self::class, 'category_id' => $category->id],
+            ['categorizable_id' => $this->id, 'categorizable_type' => self::class, 'category_id' => $category->id]
+        );
     }
 
     public function posts()

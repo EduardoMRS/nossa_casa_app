@@ -13,7 +13,8 @@ class Reaction extends Model
         'user_id',
         'reactionable_type',
         'reactionable_id',
-        'icon'
+        'content',
+        'type',
     ];
 
     protected $table = 'reactions';

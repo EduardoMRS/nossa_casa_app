@@ -20,7 +20,6 @@ return new class extends Migration
             $table->string('password');
             $table->date('birth_date')->nullable();
             $table->string('role')->default(\App\Enums\UserRole::GUEST->value);
-            $table->foreignUlid('church_id')->nullable()->constrained()->nullOnDelete();
             $table->rememberToken();
             $table->timestamps();
         });

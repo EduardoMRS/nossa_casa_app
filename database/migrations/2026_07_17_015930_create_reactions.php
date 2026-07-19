@@ -13,9 +13,10 @@ return new class extends Migration
     {
          Schema::create('reactions', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->ulidMorphs('reactionable'); // Relaciona com posts, medias, events, etc.
-            $table->string('icon');
+            $table->string('content');
+            $table->string('type'); // icone, emoji, etc.
             $table->timestamps();
         });
     }

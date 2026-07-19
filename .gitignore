@@ -34,3 +34,4 @@ package-lock
 # macOS
 .DS_Store   
 
+AllModels.php

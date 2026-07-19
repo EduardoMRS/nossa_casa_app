@@ -3,14 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
 class Classroom extends Model
 {
+    use HasUlids;
+
     protected $fillable = [
-        'church_id',
         'name',
         'description',
+        'min_age',
+        'max_age',
+        'max_members',
+        'church_id',
         'teacher_id',
+    ];
+
+    protected $appends = [
+        'teacher_details',
     ];
 
     protected $table = 'classrooms';
@@ -30,10 +40,22 @@ class Classroom extends Model
         return $this->belongsTo(User::class, 'teacher_id');
     }
 
+    public function assignTeacher(User $user)
+    {
+        $this->teacher()->associate($user);
+        $this->save();
+    }
+
+    public function getTeacherDetailsAttribute()
+    {
+        return $this->teacher ? $this->teacher->only(['id', 'first_name', 'last_name', 'email']) : null;
+    }
+
     public function members()
     {
         return $this->belongsToMany(User::class, 'classroom_users');
     }
+    
 
     public function presences()
     {

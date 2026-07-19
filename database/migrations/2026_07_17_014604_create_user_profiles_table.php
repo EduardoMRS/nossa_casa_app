@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('user_profiles', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('phone')->nullable();
             $table->string('location_lang')->default('pt-BR');
-            $table->foreignUlid('community_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUlid('church_id')->nullable()->constrained('churches')->nullOnDelete();
+            $table->foreignUlid('community_id')->nullable()->constrained('communities')->nullOnDelete();
             $table->string('avatar_path')->nullable();
             $table->string('gender')->nullable();
             $table->timestamps();

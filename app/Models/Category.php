@@ -14,7 +14,7 @@ class Category extends Model
         'church_id',
         'name',
         'slug',
-        'type'
+        'type',
     ];
 
     protected $casts = [
@@ -25,31 +25,36 @@ class Category extends Model
     
     public function classrooms()
     {
-        return $this->morphedByMany(Classroom::class, 'categorizable');
+        return $this->morphMany(Classroom::class, 'categorizable');
     }
     
     public function events()
     {
-        return $this->morphedByMany(Event::class, 'categorizable');
+        return $this->morphMany(Event::class, 'categorizable');
     }
 
     public function forms()
     {
-        return $this->morphedByMany(Form::class, 'categorizable');
+        return $this->morphMany(Form::class, 'categorizable');
     }
 
     public function media()
     {
-        return $this->morphedByMany(Media::class, 'categorizable');
+        return $this->morphMany(Media::class, 'categorizable');
     }
 
     public function posts()
     {
-        return $this->morphedByMany(Post::class, 'categorizable');
+        return $this->morphMany(Post::class, 'categorizable');
     }
 
     public function users()
     {
-        return $this->morphedByMany(User::class, 'categorizable');
+        return $this->morphMany(User::class, 'categorizable');
+    }
+
+    public function church()
+    {
+        return $this->belongsTo(Church::class);
     }
 }

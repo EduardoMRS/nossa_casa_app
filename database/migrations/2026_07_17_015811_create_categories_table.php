@@ -13,19 +13,18 @@ return new class extends Migration
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('church_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('name');
-            $table->string('slug');
-            $table->string('type')->index(); // Usará o enum CategoryType
+            $table->foreignUlid('church_id')->nullable()->constrained('churches')->cascadeOnDelete();
+            $table->string('name')->nullable();
+            $table->string('slug')->nullable()->index();
+            $table->string('type')->nullable()->index(); // Usará o enum CategoryType
             $table->timestamps();
         });
 
         // Tabela pivô polimórfica (category_relations)
         Schema::create('categorizables', function (Blueprint $table) {
-            $table->foreignUlid('category_id')->constrained()->cascadeOnDelete();
-            $table->ulidMorphs('categorizable'); // Cria categorizable_type e categorizable_id (ULID)
-            
-            $table->primary(['category_id', 'categorizable_id', 'categorizable_type'], 'categorizables_primary');
+            $table->foreignUlid('category_id')->constrained('categories')->cascadeOnDelete();
+            $table->ulidMorphs('categorizable');
+            $table->timestamps();
         });
     }
 

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('medias', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('uploader_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignUlid('church_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUlid('church_id')->nullable()->constrained('churches')->cascadeOnDelete();
             $table->string('file_path');
             $table->string('mimetype');
             $table->unsignedBigInteger('size'); // Tamanho do arquivo em bytes
@@ -37,6 +37,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('media');
+        Schema::dropIfExists('mediables');
+        Schema::dropIfExists('medias');
     }
 };

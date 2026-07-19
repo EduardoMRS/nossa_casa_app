@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
 class UserProfile extends Model
 {
+    use HasUlids;
+
     protected $fillable = [
         'user_id',
         'phone',
@@ -14,6 +17,8 @@ class UserProfile extends Model
         'avatar_path',
         'gender',
     ];
+
+    protected $table = 'user_profiles';
 
     public function user()
     {

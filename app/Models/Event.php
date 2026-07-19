@@ -9,8 +9,6 @@ class Event extends Model {
     use HasUlids;
 
     protected $fillable = [
-        'church_id',
-        'author_id',
         'title',
         'slug',
         'tags',
@@ -18,6 +16,8 @@ class Event extends Model {
         'start_time',
         'end_time',
         'cover_path',
+        'church_id',
+        'author_id',
     ];
 
     protected $casts = [
@@ -26,32 +26,98 @@ class Event extends Model {
         'tags' => 'array',
     ];
 
-    public function forms() {
+    protected $appends = [
+        'category',
+    ];
+
+    public function forms()
+    {
         // Vincula este evento a qualquer formulário via FormRelation
         return $this->morphToMany(Form::class, 'formable', 'form_relations');
     }
 
-    public function categories() {
+    public function categories()
+    {
         return $this->morphToMany(Category::class, 'categorizable');
     }
 
-    public function church() {
+    public function getCategoryAttribute()
+    {
+        return join(', ', $this->categories()->pluck('name')->toArray());
+    }
+
+    public function church()
+    {
         return $this->belongsTo(Church::class);
     }
 
-    public function author() {
+    public function author()
+    {
         return $this->belongsTo(User::class, 'author_id');
     }
 
-    public function users() {
-        return $this->hasMany(EventUser::class);
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'event_users')
+                ->using(EventUser::class);
     }
 
-    public function confirmations() {
-        return $this->belongsToMany(User::class, 'event_confirmations', 'event_id', 'user_id', 'id', 'id')->withPivot('status');
+    public function confirmations()
+    {
+        return $this->hasMany(EventConfirmation::class);
+    }
+    
+    
+    public function userConfirm(User $user)
+    {
+        $this->confirmations()->updateOrCreate(
+            ['user_id' => $user->id]
+        );
     }
 
-    public function address() {
+    public function userUnConfirm(User $user)
+    {
+       $this->confirmations()->where('user_id', $user->id)->delete();
+    }
+
+    public function userCheckIn(User $user)
+    {
+        $this->confirmations()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['check_in_at' => now()]
+        );
+    }
+
+    public function userCheckOut(User $user)
+    {
+       $this->confirmations()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['check_out_at' => now()]
+        );
+    }
+
+    public function checkinsIn()
+    {
+        return $this->confirmations()->whereNotNull('check_in_at');
+    }
+
+    public function checkinsOut()
+    {
+        return $this->confirmations()->whereNotNull('check_out_at');
+    }
+
+    public function noCheckinsIn()
+    {
+        return $this->confirmations()->whereNull('check_in_at');
+    }
+
+    public function noCheckinsOut()
+    {
+        return $this->confirmations()->whereNull('check_out_at');
+    }
+
+    public function address()
+    {
         return $this->morphOne(Address::class, 'addressable');
     }
 }

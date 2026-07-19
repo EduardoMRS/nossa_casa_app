@@ -14,8 +14,8 @@ return new class extends Migration
         // events
         Schema::create('events', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('church_id')->constrained();
-            $table->foreignUlid('author_id')->constrained('users');
+            $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
+            $table->foreignUlid('author_id')->constrained('users')->cascadeOnDelete();
             $table->string('title');
             $table->string('slug')->unique();
             $table->json('tags')->nullable();
@@ -29,8 +29,8 @@ return new class extends Migration
         // event_users (Inscrições)
         Schema::create('event_users', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignUlid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUlid('event_id')->constrained('events')->cascadeOnDelete();
+            $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('status')->default('pending'); // pending, approved, rejected, canceled
             $table->timestamps();
         });
@@ -38,7 +38,8 @@ return new class extends Migration
         // event_confirmations (Check-in/Check-out)
         Schema::create('event_confirmations', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('event_user_id')->constrained('event_users')->cascadeOnDelete();
+            $table->foreignUlid('event_id')->nullable()->constrained('events')->cascadeOnDelete();
+            $table->foreignUlid('user_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->timestamp('check_in_at')->nullable();
             $table->timestamp('check_out_at')->nullable();
             $table->timestamps();
