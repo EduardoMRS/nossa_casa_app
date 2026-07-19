@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
-class Form extends Model {
+class Form extends Model
+{
     use HasUlids;
     
     protected $fillable = ['title', 'schema'];

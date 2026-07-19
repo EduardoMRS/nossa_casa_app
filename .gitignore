@@ -35,3 +35,4 @@ package-lock
 .DS_Store   
 
 AllModels.php
+AllMigrations.php

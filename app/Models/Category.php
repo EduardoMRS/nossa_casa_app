@@ -25,32 +25,32 @@ class Category extends Model
     
     public function classrooms()
     {
-        return $this->morphMany(Classroom::class, 'categorizable');
+        return $this->morphedByMany(Classroom::class, 'categorizable');
     }
     
     public function events()
     {
-        return $this->morphMany(Event::class, 'categorizable');
+        return $this->morphedByMany(Event::class, 'categorizable');
     }
 
     public function forms()
     {
-        return $this->morphMany(Form::class, 'categorizable');
+        return $this->morphedByMany(Form::class, 'categorizable');
     }
 
     public function media()
     {
-        return $this->morphMany(Media::class, 'categorizable');
+        return $this->morphedByMany(Media::class, 'categorizable');
     }
 
     public function posts()
     {
-        return $this->morphMany(Post::class, 'categorizable');
+        return $this->morphedByMany(Post::class, 'categorizable');
     }
 
     public function users()
     {
-        return $this->morphMany(User::class, 'categorizable');
+        return $this->morphedByMany(User::class, 'categorizable');
     }
 
     public function church()

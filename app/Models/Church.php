@@ -52,7 +52,7 @@ class Church extends Model
 
     public function assignCategory(Category $category): void
     {
-        Categorizable::updateOrCreate(
+        $this->categories()->updateOrCreate(
             ['categorizable_id' => $this->id, 'categorizable_type' => self::class, 'category_id' => $category->id],
             ['categorizable_id' => $this->id, 'categorizable_type' => self::class, 'category_id' => $category->id]
         );
@@ -85,12 +85,12 @@ class Church extends Model
 
     public function settings()
     {
-        return $this->hasOne(ChurchSetting::class);
+        return $this->hasOne(Setting::class);
     }
 
     public function parentChurch()
     {
-        return $this->hasOne(Church::class, 'networks', 'child_church_id', 'parent_church_id');
+        return $this->hasOne(Church::class, 'id', 'parent_church_id');
     }
 
     public function childrenChurches()
@@ -100,6 +100,6 @@ class Church extends Model
 
     public function community()
     {
-        return $this->hasOne(Community::class);
+        return $this->belongsTo(Community::class);
     }
 }

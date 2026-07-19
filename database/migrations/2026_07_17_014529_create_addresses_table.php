@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->morphs('addressable');
+            $table->ulidMorphs('addressable');
             $table->string('country')->default('Brasil');
             $table->string('state', 2);
             $table->string('city');

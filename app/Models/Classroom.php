@@ -64,6 +64,6 @@ class Classroom extends Model
 
     public function posts()
     {
-        return $this->morphMany(Post::class, 'postable');
+        return $this->morphToMany(Post::class, 'postable');
     }
 }

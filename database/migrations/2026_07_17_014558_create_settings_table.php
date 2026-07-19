@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->json('options')->nullable(); // Armazena as opções de configuração em formato JSON
+            $table->json('options')->nullable();
             $table->timestamps();
         });
     }

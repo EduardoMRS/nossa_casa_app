@@ -101,4 +101,9 @@ class Post extends Model
             'reactions_count' => $this->reactions()->count(),
         ];
     }
+
+    public function classrooms()
+    {
+        return $this->morphedByMany(Classroom::class, 'postable');
+    }
 }
