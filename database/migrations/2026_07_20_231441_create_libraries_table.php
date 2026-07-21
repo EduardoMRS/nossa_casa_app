@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('libraries', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->string('title')->index();
+            $table->string('description')->nullable();
+            $table->string('type');
+            $table->string('file_path')->nullable();
             $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
-            $table->json('options')->nullable();
             $table->timestamps();
         });
     }
@@ -24,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('libraries');
     }
 };

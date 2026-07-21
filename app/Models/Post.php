@@ -25,6 +25,7 @@ class Post extends Model
     ];
 
     protected $appends = [
+        'translations',
         'author_details',
         'category',
         'metrics',
@@ -105,5 +106,20 @@ class Post extends Model
     public function classrooms()
     {
         return $this->morphedByMany(Classroom::class, 'postable');
+    }
+
+    public function highlight()
+    {
+        return $this->morphOne(Highlight::class, 'highlightable');
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

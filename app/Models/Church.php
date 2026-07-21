@@ -10,14 +10,14 @@ class Church extends Model
 {
     use HasUlids;
 
+    protected $table = 'churches';
+
     protected $fillable = [
         'name',
         'slug',
-        'address_id',
-        'status',
-        'found_date',
         'community_id',
-        'founder_id',
+        'status',
+        'found_date'
     ];
 
     protected $casts = [
@@ -25,7 +25,9 @@ class Church extends Model
         'found_date' => 'date',
     ];
 
-    protected $table = 'churches';
+    protected $appends = [
+        'translations',
+    ];
 
     public function address()
     {
@@ -101,5 +103,15 @@ class Church extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

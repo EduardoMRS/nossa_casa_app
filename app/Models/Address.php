@@ -9,6 +9,8 @@ class Address extends Model
 {
     use HasUlids;
     protected $fillable = [
+        'addressable_type',
+        'addressable_id',
         'country',
         'state',
         'city',
@@ -17,8 +19,6 @@ class Address extends Model
         'number',
         'complement',
         'zipcode',
-        'addressable_type',
-        'addressable_id'
     ];
 
     protected $table = 'addresses';

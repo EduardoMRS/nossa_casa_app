@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('vercicles', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
-            $table->json('options')->nullable();
+            $table->foreignUlid('library_id')->constrained('libraries')->cascadeOnDelete();
+            $table->string('book');
+            $table->string('chapter');
+            $table->string('verse');
+            $table->string('content');
+            $table->string('version');
             $table->timestamps();
         });
     }
@@ -24,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('vercicles');
     }
 };

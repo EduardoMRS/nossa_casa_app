@@ -10,6 +10,8 @@ class Community extends Model
 {
     use HasRelationships, HasUlids;
     
+    protected $table = 'communities';
+
     protected $fillable = [
         'slug',
         'name',
@@ -18,7 +20,9 @@ class Community extends Model
         'logo_path',
     ];
 
-    protected $table = 'communities';
+    protected $appends = [
+        'translations',
+    ];
 
     public function churches()
     {
@@ -43,5 +47,15 @@ class Community extends Model
     public function categories()
     {
         return $this->hasManyThrough(Category::class, Church::class, 'community_id', 'church_id', 'id', 'id');
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

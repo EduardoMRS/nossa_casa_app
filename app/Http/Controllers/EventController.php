@@ -34,9 +34,9 @@ class EventController extends Controller
         return response()->json($event, 201);
     }
 
-    public function show(string $id)
+    public function show(string $slug)
     {
-        $event = Event::with(['church', 'author', 'categories', 'address', 'confirmations'])->findOrFail($id);
+        $event = Event::with(['church', 'categories', 'address', 'confirmations'])->where('slug', $slug)->firstOrFail();
         return response()->json($event);
     }
 
@@ -68,5 +68,24 @@ class EventController extends Controller
         $event->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function checkin(Request $request, string $id)
+    {
+        $event = Event::findOrFail($id);
+        $user = $request->user();
+
+        // Check if the user has already checked in
+        if ($event->confirmations()->where('user_id', $user->id)->exists()) {
+            return response()->json(['message' => 'User has already checked in.'], 400);
+        }
+
+        // Create a new confirmation for the user
+        $event->confirmations()->create([
+            'user_id' => $user->id,
+            'status' => 'checked_in',
+        ]);
+
+        return response()->json(['message' => 'Check-in successful.'], 200);
     }
 }

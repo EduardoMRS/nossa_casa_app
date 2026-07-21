@@ -9,10 +9,19 @@ class Form extends Model
 {
     use HasUlids;
     
-    protected $fillable = ['title', 'schema'];
+    protected $fillable = [
+        'title',
+        'description',
+        'schema',
+        'church_id',
+    ];
 
     protected $casts = [
         'schema' => 'array', // Transforma o JSON automaticamente em Array/Collection
+    ];
+
+    protected $appends = [
+        'translations',
     ];
 
     protected $table = 'forms';
@@ -27,5 +36,25 @@ class Form extends Model
 
     public function responses() {
         return $this->hasMany(FormResponse::class);
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
+    }
+
+    public function categories()
+    {
+        return $this->morphToMany(Category::class, 'categorizable', 'category_relations');
+    }
+
+    public function getCategoryAttribute()
+    {
+        return join(', ', $this->categories()->pluck('name')->toArray());
     }
 }

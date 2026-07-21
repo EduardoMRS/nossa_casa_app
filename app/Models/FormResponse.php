@@ -9,7 +9,11 @@ class FormResponse extends Model
 {
     use HasUlids;
 
-    protected $fillable = ['form_id', 'user_id', 'answers'];
+    protected $fillable = [
+        'form_id',
+        'user_id',
+        'answers'
+    ];
     protected $casts = [
         'answers' => 'array', // Transforma o JSON automaticamente em Array/Collection
     ];

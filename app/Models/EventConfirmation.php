@@ -15,6 +15,14 @@ class EventConfirmation extends Pivot {
     
     protected $table = 'event_confirmations';
 
+    protected $fillable = [
+        'event_id',
+        'user_id',
+        'status',
+        'check_in_at',
+        'check_out_at',
+    ];
+
     public function event()
     {
         return $this->belongsTo(Event::class);

@@ -9,6 +9,8 @@ class Classroom extends Model
 {
     use HasUlids;
 
+    protected $table = 'classrooms';
+
     protected $fillable = [
         'name',
         'description',
@@ -18,12 +20,11 @@ class Classroom extends Model
         'church_id',
         'teacher_id',
     ];
-
+    
     protected $appends = [
         'teacher_details',
+        'translations',
     ];
-
-    protected $table = 'classrooms';
 
     public function church()
     {
@@ -65,5 +66,15 @@ class Classroom extends Model
     public function posts()
     {
         return $this->morphToMany(Post::class, 'postable');
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

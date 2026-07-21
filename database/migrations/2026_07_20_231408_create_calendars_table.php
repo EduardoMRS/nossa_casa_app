@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('calendars', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->ulidMorphs('calendarable');
             $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
-            $table->json('options')->nullable();
+            $table->dateTime('date');
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('calendars');
     }
 };

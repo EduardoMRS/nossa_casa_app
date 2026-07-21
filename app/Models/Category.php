@@ -21,6 +21,10 @@ class Category extends Model
         'type' => CategoryType::class,
     ];
 
+    protected $appends = [
+        'translations',
+    ];
+
     protected $table = 'categories';
     
     public function classrooms()
@@ -56,5 +60,15 @@ class Category extends Model
     public function church()
     {
         return $this->belongsTo(Church::class);
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

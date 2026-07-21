@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('title');
             $table->string('description')->nullable();
             $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
-            $table->foreignUlid('category_id')->constrained('categories')->cascadeOnDelete();
             $table->json('schema'); // Onde guardamos a estrutura do form (labels, inputs, validations)
             $table->timestamps();
         });

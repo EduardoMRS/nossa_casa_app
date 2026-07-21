@@ -35,4 +35,51 @@ return [
         ],
     ],
 
+    'ia' => [
+        'openai' => [
+            'token' => env('OPENAI_TOKEN'),
+            'url' => 'https://api.openai.com/v1/chat/completions',
+            'list_models' => 'https://api.openai.com/v1/models',
+            'models' => [
+                'gpt-4o-mini',
+                'gpt-3.5-turbo',
+                'gpt-4',
+                'gpt-4-turbo',
+                'gpt-4o',
+            ],
+        ],
+        // 'gpt' => [ // Desabilitado pois é o mesmo que o openai,porem passando apenas o token, foi ajustado as referencias para o openai, caso queira usar o gpt, basta descomentar e ajustar as referencias no código.
+        //     'token' => env('OPENAI_TOKEN')
+        // ],
+        'openrouter' => [
+            'token' => env('OPENROUTER_TOKEN'),
+            'url' => 'https://openrouter.ai/api/v1/chat/completions',
+            'list_models' => 'https://openrouter.ai/api/v1/models?max_price=0&sort=latency-low-to-high',
+            'models' => [
+                'sourceful/riverflow-v2.5-fast',
+                'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+                'google/gemma-4-31b-it:free',
+                'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
+                'qwen/qwen3-next-80b-a3b-instruct:free',
+                'google/gemma-3n-e2b-it:free',
+                'allenai/molmo-2-8b:free',
+                'arcee-ai/trinity-mini:free',
+                'google/gemma-3-27b-it:free',
+                'openai/gpt-oss-120b:free',
+                'openai/gpt-oss-20b:free',
+                'x-ai/grok-4-fast:free',
+                'deepseek/deepseek-chat'
+            ]
+        ],
+        'gemini' => [
+            'token' => env('GEMINI_TOKEN'),
+            'url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+            'list_models' => 'https://generativelanguage.googleapis.com/v1beta/openai/models',
+            'models' => [
+                'gemini-2.5-flash-lite',
+                'gemini-3-flash-preview'
+            ],
+        ],
+    ],
+
 ];

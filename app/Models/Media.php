@@ -77,4 +77,9 @@ class Media extends Model
     {
         return $query->where('status', MediaStatus::REJECTED);
     }
+
+    public function highlight()
+    {
+        return $this->morphOne(Highlight::class, 'highlightable');
+    }
 }

@@ -15,6 +15,12 @@ class ChurchController extends Controller
         return response()->json($churches);
     }
 
+    public function show(string $slug)
+    {
+        $church = Church::with(['community', 'address', 'settings', 'categories'])->where('slug', $slug)->firstOrFail();
+        return response()->json($church);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -30,12 +36,6 @@ class ChurchController extends Controller
         $church = Church::create($validated);
 
         return response()->json($church, 201);
-    }
-
-    public function show(string $id)
-    {
-        $church = Church::with(['community', 'address', 'settings', 'categories'])->findOrFail($id);
-        return response()->json($church);
     }
 
     public function update(Request $request, string $id)

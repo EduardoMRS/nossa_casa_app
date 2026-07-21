@@ -27,7 +27,6 @@ class User extends Authenticatable implements PasskeyUser
         'password',
         'birth_date',
         'role',
-        'church_id',
     ];
 
     protected $hidden = [

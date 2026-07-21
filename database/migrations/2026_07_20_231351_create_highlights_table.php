@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('settings', function (Blueprint $table) {
+        Schema::create('highlights', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->ulidMorphs('highlightable');
             $table->foreignUlid('church_id')->constrained('churches')->cascadeOnDelete();
-            $table->json('options')->nullable();
+            $table->integer('order')->default(0);
             $table->timestamps();
         });
     }
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('settings');
+        Schema::dropIfExists('highlights');
     }
 };

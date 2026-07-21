@@ -13,6 +13,7 @@ class UserProfile extends Model
         'user_id',
         'phone',
         'location_lang',
+        'church_id',
         'community_id',
         'avatar_path',
         'gender',

@@ -25,9 +25,9 @@ class Event extends Model {
         'end_time' => 'datetime',
         'tags' => 'array',
     ];
-
     protected $appends = [
         'category',
+        'translations',
     ];
 
     public function forms()
@@ -119,5 +119,26 @@ class Event extends Model {
     public function address()
     {
         return $this->morphOne(Address::class, 'addressable');
+    }
+
+    public function highlight()
+    {
+        return $this->morphOne(Highlight::class, 'highlightable');
+    }
+
+    public function translations()
+    {
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getTranslationsAttribute()
+    {
+        return collect($this->translations()->get())->map(function ($translation) {
+            return [
+                'locale' => $translation['locale'],
+                'content' => $translation['content'],
+                'translatable_column' => $translation['translatable_column'],
+            ];
+        });
     }
 }
