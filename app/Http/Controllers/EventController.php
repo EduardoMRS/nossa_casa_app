@@ -11,23 +11,28 @@ class EventController extends Controller
     public function index()
     {
         $events = Event::with('church')->orderBy('start_time', 'asc')->paginate(15);
+
         return response()->json($events);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'slug'        => 'required|string|max:255|unique:events',
-            'tags'        => 'nullable|array',
-            'tags.*'      => 'string',
+            'title' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:events',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
             'description' => 'nullable|string',
-            'start_time'  => 'required|date',
-            'end_time'    => 'nullable|date|after_or_equal:start_time',
-            'cover_path'  => 'nullable|string|max:255',
-            'church_id'   => 'required|string|exists:churches,id',
-            'author_id'   => 'required|string|exists:users,id',
+            'start_time' => 'required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+            'cover_path' => 'nullable|string|max:255',
+            'church_id' => 'nullable|string|exists:churches,id',
+            'author_id' => 'nullable|string|exists:users,id',
         ]);
+
+        $validated['church_id'] = $request->user()->church?->id;
+        $validated['author_id'] = $request->user()->id;
+        abort_unless($validated['church_id'], 422, 'A church membership is required to create events.');
 
         $event = Event::create($validated);
 
@@ -37,24 +42,24 @@ class EventController extends Controller
     public function show(string $slug)
     {
         $event = Event::with(['church', 'categories', 'address', 'confirmations'])->where('slug', $slug)->firstOrFail();
+
         return response()->json($event);
     }
 
     public function update(Request $request, string $id)
     {
         $event = Event::findOrFail($id);
+        $this->ensureChurchAccess($request, $event->church_id);
 
         $validated = $request->validate([
-            'title'       => 'sometimes|required|string|max:255',
-            'slug'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('events')->ignore($event->id)],
-            'tags'        => 'nullable|array',
-            'tags.*'      => 'string',
+            'title' => 'sometimes|required|string|max:255',
+            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('events')->ignore($event->id)],
+            'tags' => 'nullable|array',
+            'tags.*' => 'string',
             'description' => 'nullable|string',
-            'start_time'  => 'sometimes|required|date',
-            'end_time'    => 'nullable|date|after_or_equal:start_time',
-            'cover_path'  => 'nullable|string|max:255',
-            'church_id'   => 'sometimes|required|string|exists:churches,id',
-            'author_id'   => 'sometimes|required|string|exists:users,id',
+            'start_time' => 'sometimes|required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+            'cover_path' => 'nullable|string|max:255',
         ]);
 
         $event->update($validated);
@@ -65,6 +70,7 @@ class EventController extends Controller
     public function destroy(string $id)
     {
         $event = Event::findOrFail($id);
+        $this->ensureChurchAccess(request(), $event->church_id);
         $event->delete();
 
         return response()->json(null, 204);
@@ -83,7 +89,7 @@ class EventController extends Controller
         // Create a new confirmation for the user
         $event->confirmations()->create([
             'user_id' => $user->id,
-            'status' => 'checked_in',
+            'check_in_at' => now(),
         ]);
 
         return response()->json(['message' => 'Check-in successful.'], 200);

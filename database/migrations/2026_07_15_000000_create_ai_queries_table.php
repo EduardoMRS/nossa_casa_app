@@ -20,9 +20,9 @@ return new class extends Migration
             $table->json('usage')->nullable(); // Informações de uso (tokens, etc)
             $table->string('status')->default('completed'); // completed, error, pending
             $table->text('error_message')->nullable(); // Mensagem de erro se houver
-            $table->integer('church_id')->unsigned()->nullable();
+            $table->ulid('church_id')->nullable();
             $table->string('type')->nullable();
-            //periodo inicio
+            // periodo inicio
             $table->dateTime('started_at_filter')->nullable();
             $table->dateTime('finished_at_filter')->nullable();
             $table->timestamps();
@@ -36,8 +36,6 @@ return new class extends Migration
             $table->index('started_at_filter');
             $table->index('finished_at_filter');
 
-            // Foreign keys
-            $table->foreign('church_id')->references('id')->on('churches')->onDelete('cascade');
         });
     }
 

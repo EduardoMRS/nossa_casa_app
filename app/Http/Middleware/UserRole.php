@@ -2,55 +2,58 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole as UserRoleEnum;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class UserRole
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @param  string  $roles (cargos separados por pipe, ex: admin|manager)
-     * @param  string|null  $redirectTo (nome da rota para redirecionar opcionalmente)
-     */
     public function handle(Request $request, Closure $next, string $roles, ?string $redirectTo = null): Response
     {
         $user = $request->user();
 
-        // 1. Verifica se há um usuário autenticado
-        if (!$user) {
+        if (! $user) {
             return $request->expectsJson()
                 ? response()->json(['message' => 'Unauthenticated.'], 401)
                 : redirect()->route('login');
         }
 
-        // 2. Prepara o array de roles permitidas
-        $allowedRoles = explode('|', $roles);
+        $allowedRoles = array_map(UserRoleEnum::from(...), explode('|', $roles));
+        $userRole = $user->role instanceof UserRoleEnum
+            ? $user->role
+            : UserRoleEnum::from($user->role);
 
-        // 3. Obtém a role do usuário (trata caso esteja usando o Enum UserRole no model)
-        $userRole = $user->role->value ?? $user->role;
-
-        // 4. Se o usuário NÃO tiver permissão
-        if (!in_array($userRole, $allowedRoles)) {
-            
-            // Retorno para rotas de API
+        if (! $this->hasRole($userRole, $allowedRoles)) {
             if ($request->expectsJson()) {
-                // Retorna 404 para ocultar a existência do endpoint
-                return response()->json(['message' => 'Not Found.'], 404);
+                return response()->json(['message' => 'Forbidden.'], 403);
             }
 
-            // Retorno para rotas Web com redirecionamento opcional definido
             if ($redirectTo) {
                 return redirect()->route($redirectTo);
             }
 
-            // Retorno padrão para Web: Aborta com 404 (acionará a tela customizada que você vai criar)
-            abort(404);
+            abort(403);
         }
 
         return $next($request);
+    }
+
+    /**
+     * @param  array<int, UserRoleEnum>  $allowedRoles
+     */
+    private function hasRole(UserRoleEnum $userRole, array $allowedRoles): bool
+    {
+        if (in_array($userRole, [UserRoleEnum::SYSTEM, UserRoleEnum::SUPERADMIN], true)) {
+            return true;
+        }
+
+        if ($userRole === UserRoleEnum::ADMIN) {
+            return in_array(UserRoleEnum::ADMIN, $allowedRoles, true)
+                || in_array(UserRoleEnum::LEADER, $allowedRoles, true)
+                || in_array(UserRoleEnum::MEDIA, $allowedRoles, true);
+        }
+
+        return in_array($userRole, $allowedRoles, true);
     }
 }

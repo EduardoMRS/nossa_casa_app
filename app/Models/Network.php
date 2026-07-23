@@ -2,31 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Network extends Model
 {
+    use HasUlids;
+
     protected $fillable = [
-        'name',
         'parent_church_id',
         'child_church_id',
         'community_id',
     ];
 
-    public function communities()
+    public function parentChurch()
     {
-        return $this->hasMany(Community::class, 'network_id');
+        return $this->belongsTo(Church::class, 'parent_church_id');
     }
 
-    public function members()
+    public function childChurch()
     {
-        return $this->hasOneThrough(
-            User::class,
-            Community::class,
-            'network_id', // Foreign key on the communities table...
-            'community_id', // Foreign key on the users table...
-            'id', // Local key on the networks table...
-            'id' // Local key on the communities table...
-        );
+        return $this->belongsTo(Church::class, 'child_church_id');
+    }
+
+    public function community()
+    {
+        return $this->belongsTo(Community::class);
     }
 }

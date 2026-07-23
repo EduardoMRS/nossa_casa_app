@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 
 class Address extends Model
 {
     use HasUlids;
+
     protected $fillable = [
         'addressable_type',
         'addressable_id',
@@ -23,18 +24,8 @@ class Address extends Model
 
     protected $table = 'addresses';
 
-    public function user()
+    public function addressable()
     {
-        return $this->morphTo(User::class, 'addressable');
-    }
-
-    public function church()
-    {
-        return $this->morphTo(Church::class, 'addressable');
-    }
-
-    public function event()
-    {
-        return $this->morphTo(Event::class, 'addressable');
+        return $this->morphTo();
     }
 }

@@ -19,7 +19,7 @@ class Media extends Model
         'mimetype',
         'size',
         'gallery',
-        'status'
+        'status',
     ];
 
     protected $casts = [
@@ -55,7 +55,7 @@ class Media extends Model
 
     public function categories()
     {
-        return $this->morphedByMany(Category::class, 'categorizable');
+        return $this->morphToMany(Category::class, 'categorizable');
     }
 
     public function church()

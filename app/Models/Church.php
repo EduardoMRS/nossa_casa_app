@@ -17,7 +17,7 @@ class Church extends Model
         'slug',
         'community_id',
         'status',
-        'found_date'
+        'found_date',
     ];
 
     protected $casts = [
@@ -73,6 +73,11 @@ class Church extends Model
     public function events()
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function forms()
+    {
+        return $this->hasMany(Form::class);
     }
 
     public function media()
