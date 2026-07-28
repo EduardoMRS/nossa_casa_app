@@ -75,7 +75,7 @@ class ClassroomController extends Controller
             $validated['user_id'] => ['check_in' => now()]
         ]);
 
-        return response()->json(['message' => 'Check-in realizado com sucesso.'], 200);
+        return response()->json(['message' => __('checkin.checkin_success')], 200);
     }
 
     public function checkOut(Request $request, string $id)
@@ -90,6 +90,6 @@ class ClassroomController extends Controller
             $validated['user_id'] => ['check_out' => now()]
         ]);
 
-        return response()->json(['message' => 'Check-out realizado com sucesso.'], 200);
+        return response()->json(['message' => __('checkin.checkout_success')], 200);
     }
 }

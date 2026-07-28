@@ -36,7 +36,7 @@ class FormController extends Controller
         ]);
         $church = $request->user()->church;
 
-        abort_unless($church, 422, 'A church membership is required to create forms.');
+        abort_unless($church && $church->exists(), 422, __('church.membership_form_create_required'));
 
         $form = $church->forms()->create($validated);
 

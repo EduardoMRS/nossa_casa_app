@@ -99,7 +99,7 @@ class EventController extends Controller
 
         // Check if the user has already checked in
         if ($event->confirmations()->where('user_id', $user->id)->exists()) {
-            return response()->json(['message' => 'User has already checked in.'], 400);
+            return response()->json(['message' => __('checkin.already_checked_in')], 400);
         }
 
         // Create a new confirmation for the user
@@ -108,6 +108,6 @@ class EventController extends Controller
             'check_in_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Check-in successful.'], 200);
+        return response()->json(['message' => __('checkin.checkin_success')], 200);
     }
 }

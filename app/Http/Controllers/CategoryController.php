@@ -65,7 +65,7 @@ class CategoryController extends Controller
             'classroom' => \App\Models\Classroom::class,
             'form' => \App\Models\Form::class,
             'user' => \App\Models\User::class,
-            default => abort(404, 'Tipo de item inválido.'),
+            default => abort(404, __('category.invalid_type')),
         };
 
         $model = $modelClass::findOrFail($item_id);
@@ -73,6 +73,6 @@ class CategoryController extends Controller
         // Sincroniza a categoria sem remover as anteriores usando o relacionamento polimórfico
         $model->categories()->syncWithoutDetaching([$validated['category_id']]);
 
-        return response()->json(['message' => 'Categoria associada com sucesso.']);
+        return response()->json(['message' => __('category.assignment_success')],200);
     }
 }

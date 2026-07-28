@@ -104,16 +104,16 @@ class AiModelsController extends Controller
             ],
         ],
         [
-            'provider.in' => 'O provedor selecionado não é válido.',
-            'model_id.unique' => 'Este modelo já está cadastrado.',
-            'status.in' => 'O status selecionado não é válido.',
+            'provider.in' => __('aimodel.invalid_provider'),
+            'model_id.unique' => __('aimodel.already_registered'),
+            'status.in' => __('aimodel.invalid_status'),
         ]);
 
         // Define a próxima posição livre para este Provedor específico
         $validated['position'] = AiModel::where('provider', $validated['provider'])->max('position') + 1;
 
         $model = AiModel::create($validated);
-        return response()->json(['message' => 'Modelo cadastrado com sucesso!', 'data' => $model], 201);
+        return response()->json(['message' => __('aimodel.create_success'), 'data' => $model], 201);
     }
 
     public function update(Request $request, AiModel $aiModel)
@@ -148,9 +148,9 @@ class AiModelsController extends Controller
             ],
         ],
         [
-            'provider.in' => 'O provedor selecionado não é válido.',
-            'model_id.unique' => 'Este modelo já está cadastrado.',
-            'status.in' => 'O status selecionado não é válido.',
+            'provider.in' => __('aimodel.invalid_provider'),
+            'model_id.unique' => __('aimodel.already_registered'),
+            'status.in' => __('aimodel.invalid_status'),
         ]);
 
         if ($request->has('is_active')) {
@@ -158,7 +158,7 @@ class AiModelsController extends Controller
         }
 
         $aiModel->update($validated);
-        return response()->json(['message' => 'Modelo atualizado!', 'data' => $aiModel]);
+        return response()->json(['message' => __('aimodel.update_success'), 'data' => $aiModel]);
     }
 
     /**
@@ -178,13 +178,13 @@ class AiModelsController extends Controller
                 ->update(['position' => $index]);
         }
 
-        return response()->json(['message' => 'Ordenação atualizada com sucesso por provedor!']);
+        return response()->json(['message' => __('aimodel.order_update_success')]);
     }
 
     public function destroy(AiModel $aiModel)
     {
         $aiModel->update(['status' => 'removed']);
-        return response()->json(['message' => 'Modelo removido com sucesso.']);
+        return response()->json(['message' => __('aimodel.model_removed_success')]);
     }
 
     public function fetchExternalModels(Request $request, string $provider)
@@ -225,7 +225,7 @@ class AiModelsController extends Controller
 
             return response()->json($models);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Não foi possível buscar os modelos externos.'], 500);
+            return response()->json(['error' => __('aimodel.no_found_models')], 500);
         }
     }
 }

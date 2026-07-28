@@ -30,7 +30,7 @@ class PostController extends Controller
 
         $validated['author_id'] = $request->user()->id;
         $validated['church_id'] = $request->user()->church?->id;
-        abort_unless($validated['church_id'], 422, 'A church membership is required to create posts.');
+        abort_unless($validated['church_id'], 422, __('church.membership_post_create_required'));
 
         $post = Post::create($validated);
 

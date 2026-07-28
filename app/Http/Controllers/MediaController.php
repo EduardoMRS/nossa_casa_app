@@ -34,7 +34,7 @@ class MediaController extends Controller
         ]);
         
         $church = $request->user()->church;
-        abort_unless($church && $church->exists(), 422, 'A church membership is required to upload media.');
+        abort_unless($church && $church->exists(), 422, __('church.membership_upload_media_required'));
 
         // Extrai o arquivo tentando de 'file' (upload) ou 'file_path' (string)
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
