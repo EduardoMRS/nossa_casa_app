@@ -15,6 +15,10 @@ class InitialAiModelSeeder extends Seeder
         $providers = [
             'openrouter' => [
                 [
+                    'model_id' => 'inclusionai/ling-3.0-flash:free',
+                    'status' => 'active',
+                ],
+                [
                     'model_id' => 'krea/krea-2-medium-turbo',
                     'status' => 'active',
                 ],

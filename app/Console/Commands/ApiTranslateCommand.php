@@ -30,20 +30,29 @@ class ApiTranslateCommand extends Command
 
     private function translateText()
     {
-        Log::debug('Starting translation available languages: ' . join(',', config('app.locales')));
+        $locales = config('app.locales') ?? ['en', 'pt'];
+        $locales = array_filter($locales, fn($locale) => $locale !== 'en'); // Remove 'en' from the locales to translate
+        Log::debug('Starting translation available languages: ' . join(',', $locales));
         $systemPrompt = 'You are a professional translator.
-        Translation the following text to: "' . join(',', config('app.locales')) . '"
-        Do not translate any text inside brackets [] labels of values and return in json winthout any other text or explanation. The output should be in the following format:
-            ["lang" => ["filename.php" => ["key1" => "translated text 1","key2" => "translated text 2","key3" => "translated text 3",],],]
-            Example of the output:
-            ["pt" => ["pagination.php" => ["previous" => "&laquo; Anterior","next" => "Seguinte &raquo;",],],]
-            Content to be translated:
-            ["en" => ' . json_encode($this->contentBase) . ']
+        Translation the following Content to "' . join(',', $locales) . '" of laravel translation files. The output should be in the following format only:
+            {"lang": 
+                {
+                    "filename.php": {
+                        "key1": "translated text 1",
+                        "key2": "translated text 2",
+                        "key3": "translated text 3"
+                    }
+                }
+            }
+        Example of the output: {"pt": {"pagination.php": {"previous": "&laquo; Anterior","next": "Seguinte &raquo;"}}}
+        Content to be translated: {"en": ' . json_encode($this->contentBase) . '}
         ';
 
         $aiProvider = new \App\Services\AiProvider();
         $translatedContent = $aiProvider->system($systemPrompt)->run();
         $translatedContent = str_replace('\"', '"', data_get($translatedContent, 'content', ''));
+        $translatedContent = str_replace('```json', '', $translatedContent);
+        $translatedContent = str_replace('```', '', $translatedContent);
         
         Log::debug('Translated content: ', [$translatedContent]);
         $translatedContent = \Str::replaceFirst('\\n', '', $translatedContent);
@@ -60,9 +69,15 @@ class ApiTranslateCommand extends Command
                 if (!is_dir(dirname($filePath))) {
                     mkdir(dirname($filePath), 0775, true);
                 }
-                file_put_contents($filePath, "<?php\n\nreturn " . var_export($translations, true) . ";\n");
+                $content = "<?php\n\nreturn " . var_export($translations, true);
+                $content = preg_replace('/array\s*\(/', '[', $content);
+                $content = preg_replace('/\)\s*;?\s*$/', '];', $content);
+                // Corrige '),' para '],'
+                $content = str_replace('),', '],', $content);
+                $content = preg_replace('/;;+/', ';', $content);
+                file_put_contents($filePath, $content . "\n");
             }
         }
-        // Log::debug('Translation job completed for translation ID: ' . $this->translation_id);
+        Log::debug('Translation command completed successfully.');
     }
 }
