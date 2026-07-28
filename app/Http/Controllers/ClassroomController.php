@@ -62,4 +62,34 @@ class ClassroomController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function checkIn(Request $request, string $id)
+    {
+        $classroom = Classroom::findOrFail($id);
+        
+        $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
+        ]);
+
+        $classroom->presences()->syncWithoutDetaching([
+            $validated['user_id'] => ['check_in' => now()]
+        ]);
+
+        return response()->json(['message' => 'Check-in realizado com sucesso.'], 200);
+    }
+
+    public function checkOut(Request $request, string $id)
+    {
+        $classroom = Classroom::findOrFail($id);
+        
+        $validated = $request->validate([
+            'user_id' => 'required|string|exists:users,id',
+        ]);
+
+        $classroom->presences()->syncWithoutDetaching([
+            $validated['user_id'] => ['check_out' => now()]
+        ]);
+
+        return response()->json(['message' => 'Check-out realizado com sucesso.'], 200);
+    }
 }

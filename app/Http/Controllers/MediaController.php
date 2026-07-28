@@ -6,9 +6,11 @@ use App\Enums\MediaStatus;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-
+use App\Traits\UploadsMedia;
 class MediaController extends Controller
 {
+    use UploadsMedia;
+
     public function index()
     {
         return response()->json(Media::visible()->with('uploader:id,first_name,last_name')->paginate(15));
@@ -23,19 +25,30 @@ class MediaController extends Controller
 
     public function store(Request $request)
     {
-        $file = $request->file('file');
         $validated = $request->validate([
-            'file_path' => ['required', 'string', 'max:255', 'default' => $file?->store('media')],
-            'mimetype' => ['required', 'string', 'max:255', 'default' => $file?->getClientMimeType()],
-            'size' => ['required', 'integer', 'min:1', 'default' => $file?->getSize()],
-            'gallery' => ['boolean'],
+            'file_path' => ['nullable'],
+            'file'      => ['nullable'], // Permite receber na chave 'file' também se for multipart
+            'mimetype'  => ['nullable', 'string', 'max:255'],
+            'size'      => ['nullable', 'integer', 'min:0'],
+            'gallery'   => ['boolean'],
         ]);
+        
         $church = $request->user()->church;
+        abort_unless($church && $church->exists(), 422, 'A church membership is required to upload media.');
 
-        abort_unless($church, 422, 'A church membership is required to upload media.');
+        // Extrai o arquivo tentando de 'file' (upload) ou 'file_path' (string)
+        $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
+        if(!$fileInput) {
+            return response()->json(['error' => 'No file provided.'], 422);
+        }
+        
+        $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
 
         $media = Media::create([
-            ...$validated,
+            'file_path' => $mediaPath,
+            'mimetype' => $validated['mimetype'] ?? null,
+            'size' => $validated['size'] ?? null,
+            'gallery' => $validated['gallery'] ?? false,
             'uploader_id' => $request->user()->id,
             'church_id' => $church->id,
             'status' => MediaStatus::PENDING,
@@ -61,5 +74,21 @@ class MediaController extends Controller
         $media->delete();
 
         return response()->noContent();
+    }
+
+    public function pending()
+    {
+        return response()->json(Media::pending()->with('uploader:id,first_name,last_name')->paginate(15));
+    }
+
+    public function updateStatus(Request $request, Media $media)
+    {
+        $validated = $request->validate([
+            'status' => ['required', Rule::enum(MediaStatus::class)],
+        ]);
+
+        $media->update(['status' => $validated['status']]);
+
+        return response()->json($media);
     }
 }

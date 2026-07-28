@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Traits\UploadsMedia;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    use UploadsMedia;
+    
     /**
      * Show the user's profile settings page.
      */
@@ -30,12 +33,27 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $validated = $request->validated([
+            'phone' => 'sometimes|nullable|string|max:255',
+            'location_lang' => 'sometimes|nullable|string|max:255',
+            'church_id' => 'sometimes|nullable|exists:churches,id',
+            'community_id' => 'sometimes|nullable|exists:communities,id',
+            'gender' => 'sometimes|nullable|in:male,female,other',
+            'avatar_path' => 'sometimes|nullable',
+        ]);
+
+        
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }
+        
+        if (array_key_exists('avatar_path', $validated)) {
+            $file = $request->file('avatar_path') ?? $request->input('avatar_path');
+            $validated['avatar_path'] = $this->handleMediaUpload($file, "avatars/{$request->user()->id}", $request->user()->avatar_path);
+        }
 
+        $request->user()->fill($validated);
         $request->user()->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);

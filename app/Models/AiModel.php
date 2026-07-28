@@ -53,6 +53,11 @@ class AiModel extends Model
         return $this->status === 'active';
     }
 
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
+
     public function getIsFreeAttribute(): bool
     {
         return ($this->price_prompt == 0 && $this->price_completion == 0);

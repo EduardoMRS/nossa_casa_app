@@ -51,4 +51,28 @@ class CategoryController extends Controller
 
         return response()->noContent();
     }
+
+    public function categorizeItem(Request $request, string $item_type, string $item_id)
+    {
+        $validated = $request->validate([
+            'category_id' => ['required', 'string', 'exists:categories,id'],
+        ]);
+        
+        $modelClass = match ($item_type) {
+            'post' => \App\Models\Post::class,
+            'event' => \App\Models\Event::class,
+            'media' => \App\Models\Media::class,
+            'classroom' => \App\Models\Classroom::class,
+            'form' => \App\Models\Form::class,
+            'user' => \App\Models\User::class,
+            default => abort(404, 'Tipo de item inválido.'),
+        };
+
+        $model = $modelClass::findOrFail($item_id);
+        
+        // Sincroniza a categoria sem remover as anteriores usando o relacionamento polimórfico
+        $model->categories()->syncWithoutDetaching([$validated['category_id']]);
+
+        return response()->json(['message' => 'Categoria associada com sucesso.']);
+    }
 }

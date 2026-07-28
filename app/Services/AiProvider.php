@@ -402,6 +402,7 @@ class AiProvider
         $lastExceptionMessage = null;
 
         foreach ($orderedModels as $model) {
+            Log::debug("Tentando modelo '$model' para provedor '{$this->provider}'");
             try {
                 $this->setModel($model);
             } catch (InvalidArgumentException $e) {

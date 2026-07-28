@@ -1,13 +1,16 @@
-<?php
+<?php // app/Http/Controllers/CommunityController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Community;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Traits\UploadsMedia; // Importando a trait
 
 class CommunityController extends Controller
 {
+    use UploadsMedia; // Usando a trait
+
     public function index()
     {
         $communities = Community::with('churches')->paginate(15);
@@ -21,8 +24,13 @@ class CommunityController extends Controller
             'slug'        => 'required|string|max:255|unique:communities',
             'description' => 'nullable|string',
             'found_date'  => 'nullable|date',
-            'logo_path'   => 'nullable|string|max:255',
+            'logo_path'   => 'sometimes|nullable', // Aceita arquivo, null ou string
         ]);
+
+        if (array_key_exists('logo_path', $validated)) {
+            $file = $request->file('logo_path') ?? $request->input('logo_path');
+            $validated['logo_path'] = $this->handleMediaUpload($file, 'communities/logos');
+        }
 
         $community = Community::create($validated);
 
@@ -44,8 +52,13 @@ class CommunityController extends Controller
             'slug'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('communities')->ignore($community->id)],
             'description' => 'nullable|string',
             'found_date'  => 'nullable|date',
-            'logo_path'   => 'nullable|string|max:255',
+            'logo_path'   => 'sometimes|nullable', 
         ]);
+
+        if (array_key_exists('logo_path', $validated)) {
+            $file = $request->file('logo_path') ?? $request->input('logo_path');
+            $validated['logo_path'] = $this->handleMediaUpload($file, 'communities/logos', $community->logo_path);
+        }
 
         $community->update($validated);
 

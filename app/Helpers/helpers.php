@@ -1,9 +1,11 @@
 <?php
 
+use \Illuminate\Http\UploadedFile;
+
 if(!function_exists('getFileMetadata')) {
     /**
      * Helper to get file metadata
-     * @param mixed $filepath filepath or url
+     * @param UploadedFile|string|null $filepath filepath, file base64 string, or URL
      * @return array{
      *  exists: bool,
      *  mime_type:string,
@@ -31,6 +33,12 @@ if(!function_exists('getFileMetadata')) {
             $metadata['handler'] = function () use ($filepath) {
                 return fopen($filepath, 'r');
             };
+        } elseif ($filepath instanceof UploadedFile && $filepath->isValid()) {
+            $metadata['origin'] = 'local';
+            $metadata['handler'] = function () use ($filepath) {
+                return fopen($filepath->getRealPath(), 'r');
+            };
+            $filepath = $filepath->getRealPath();
         } elseif (file_exists($filepath)) {
             $metadata['origin'] = 'local';
             $metadata['handler'] = function () use ($filepath) {
