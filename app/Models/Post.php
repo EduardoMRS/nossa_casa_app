@@ -29,11 +29,26 @@ class Post extends Model
         'author_details',
         'category',
         'metrics',
+        'author_details',
+    ];
+
+    protected $hidden = [
+        'author',
     ];
 
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function getAuthorDetailsAttribute()
+    {
+        return $this->author?->details ?? null;
+    }
+
+    public function isAuthor(User|int $user)
+    {
+        return $this->author_id === ($user instanceof User ? $user->id : $user);
     }
 
     public function church()
@@ -71,7 +86,10 @@ class Post extends Model
 
     public function scopeVisible($query)
     {
-        return $query->where('published_at', '<=', now())
+        $user = auth()->user();
+        $church = $user->church;
+        return $query->where('church_id', $church->id)
+                     ->where('published_at', '<=', now())
                      ->where(function ($query) {
                          $query->whereNull('expires_at')
                                ->orWhere('expires_at', '>', now());
@@ -82,17 +100,6 @@ class Post extends Model
     {
         return $query->whereNotNull('expires_at')
                      ->where('expires_at', '<=', now());
-    }
-
-    public function getAuthorDetailsAttribute()
-    {
-        return $this->author ? $this->author->only(
-            [
-                'id',
-                'first_name',
-                'last_name',
-                'email'
-            ]) : null;
     }
 
     public function getMetricsAttribute()

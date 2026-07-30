@@ -1,6 +1,7 @@
 <?php
 
 use \Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Crypt;
 
 if(!function_exists('getFileMetadata')) {
     /**
@@ -45,7 +46,17 @@ if(!function_exists('getFileMetadata')) {
                 return fopen($filepath, 'r');
             };
         } else {
-            return $metadata;
+            $disks = config('filesystems.disks');
+            foreach ($disks as $diskName => $diskConfig) {
+                if (Storage::disk($diskName)->exists($filepath)) {
+                    $metadata['origin'] = 'cloud';
+                    $metadata['handler'] = function () use ($diskName, $filepath) {
+                        return Storage::disk($diskName)->readStream($filepath);
+                    };
+                    $filepath = Storage::disk($diskName)->path($filepath);
+                    break;
+                }
+            }
         }
 
         $metadata['exists'] = true;
@@ -55,5 +66,20 @@ if(!function_exists('getFileMetadata')) {
         $metadata['name'] = basename($filepath);
 
         return $metadata;        
+    }
+}
+
+if(!function_exists('genUrl')) {
+    /**
+     * Helper to generate a secure URL for a file path
+     * TODO: reduce the size of the encrypted string to make it more user-friendly
+     * @param string $filePath The file path to encrypt and generate a URL for
+     * @return string The generated secure URL
+     */
+    function genUrl($filePath)
+    {
+        $encryptedPath = Crypt::encryptString($filePath);
+        $url = route('secure-file', ['encryptedFile' => $encryptedPath]);
+        return $url;
     }
 }

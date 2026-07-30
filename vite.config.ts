@@ -1,4 +1,5 @@
 import inertia from '@inertiajs/vite';
+import AutoImport from 'unplugin-auto-import/vite';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
@@ -29,6 +30,18 @@ export default defineConfig({
         }),
         wayfinder({
             formVariants: true,
+        }),
+        AutoImport({
+            imports: [
+                {
+                    // Diz ao Vite: toda vez que eu digitar "axios", faça o "import axios from 'axios'" automaticamente
+                    'axios': [
+                        ['default', 'axios'] 
+                    ]
+                }
+            ],
+            // Ele vai gerar esse arquivo para o TypeScript reconhecer que o axios existe globalmente
+            dts: 'resources/js/auto-imports.d.ts', 
         }),
     ],
 });

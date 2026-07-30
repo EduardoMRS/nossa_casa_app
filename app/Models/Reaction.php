@@ -18,4 +18,25 @@ class Reaction extends Model
     ];
 
     protected $table = 'reactions';
+
+    protected $hidden = [
+        'reactionable_type',
+        'reactionable_id',
+        'updated_at',
+        'user'
+    ];
+
+    protected $appends = [
+        'user_details',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    public function getUserDetailsAttribute()
+    {
+        return $this->user?->details ?? null;
+    }
 }

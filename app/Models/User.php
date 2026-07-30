@@ -33,6 +33,10 @@ class User extends Authenticatable implements PasskeyUser
         'password',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
+        'updated_at',
+        'created_at',
+        'email_verified_at',
         'remember_token',
     ];
 
@@ -100,4 +104,42 @@ class User extends Authenticatable implements PasskeyUser
         $this->save();
     }
     
+    /**
+     * Check if the user has a specific role or any of the roles in an array.
+     * @param string|array|UserRole $role role or array of roles to check against
+     * @return bool
+     */
+    public function hasRole( $role): bool
+    {
+        if (is_array($role)) {
+            return in_array($this->role, array_map(fn($r) => UserRole::from($r), $role));
+        }
+        return $this->role === UserRole::from($role);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole([UserRole::ADMIN, UserRole::SUPERADMIN]);
+    }
+
+    public function isModerator(): bool
+    {
+        return $this->hasRole([UserRole::LEADER, UserRole::MEDIA]);
+    }
+
+    public function isMember(): bool
+    {
+        return $this->hasRole(UserRole::MEMBER);
+    }
+
+    public function getDetailsAttribute()
+    {
+        return $this->only(
+            [
+                'id',
+                'first_name',
+                'last_name',
+                'email'
+            ]);
+    }
 }

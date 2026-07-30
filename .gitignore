@@ -36,3 +36,5 @@ package-lock
 
 AllModels.php
 AllMigrations.php
+docs/api.json
+public/

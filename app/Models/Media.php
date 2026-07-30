@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\MediaStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
@@ -27,9 +28,19 @@ class Media extends Model
         'status' => MediaStatus::class,
     ];
 
+    protected $appends = [
+        'url',
+        'uploader_details',
+    ];
+
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploader_id');
+    }
+
+    public function getUploaderDetailsAttribute()
+    {
+        return $this->uploader?->details ?? null;
     }
 
     public function posts()
@@ -81,5 +92,15 @@ class Media extends Model
     public function highlight()
     {
         return $this->morphOne(Highlight::class, 'highlightable');
+    }
+
+    public function getUrlAttribute()
+    {
+        return genUrl($this->path);
+    }
+
+    public function getPathAttribute()
+    {
+        return getFileMetadata($this->file_path)['path'] ?? null;
     }
 }

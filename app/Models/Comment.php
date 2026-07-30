@@ -19,7 +19,14 @@ class Comment extends Model
     protected $table = 'comments';
 
     protected $appends = [
-        'metrics',
+        'user_details',
+    ];
+
+    protected $hidden = [
+        'commentable_type',
+        'commentable_id',
+        'updated_at',
+        'user'
     ];
 
     public function post()
@@ -40,6 +47,11 @@ class Comment extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getUserDetailsAttribute()
+    {
+        return $this->user?->details ?? null;
     }
     
     // Auto-relacionamento polimórfico: Um comentário pode ter respostas (outros comentários)
