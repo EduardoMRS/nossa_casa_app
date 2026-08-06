@@ -2,12 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Address;
+use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Community;
 use App\Models\User;
-use App\Enums\UserRole;
-use App\Models\UserProfile;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -15,15 +13,18 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $systemEmail = env('APP_USER_SYSTEM_EMAIL', 'system@nossacasa.test');
+        $systemPassword = env('APP_USER_SYSTEM_PASSWORD', 'password');
+
         // 1. Cria o usuário do Sistema (Super System admin)
         $superadmin = User::updateOrCreate(
             [
-                'email' => env('APP_USER_SYSTEM_EMAIL'),
+                'email' => $systemEmail,
             ],
             [
                 'first_name' => 'System',
                 'last_name' => 'Nossa Casa',
-                'password' => bcrypt(env('APP_USER_SYSTEM_PASSWORD')),
+                'password' => bcrypt($systemPassword),
                 'birth_date' => '2000-01-01',
             ]
         );

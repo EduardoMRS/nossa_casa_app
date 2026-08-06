@@ -320,8 +320,7 @@ class ApiTranslateCommand extends Command
                                 );
                                 $isCurrent = $existingTranslations
                                     ->get($translationKey, collect())
-                                    ->contains(fn (Translation $translation): bool =>
-                                        $translation->content_original === $source
+                                    ->contains(fn (Translation $translation): bool => $translation->content_original === $source
                                         && filled($translation->content)
                                     );
 
@@ -492,7 +491,7 @@ class ApiTranslateCommand extends Command
 
             $lastContent = is_string($rawContent)
                 ? $rawContent
-                : json_encode($rawContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+                : (json_encode($rawContent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
             Log::warning('Translation provider returned invalid JSON.', [
                 'attempt' => $attempt,
                 'translatedContent' => Str::limit($lastContent, 4000),

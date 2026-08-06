@@ -44,6 +44,11 @@ class Event extends Model
         return $this->morphToMany(Category::class, 'categorizable');
     }
 
+    public function medias()
+    {
+        return $this->morphToMany(Media::class, 'mediable');
+    }
+
     public function getCategoryAttribute()
     {
         $categories = $this->relationLoaded('categories')
