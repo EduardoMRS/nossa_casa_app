@@ -2,10 +2,12 @@
 /vendor/
 npm-debug.log
 yarn-error.log
-bootstrap/
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
 app/storage/
 public/storage
 public/hot
+public/fonts-manifest.dev.json
 storage/*.key
 storage/pail
 .env
@@ -16,7 +18,6 @@ Homestead.json
 /resources/js/actions
 /resources/js/routes
 /resources/js/wayfinder
-composer.lock
 
 # IDEs
 .idea/
@@ -29,8 +30,6 @@ dist/
 *.log
 logs
 node_modules/
-package-lock
 
 # macOS
 .DS_Store   
-
