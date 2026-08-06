@@ -15,8 +15,8 @@ use Illuminate\Validation\Rule;
 
 class MediaController extends Controller
 {
-    use UploadsMedia;
     use ManagesChurchCategories;
+    use UploadsMedia;
 
     public function index()
     {
@@ -26,8 +26,10 @@ class MediaController extends Controller
     public function show(Media $media)
     {
         abort_unless($media->status === MediaStatus::APPROVED, 404);
+        $media->load(['categories', 'comments.user']);
+        $media->categories->each->localize();
 
-        return response()->json($media->load(['categories', 'comments.user']));
+        return response()->json($media);
     }
 
     public function store(StoreMediaRequest $request)

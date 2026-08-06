@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
+
 class Community extends Model
 {
-    use HasRelationships, HasUlids;
-    
+    use HasRelationships, HasTranslations, HasUlids;
+
     protected $table = 'communities';
 
     protected $fillable = [
@@ -39,23 +40,13 @@ class Community extends Model
         return $this->hasManyDeep(
             User::class,
             [Church::class, UserProfile::class],
-            ['community_id', 'church_id', 'id'], 
-            ['id', 'id', 'user_id'] 
+            ['community_id', 'church_id', 'id'],
+            ['id', 'id', 'user_id']
         );
     }
 
     public function categories()
     {
         return $this->hasManyThrough(Category::class, Church::class, 'community_id', 'church_id', 'id', 'id');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

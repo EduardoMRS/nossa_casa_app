@@ -1,21 +1,22 @@
 <?php
 
+use App\Enums\CategoryType;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
-use App\Enums\CategoryType;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\Media;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 if (! function_exists('categoriesForChurchAndType')) {
-    function categoriesForChurchAndType(Request $request, string $type)
+    function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
     {
         $churchId = $request->user()?->church?->id;
 
@@ -23,11 +24,15 @@ if (! function_exists('categoriesForChurchAndType')) {
             return collect();
         }
 
-        return Category::query()
+        $categories = Category::query()
             ->where('church_id', $churchId)
             ->where('type', $type)
             ->orderBy('name')
             ->get(['id', 'name', 'slug', 'type']);
+
+        return $localized
+            ? $categories->each->localize()
+            : $categories->each->makeHidden('translations');
     }
 }
 
@@ -38,6 +43,8 @@ Route::get('/', function () {
         ->limit(3)
         ->get()
         ->map(function (Event $event) {
+            $event->localize(relations: ['church']);
+
             return [
                 'id' => $event->id,
                 'title' => $event->title,
@@ -55,6 +62,8 @@ Route::get('/', function () {
         ->limit(3)
         ->get()
         ->map(function (Post $post) {
+            $post->localize();
+
             return [
                 'id' => $post->id,
                 'title' => $post->title,
@@ -80,6 +89,8 @@ Route::get('/events', function () {
         ->orderBy('start_time', 'asc')
         ->paginate(18)
         ->through(function (Event $event) {
+            $event->localize(relations: ['church']);
+
             return [
                 'id' => $event->id,
                 'title' => $event->title,
@@ -100,6 +111,9 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description', 'forms.schema'])->first();
 
     abort_if($registrationForm === null, 404);
+
+    $event->localize(relations: ['church']);
+    $registrationForm->localize();
 
     $existingResponse = null;
 
@@ -140,6 +154,9 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
 Route::get('/events/{event:slug}', function (Event $event, Request $request) {
     $event->load('church:id,name,slug', 'categories:id,name');
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description'])->first();
+
+    $event->localize(relations: ['church', 'categories']);
+    $registrationForm?->localize();
 
     return Inertia::render('Events/Show', [
         'event' => [
@@ -186,7 +203,7 @@ Route::get('/gallery', function (Request $request) {
 
     return Inertia::render('Gallery/Index', [
         'media' => $media,
-            'categories' => categoriesForChurchAndType($request, CategoryType::MEDIA->value),
+        'categories' => categoriesForChurchAndType($request, CategoryType::MEDIA->value, true),
     ]);
 })->name('gallery.index');
 
@@ -320,6 +337,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/posts', function () {
         $posts = Post::visible()->orderBy('created_at', 'desc')->paginate(10)->through(function ($post) {
+            $post->localize();
+
             return [
                 'id' => $post->id,
                 'title' => $post->title,
@@ -352,7 +371,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $post = Post::visible()->with(['church', 'medias'])->findOrFail(request()->route('post'));
         $church = $post->church;
         $props = [
-            'available_categories' => $church->categories()->get(['id', 'name']),
+            'available_categories' => $church->categories()->get(['id', 'name'])->each->makeHidden('translations'),
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
             'post' => [
                 'id' => $post->id,
@@ -368,7 +387,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
     Route::get('/posts/{post}', function () {
-        $post = Post::visible()->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        $post = Post::visible()->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        $post->localize(relations: ['church', 'categories']);
         $props = [
             'can' => [
                 'edit' => auth()->user()->can('update', $post),

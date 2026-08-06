@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref } from 'vue';
+import { useI18n } from '@/lib/i18n';
 type Church = {
     id: string;
     name: string;
@@ -23,6 +24,7 @@ const props = defineProps<{
     stats: Array<{ label: string; value: number }>;
 }>();
 const churches = ref([...props.churches]);
+const { t } = useI18n();
 const editing = ref<Church | null>(null);
 const open = ref(false);
 const tab = ref<'churches' | 'networks'>('churches');
@@ -50,7 +52,7 @@ async function save(): Promise<void> {
 }
 </script>
 <template>
-    <Head title="Multicongregações" />
+    <Head :title="t('admin.multicongregation.title')" />
     <main class="space-y-6 p-4 md:p-8">
         <header
             class="flex flex-col justify-between gap-4 rounded-3xl bg-gradient-to-br from-violet-950 to-indigo-700 p-7 text-white md:flex-row md:items-end"
@@ -59,30 +61,32 @@ async function save(): Promise<void> {
                 <p
                     class="text-xs font-bold tracking-[0.2em] text-violet-200 uppercase"
                 >
-                    Estrutura
+                    {{ t('admin.multicongregation.kicker') }}
                 </p>
-                <h1 class="mt-2 text-3xl font-black">Multicongregações</h1>
+                <h1 class="mt-2 text-3xl font-black">
+                    {{ t('admin.multicongregation.title') }}
+                </h1>
                 <p class="mt-2 text-sm text-violet-100">
-                    Matriz, filiais e comunidades sob uma visão unificada.
+                    {{ t('admin.multicongregation.description') }}
                 </p>
             </div>
             <button
                 class="rounded-xl bg-white px-4 py-3 text-sm font-black text-violet-900"
                 @click="start()"
             >
-                Nova igreja
+                {{ t('admin.multicongregation.new_church') }}
             </button>
         </header>
         <section class="grid gap-4 sm:grid-cols-3">
             <article
-                v-for="stat in props.stats"
+                v-for="(stat, index) in props.stats"
                 :key="stat.label"
                 class="rounded-2xl border bg-white p-5 shadow-sm"
             >
                 <p
                     class="text-xs font-bold tracking-wider text-slate-400 uppercase"
                 >
-                    {{ stat.label }}
+                    {{ t(`admin.multicongregation.stats.${index}`) }}
                 </p>
                 <p class="mt-2 text-3xl font-black">{{ stat.value }}</p>
             </article>
@@ -97,7 +101,7 @@ async function save(): Promise<void> {
                 class="px-2 py-3 text-sm"
                 @click="tab = 'churches'"
             >
-                Igrejas</button
+                {{ t('admin.multicongregation.churches') }}</button
             ><button
                 :class="
                     tab === 'networks'
@@ -107,7 +111,7 @@ async function save(): Promise<void> {
                 class="px-2 py-3 text-sm"
                 @click="tab = 'networks'"
             >
-                Matriz e filiais
+                {{ t('admin.multicongregation.networks') }}
             </button>
         </div>
         <section v-if="tab === 'churches'" class="grid gap-3 lg:grid-cols-2">
@@ -119,19 +123,29 @@ async function save(): Promise<void> {
                 <div>
                     <h2 class="font-bold">{{ church.name }}</h2>
                     <p class="text-sm text-slate-500">
-                        {{ church.community?.name ?? 'Sem comunidade' }} ·
-                        {{ church.members_count }} membros
+                        {{
+                            church.community?.name ??
+                            t('admin.multicongregation.no_community')
+                        }}
+                        ·
+                        {{
+                            t('admin.multicongregation.members', {
+                                count: church.members_count,
+                            })
+                        }}
                     </p>
                     <span
                         class="mt-2 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 uppercase"
-                        >{{ church.status }}</span
+                        >{{
+                            t(`admin.multicongregation.status.${church.status}`)
+                        }}</span
                     >
                 </div>
                 <button
                     class="text-sm font-bold text-indigo-700"
                     @click="start(church)"
                 >
-                    Editar
+                    {{ t('actions.edit') }}
                 </button>
             </article>
         </section>
@@ -151,7 +165,7 @@ async function save(): Promise<void> {
                 v-if="!props.networks.length"
                 class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
             >
-                Nenhum vínculo cadastrado.
+                {{ t('admin.multicongregation.empty_networks') }}
             </p>
         </section>
         <div
@@ -163,29 +177,39 @@ async function save(): Promise<void> {
                 @submit.prevent="save"
             >
                 <h2 class="text-xl font-black">
-                    {{ editing ? 'Editar igreja' : 'Nova igreja' }}
+                    {{
+                        editing
+                            ? t('admin.multicongregation.edit_church')
+                            : t('admin.multicongregation.new_church')
+                    }}
                 </h2>
                 <input
                     v-model="form.name"
                     required
                     class="w-full rounded-lg border-slate-300"
-                    placeholder="Nome"
+                    :placeholder="t('admin.common.name')"
                 /><input
                     v-model="form.slug"
                     required
                     class="w-full rounded-lg border-slate-300"
-                    placeholder="Slug"
+                    :placeholder="t('admin.common.slug')"
                 /><select
                     v-model="form.status"
                     class="w-full rounded-lg border-slate-300"
                 >
-                    <option value="active">Ativa</option>
-                    <option value="inactive">Inativa</option></select
+                    <option value="active">
+                        {{ t('admin.multicongregation.status.active') }}
+                    </option>
+                    <option value="inactive">
+                        {{ t('admin.multicongregation.status.inactive') }}
+                    </option></select
                 ><select
                     v-model="form.community_id"
                     class="w-full rounded-lg border-slate-300"
                 >
-                    <option value="">Sem comunidade</option>
+                    <option value="">
+                        {{ t('admin.multicongregation.no_community') }}
+                    </option>
                     <option
                         v-for="community in props.communities"
                         :key="community.id"
@@ -200,11 +224,11 @@ async function save(): Promise<void> {
                         class="rounded-lg px-4 py-2 text-sm font-bold text-slate-500"
                         @click="open = false"
                     >
-                        Cancelar</button
+                        {{ t('actions.cancel') }}</button
                     ><button
                         class="rounded-lg bg-violet-700 px-4 py-2 text-sm font-bold text-white"
                     >
-                        Salvar
+                        {{ t('actions.save') }}
                     </button>
                 </div>
             </form>

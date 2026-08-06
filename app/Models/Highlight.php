@@ -1,16 +1,15 @@
 <?php
 
 namespace App\Models;
-use App\Models\Post;
-use App\Models\Event;
-use App\Models\Media;
+
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Highlight extends Model
 {
-    use HasUlids;
-    
+    use HasTranslations, HasUlids;
+
     protected $fillable = [
         'highlightable_id',
         'highlightable_type',
@@ -31,15 +30,5 @@ class Highlight extends Model
     public function medias()
     {
         return $this->morphedByMany(Media::class, 'highlightable');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

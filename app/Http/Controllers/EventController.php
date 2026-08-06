@@ -8,18 +8,21 @@ use App\Enums\CategoryType;
 use App\Http\Requests\Event\StoreEventRequest;
 use App\Http\Requests\Event\UpdateEventRequest;
 use App\Models\Event;
-use App\Traits\UploadsMedia;
 use App\Traits\ManagesChurchCategories;
+use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
-    use UploadsMedia;
     use ManagesChurchCategories;
+    use UploadsMedia;
 
     public function index()
     {
-        $events = Event::with('church')->orderBy('start_time', 'asc')->paginate(15);
+        $events = Event::with('church')
+            ->orderBy('start_time', 'asc')
+            ->paginate(15)
+            ->through(fn (Event $event): Event => $event->localize(relations: ['church']));
 
         return response()->json($events);
     }
@@ -47,6 +50,7 @@ class EventController extends Controller
     public function show(string $slug)
     {
         $event = Event::with(['church', 'categories', 'address', 'confirmations'])->where('slug', $slug)->firstOrFail();
+        $event->localize(relations: ['church', 'categories']);
 
         return response()->json($event);
     }

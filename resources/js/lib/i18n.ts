@@ -8,6 +8,7 @@ interface Catalog {
 export type SupportedLocale = 'en' | 'pt';
 
 const localeStorageKey = 'ncapp.locale';
+const localeCookieKey = 'ncapp_locale';
 
 const catalogs: Record<SupportedLocale, Catalog> = {
     en: en as Catalog,
@@ -19,7 +20,9 @@ const detectLocale = (): SupportedLocale => {
         return 'en';
     }
 
-    const persisted = localStorage.getItem(localeStorageKey) as SupportedLocale | null;
+    const persisted = localStorage.getItem(
+        localeStorageKey,
+    ) as SupportedLocale | null;
 
     if (persisted && persisted in catalogs) {
         return persisted;
@@ -33,6 +36,10 @@ const detectLocale = (): SupportedLocale => {
 };
 
 const activeLocale = ref<SupportedLocale>(detectLocale());
+
+if (typeof document !== 'undefined') {
+    document.cookie = `${localeCookieKey}=${activeLocale.value}; Path=/; SameSite=Lax; Max-Age=31536000`;
+}
 
 const readPath = (source: Catalog, path: string): string | undefined => {
     const segments = path.split('.');
@@ -49,7 +56,10 @@ const readPath = (source: Catalog, path: string): string | undefined => {
     return typeof current === 'string' ? current : undefined;
 };
 
-const interpolate = (template: string, replacements?: Record<string, string | number>): string => {
+const interpolate = (
+    template: string,
+    replacements?: Record<string, string | number>,
+): string => {
     if (!replacements) {
         return template;
     }
@@ -68,6 +78,7 @@ export const setLocale = (locale: SupportedLocale): void => {
         if (typeof document !== 'undefined') {
             document.documentElement.lang = locale;
             localStorage.setItem(localeStorageKey, locale);
+            document.cookie = `${localeCookieKey}=${locale}; Path=/; SameSite=Lax; Max-Age=31536000`;
         }
     }
 };
@@ -75,7 +86,10 @@ export const setLocale = (locale: SupportedLocale): void => {
 export const useI18n = () => {
     const locale = computed(() => activeLocale.value);
 
-    const t = (key: string, replacements?: Record<string, string | number>): string => {
+    const t = (
+        key: string,
+        replacements?: Record<string, string | number>,
+    ): string => {
         const localCatalog = catalogs[activeLocale.value];
         const fallbackCatalog = catalogs.en;
 

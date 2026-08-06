@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Vercicle extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $fillable = [
         'library_id',
@@ -21,14 +22,4 @@ class Vercicle extends Model
     protected $appends = [
         'translations',
     ];
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
-    }
 }

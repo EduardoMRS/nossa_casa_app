@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ref } from 'vue';
+import { useI18n } from '@/lib/i18n';
 
 type CommentItem = {
     id: string;
@@ -15,8 +16,9 @@ const props = defineProps<{
     stats: Array<{ label: string; value: number }>;
 }>();
 const comments = ref([...props.comments.data]);
+const { locale, t } = useI18n();
 async function remove(comment: CommentItem): Promise<void> {
-    if (!window.confirm('Remover este comentário?')) {
+    if (!window.confirm(t('admin.wall.remove_confirm'))) {
         return;
     }
 
@@ -25,7 +27,7 @@ async function remove(comment: CommentItem): Promise<void> {
 }
 </script>
 <template>
-    <Head title="Moderar mural" />
+    <Head :title="t('admin.wall.title')" />
     <main class="space-y-6 p-4 md:p-8">
         <header
             class="rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-indigo-800 p-7 text-white shadow-xl"
@@ -33,24 +35,25 @@ async function remove(comment: CommentItem): Promise<void> {
             <p
                 class="text-xs font-bold tracking-[0.2em] text-indigo-200 uppercase"
             >
-                Comunicação
+                {{ t('admin.wall.kicker') }}
             </p>
-            <h1 class="mt-2 text-3xl font-black">Moderar mural</h1>
+            <h1 class="mt-2 text-3xl font-black">
+                {{ t('admin.wall.title') }}
+            </h1>
             <p class="mt-2 max-w-xl text-sm text-indigo-100">
-                Revise conversas recentes e mantenha o ambiente acolhedor para a
-                comunidade.
+                {{ t('admin.wall.description') }}
             </p>
         </header>
         <section class="grid gap-4 sm:grid-cols-3">
             <article
-                v-for="stat in props.stats"
+                v-for="(stat, index) in props.stats"
                 :key="stat.label"
                 class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
             >
                 <p
                     class="text-xs font-bold tracking-wider text-slate-400 uppercase"
                 >
-                    {{ stat.label }}
+                    {{ t(`admin.wall.stats.${index}`) }}
                 </p>
                 <p class="mt-2 text-3xl font-black text-slate-900">
                     {{ stat.value }}
@@ -63,10 +66,14 @@ async function remove(comment: CommentItem): Promise<void> {
             >
                 <div>
                     <h2 class="font-black text-slate-900">
-                        Comentários recentes
+                        {{ t('admin.wall.recent_comments') }}
                     </h2>
                     <p class="text-xs text-slate-500">
-                        {{ comments.length }} itens nesta página
+                        {{
+                            t('admin.wall.items_page', {
+                                count: comments.length,
+                            })
+                        }}
                     </p>
                 </div>
             </header>
@@ -87,7 +94,7 @@ async function remove(comment: CommentItem): Promise<void> {
                                 {{
                                     comment.user
                                         ? `${comment.user.first_name} ${comment.user.last_name}`
-                                        : 'Usuário removido'
+                                        : t('admin.wall.removed_user')
                                 }}
                             </p>
                             <p class="mt-1 text-sm text-slate-600">
@@ -103,7 +110,9 @@ async function remove(comment: CommentItem): Promise<void> {
                                 {{
                                     new Date(
                                         comment.created_at,
-                                    ).toLocaleDateString('pt-BR')
+                                    ).toLocaleDateString(
+                                        locale === 'pt' ? 'pt-BR' : 'en-US',
+                                    )
                                 }}
                             </p>
                         </div>
@@ -112,12 +121,12 @@ async function remove(comment: CommentItem): Promise<void> {
                         class="rounded-lg px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50"
                         @click="remove(comment)"
                     >
-                        Remover
+                        {{ t('admin.common.remove') }}
                     </button>
                 </article>
             </div>
             <div v-else class="p-12 text-center text-sm text-slate-500">
-                Nenhum comentário para revisar.
+                {{ t('admin.wall.empty') }}
             </div>
         </section>
     </main>

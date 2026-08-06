@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Form extends Model
 {
-    use HasUlids;
-    
+    use HasTranslations, HasUlids;
+
     protected $fillable = [
         'title',
         'description',
@@ -36,7 +37,8 @@ class Form extends Model
         return $this->morphedByMany(Post::class, 'formable', 'form_relations');
     }
 
-    public function responses() {
+    public function responses()
+    {
         return $this->hasMany(FormResponse::class);
     }
 
@@ -47,17 +49,6 @@ class Form extends Model
 
     public function getCategoryAttribute()
     {
-        return join(', ', $this->categories()->pluck('name')->toArray());
+        return implode(', ', $this->categories()->pluck('name')->toArray());
     }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
-    }
-
 }

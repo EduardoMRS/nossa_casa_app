@@ -2,7 +2,8 @@
 /vendor/
 npm-debug.log
 yarn-error.log
-bootstrap/
+/bootstrap/*
+!/bootstrap/app.php
 app/storage/
 public/storage
 public/hot

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Library extends Model
 {
-    use HasUlids;
-    
+    use HasTranslations, HasUlids;
+
     protected $fillable = [
         'title',
         'description',
@@ -24,15 +25,5 @@ class Library extends Model
     public function categories()
     {
         return $this->morphToMany(Category::class, 'categorizable');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

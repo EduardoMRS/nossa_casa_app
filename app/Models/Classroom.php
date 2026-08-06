@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Classroom extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $table = 'classrooms';
 
@@ -23,7 +24,7 @@ class Classroom extends Model
         'church_id',
         'teacher_id',
     ];
-    
+
     protected $appends = [
         'teacher_details',
         'translations',
@@ -66,7 +67,6 @@ class Classroom extends Model
     {
         return $this->belongsToMany(User::class, 'classroom_users');
     }
-    
 
     public function presences(): HasMany
     {
@@ -76,15 +76,5 @@ class Classroom extends Model
     public function posts()
     {
         return $this->morphToMany(Post::class, 'postable');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

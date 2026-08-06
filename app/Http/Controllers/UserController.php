@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use App\Enums\UserRole;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = User::with(['profile', 'church'])->paginate(15);
+        $users->getCollection()->each(fn (User $user) => $user->church?->localize());
+
         return response()->json($users);
     }
 
@@ -20,12 +22,12 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|string|email|max:255|unique:users',
-            'password'   => 'required|string|min:8|confirmed',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
             'birth_date' => 'nullable|date',
-            'role'       => ['required', Rule::enum(UserRole::class)],
-            'church_id'  => 'nullable|string|exists:churches,id',
+            'role' => ['required', Rule::enum(UserRole::class)],
+            'church_id' => 'nullable|string|exists:churches,id',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -41,6 +43,8 @@ class UserController extends Controller
     public function show(string $id)
     {
         $user = User::with(['profile', 'church'])->findOrFail($id);
+        $user->church?->localize();
+
         return response()->json($user);
     }
 
@@ -50,12 +54,12 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'first_name' => 'sometimes|required|string|max:255',
-            'last_name'  => 'sometimes|required|string|max:255',
-            'email'      => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password'   => 'nullable|string|min:8|confirmed',
+            'last_name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8|confirmed',
             'birth_date' => 'nullable|date',
-            'role'       => ['sometimes', 'required', Rule::enum(UserRole::class)],
-            'church_id'  => 'nullable|string|exists:churches,id',
+            'role' => ['sometimes', 'required', Rule::enum(UserRole::class)],
+            'church_id' => 'nullable|string|exists:churches,id',
         ]);
 
         if (isset($validated['password'])) {

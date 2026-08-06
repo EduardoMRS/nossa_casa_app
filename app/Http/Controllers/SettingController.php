@@ -9,12 +9,18 @@ class SettingController extends Controller
 {
     public function index()
     {
-        return response()->json(Setting::with('church:id,name,slug')->paginate(15));
+        $settings = Setting::with('church:id,name,slug')->paginate(15);
+        $settings->getCollection()->each(fn (Setting $setting) => $setting->church?->localize());
+
+        return response()->json($settings);
     }
 
     public function show(Setting $setting)
     {
-        return response()->json($setting->load('church:id,name,slug'));
+        $setting->load('church:id,name,slug');
+        $setting->church?->localize();
+
+        return response()->json($setting);
     }
 
     public function store(Request $request)

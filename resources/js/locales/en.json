@@ -1,4 +1,27 @@
 {
+    "a11y": {
+        "more": "More",
+        "close": "Close",
+        "sidebar_title": "Sidebar",
+        "sidebar_description": "Displays the mobile sidebar.",
+        "toggle_sidebar": "Toggle sidebar",
+        "breadcrumb": "Breadcrumb",
+        "loading": "Loading",
+        "show_password": "Show password",
+        "hide_password": "Hide password"
+    },
+    "welcome": {
+        "meta_title": "Welcome",
+        "dashboard": "Dashboard",
+        "login": "Log in",
+        "register": "Register",
+        "title": "Let's get started",
+        "description": "Laravel has an incredibly rich ecosystem. We suggest starting with the following.",
+        "read": "Read the",
+        "documentation": "Documentation",
+        "watch_tutorials": "Watch video tutorials at",
+        "deploy": "Deploy now"
+    },
     "locale": {
         "switcher": "Language"
     },
@@ -10,6 +33,17 @@
         "dashboard": "Dashboard",
         "login": "Sign in"
     },
+    "navigation": {
+        "menu": "Navigation menu",
+        "shortcuts": "Shortcuts",
+        "communication": "Communication and content",
+        "ministries": "Ministries and members",
+        "administration": "Administration and settings",
+        "highlights": "Highlights",
+        "intercession": "Intercession requests",
+        "documentation": "Documentation",
+        "repository": "Repository"
+    },
     "actions": {
         "create": "Create",
         "edit": "Edit",
@@ -18,6 +52,528 @@
         "update": "Update",
         "upload": "Upload",
         "delete": "Delete"
+    },
+    "gallery": {
+        "meta_title": "Gallery",
+        "kicker": "Visual memories",
+        "title": "Community photo and video gallery",
+        "description": "Explore media shared by the community and approved by the moderation team.",
+        "upload_kicker": "Media upload",
+        "upload_title": "Add a new gallery item",
+        "file": "File",
+        "file_placeholder": "https://... or file path",
+        "upload_hint": "Authorized profiles can submit files to the gallery; moderation remains available in the private dashboard.",
+        "categories": "Media categories",
+        "categories_hint": "Select your church categories",
+        "preview": "Preview",
+        "preview_alt": "Media preview",
+        "no_selection": "No media selected",
+        "uploading": "Uploading...",
+        "upload": "Upload to gallery",
+        "upload_error": "The media could not be uploaded.",
+        "item_alt": "Gallery media",
+        "anonymous": "Anonymous",
+        "pagination": "Showing {from} - {to} of {total} items"
+    },
+    "auth": {
+        "common": {
+            "workspace": "Admin workspace",
+            "name": "Name",
+            "full_name": "Full name",
+            "email": "Email address",
+            "password": "Password",
+            "confirm_password": "Confirm password"
+        },
+        "login": {
+            "meta_title": "Log in",
+            "title": "Log in to your account",
+            "description": "Enter your email and password below to log in",
+            "forgot_password": "Forgot your password?",
+            "remember": "Remember me",
+            "submit": "Log in",
+            "no_account": "Don't have an account?",
+            "sign_up": "Sign up"
+        },
+        "register": {
+            "meta_title": "Register",
+            "title": "Create an account",
+            "description": "Enter your details below to create your account",
+            "submit": "Create account",
+            "has_account": "Already have an account?"
+        },
+        "forgot": {
+            "meta_title": "Forgot password",
+            "title": "Forgot password",
+            "description": "Enter your email to receive a password reset link",
+            "submit": "Email password reset link",
+            "return_to": "Or, return to"
+        },
+        "reset": {
+            "meta_title": "Reset password",
+            "title": "Reset password",
+            "description": "Please enter your new password below",
+            "submit": "Reset password"
+        },
+        "confirm": {
+            "meta_title": "Confirm password",
+            "title": "Confirm password",
+            "description": "This is a secure area of the application. Please confirm your password before continuing.",
+            "passkey": "Confirm with passkey",
+            "confirming": "Confirming...",
+            "separator": "Or confirm with password",
+            "submit": "Confirm password"
+        },
+        "verify": {
+            "meta_title": "Email verification",
+            "title": "Email verification",
+            "description": "Please verify your email address by clicking on the link we just emailed to you.",
+            "sent": "A new verification link has been sent to the email address you provided during registration.",
+            "resend": "Resend verification email",
+            "logout": "Log out"
+        },
+        "two_factor": {
+            "meta_title": "Two-factor authentication",
+            "recovery_title": "Recovery code",
+            "recovery_description": "Please confirm access to your account by entering one of your emergency recovery codes.",
+            "authentication_title": "Authentication code",
+            "authentication_description": "Enter the authentication code provided by your authenticator application.",
+            "use_authentication": "log in using an authentication code",
+            "use_recovery": "log in using a recovery code",
+            "continue": "Continue",
+            "or_you_can": "or you can",
+            "recovery_placeholder": "Enter recovery code"
+        }
+    },
+    "settings": {
+        "title": "Settings",
+        "description": "Manage your profile and account settings",
+        "profile": {
+            "nav": "Profile",
+            "breadcrumb": "Profile settings",
+            "meta_title": "Profile settings",
+            "title": "Profile",
+            "description": "Update your name and email address",
+            "unverified": "Your email address is unverified.",
+            "resend": "Click here to re-send the verification email.",
+            "sent": "A new verification link has been sent to your email address."
+        },
+        "security": {
+            "nav": "Security",
+            "breadcrumb": "Security settings",
+            "meta_title": "Security settings",
+            "title": "Update password",
+            "description": "Ensure your account is using a long, random password to stay secure",
+            "current_password": "Current password",
+            "new_password": "New password"
+        },
+        "appearance": {
+            "nav": "Appearance",
+            "breadcrumb": "Appearance settings",
+            "meta_title": "Appearance settings",
+            "title": "Appearance settings",
+            "description": "Update the appearance settings for your account",
+            "light": "Light",
+            "dark": "Dark",
+            "system": "System"
+        },
+        "delete_account": {
+            "title": "Delete account",
+            "description": "Delete your account and all of its resources",
+            "warning": "Warning",
+            "warning_text": "Please proceed with caution, this cannot be undone.",
+            "confirm_title": "Are you sure you want to delete your account?",
+            "confirm_description": "Once your account is deleted, all of its resources and data will also be permanently deleted. Enter your password to confirm."
+        },
+        "passkeys": {
+            "title": "Passkeys",
+            "description": "Manage your passkeys for passwordless sign-in",
+            "empty": "No passkeys yet",
+            "empty_hint": "Add a passkey to sign in without a password",
+            "added": "Added {date}",
+            "last_used": "Last used {date}",
+            "remove_title": "Remove passkey",
+            "remove_description": "Are you sure you want to remove the “{name}” passkey? You will no longer be able to use it to sign in.",
+            "removing": "Removing...",
+            "unsupported": "Passkeys are not supported in this browser.",
+            "add": "Add passkey",
+            "name": "Passkey name",
+            "placeholder": "e.g., MacBook Pro, iPhone",
+            "name_hint": "A name helps you identify this passkey later.",
+            "registering": "Registering...",
+            "register": "Register passkey"
+        },
+        "two_factor": {
+            "title": "Two-factor authentication",
+            "description": "Manage your two-factor authentication settings",
+            "disabled_hint": "When enabled, you will be prompted for a secure code from a TOTP-supported application during login.",
+            "enabled_hint": "You will be prompted for a secure, random code from your authenticator application during login.",
+            "continue_setup": "Continue setup",
+            "enable": "Enable 2FA",
+            "disable": "Disable 2FA",
+            "recovery_codes": "2FA recovery codes",
+            "recovery_description": "Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.",
+            "hide_codes": "Hide recovery codes",
+            "view_codes": "View recovery codes",
+            "regenerate": "Regenerate codes",
+            "recovery_hint": "Each recovery code can be used once and is removed after use. Regenerate them when you need more.",
+            "enabled_title": "Two-factor authentication enabled",
+            "enabled_description": "Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.",
+            "verify_title": "Verify authentication code",
+            "verify_description": "Enter the 6-digit code from your authenticator app",
+            "enable_title": "Enable two-factor authentication",
+            "enable_description": "Scan the QR code or enter the setup key in your authenticator app to finish setup.",
+            "close": "Close",
+            "manual_code": "or, enter the code manually",
+            "confirm": "Confirm"
+        }
+    },
+    "admin": {
+        "common": {
+            "back_dashboard": "Back to dashboard",
+            "clear": "Clear",
+            "name": "Name",
+            "title": "Title",
+            "description": "Description",
+            "type": "Type",
+            "slug": "Slug",
+            "status": "Status",
+            "mimetype": "MIME type",
+            "file_reference": "PDF / Link",
+            "items": "{count} items",
+            "saving": "Saving...",
+            "remove": "Remove",
+            "preview": "Preview",
+            "select": "Select",
+            "close_editor": "Close editor",
+            "recent_activity": "Recent activity",
+            "no_recent_records": "No recent records for this module."
+        },
+        "branding": {
+            "title": "Visual identity",
+            "heading": "Church visual identity",
+            "description": "Configure colors, titles, logo, and contact channels used across private and public experiences.",
+            "brand_name": "Brand name",
+            "tagline": "Tagline",
+            "banner_title": "Banner title",
+            "banner_subtitle": "Banner subtitle",
+            "font_family": "Font family",
+            "icon_name": "Primary icon",
+            "logo_url": "Logo URL",
+            "website": "Website",
+            "primary_color": "Primary color",
+            "secondary_color": "Secondary color",
+            "accent_color": "Accent color",
+            "surface_color": "Surface color",
+            "phone": "Phone",
+            "save": "Save visual settings"
+        },
+        "categories": {
+            "title": "Categories",
+            "subtitle": "Content organization",
+            "description": "Organize church content by type for events, posts, media, classrooms, and forms.",
+            "new": "New category",
+            "edit": "Edit category",
+            "create": "Create category",
+            "update": "Update category",
+            "delete_confirm": "Delete category \"{name}\"?",
+            "church_categories": "Church categories",
+            "grouped": "Organized by type",
+            "count": "{count} categories",
+            "empty": "No categories registered for this type.",
+            "none_available": "No categories available for this church.",
+            "types": {
+                "post": "Posts",
+                "event": "Events",
+                "media": "Media",
+                "classroom": "Classrooms",
+                "form": "Forms",
+                "library": "Library",
+                "user": "Users"
+            }
+        },
+        "classrooms": {
+            "title": "Classrooms",
+            "kids_title": "Kids Ministry",
+            "description": "Manage age groups, gender eligibility, students, and attendance.",
+            "new": "New classroom",
+            "edit": "Edit classroom",
+            "manage_tab": "Manage classrooms",
+            "attendance_tab": "Check-in and checkout",
+            "select_room": "Select a classroom",
+            "attendance_hint": "Select a student to register entry or exit.",
+            "empty_attendance": "Create a classroom and add students to start attendance.",
+            "years": "years",
+            "present": "{count} present",
+            "open": "Open classroom",
+            "checkin": "Check in",
+            "checkout": "Check out",
+            "min_age": "Minimum age",
+            "max_age": "Maximum age",
+            "gender_restriction": "Gender restriction",
+            "is_kids": "This is a Kids classroom (PIN required at checkout)",
+            "max_members": "Student limit",
+            "students": "Students",
+            "save": "Save classroom",
+            "save_error": "The classroom could not be saved.",
+            "pin_generated": "Checkout PIN for {name}: {pin}",
+            "pin_prompt": "Checkout PIN for {name} (leave blank when not required):",
+            "checkin_success": "Check-in completed.",
+            "checkin_error": "Check-in could not be completed.",
+            "checkout_error": "Checkout could not be completed.",
+            "gender": {
+                "none": "No restriction",
+                "all": "all genders",
+                "male": "Male",
+                "female": "Female"
+            }
+        },
+        "forms": {
+            "title": "Forms",
+            "description": "Visual builder and content links.",
+            "new": "New form",
+            "edit": "Edit form",
+            "create": "Create form",
+            "save_changes": "Save changes",
+            "card_summary": "{responses} responses · {links} links",
+            "editor_description": "Add fields and content elements without editing code.",
+            "add_element": "Add element",
+            "label": "Label",
+            "identifier": "Identifier",
+            "width": "Width",
+            "width_full": "Full row",
+            "width_half": "Half row",
+            "width_third": "One third",
+            "size": "Size",
+            "dynamic": "Dynamic",
+            "fixed": "Fixed",
+            "required": "Required",
+            "height": "Height (rows)",
+            "options": "Options (one per line)",
+            "visual_element": "Visual element with no participant response.",
+            "new_heading": "New heading",
+            "new_field": "New field",
+            "option_one": "Option 1",
+            "save_error": "The form could not be saved.",
+            "delete_confirm": "Delete form “{title}”?",
+            "types": {
+                "text": "Short text",
+                "email": "Email",
+                "number": "Number",
+                "date": "Date",
+                "textarea": "Long text",
+                "select": "List",
+                "radio": "Single choice",
+                "checkbox": "Checkbox",
+                "heading": "Heading",
+                "divider": "Divider",
+                "line_break": "Line break"
+            }
+        },
+        "logs": {
+            "title": "Logs and metrics",
+            "kicker": "Operational overview",
+            "description": "A live summary of platform activity.",
+            "system": "System",
+            "empty": "No recent activity.",
+            "stats": {
+                "0": "Users",
+                "1": "Events",
+                "2": "Posts",
+                "3": "Comments",
+                "4": "Media",
+                "5": "Forms"
+            }
+        },
+        "prayers": {
+            "title": "My prayers",
+            "kicker": "Spiritual life",
+            "description": "Track the prayer requests you shared with the church.",
+            "new": "New request",
+            "new_title": "New prayer request",
+            "placeholder": "Write your request...",
+            "submit": "Send request",
+            "empty": "You have not submitted any requests yet.",
+            "stats": {
+                "0": "Requests sent",
+                "1": "Church requests"
+            }
+        },
+        "wall": {
+            "title": "Moderate wall",
+            "kicker": "Communication",
+            "description": "Review recent conversations and keep the community welcoming.",
+            "remove_confirm": "Remove this comment?",
+            "recent_comments": "Recent comments",
+            "items_page": "{count} items on this page",
+            "removed_user": "Removed user",
+            "empty": "No comments to review.",
+            "stats": {
+                "0": "Total comments",
+                "1": "Posts with comments",
+                "2": "Events with comments"
+            }
+        },
+        "multicongregation": {
+            "title": "Multicongregations",
+            "kicker": "Structure",
+            "description": "Headquarters, branches, and communities in a unified view.",
+            "new_church": "New church",
+            "edit_church": "Edit church",
+            "churches": "Churches",
+            "networks": "Headquarters and branches",
+            "no_community": "No community",
+            "members": "{count} members",
+            "empty_networks": "No links registered.",
+            "stats": {
+                "0": "Churches",
+                "1": "Communities",
+                "2": "Headquarters/branch links"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive",
+                "closed": "Closed",
+                "deleted": "Deleted"
+            }
+        },
+        "users": {
+            "title": "User management",
+            "kicker": "Administration",
+            "description": "Roles, access, and church membership in one place.",
+            "new": "New user",
+            "edit": "Edit user",
+            "search_placeholder": "Search by name or email",
+            "found": "{count} found",
+            "first_name": "First name",
+            "last_name": "Last name",
+            "no_church": "No church",
+            "stats": {
+                "0": "Total users",
+                "1": "Administrators",
+                "2": "Members"
+            }
+        },
+        "media": {
+            "title": "Moderate gallery",
+            "subtitle": "Communication and content",
+            "description": "Track approval, edit media, and manage community publications.",
+            "crud": "Media management",
+            "new": "Upload new media",
+            "edit": "Edit media",
+            "update": "Update media",
+            "upload": "Upload media",
+            "delete_confirm": "Delete this media?",
+            "source": "Source",
+            "file_url": "File / URL",
+            "public_gallery": "Visible in the public gallery",
+            "category_hint": "Filter by the current church",
+            "size": "Size (bytes)",
+            "select_preview": "Select media to preview",
+            "workflow_hint": "Upload, editing, and approval use the same streamlined workflow.",
+            "queue": "Moderation queue",
+            "recent": "Recent media",
+            "no_author": "No author",
+            "approve": "Approve",
+            "reject": "Reject",
+            "empty": "No media registered yet.",
+            "actions": {
+                "0": "Open public gallery",
+                "1": "Go to dashboard"
+            },
+            "stats": {
+                "0": "Media submitted",
+                "1": "Pending",
+                "2": "Approved",
+                "3": "Rejected"
+            },
+            "status": {
+                "pending": "Pending",
+                "approved": "Approved",
+                "rejected": "Rejected"
+            }
+        },
+        "library": {
+            "title": "Library and verse",
+            "heading": "Digital library and devotional management",
+            "description": "Manage the daily reading and materials available for download and study.",
+            "verse_of_day": "Verse of the day",
+            "devotional_home": "Devotional home",
+            "active": "Active",
+            "no_record": "No record",
+            "verse_text": "Verse text",
+            "book": "Book",
+            "chapter": "Chapter",
+            "verse": "Verse",
+            "version": "Version / translation",
+            "categories": "Library categories",
+            "categories_hint": "Use categories from the current church only",
+            "update_verse": "Update home verse",
+            "collection": "Collection",
+            "registered_categories": "Registered categories",
+            "items_count": "{count} works",
+            "new_item": "New work",
+            "edit_item": "Edit work",
+            "file_type": "File type",
+            "category_type": "Category / type",
+            "type_placeholder": "Devotional, study, news...",
+            "select_file": "Select file",
+            "file_path": "URL / file path",
+            "preview_before_upload": "Preview before upload",
+            "preview_alt": "File preview",
+            "selected_file": "Selected file",
+            "path_entered": "Entered path/URL",
+            "cancel_edit": "Cancel editing",
+            "registered_collection": "Registered books and scripts",
+            "records": "{count} records",
+            "no_description": "No description",
+            "empty": "No works registered yet.",
+            "delete_confirm": "Delete “{title}”?"
+        },
+        "modules": {
+            "highlights": {
+                "title": "Highlights",
+                "subtitle": "Communication and content",
+                "description": "Manage the visual highlights shown to the community across the main channels.",
+                "stats": {
+                    "0": "Active highlights",
+                    "1": "Published posts",
+                    "2": "Published events"
+                },
+                "actions": {
+                    "0": "Manage posts",
+                    "1": "Open events",
+                    "2": "Visual identity"
+                }
+            },
+            "library": {
+                "title": "Library and verse",
+                "subtitle": "Communication and content",
+                "description": "Manage devotional materials, the digital collection, and featured verses.",
+                "stats": {
+                    "0": "Library materials",
+                    "1": "Registered verses",
+                    "2": "Content categories"
+                },
+                "actions": {
+                    "0": "Open public home",
+                    "1": "Review highlights"
+                }
+            },
+            "prayer_requests": {
+                "title": "Intercession requests",
+                "subtitle": "Ministries and members",
+                "description": "Review incoming requests and organize pastoral follow-up.",
+                "stats": {
+                    "0": "Requests received",
+                    "1": "Anonymous requests",
+                    "2": "Identified requests"
+                },
+                "actions": {
+                    "0": "Open my prayers",
+                    "1": "Go to dashboard"
+                }
+            }
+        }
     },
     "home": {
         "meta_title": "Home",
@@ -87,6 +643,7 @@
             "until": "to"
         },
         "form": {
+            "studio": "Content Studio",
             "create_title": "Create Event",
             "edit_title": "Edit Event",
             "subtitle": "Describe your event with rich formatting and publish it for your church.",
@@ -103,7 +660,36 @@
         }
     },
     "posts": {
+        "shared": {
+            "delete_confirm": "Are you sure you want to delete this post?"
+        },
+        "index": {
+            "meta_title": "Posts",
+            "title": "Posts",
+            "description": "Manage content, authors, and publications in one editorial workflow.",
+            "new": "New post",
+            "content": "Content",
+            "author": "Author",
+            "engagement": "Engagement",
+            "status": "Status",
+            "actions": "Actions",
+            "draft": "Draft",
+            "empty": "No posts found. Create the first one to start the workflow.",
+            "pagination": "Showing {from} to {to} of {total} results"
+        },
+        "show": {
+            "back": "Back to posts",
+            "cover_alt": "Post cover",
+            "expires_at": "Expires on {date}",
+            "engagement": "Engagement",
+            "likes": "{count} likes",
+            "comments": "{count} comments",
+            "summary": "Summary",
+            "summary_text": "{comments} comments loaded and {reactions} reactions recorded for this post.",
+            "recent_comments": "Recent comments"
+        },
         "form": {
+            "studio": "News Studio",
             "create_title": "Create Post",
             "edit_title": "Edit Post",
             "subtitle": "Write announcements and ministry updates with a rich editor.",

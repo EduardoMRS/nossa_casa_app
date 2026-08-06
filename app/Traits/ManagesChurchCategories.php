@@ -18,7 +18,8 @@ trait ManagesChurchCategories
             ->where('church_id', $churchId)
             ->where('type', $type)
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'type']);
+            ->get(['id', 'name', 'slug', 'type'])
+            ->each->makeHidden('translations');
     }
 
     protected function syncChurchCategories(Request $request, string $type, ?string $churchId = null): array

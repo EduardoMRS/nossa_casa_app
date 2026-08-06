@@ -26,14 +26,18 @@ class FormController extends Controller
             ->with(['events:id,title', 'posts:id,title'])
             ->withCount('responses')
             ->latest()
-            ->paginate(15));
+            ->paginate(15)
+            ->through(fn (Form $form): Form => $form->localize(relations: ['events', 'posts'])));
     }
 
     public function show(Request $request, Form $form): JsonResponse
     {
         $this->ensureChurchAccess($request, $form->church_id);
 
-        return response()->json($form->load(['events:id,title', 'posts:id,title', 'responses.user:id,first_name,last_name']));
+        $form->load(['events:id,title', 'posts:id,title', 'responses.user:id,first_name,last_name'])
+            ->localize(relations: ['events', 'posts']);
+
+        return response()->json($form);
     }
 
     public function store(StoreFormRequest $request): JsonResponse

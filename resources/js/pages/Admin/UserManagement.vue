@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import { useI18n } from '@/lib/i18n';
 type UserItem = {
     id: string;
     first_name: string;
@@ -20,6 +21,7 @@ const props = defineProps<{
     stats: Array<{ label: string; value: number }>;
 }>();
 const users = ref([...props.users.data]);
+const { t } = useI18n();
 const editing = ref<UserItem | null>(null);
 const open = ref(false);
 const query = ref('');
@@ -74,7 +76,7 @@ async function save(): Promise<void> {
 }
 </script>
 <template>
-    <Head title="Gestão de usuários" />
+    <Head :title="t('admin.users.title')" />
     <main class="space-y-6 p-4 md:p-8">
         <header
             class="flex flex-col justify-between gap-4 rounded-3xl bg-gradient-to-br from-slate-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"
@@ -83,30 +85,32 @@ async function save(): Promise<void> {
                 <p
                     class="text-xs font-bold tracking-[0.2em] text-indigo-200 uppercase"
                 >
-                    Administração
+                    {{ t('admin.users.kicker') }}
                 </p>
-                <h1 class="mt-2 text-3xl font-black">Gestão de usuários</h1>
+                <h1 class="mt-2 text-3xl font-black">
+                    {{ t('admin.users.title') }}
+                </h1>
                 <p class="mt-2 text-sm text-indigo-100">
-                    Papéis, acesso e vínculo congregacional em um só lugar.
+                    {{ t('admin.users.description') }}
                 </p>
             </div>
             <button
                 class="rounded-xl bg-white px-4 py-3 text-sm font-black text-indigo-900"
                 @click="start()"
             >
-                Novo usuário
+                {{ t('admin.users.new') }}
             </button>
         </header>
         <section class="grid gap-4 sm:grid-cols-3">
             <article
-                v-for="stat in props.stats"
+                v-for="(stat, index) in props.stats"
                 :key="stat.label"
                 class="rounded-2xl border bg-white p-5 shadow-sm"
             >
                 <p
                     class="text-xs font-bold tracking-wider text-slate-400 uppercase"
                 >
-                    {{ stat.label }}
+                    {{ t(`admin.users.stats.${index}`) }}
                 </p>
                 <p class="mt-2 text-3xl font-black">{{ stat.value }}</p>
             </article>
@@ -115,10 +119,10 @@ async function save(): Promise<void> {
             <input
                 v-model="query"
                 class="w-full max-w-sm rounded-xl border-slate-300"
-                placeholder="Buscar por nome ou e-mail"
-            /><span class="text-xs font-bold text-slate-400"
-                >{{ filtered.length }} encontrados</span
-            >
+                :placeholder="t('admin.users.search_placeholder')"
+            /><span class="text-xs font-bold text-slate-400">{{
+                t('admin.users.found', { count: filtered.length })
+            }}</span>
         </div>
         <section class="grid gap-3 lg:grid-cols-2">
             <article
@@ -140,9 +144,9 @@ async function save(): Promise<void> {
                         <span
                             class="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase"
                             >{{
-                                typeof user.role === 'string'
-                                    ? user.role
-                                    : user.role.value
+                                t(
+                                    `dashboard.roles.${typeof user.role === 'string' ? user.role : user.role.value}`,
+                                )
                             }}</span
                         >
                     </div>
@@ -151,7 +155,7 @@ async function save(): Promise<void> {
                     class="rounded-lg px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
                     @click="start(user)"
                 >
-                    Editar
+                    {{ t('actions.edit') }}
                 </button>
             </article>
         </section>
@@ -165,7 +169,11 @@ async function save(): Promise<void> {
             >
                 <div class="flex justify-between">
                     <h2 class="text-xl font-black">
-                        {{ editing ? 'Editar usuário' : 'Novo usuário' }}
+                        {{
+                            editing
+                                ? t('admin.users.edit')
+                                : t('admin.users.new')
+                        }}
                     </h2>
                     <button
                         type="button"
@@ -180,12 +188,12 @@ async function save(): Promise<void> {
                         v-model="form.first_name"
                         required
                         class="rounded-lg border-slate-300"
-                        placeholder="Nome"
+                        :placeholder="t('admin.users.first_name')"
                     /><input
                         v-model="form.last_name"
                         required
                         class="rounded-lg border-slate-300"
-                        placeholder="Sobrenome"
+                        :placeholder="t('admin.users.last_name')"
                     /><input
                         v-model="form.email"
                         required
@@ -201,13 +209,15 @@ async function save(): Promise<void> {
                             :key="role.value"
                             :value="role.value"
                         >
-                            {{ role.label }}
+                            {{ t(`dashboard.roles.${role.value}`) }}
                         </option></select
                     ><select
                         v-model="form.church_id"
                         class="rounded-lg border-slate-300"
                     >
-                        <option value="">Sem igreja</option>
+                        <option value="">
+                            {{ t('admin.users.no_church') }}
+                        </option>
                         <option
                             v-for="church in props.churches"
                             :key="church.id"
@@ -227,11 +237,11 @@ async function save(): Promise<void> {
                         class="rounded-lg px-4 py-2 text-sm font-bold text-slate-500"
                         @click="open = false"
                     >
-                        Cancelar</button
+                        {{ t('actions.cancel') }}</button
                     ><button
                         class="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-bold text-white"
                     >
-                        Salvar
+                        {{ t('actions.save') }}
                     </button>
                 </div>
             </form>

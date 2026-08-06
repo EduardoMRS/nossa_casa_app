@@ -15,7 +15,9 @@ class PostController extends Controller
     public function index()
     {
         // Utilizando o local scope "visible" criado no seu model
-        $posts = Post::visible()->paginate(15)->map(function ($post) {
+        $posts = Post::visible()->with(['church', 'categories'])->paginate(15)->map(function ($post) {
+            $post->localize(relations: ['church', 'categories']);
+
             return [
                 'id' => $post->id,
                 'title' => $post->title,
@@ -25,7 +27,7 @@ class PostController extends Controller
                 'expires_at' => $post->expires_at,
                 'author_id' => $post->author_id,
                 'church_id' => $post->church_id,
-                'category' => $post->category,
+                'category' => $post->categories->pluck('name')->join(', '),
                 'metrics' => $post->metrics,
                 'author' => $post->author_details, // Incluindo os detalhes do autor
                 'church' => $post->church,
@@ -60,6 +62,7 @@ class PostController extends Controller
     public function show(string $id)
     {
         $post = Post::with(['author', 'church', 'categories', 'medias', 'comments'])->findOrFail($id);
+        $post->localize(relations: ['church', 'categories']);
 
         return response()->json($post);
     }

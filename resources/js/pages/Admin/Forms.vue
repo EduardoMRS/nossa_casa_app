@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import { useI18n } from '@/lib/i18n';
 
 type Linkable = { id: string; title: string };
 type Category = { id: string; name: string };
@@ -35,6 +36,7 @@ const props = defineProps<{
     posts: Linkable[];
     categories: Category[];
 }>();
+const { t } = useI18n();
 const selected = ref<ManagedForm | null>(null);
 const editorOpen = ref(false);
 const saving = ref(false);
@@ -47,21 +49,24 @@ const form = ref({
     event_ids: [] as string[],
     post_ids: [] as string[],
 });
-const fieldTypes = [
-    ['text', 'Texto curto'],
-    ['email', 'E-mail'],
-    ['number', 'Número'],
-    ['date', 'Data'],
-    ['textarea', 'Texto longo'],
-    ['select', 'Lista'],
-    ['radio', 'Escolha única'],
-    ['checkbox', 'Caixa de seleção'],
-    ['heading', 'Título'],
-    ['divider', 'Separador'],
-    ['line_break', 'Quebra de linha'],
-] as const;
+const fieldTypes = computed(
+    () =>
+        [
+            ['text', t('admin.forms.types.text')],
+            ['email', t('admin.forms.types.email')],
+            ['number', t('admin.forms.types.number')],
+            ['date', t('admin.forms.types.date')],
+            ['textarea', t('admin.forms.types.textarea')],
+            ['select', t('admin.forms.types.select')],
+            ['radio', t('admin.forms.types.radio')],
+            ['checkbox', t('admin.forms.types.checkbox')],
+            ['heading', t('admin.forms.types.heading')],
+            ['divider', t('admin.forms.types.divider')],
+            ['line_break', t('admin.forms.types.line_break')],
+        ] as const,
+);
 const submitLabel = computed(() =>
-    selected.value ? 'Salvar alterações' : 'Criar formulário',
+    selected.value ? t('admin.forms.save_changes') : t('admin.forms.create'),
 );
 const inputTypes = new Set([
     'text',
@@ -84,12 +89,14 @@ function emptyElement(type = 'text'): FormElement {
                 : `campo_${fields.value.length + 1}`,
         label:
             type === 'heading'
-                ? 'Novo título'
+                ? t('admin.forms.new_heading')
                 : type === 'divider' || type === 'line_break'
                   ? undefined
-                  : 'Novo campo',
+                  : t('admin.forms.new_field'),
         required: false,
-        options: ['select', 'radio'].includes(type) ? ['Opção 1'] : [],
+        options: ['select', 'radio'].includes(type)
+            ? [t('admin.forms.option_one')]
+            : [],
         width: 'full',
         size: 'auto',
         height: 4,
@@ -168,15 +175,17 @@ async function save(): Promise<void> {
         error.value = axios.isAxiosError(caught)
             ? Object.values(caught.response?.data?.errors ?? {})
                   .flat()
-                  .join(' ') || 'Não foi possível salvar o formulário.'
-            : 'Não foi possível salvar o formulário.';
+                  .join(' ') || t('admin.forms.save_error')
+            : t('admin.forms.save_error');
     } finally {
         saving.value = false;
     }
 }
 
 async function remove(item: ManagedForm): Promise<void> {
-    if (!window.confirm(`Excluir o formulário “${item.title}”?`)) {
+    if (
+        !window.confirm(t('admin.forms.delete_confirm', { title: item.title }))
+    ) {
         return;
     }
 
@@ -190,23 +199,25 @@ function closeEditor(): void {
 </script>
 
 <template>
-    <Head title="Formulários" />
+    <Head :title="t('admin.forms.title')" />
     <main
         class="grid gap-6 p-4 xl:grid-cols-[20rem_minmax(0,1fr)_19rem] xl:p-6"
     >
         <section class="space-y-4">
             <header class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-black">Formulários</h1>
+                    <h1 class="text-2xl font-black">
+                        {{ t('admin.forms.title') }}
+                    </h1>
                     <p class="text-sm text-slate-500">
-                        Construtor visual e vínculos.
+                        {{ t('admin.forms.description') }}
                     </p>
                 </div>
                 <button
                     class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white"
                     @click="startNew"
                 >
-                    Novo
+                    {{ t('admin.forms.new') }}
                 </button>
             </header>
             <article
@@ -216,16 +227,17 @@ function closeEditor(): void {
             >
                 <button class="w-full text-left" @click="edit(item)">
                     <strong>{{ item.title }}</strong
-                    ><span class="mt-1 block text-xs text-slate-500"
-                        >{{ item.responses_count }} respostas ·
-                        {{ item.events.length + item.posts.length }}
-                        vínculo(s)</span
-                    ></button
+                    ><span class="mt-1 block text-xs text-slate-500">{{
+                        t('admin.forms.card_summary', {
+                            responses: item.responses_count,
+                            links: item.events.length + item.posts.length,
+                        })
+                    }}</span></button
                 ><button
                     class="mt-2 text-xs font-bold text-red-600"
                     @click="remove(item)"
                 >
-                    Excluir
+                    {{ t('actions.delete') }}
                 </button>
             </article>
         </section>
@@ -244,13 +256,12 @@ function closeEditor(): void {
                         <h2 class="text-xl font-black">
                             {{
                                 selected
-                                    ? 'Editar formulário'
-                                    : 'Novo formulário'
+                                    ? t('admin.forms.edit')
+                                    : t('admin.forms.new')
                             }}
                         </h2>
                         <p class="text-sm text-slate-500">
-                            Adicione campos e elementos de conteúdo sem editar
-                            código.
+                            {{ t('admin.forms.editor_description') }}
                         </p>
                     </header>
                     <p
@@ -261,18 +272,22 @@ function closeEditor(): void {
                     </p>
                     <div class="grid gap-3 md:grid-cols-2">
                         <label class="text-sm font-semibold"
-                            >Título<input
+                            >{{ t('admin.common.title')
+                            }}<input
                                 v-model="form.title"
                                 required
                                 class="mt-1 w-full rounded-lg border-slate-300" /></label
                         ><label class="text-sm font-semibold"
-                            >Descrição<input
+                            >{{ t('admin.common.description')
+                            }}<input
                                 v-model="form.description"
                                 class="mt-1 w-full rounded-lg border-slate-300"
                         /></label>
                     </div>
                     <div class="rounded-xl bg-slate-50 p-3">
-                        <p class="text-sm font-bold">Adicionar elemento</p>
+                        <p class="text-sm font-bold">
+                            {{ t('admin.forms.add_element') }}
+                        </p>
                         <div class="mt-2 flex flex-wrap gap-2">
                             <button
                                 v-for="[value, label] in fieldTypes"
@@ -312,44 +327,56 @@ function closeEditor(): void {
                                         class="text-red-600"
                                         @click="removeField(index)"
                                     >
-                                        Remover
+                                        {{ t('admin.common.remove') }}
                                     </button>
                                 </div>
                             </div>
                             <template v-if="inputTypes.has(field.type)"
                                 ><div class="grid gap-3 md:grid-cols-2">
                                     <label class="text-sm"
-                                        >Rótulo<input
+                                        >{{ t('admin.forms.label')
+                                        }}<input
                                             v-model="field.label"
                                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                                     ><label class="text-sm"
-                                        >Identificador<input
+                                        >{{ t('admin.forms.identifier')
+                                        }}<input
                                             v-model="field.name"
                                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                                     ><label class="text-sm"
-                                        >Largura<select
+                                        >{{ t('admin.forms.width')
+                                        }}<select
                                             v-model="field.width"
                                             class="mt-1 w-full rounded-lg border-slate-300"
                                         >
                                             <option value="full">
-                                                Linha inteira
+                                                {{
+                                                    t('admin.forms.width_full')
+                                                }}
                                             </option>
                                             <option value="half">
-                                                Metade da linha
+                                                {{
+                                                    t('admin.forms.width_half')
+                                                }}
                                             </option>
                                             <option value="third">
-                                                Um terço
+                                                {{
+                                                    t('admin.forms.width_third')
+                                                }}
                                             </option>
                                         </select></label
                                     ><label class="text-sm"
-                                        >Tamanho<select
+                                        >{{ t('admin.forms.size')
+                                        }}<select
                                             v-model="field.size"
                                             class="mt-1 w-full rounded-lg border-slate-300"
                                         >
                                             <option value="auto">
-                                                Dinâmico
+                                                {{ t('admin.forms.dynamic') }}
                                             </option>
-                                            <option value="fixed">Fixo</option>
+                                            <option value="fixed">
+                                                {{ t('admin.forms.fixed') }}
+                                            </option>
                                         </select></label
                                     >
                                 </div>
@@ -357,14 +384,15 @@ function closeEditor(): void {
                                     ><input
                                         v-model="field.required"
                                         type="checkbox"
-                                    />Obrigatório</label
+                                    />{{ t('admin.forms.required') }}</label
                                 ><label
                                     v-if="
                                         field.type === 'textarea' &&
                                         field.size === 'fixed'
                                     "
                                     class="mt-3 block text-sm"
-                                    >Altura (linhas)<input
+                                    >{{ t('admin.forms.height')
+                                    }}<input
                                         v-model.number="field.height"
                                         type="number"
                                         min="1"
@@ -373,7 +401,8 @@ function closeEditor(): void {
                                 ><label
                                     v-if="needsOptions(field)"
                                     class="mt-3 block text-sm"
-                                    >Opções (uma por linha)<textarea
+                                    >{{ t('admin.forms.options')
+                                    }}<textarea
                                         :value="field.options?.join('\n')"
                                         rows="3"
                                         class="mt-1 w-full rounded-lg border-slate-300"
@@ -387,18 +416,20 @@ function closeEditor(): void {
                                     /></label></template
                             ><template v-else-if="field.type === 'heading'"
                                 ><label class="block text-sm"
-                                    >Título<input
+                                    >{{ t('admin.common.title')
+                                    }}<input
                                         v-model="field.label"
                                         class="mt-1 w-full rounded-lg border-slate-300" /></label
                             ></template>
                             <p v-else class="text-sm text-slate-500">
-                                Elemento visual sem resposta do participante.
+                                {{ t('admin.forms.visual_element') }}
                             </p>
                         </article>
                     </section>
                     <fieldset class="grid gap-3 md:grid-cols-3">
                         <label class="text-sm font-semibold"
-                            >Eventos<select
+                            >{{ t('nav.events')
+                            }}<select
                                 v-model="form.event_ids"
                                 multiple
                                 class="mt-1 h-28 w-full rounded-lg border-slate-300"
@@ -412,7 +443,8 @@ function closeEditor(): void {
                                 </option>
                             </select></label
                         ><label class="text-sm font-semibold"
-                            >Postagens<select
+                            >{{ t('posts.index.title')
+                            }}<select
                                 v-model="form.post_ids"
                                 multiple
                                 class="mt-1 h-28 w-full rounded-lg border-slate-300"
@@ -426,7 +458,8 @@ function closeEditor(): void {
                                 </option>
                             </select></label
                         ><label class="text-sm font-semibold"
-                            >Categorias<select
+                            >{{ t('admin.categories.title')
+                            }}<select
                                 v-model="form.category_ids"
                                 multiple
                                 class="mt-1 h-28 w-full rounded-lg border-slate-300"
@@ -445,11 +478,11 @@ function closeEditor(): void {
                         :disabled="saving"
                         class="w-full rounded-lg bg-slate-900 py-2 text-sm font-bold text-white disabled:opacity-50"
                     >
-                        {{ saving ? 'Salvando…' : submitLabel }}
+                        {{ saving ? t('admin.common.saving') : submitLabel }}
                     </button>
                 </form>
                 <aside class="rounded-2xl border bg-white p-5">
-                    <h2 class="font-black">Prévia</h2>
+                    <h2 class="font-black">{{ t('admin.common.preview') }}</h2>
                     <div class="mt-4 grid grid-cols-3 gap-3">
                         <template
                             v-for="field in fields"
@@ -495,7 +528,9 @@ function closeEditor(): void {
                                     disabled
                                     class="mt-1 w-full rounded-lg border-slate-300"
                                 >
-                                    <option>Selecione</option></select
+                                    <option>
+                                        {{ t('admin.common.select') }}
+                                    </option></select
                                 ><input
                                     v-else
                                     :type="
@@ -517,7 +552,7 @@ function closeEditor(): void {
                 class="mx-auto mt-4 block rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-700 shadow"
                 @click="closeEditor"
             >
-                Fechar editor
+                {{ t('admin.common.close_editor') }}
             </button>
         </div>
     </main>

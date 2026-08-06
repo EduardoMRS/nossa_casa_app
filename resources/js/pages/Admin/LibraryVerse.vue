@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useI18n } from '@/lib/i18n';
 
 type VerseData = {
     book: string;
@@ -40,6 +41,7 @@ const props = defineProps<{
     libraries: LibraryItem[];
     categories: CategoryOption[];
 }>();
+const { t } = useI18n();
 
 const verseForm = reactive({
     book: props.verse.book,
@@ -71,20 +73,31 @@ const currentEditingLibrary = computed(() => {
         return null;
     }
 
-    return props.libraries.find((library) => library.id === editingLibraryId.value) || null;
+    return (
+        props.libraries.find(
+            (library) => library.id === editingLibraryId.value,
+        ) || null
+    );
 });
 
 const selectedLibraryLabel = computed(() => {
     if (!editingLibraryId.value) {
-        return 'Nova obra';
+        return t('admin.library.new_item');
     }
 
-    return props.libraries.find((library) => library.id === editingLibraryId.value)?.title || 'Editar obra';
+    return (
+        props.libraries.find((library) => library.id === editingLibraryId.value)
+            ?.title || t('admin.library.edit_item')
+    );
 });
 
 const libraryPreviewSource = computed(() => {
     if (libraryInputType.value === 'file') {
-        return selectedLibraryPreviewUrl.value || currentEditingLibrary.value?.preview_url || '';
+        return (
+            selectedLibraryPreviewUrl.value ||
+            currentEditingLibrary.value?.preview_url ||
+            ''
+        );
     }
 
     if (libraryForm.file_path.trim()) {
@@ -108,7 +121,10 @@ const fillLibraryForm = (library: LibraryItem) => {
     libraryForm.type = library.type;
     libraryForm.file_path = library.file_path || '';
     libraryForm.category_ids = [...library.category_ids];
-    libraryInputType.value = library.file_path && library.file_path.startsWith('http') ? 'url' : 'file';
+    libraryInputType.value =
+        library.file_path && library.file_path.startsWith('http')
+            ? 'url'
+            : 'file';
     selectedLibraryFile.value = null;
     revokeSelectedPreview();
     libraryErrors.value = {};
@@ -155,18 +171,22 @@ const submitVerse = async () => {
     verseErrors.value = {};
 
     try {
-        await router.put('/admin/biblioteca-versiculo/verse', {
-            book: verseForm.book,
-            chapter: Number(verseForm.chapter),
-            verse: Number(verseForm.verse),
-            content: verseForm.content,
-            version: verseForm.version,
-        }, {
-            preserveScroll: true,
-            onError: (errors) => {
-                verseErrors.value = errors as Record<string, string>;
+        await router.put(
+            '/admin/biblioteca-versiculo/verse',
+            {
+                book: verseForm.book,
+                chapter: Number(verseForm.chapter),
+                verse: Number(verseForm.verse),
+                content: verseForm.content,
+                version: verseForm.version,
             },
-        });
+            {
+                preserveScroll: true,
+                onError: (errors) => {
+                    verseErrors.value = errors as Record<string, string>;
+                },
+            },
+        );
     } finally {
         processingVerse.value = false;
     }
@@ -180,22 +200,27 @@ const submitLibrary = async () => {
         title: libraryForm.title,
         description: libraryForm.description,
         type: libraryForm.type,
-        file_path: libraryInputType.value === 'file'
-            ? selectedLibraryFile.value ?? libraryForm.file_path
-            : libraryForm.file_path,
-            category_ids: libraryForm.category_ids,
+        file_path:
+            libraryInputType.value === 'file'
+                ? (selectedLibraryFile.value ?? libraryForm.file_path)
+                : libraryForm.file_path,
+        category_ids: libraryForm.category_ids,
     };
 
     try {
         if (editingLibraryId.value) {
-            await router.put(`/admin/biblioteca-versiculo/library/${editingLibraryId.value}`, payload, {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: resetLibraryForm,
-                onError: (errors) => {
-                    libraryErrors.value = errors as Record<string, string>;
+            await router.put(
+                `/admin/biblioteca-versiculo/library/${editingLibraryId.value}`,
+                payload,
+                {
+                    forceFormData: true,
+                    preserveScroll: true,
+                    onSuccess: resetLibraryForm,
+                    onError: (errors) => {
+                        libraryErrors.value = errors as Record<string, string>;
+                    },
                 },
-            });
+            );
         } else {
             await router.post('/admin/biblioteca-versiculo/library', payload, {
                 forceFormData: true,
@@ -212,7 +237,7 @@ const submitLibrary = async () => {
 };
 
 const deleteLibrary = (library: LibraryItem) => {
-    if (!confirm(`Excluir "${library.title}"?`)) {
+    if (!confirm(t('admin.library.delete_confirm', { title: library.title }))) {
         return;
     }
 
@@ -232,128 +257,205 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="Biblioteca e Versiculo" />
+    <Head :title="t('admin.library.title')" />
 
     <div class="space-y-6 p-4 md:p-6">
         <Heading
             variant="small"
-            title="Gestao da Biblioteca Digital & Devocional"
-            description="Gerencie a leitura do dia e os materiais disponiveis para download e estudo."
+            :title="t('admin.library.heading')"
+            :description="t('admin.library.description')"
         />
 
         <section class="grid gap-4 lg:grid-cols-2">
-            <article class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <article
+                class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm"
+            >
+                <div
+                    class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"
+                >
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-600">Versiculo do dia</p>
-                        <h2 class="text-lg font-black text-slate-900">Home devocional</h2>
+                        <p
+                            class="text-xs font-semibold tracking-[0.14em] text-emerald-600 uppercase"
+                        >
+                            {{ t('admin.library.verse_of_day') }}
+                        </p>
+                        <h2 class="text-lg font-black text-slate-900">
+                            {{ t('admin.library.devotional_home') }}
+                        </h2>
                     </div>
-                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
-                        {{ props.verse.has_record ? 'Ativo' : 'Sem registro' }}
+                    <span
+                        class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700"
+                    >
+                        {{
+                            props.verse.has_record
+                                ? t('admin.library.active')
+                                : t('admin.library.no_record')
+                        }}
                     </span>
                 </div>
 
                 <div class="mt-4 grid gap-4">
                     <div class="grid gap-2">
-                        <Label for="verse_content">Texto do versiculo</Label>
+                        <Label for="verse_content">{{
+                            t('admin.library.verse_text')
+                        }}</Label>
                         <textarea
                             id="verse_content"
                             v-model="verseForm.content"
                             rows="5"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                         />
                         <InputError :message="verseErrors.content" />
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-3">
                         <div class="grid gap-2">
-                            <Label for="verse_book">Livro</Label>
+                            <Label for="verse_book">{{
+                                t('admin.library.book')
+                            }}</Label>
                             <Input id="verse_book" v-model="verseForm.book" />
                             <InputError :message="verseErrors.book" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="verse_chapter">Capitulo</Label>
-                            <Input id="verse_chapter" v-model="verseForm.chapter" type="number" min="1" />
+                            <Label for="verse_chapter">{{
+                                t('admin.library.chapter')
+                            }}</Label>
+                            <Input
+                                id="verse_chapter"
+                                v-model="verseForm.chapter"
+                                type="number"
+                                min="1"
+                            />
                             <InputError :message="verseErrors.chapter" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="verse_verse">Versiculo</Label>
-                            <Input id="verse_verse" v-model="verseForm.verse" type="number" min="1" />
+                            <Label for="verse_verse">{{
+                                t('admin.library.verse')
+                            }}</Label>
+                            <Input
+                                id="verse_verse"
+                                v-model="verseForm.verse"
+                                type="number"
+                                min="1"
+                            />
                             <InputError :message="verseErrors.verse" />
                         </div>
                     </div>
 
                     <div class="grid gap-2 md:max-w-xs">
-                        <Label for="verse_version">Versao / traducao</Label>
+                        <Label for="verse_version">{{
+                            t('admin.library.version')
+                        }}</Label>
                         <Input id="verse_version" v-model="verseForm.version" />
                         <InputError :message="verseErrors.version" />
                     </div>
 
                     <div>
-
-                    <CategorySelector
-                        v-model="libraryForm.category_ids"
-                        :categories="categories"
-                        label="Categorias da biblioteca"
-                        hint="Use apenas categorias da igreja atual"
-                    />
-                        <Button :disabled="processingVerse" @click="submitVerse">
-                            {{ processingVerse ? 'Salvando...' : 'Atualizar versiculo da home' }}
+                        <CategorySelector
+                            v-model="libraryForm.category_ids"
+                            :categories="categories"
+                            :label="t('admin.library.categories')"
+                            :hint="t('admin.library.categories_hint')"
+                        />
+                        <Button
+                            :disabled="processingVerse"
+                            @click="submitVerse"
+                        >
+                            {{
+                                processingVerse
+                                    ? t('admin.common.saving')
+                                    : t('admin.library.update_verse')
+                            }}
                         </Button>
                     </div>
                 </div>
             </article>
 
-            <article class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <article
+                class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm"
+            >
+                <div
+                    class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"
+                >
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-indigo-600">Acervo</p>
-                        <h2 class="text-lg font-black text-slate-900">Categorias cadastradas</h2>
+                        <p
+                            class="text-xs font-semibold tracking-[0.14em] text-indigo-600 uppercase"
+                        >
+                            {{ t('admin.library.collection') }}
+                        </p>
+                        <h2 class="text-lg font-black text-slate-900">
+                            {{ t('admin.library.registered_categories') }}
+                        </h2>
                     </div>
-                    <span class="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold text-indigo-700">{{ props.libraries.length }} obras</span>
+                    <span
+                        class="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold text-indigo-700"
+                        >{{
+                            t('admin.library.items_count', {
+                                count: props.libraries.length,
+                            })
+                        }}</span
+                    >
                 </div>
 
                 <form class="mt-4 grid gap-3" @submit.prevent="submitLibrary">
                     <div class="grid gap-2">
-                        <Label for="library_source_type">Tipo de arquivo</Label>
+                        <Label for="library_source_type">{{
+                            t('admin.library.file_type')
+                        }}</Label>
                         <select
                             id="library_source_type"
                             :value="libraryInputType"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                             @change="handleLibraryTypeChange"
                         >
                             <option value="url">URL</option>
-                            <option value="file">Arquivo</option>
+                            <option value="file">
+                                {{ t('gallery.file') }}
+                            </option>
                         </select>
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="library_title">Titulo</Label>
+                        <Label for="library_title">{{
+                            t('admin.common.title')
+                        }}</Label>
                         <Input id="library_title" v-model="libraryForm.title" />
                         <InputError :message="libraryErrors.title" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="library_type">Categoria / tipo</Label>
-                        <Input id="library_type" v-model="libraryForm.type" placeholder="Devocional, estudo, noticia..." />
+                        <Label for="library_type">{{
+                            t('admin.library.category_type')
+                        }}</Label>
+                        <Input
+                            id="library_type"
+                            v-model="libraryForm.type"
+                            :placeholder="t('admin.library.type_placeholder')"
+                        />
                         <InputError :message="libraryErrors.type" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="library_description">Descricao</Label>
+                        <Label for="library_description">{{
+                            t('admin.common.description')
+                        }}</Label>
                         <textarea
                             id="library_description"
                             v-model="libraryForm.description"
                             rows="4"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                         />
                         <InputError :message="libraryErrors.description" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="library_file">{{ libraryInputType === 'file' ? 'Selecionar arquivo' : 'URL / caminho do arquivo' }}</Label>
+                        <Label for="library_file">{{
+                            libraryInputType === 'file'
+                                ? t('admin.library.select_file')
+                                : t('admin.library.file_path')
+                        }}</Label>
                         <Input
                             v-if="libraryInputType === 'url'"
                             id="library_file"
                             v-model="libraryForm.file_path"
-                            placeholder="https://... ou caminho do arquivo"
+                            :placeholder="t('gallery.file_placeholder')"
                         />
                         <input
                             v-else
@@ -365,24 +467,54 @@ onBeforeUnmount(() => {
                         <InputError :message="libraryErrors.file_path" />
                     </div>
 
-                    <div v-if="libraryPreviewSource" class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                        <div class="border-b border-slate-200 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                            Preview antes de enviar
+                    <div
+                        v-if="libraryPreviewSource"
+                        class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
+                    >
+                        <div
+                            class="border-b border-slate-200 px-4 py-2 text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase"
+                        >
+                            {{ t('admin.library.preview_before_upload') }}
                         </div>
                         <div class="p-4">
                             <img
-                                v-if="libraryPreviewSource.match(/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i)"
+                                v-if="
+                                    libraryPreviewSource.match(
+                                        /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i,
+                                    )
+                                "
                                 :src="libraryPreviewSource"
-                                alt="Preview do arquivo"
+                                :alt="t('admin.library.preview_alt')"
                                 class="h-48 w-full rounded-xl object-cover"
                             />
-                            <div v-else class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white p-4">
-                                <div class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">Arquivo</div>
+                            <div
+                                v-else
+                                class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white p-4"
+                            >
+                                <div
+                                    class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
+                                >
+                                    {{ t('gallery.file') }}
+                                </div>
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-semibold text-slate-900">
-                                        {{ libraryInputType === 'file' ? (selectedLibraryFile?.name || 'Arquivo selecionado') : libraryForm.file_path || 'Caminho/URL informado' }}
+                                    <p
+                                        class="truncate text-sm font-semibold text-slate-900"
+                                    >
+                                        {{
+                                            libraryInputType === 'file'
+                                                ? selectedLibraryFile?.name ||
+                                                  t(
+                                                      'admin.library.selected_file',
+                                                  )
+                                                : libraryForm.file_path ||
+                                                  t(
+                                                      'admin.library.path_entered',
+                                                  )
+                                        }}
                                     </p>
-                                    <p class="text-xs text-slate-500">{{ libraryPreviewSource }}</p>
+                                    <p class="text-xs text-slate-500">
+                                        {{ libraryPreviewSource }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -390,50 +522,97 @@ onBeforeUnmount(() => {
 
                     <div class="flex flex-wrap gap-2">
                         <Button :disabled="processingLibrary">
-                            {{ processingLibrary ? 'Salvando...' : selectedLibraryLabel }}
+                            {{
+                                processingLibrary
+                                    ? t('admin.common.saving')
+                                    : selectedLibraryLabel
+                            }}
                         </Button>
-                        <Button v-if="editingLibraryId" type="button" variant="outline" @click="resetLibraryForm">
-                            Cancelar edicao
+                        <Button
+                            v-if="editingLibraryId"
+                            type="button"
+                            variant="outline"
+                            @click="resetLibraryForm"
+                        >
+                            {{ t('admin.library.cancel_edit') }}
                         </Button>
                     </div>
                 </form>
             </article>
         </section>
 
-        <section class="rounded-3xl border border-slate-200/80 bg-white shadow-sm">
-            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <h2 class="text-sm font-black uppercase tracking-[0.12em] text-slate-700">Acervo de livros & roteiros cadastrados</h2>
-                <span class="text-xs text-slate-400">{{ props.libraries.length }} registros</span>
+        <section
+            class="rounded-3xl border border-slate-200/80 bg-white shadow-sm"
+        >
+            <div
+                class="flex items-center justify-between border-b border-slate-100 px-5 py-4"
+            >
+                <h2
+                    class="text-sm font-black tracking-[0.12em] text-slate-700 uppercase"
+                >
+                    {{ t('admin.library.registered_collection') }}
+                </h2>
+                <span class="text-xs text-slate-400">{{
+                    t('admin.library.records', {
+                        count: props.libraries.length,
+                    })
+                }}</span>
             </div>
 
-            <div v-if="props.libraries.length > 0" class="divide-y divide-slate-100">
+            <div
+                v-if="props.libraries.length > 0"
+                class="divide-y divide-slate-100"
+            >
                 <div
                     v-for="library in props.libraries"
                     :key="library.id"
                     class="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-start lg:justify-between"
                 >
                     <div class="space-y-1">
-                        <p class="text-sm font-semibold text-slate-900">{{ library.title }}</p>
-                        <p class="text-xs text-slate-500">{{ library.description || 'Sem descricao' }}</p>
-                        <div class="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold text-slate-500">
-                            <span class="rounded-full bg-slate-100 px-2 py-1">{{ library.type }}</span>
-                            <span v-if="library.file_path" class="rounded-full bg-slate-100 px-2 py-1">PDF / Link</span>
+                        <p class="text-sm font-semibold text-slate-900">
+                            {{ library.title }}
+                        </p>
+                        <p class="text-xs text-slate-500">
+                            {{
+                                library.description ||
+                                t('admin.library.no_description')
+                            }}
+                        </p>
+                        <div
+                            class="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold text-slate-500"
+                        >
+                            <span class="rounded-full bg-slate-100 px-2 py-1">{{
+                                library.type
+                            }}</span>
+                            <span
+                                v-if="library.file_path"
+                                class="rounded-full bg-slate-100 px-2 py-1"
+                                >{{ t('admin.common.file_reference') }}</span
+                            >
                         </div>
                     </div>
 
                     <div class="flex flex-wrap gap-2">
-                        <Button type="button" variant="outline" @click="fillLibraryForm(library)">
-                            Editar
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="fillLibraryForm(library)"
+                        >
+                            {{ t('actions.edit') }}
                         </Button>
-                        <Button type="button" variant="destructive" @click="deleteLibrary(library)">
-                            Excluir
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            @click="deleteLibrary(library)"
+                        >
+                            {{ t('actions.delete') }}
                         </Button>
                     </div>
                 </div>
             </div>
 
             <div v-else class="px-5 py-8 text-center text-sm text-slate-500">
-                Nenhuma obra cadastrada ainda.
+                {{ t('admin.library.empty') }}
             </div>
         </section>
     </div>

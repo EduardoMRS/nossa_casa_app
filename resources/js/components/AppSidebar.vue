@@ -34,6 +34,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useI18n } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import { edit as brandingEdit } from '@/routes/admin/branding';
 import { index as adminCategoriesIndex } from '@/routes/admin/categories';
@@ -52,6 +53,8 @@ import { index as adminWallModerationIndex } from '@/routes/admin/wallModeration
 import { index as eventsIndex } from '@/routes/events';
 import { index as postsIndex } from '@/routes/posts';
 import type { NavItem } from '@/types';
+
+const { t } = useI18n();
 
 const page = usePage<{
     auth?: {
@@ -82,115 +85,115 @@ const canManageWorkspace = computed(() =>
     ['admin', 'superadmin', 'system'].includes(role.value),
 );
 
-const mainNavItems: NavItem[] = [
+const mainNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Dashboard',
+        title: t('nav.dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
     },
-];
+]);
 
-const communicationNavItems: NavItem[] = [
+const communicationNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Postagens',
+        title: t('posts.index.title'),
         href: postsIndex(),
         icon: Megaphone,
     },
     {
-        title: 'Destaques',
+        title: t('navigation.highlights'),
         href: adminHighlightsIndex(),
         icon: Sparkles,
     },
     {
-        title: 'Moderar Galeria',
+        title: t('admin.media.title'),
         href: adminGalleryModerationIndex(),
         icon: Image,
     },
     {
-        title: 'Moderar Mural',
+        title: t('admin.wall.title'),
         href: adminWallModerationIndex(),
         icon: MessageSquareWarning,
     },
     {
-        title: 'Biblioteca & Versiculo',
+        title: t('admin.library.title'),
         href: adminLibraryVerseIndex(),
         icon: LibraryBig,
     },
     {
-        title: 'Identidade Visual',
+        title: t('admin.branding.title'),
         href: brandingEdit(),
         icon: Palette,
     },
-];
+]);
 
 const ministriesNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Eventos',
+        title: t('nav.events'),
         href: eventsIndex(),
         icon: CalendarDays,
     },
     {
-        title: 'Formularios',
+        title: t('admin.forms.title'),
         href: adminFormsIndex(),
         icon: ClipboardList,
     },
     {
-        title: 'Pedidos de Intercessao',
+        title: t('navigation.intercession'),
         href: adminPrayerRequestsIndex(),
         icon: HandHelping,
     },
     {
-        title: 'Ministerio Kids',
+        title: t('admin.classrooms.kids_title'),
         href: adminKidsMinistryIndex(),
         icon: School,
     },
     {
-        title: 'Minhas Oracoes',
+        title: t('admin.prayers.title'),
         href: adminMyPrayersIndex(),
         icon: Heart,
     },
 ]);
 
-const administrationNavItems: NavItem[] = [
+const administrationNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Gestao de Usuarios',
+        title: t('admin.users.title'),
         href: adminUserManagementIndex(),
         icon: UserRoundCog,
     },
     {
-        title: 'Categorias',
+        title: t('admin.categories.title'),
         href: adminCategoriesIndex(),
         icon: FolderGit2,
     },
     {
-        title: 'Multicongregacoes',
+        title: t('admin.multicongregation.title'),
         href: adminMultiCongregationIndex(),
         icon: Users,
     },
     {
-        title: 'Salas de Aula',
+        title: t('admin.classrooms.title'),
         href: adminClassroomsIndex(),
         icon: PanelsTopLeft,
     },
     {
-        title: 'Logs & Metricas',
+        title: t('admin.logs.title'),
         href: adminLogsMetricsIndex(),
         icon: ListChecks,
     },
-];
+]);
 
-const footerNavItems: NavItem[] = [
+const footerNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Documentacao',
+        title: t('navigation.documentation'),
         href: 'https://laravel.com/docs',
         icon: BookOpen,
     },
     {
-        title: 'Repositorio',
+        title: t('navigation.repository'),
         href: 'https://github.com/laravel/vue-starter-kit',
         icon: FolderGit2,
     },
-];
+]);
 </script>
 
 <template>
@@ -208,20 +211,20 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" label="Atalhos" />
+            <NavMain :items="mainNavItems" :label="t('navigation.shortcuts')" />
 
             <template v-if="canManageWorkspace">
                 <NavMain
                     :items="communicationNavItems"
-                    label="Comunicacao & Conteudo"
+                    :label="t('navigation.communication')"
                 />
                 <NavMain
                     :items="ministriesNavItems"
-                    label="Ministerios & Membros"
+                    :label="t('navigation.ministries')"
                 />
                 <NavMain
                     :items="administrationNavItems"
-                    label="Administracao & Configuracao"
+                    :label="t('navigation.administration')"
                 />
             </template>
         </SidebarContent>

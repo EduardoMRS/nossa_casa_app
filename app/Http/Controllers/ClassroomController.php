@@ -7,7 +7,6 @@ use App\Http\Requests\Classroom\CheckOutClassroomRequest;
 use App\Http\Requests\Classroom\StoreClassroomRequest;
 use App\Http\Requests\Classroom\UpdateClassroomRequest;
 use App\Models\Classroom;
-use App\Models\ClassroomPresence;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,7 +25,8 @@ class ClassroomController extends Controller
             ->with(['teacher:id,first_name,last_name', 'members:id,first_name,last_name'])
             ->withCount(['members', 'presences as active_presences_count' => fn ($query) => $query->whereNull('check_out')])
             ->latest()
-            ->paginate(15));
+            ->paginate(15)
+            ->through(fn (Classroom $classroom): Classroom => $classroom->localize()));
     }
 
     public function store(StoreClassroomRequest $request): JsonResponse
@@ -46,11 +46,13 @@ class ClassroomController extends Controller
     {
         $this->ensureChurchAccess($request, $classroom->church_id);
 
-        return response()->json($classroom->load([
+        $classroom->load([
             'teacher:id,first_name,last_name',
             'members:id,first_name,last_name',
             'presences' => fn ($query) => $query->with('user:id,first_name,last_name')->latest('check_in'),
-        ]));
+        ])->localize();
+
+        return response()->json($classroom);
     }
 
     public function update(UpdateClassroomRequest $request, Classroom $classroom): JsonResponse

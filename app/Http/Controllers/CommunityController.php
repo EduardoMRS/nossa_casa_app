@@ -1,11 +1,13 @@
-<?php // app/Http/Controllers/CommunityController.php
+<?php
+
+// app/Http/Controllers/CommunityController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use App\Traits\UploadsMedia; // Importando a trait
+use Illuminate\Validation\Rule; // Importando a trait
 
 class CommunityController extends Controller
 {
@@ -13,18 +15,21 @@ class CommunityController extends Controller
 
     public function index()
     {
-        $communities = Community::with('churches')->paginate(15);
+        $communities = Community::with('churches')
+            ->paginate(15)
+            ->through(fn (Community $community): Community => $community->localize(relations: ['churches']));
+
         return response()->json($communities);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'slug'        => 'required|string|max:255|unique:communities',
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:255|unique:communities',
             'description' => 'nullable|string',
-            'found_date'  => 'nullable|date',
-            'logo_path'   => 'sometimes|nullable', // Aceita arquivo, null ou string
+            'found_date' => 'nullable|date',
+            'logo_path' => 'sometimes|nullable', // Aceita arquivo, null ou string
         ]);
 
         if (array_key_exists('logo_path', $validated)) {
@@ -40,6 +45,9 @@ class CommunityController extends Controller
     public function show(string $id)
     {
         $community = Community::with(['churches', 'members'])->findOrFail($id);
+
+        $community->localize(relations: ['churches']);
+
         return response()->json($community);
     }
 
@@ -48,11 +56,11 @@ class CommunityController extends Controller
         $community = Community::findOrFail($id);
 
         $validated = $request->validate([
-            'name'        => 'sometimes|required|string|max:255',
-            'slug'        => ['sometimes', 'required', 'string', 'max:255', Rule::unique('communities')->ignore($community->id)],
+            'name' => 'sometimes|required|string|max:255',
+            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('communities')->ignore($community->id)],
             'description' => 'nullable|string',
-            'found_date'  => 'nullable|date',
-            'logo_path'   => 'sometimes|nullable', 
+            'found_date' => 'nullable|date',
+            'logo_path' => 'sometimes|nullable',
         ]);
 
         if (array_key_exists('logo_path', $validated)) {

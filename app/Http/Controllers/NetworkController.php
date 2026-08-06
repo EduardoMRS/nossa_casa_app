@@ -10,12 +10,24 @@ class NetworkController extends Controller
 {
     public function index()
     {
-        return response()->json(Network::with(['parentChurch', 'childChurch', 'community'])->paginate(15));
+        $networks = Network::with(['parentChurch', 'childChurch', 'community'])->paginate(15);
+        $networks->getCollection()->each(function (Network $network): void {
+            $network->parentChurch?->localize();
+            $network->childChurch?->localize();
+            $network->community?->localize();
+        });
+
+        return response()->json($networks);
     }
 
     public function show(Network $network)
     {
-        return response()->json($network->load(['parentChurch', 'childChurch', 'community']));
+        $network->load(['parentChurch', 'childChurch', 'community']);
+        $network->parentChurch?->localize();
+        $network->childChurch?->localize();
+        $network->community?->localize();
+
+        return response()->json($network);
     }
 
     public function store(Request $request)

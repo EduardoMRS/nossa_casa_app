@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $fillable = [
         'title',
@@ -64,7 +65,11 @@ class Post extends Model
 
     public function getCategoryAttribute()
     {
-        return join(', ', $this->categories()->pluck('name')->toArray());
+        $categories = $this->relationLoaded('categories')
+            ? $this->getRelation('categories')
+            : $this->categories()->get();
+
+        return $categories->pluck('name')->join(', ');
     }
 
     // Relacionamento Polimórfico: Um post pode ter várias mídias (capa, anexos, galeria interna)
@@ -107,7 +112,7 @@ class Post extends Model
     public function scopeExpired($query)
     {
         return $query->whereNotNull('expires_at')
-                     ->where('expires_at', '<=', now());
+            ->where('expires_at', '<=', now());
     }
 
     public function getMetricsAttribute()
@@ -126,15 +131,5 @@ class Post extends Model
     public function highlight()
     {
         return $this->morphOne(Highlight::class, 'highlightable');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

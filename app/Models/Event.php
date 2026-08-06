@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 
-class Event extends Model {
-    use HasUlids;
+class Event extends Model
+{
+    use HasTranslations, HasUlids;
 
     protected $fillable = [
         'title',
@@ -25,6 +27,7 @@ class Event extends Model {
         'end_time' => 'datetime',
         'tags' => 'array',
     ];
+
     protected $appends = [
         'category',
         'translations',
@@ -43,7 +46,11 @@ class Event extends Model {
 
     public function getCategoryAttribute()
     {
-        return join(', ', $this->categories()->pluck('name')->toArray());
+        $categories = $this->relationLoaded('categories')
+            ? $this->getRelation('categories')
+            : $this->categories()->get();
+
+        return $categories->pluck('name')->join(', ');
     }
 
     public function church()
@@ -59,15 +66,14 @@ class Event extends Model {
     public function users()
     {
         return $this->belongsToMany(User::class, 'event_users')
-                ->using(EventUser::class);
+            ->using(EventUser::class);
     }
 
     public function confirmations()
     {
         return $this->hasMany(EventConfirmation::class);
     }
-    
-    
+
     public function userConfirm(User $user)
     {
         $this->confirmations()->updateOrCreate(
@@ -77,7 +83,7 @@ class Event extends Model {
 
     public function userUnConfirm(User $user)
     {
-       $this->confirmations()->where('user_id', $user->id)->delete();
+        $this->confirmations()->where('user_id', $user->id)->delete();
     }
 
     public function userCheckIn(User $user)
@@ -90,7 +96,7 @@ class Event extends Model {
 
     public function userCheckOut(User $user)
     {
-       $this->confirmations()->updateOrCreate(
+        $this->confirmations()->updateOrCreate(
             ['user_id' => $user->id],
             ['check_out_at' => now()]
         );
@@ -124,21 +130,5 @@ class Event extends Model {
     public function highlight()
     {
         return $this->morphOne(Highlight::class, 'highlightable');
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return collect($this->translations()->get())->map(function ($translation) {
-            return [
-                'locale' => $translation['locale'],
-                'content' => $translation['content'],
-                'translatable_column' => $translation['translatable_column'],
-            ];
-        });
     }
 }

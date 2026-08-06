@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\CategoryType;
 use App\Models\Category;
+use App\Models\Classroom;
+use App\Models\Event;
+use App\Models\Form;
+use App\Models\Media;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,16 +18,19 @@ class CategoryController extends Controller
     {
         $churchId = $request->user()?->church?->id;
 
-        return response()->json(Category::query()
+        $categories = Category::query()
             ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
             ->when($request->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))
             ->when($request->type, fn ($query, $type) => $query->where('type', $type))
-            ->paginate(15));
+            ->paginate(15)
+            ->through(fn (Category $category): Category => $category->localize());
+
+        return response()->json($categories);
     }
 
     public function show(Category $category)
     {
-        return response()->json($category);
+        return response()->json($category->localize());
     }
 
     public function store(Request $request)
@@ -33,9 +41,9 @@ class CategoryController extends Controller
         $category = Category::create([
             'church_id' => $churchId,
             ...$request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255'],
-            'type' => ['required', Rule::enum(CategoryType::class)],
+                'name' => ['required', 'string', 'max:255'],
+                'slug' => ['required', 'string', 'max:255'],
+                'type' => ['required', Rule::enum(CategoryType::class)],
             ]),
         ]);
 
@@ -73,11 +81,11 @@ class CategoryController extends Controller
         abort_unless($category->church_id, 422, 'A church category is required.');
         $this->ensureChurchAccess($request, $category->church_id);
         $modelClass = match ($item_type) {
-            'post' => \App\Models\Post::class,
-            'event' => \App\Models\Event::class,
-            'media' => \App\Models\Media::class,
-            'classroom' => \App\Models\Classroom::class,
-            'form' => \App\Models\Form::class,
+            'post' => Post::class,
+            'event' => Event::class,
+            'media' => Media::class,
+            'classroom' => Classroom::class,
+            'form' => Form::class,
             default => abort(404, __('category.invalid_type')),
         };
 
@@ -96,6 +104,6 @@ class CategoryController extends Controller
         // Sincroniza a categoria sem remover as anteriores usando o relacionamento polimórfico
         $model->categories()->syncWithoutDetaching([$validated['category_id']]);
 
-        return response()->json(['message' => __('category.assignment_success')],200);
+        return response()->json(['message' => __('category.assignment_success')], 200);
     }
 }

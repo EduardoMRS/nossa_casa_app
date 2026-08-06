@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import { useI18n } from '@/lib/i18n';
 
 type Member = {
     id: string;
@@ -27,6 +28,7 @@ const props = defineProps<{
     members: Member[];
     kidsOnly?: boolean;
 }>();
+const { t } = useI18n();
 const selected = ref<Classroom | null>(null);
 const editorOpen = ref(false);
 const error = ref('');
@@ -105,7 +107,7 @@ async function save(): Promise<void> {
             ? Object.values(caught.response?.data?.errors ?? {})
                   .flat()
                   .join(' ')
-            : 'Não foi possível salvar a sala.';
+            : t('admin.classrooms.save_error');
     }
 }
 async function checkIn(classroom: Classroom, member: Member): Promise<void> {
@@ -115,20 +117,23 @@ async function checkIn(classroom: Classroom, member: Member): Promise<void> {
             { user_id: member.id },
         );
         checkoutPin.value = data.checkout_pin
-            ? `PIN de retirada de ${member.first_name}: ${data.checkout_pin}`
-            : 'Check-in realizado.';
+            ? t('admin.classrooms.pin_generated', {
+                  name: member.first_name,
+                  pin: data.checkout_pin,
+              })
+            : t('admin.classrooms.checkin_success');
         window.location.reload();
     } catch (caught) {
         error.value = axios.isAxiosError(caught)
             ? Object.values(caught.response?.data?.errors ?? {})
                   .flat()
                   .join(' ')
-            : 'Não foi possível realizar o check-in.';
+            : t('admin.classrooms.checkin_error');
     }
 }
 async function checkOut(classroom: Classroom, member: Member): Promise<void> {
     const pin = window.prompt(
-        `PIN de retirada de ${member.first_name} (deixe vazio se não houver):`,
+        t('admin.classrooms.pin_prompt', { name: member.first_name }),
     );
 
     if (pin === null) {
@@ -146,31 +151,39 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
             ? Object.values(caught.response?.data?.errors ?? {})
                   .flat()
                   .join(' ')
-            : 'Não foi possível realizar o checkout.';
+            : t('admin.classrooms.checkout_error');
     }
 }
 </script>
 
 <template>
-    <Head title="Salas" />
+    <Head
+        :title="
+            props.kidsOnly
+                ? t('admin.classrooms.kids_title')
+                : t('admin.classrooms.title')
+        "
+    />
     <main class="grid gap-6 p-4 lg:grid-cols-[minmax(0,1fr)_26rem] lg:p-6">
         <section class="space-y-4">
             <header class="flex justify-between">
                 <div>
                     <h1 class="text-2xl font-black">
                         {{
-                            props.kidsOnly ? 'Ministério Kids' : 'Salas de aula'
+                            props.kidsOnly
+                                ? t('admin.classrooms.kids_title')
+                                : t('admin.classrooms.title')
                         }}
                     </h1>
                     <p class="text-sm text-slate-500">
-                        Faixas etárias, gênero e presença do Ministério Kids.
+                        {{ t('admin.classrooms.description') }}
                     </p>
                 </div>
                 <button
                     class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white"
                     @click="edit(null)"
                 >
-                    Nova sala
+                    {{ t('admin.classrooms.new') }}
                 </button>
             </header>
             <p
@@ -192,7 +205,7 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                     class="px-3 py-2 text-sm"
                     @click="activeTab = 'management'"
                 >
-                    Gerenciar salas
+                    {{ t('admin.classrooms.manage_tab') }}
                 </button>
                 <button
                     :class="
@@ -203,12 +216,12 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                     class="px-3 py-2 text-sm"
                     @click="activeTab = 'attendance'"
                 >
-                    Check-in e checkout
+                    {{ t('admin.classrooms.attendance_tab') }}
                 </button>
             </div>
             <template v-if="activeTab === 'attendance'">
                 <label class="block max-w-md text-sm font-semibold">
-                    Selecione a sala
+                    {{ t('admin.classrooms.select_room') }}
                     <select
                         v-model="attendanceClassroomId"
                         class="mt-1 w-full rounded-lg border-slate-300"
@@ -228,7 +241,7 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                 >
                     <h2 class="font-bold">{{ attendanceClassroom.name }}</h2>
                     <p class="mt-1 text-sm text-slate-500">
-                        Selecione um aluno para registrar entrada ou saída.
+                        {{ t('admin.classrooms.attendance_hint') }}
                     </p>
                     <div class="mt-4 flex flex-wrap gap-2">
                         <span
@@ -241,13 +254,13 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                                 class="ml-1 text-emerald-700"
                                 @click="checkIn(attendanceClassroom, member)"
                             >
-                                Entrada
+                                {{ t('admin.classrooms.checkin') }}
                             </button>
                             <button
                                 class="ml-1 text-amber-700"
                                 @click="checkOut(attendanceClassroom, member)"
                             >
-                                Saída
+                                {{ t('admin.classrooms.checkout') }}
                             </button>
                         </span>
                     </div>
@@ -256,7 +269,7 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                     v-else
                     class="rounded-xl border border-dashed p-6 text-sm text-slate-500"
                 >
-                    Crie uma sala e adicione alunos para iniciar a presença.
+                    {{ t('admin.classrooms.empty_attendance') }}
                 </p>
             </template>
             <template v-else>
@@ -272,25 +285,33 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                                 {{ room.min_age ?? 0 }}–{{
                                     room.max_age ?? '∞'
                                 }}
-                                anos ·
+                                {{ t('admin.classrooms.years') }} ·
                                 {{
-                                    room.gender_restriction ||
-                                    'todos os gêneros'
+                                    room.gender_restriction
+                                        ? t(
+                                              `admin.classrooms.gender.${room.gender_restriction}`,
+                                          )
+                                        : t('admin.classrooms.gender.all')
                                 }}
-                                · {{ room.active_presences_count }} presente(s)
+                                ·
+                                {{
+                                    t('admin.classrooms.present', {
+                                        count: room.active_presences_count,
+                                    })
+                                }}
                             </p>
                         </div>
                         <button
                             class="text-sm font-semibold"
                             @click="edit(room)"
                         >
-                            Editar
+                            {{ t('actions.edit') }}
                         </button>
                         <button
                             class="text-sm font-semibold text-sky-700"
                             @click="openClassroom(room)"
                         >
-                            Abrir sala
+                            {{ t('admin.classrooms.open') }}
                         </button>
                     </div>
                     <div class="mt-4 flex flex-wrap gap-2">
@@ -303,12 +324,12 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                                 class="ml-1 text-emerald-700"
                                 @click="checkIn(room, member)"
                             >
-                                Entrada</button
+                                {{ t('admin.classrooms.checkin') }}</button
                             ><button
                                 class="ml-1 text-amber-700"
                                 @click="checkOut(room, member)"
                             >
-                                Saída
+                                {{ t('admin.classrooms.checkout') }}
                             </button></span
                         >
                     </div>
@@ -324,28 +345,36 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                 @submit.prevent="save"
             >
                 <h2 class="font-black">
-                    {{ selected ? 'Editar sala' : 'Nova sala' }}
+                    {{
+                        selected
+                            ? t('admin.classrooms.edit')
+                            : t('admin.classrooms.new')
+                    }}
                 </h2>
                 <label class="block text-sm font-semibold"
-                    >Nome<input
+                    >{{ t('admin.common.name')
+                    }}<input
                         v-model="form.name"
                         required
                         class="mt-1 w-full rounded-lg border-slate-300" /></label
                 ><label class="block text-sm font-semibold"
-                    >Descrição<textarea
+                    >{{ t('admin.common.description')
+                    }}<textarea
                         v-model="form.description"
                         class="mt-1 w-full rounded-lg border-slate-300"
                     />
                 </label>
                 <div class="grid grid-cols-2 gap-3">
                     <label class="text-sm font-semibold"
-                        >Idade mínima<input
+                        >{{ t('admin.classrooms.min_age')
+                        }}<input
                             v-model.number="form.min_age"
                             type="number"
                             min="0"
                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                     ><label class="text-sm font-semibold"
-                        >Idade máxima<input
+                        >{{ t('admin.classrooms.max_age')
+                        }}<input
                             v-model.number="form.max_age"
                             type="number"
                             min="0"
@@ -353,28 +382,39 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                     /></label>
                 </div>
                 <label class="block text-sm font-semibold"
-                    >Restrição de gênero<select
+                    >{{ t('admin.classrooms.gender_restriction')
+                    }}<select
                         v-model="form.gender_restriction"
                         class="mt-1 w-full rounded-lg border-slate-300"
                     >
-                        <option value="">Sem restrição</option>
-                        <option value="male">Masculino</option>
-                        <option value="female">Feminino</option>
+                        <option value="">
+                            {{ t('admin.classrooms.gender.none') }}
+                        </option>
+                        <option value="male">
+                            {{ t('admin.classrooms.gender.male') }}
+                        </option>
+                        <option value="female">
+                            {{ t('admin.classrooms.gender.female') }}
+                        </option>
                     </select></label
                 ><label
                     v-if="!props.kidsOnly"
                     class="flex gap-2 text-sm font-semibold"
-                    ><input v-model="form.is_kids" type="checkbox" />Esta é uma
-                    sala Kids (PIN obrigatório na saída)</label
+                    ><input v-model="form.is_kids" type="checkbox" />{{
+                        t('admin.classrooms.is_kids')
+                    }}</label
                 ><label class="block text-sm font-semibold"
-                    >Limite de alunos<input
+                    >{{ t('admin.classrooms.max_members')
+                    }}<input
                         v-model.number="form.max_members"
                         type="number"
                         min="1"
                         class="mt-1 w-full rounded-lg border-slate-300"
                 /></label>
                 <fieldset>
-                    <legend class="text-sm font-semibold">Alunos</legend>
+                    <legend class="text-sm font-semibold">
+                        {{ t('admin.classrooms.students') }}
+                    </legend>
                     <label
                         v-for="member in props.members"
                         :key="member.id"
@@ -389,14 +429,14 @@ async function checkOut(classroom: Classroom, member: Member): Promise<void> {
                 <button
                     class="w-full rounded-lg bg-slate-900 py-2 text-sm font-bold text-white"
                 >
-                    Salvar sala
+                    {{ t('admin.classrooms.save') }}
                 </button>
                 <button
                     type="button"
                     class="w-full rounded-lg border border-slate-200 py-2 text-sm font-semibold text-slate-600"
                     @click="closeEditor"
                 >
-                    Cancelar
+                    {{ t('actions.cancel') }}
                 </button>
             </form>
         </div>

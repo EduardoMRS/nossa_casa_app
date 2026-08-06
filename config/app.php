@@ -86,7 +86,7 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
-    'locales' => explode(',', env('APP_LOCALES', 'en')),
+    'locales' => explode(',', env('APP_LOCALES', 'en,pt')),
 
     /*
     |--------------------------------------------------------------------------

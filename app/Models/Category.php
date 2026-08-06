@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Enums\CategoryType;
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $fillable = [
         'church_id',
@@ -26,12 +27,12 @@ class Category extends Model
     ];
 
     protected $table = 'categories';
-    
+
     public function classrooms()
     {
         return $this->morphedByMany(Classroom::class, 'categorizable');
     }
-    
+
     public function events()
     {
         return $this->morphedByMany(Event::class, 'categorizable');
@@ -60,15 +61,5 @@ class Category extends Model
     public function church()
     {
         return $this->belongsTo(Church::class);
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

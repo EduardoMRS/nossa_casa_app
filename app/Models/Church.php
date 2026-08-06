@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Enums\ChurchStatus;
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 
 class Church extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $table = 'churches';
 
@@ -108,15 +109,5 @@ class Church extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
-    }
-
-    public function translations()
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslationsAttribute()
-    {
-        return $this->translations()->pluck('content', 'translatable_column');
     }
 }

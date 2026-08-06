@@ -6,12 +6,11 @@ use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Church;
-use App\Models\Community;
 use App\Models\Classroom;
 use App\Models\Comment;
+use App\Models\Community;
 use App\Models\Event;
 use App\Models\Form;
-use App\Models\FormResponse;
 use App\Models\Highlight;
 use App\Models\Library;
 use App\Models\Media;
@@ -35,6 +34,7 @@ class AdminWorkspaceController extends Controller
         $highlights = Highlight::query()->latest()->limit(8)->get(['highlightable_type', 'highlightable_id', 'created_at']);
 
         return $this->module(
+            translationNamespace: 'admin.modules.highlights',
             title: 'Destaques',
             subtitle: 'Comunicacao e conteudo',
             description: 'Gerencie os destaques visuais que aparecem para a comunidade nos canais principais.',
@@ -142,6 +142,7 @@ class AdminWorkspaceController extends Controller
         $items = Library::query()->latest()->limit(8)->get(['title', 'type']);
 
         return $this->module(
+            translationNamespace: 'admin.modules.library',
             title: 'Biblioteca e Versiculo',
             subtitle: 'Comunicacao e conteudo',
             description: 'Controle materiais devocionais, acervo digital e versiculos em destaque.',
@@ -164,11 +165,25 @@ class AdminWorkspaceController extends Controller
     public function forms(): Response
     {
         $churchId = request()->user()?->church?->id;
+        $forms = Form::query()
+            ->where('church_id', $churchId)
+            ->with(['categories:id,name', 'events:id,title', 'posts:id,title'])
+            ->withCount('responses')
+            ->latest()
+            ->get()
+            ->each(function (Form $form): void {
+                $form->makeHidden('translations');
+                $form->categories->each->makeHidden('translations');
+                $form->events->each->makeHidden('translations');
+                $form->posts->each->makeHidden('translations');
+            });
+        $events = Event::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations');
+        $posts = Post::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations');
 
         return Inertia::render('Admin/Forms', [
-            'forms' => Form::query()->where('church_id', $churchId)->with(['categories:id,name', 'events:id,title', 'posts:id,title'])->withCount('responses')->latest()->get(),
-            'events' => Event::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title']),
-            'posts' => Post::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title']),
+            'forms' => $forms,
+            'events' => $events,
+            'posts' => $posts,
             'categories' => $this->availableChurchCategories($churchId, CategoryType::FORM->value),
         ]);
     }
@@ -181,6 +196,7 @@ class AdminWorkspaceController extends Controller
             : collect();
 
         return $this->module(
+            translationNamespace: 'admin.modules.prayer_requests',
             title: 'Pedidos de Intercessao',
             subtitle: 'Ministerios e membros',
             description: 'Central para visualizar pedidos recebidos e organizar acompanhamento pastoral.',
@@ -226,9 +242,13 @@ class AdminWorkspaceController extends Controller
 
     public function userManagement(): Response
     {
+        $users = User::query()->with('church:id,name')->latest()->paginate(20);
+        $users->getCollection()->each(fn (User $user) => $user->church?->makeHidden('translations'));
+        $churches = Church::query()->orderBy('name')->get(['id', 'name'])->each->makeHidden('translations');
+
         return Inertia::render('Admin/UserManagement', [
-            'users' => User::query()->with('church:id,name')->latest()->paginate(20),
-            'churches' => Church::query()->orderBy('name')->get(['id', 'name']),
+            'users' => $users,
+            'churches' => $churches,
             'roles' => collect(UserRole::cases())->map(fn (UserRole $role) => ['value' => $role->value, 'label' => ucfirst($role->value)]),
             'stats' => [
                 ['label' => 'Usuários totais', 'value' => User::query()->count()],
@@ -240,10 +260,22 @@ class AdminWorkspaceController extends Controller
 
     public function multiCongregation(): Response
     {
+        $churches = Church::query()->with('community:id,name')->withCount('members')->orderBy('name')->get();
+        $churches->each(function (Church $church): void {
+            $church->makeHidden('translations');
+            $church->community?->makeHidden('translations');
+        });
+        $communities = Community::query()->orderBy('name')->get(['id', 'name'])->each->makeHidden('translations');
+        $networks = Network::query()->with(['parentChurch:id,name', 'childChurch:id,name'])->get();
+        $networks->each(function (Network $network): void {
+            $network->parentChurch?->makeHidden('translations');
+            $network->childChurch?->makeHidden('translations');
+        });
+
         return Inertia::render('Admin/MultiCongregation', [
-            'churches' => Church::query()->with('community:id,name')->withCount('members')->orderBy('name')->get(),
-            'communities' => Community::query()->orderBy('name')->get(['id', 'name']),
-            'networks' => Network::query()->with(['parentChurch:id,name', 'childChurch:id,name'])->get(),
+            'churches' => $churches,
+            'communities' => $communities,
+            'networks' => $networks,
             'stats' => [
                 ['label' => 'Igrejas', 'value' => Church::query()->count()],
                 ['label' => 'Comunidades', 'value' => Community::query()->count()],
@@ -260,9 +292,17 @@ class AdminWorkspaceController extends Controller
     private function classroomWorkspace(bool $kidsOnly): Response
     {
         $churchId = request()->user()?->church?->id;
+        $classrooms = Classroom::query()
+            ->where('church_id', $churchId)
+            ->when($kidsOnly, fn ($query) => $query->where('is_kids', true))
+            ->with(['teacher:id,first_name,last_name', 'members:id,first_name,last_name'])
+            ->withCount(['members', 'presences as active_presences_count' => fn ($query) => $query->whereNull('check_out')])
+            ->latest()
+            ->get()
+            ->each->makeHidden('translations');
 
         return Inertia::render('Admin/Classrooms', [
-            'classrooms' => Classroom::query()->where('church_id', $churchId)->when($kidsOnly, fn ($query) => $query->where('is_kids', true))->with(['teacher:id,first_name,last_name', 'members:id,first_name,last_name'])->withCount(['members', 'presences as active_presences_count' => fn ($query) => $query->whereNull('check_out')])->latest()->get(),
+            'classrooms' => $classrooms,
             'members' => User::query()->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))->with('profile:user_id,gender')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'birth_date']),
             'kidsOnly' => $kidsOnly,
         ]);
@@ -288,9 +328,10 @@ class AdminWorkspaceController extends Controller
      * @param  array<int, array{label: string, href: string}>  $actions
      * @param  array<int, array{label: string, value: string}>  $items
      */
-    private function module(string $title, string $subtitle, string $description, array $stats, array $actions, array $items): Response
+    private function module(string $translationNamespace, string $title, string $subtitle, string $description, array $stats, array $actions, array $items): Response
     {
         return Inertia::render('Admin/Module', [
+            'translationNamespace' => $translationNamespace,
             'title' => $title,
             'subtitle' => $subtitle,
             'description' => $description,
