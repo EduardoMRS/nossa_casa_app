@@ -1,0 +1,219 @@
+{
+    "locale": {
+        "switcher": "Language"
+    },
+    "nav": {
+        "home": "Home",
+        "events": "Events",
+        "gallery": "Gallery",
+        "back": "Back",
+        "dashboard": "Dashboard",
+        "login": "Sign in"
+    },
+    "actions": {
+        "create": "Create",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "update": "Update",
+        "upload": "Upload",
+        "delete": "Delete"
+    },
+    "home": {
+        "meta_title": "Home",
+        "hero": {
+            "kicker": "Living community",
+            "title": "Welcome to the Nossa Casa ecosystem",
+            "description": "Schedule, content, and registrations connected in one seamless experience for members, leaders, and media team.",
+            "cta_events": "Explore events",
+            "cta_gallery": "View gallery"
+        },
+        "stats": {
+            "events": "Events",
+            "gallery": "Gallery media",
+            "posts": "Posts and updates"
+        },
+        "featured": {
+            "kicker": "Highlights",
+            "title": "Upcoming events",
+            "view_all": "View all",
+            "view_detail": "View details"
+        },
+        "latest_posts": {
+            "kicker": "Communication",
+            "title": "Latest updates"
+        }
+    },
+    "events": {
+        "shared": {
+            "community": "Community",
+            "start": "Start",
+            "end": "End"
+        },
+        "index": {
+            "meta_title": "Events",
+            "hero": {
+                "kicker": "Community agenda",
+                "title": "Featured events and upcoming meetings",
+                "description": "This screen is already connected to the backend and lists real events from your system."
+            },
+            "no_description": "No description available.",
+            "view_details": "View details",
+            "pagination": "Showing {from} - {to} of {total} events"
+        },
+        "show": {
+            "register": "Register now",
+            "manage_registration": "Manage registration",
+            "registrations_unavailable": "Registrations are not available yet",
+            "back_to_events": "Back to events",
+            "about": "About this event",
+            "registration": "Registration",
+            "categories": "Categories",
+            "form_not_configured": "The main form is not configured for this event yet."
+        },
+        "register": {
+            "title": "Event registration",
+            "back_to_event": "Back to event details",
+            "already_registered": "Your registration is already saved. Update your information if needed.",
+            "login_required": "You need to sign in before submitting your registration.",
+            "submit": "Submit registration",
+            "submitting": "Submitting...",
+            "success": "Registration submitted successfully.",
+            "error": "Could not submit your registration. Please try again.",
+            "schema_empty": "This form has no configured fields yet.",
+            "select": "Select",
+            "invalid_field": "Invalid field",
+            "mark_option": "Mark option",
+            "until": "to"
+        },
+        "form": {
+            "create_title": "Create Event",
+            "edit_title": "Edit Event",
+            "subtitle": "Describe your event with rich formatting and publish it for your church.",
+            "title": "Title",
+            "slug": "Slug",
+            "description": "Description",
+            "start_time": "Start date and time",
+            "end_time": "End date and time",
+            "cover": "Cover image",
+            "cover_hint": "Recommended: landscape image, at least 1280x720.",
+            "description_hint": "Use Markdown or WYSIWYG mode to format the event content.",
+            "save": "Publish event",
+            "update": "Update event"
+        }
+    },
+    "posts": {
+        "form": {
+            "create_title": "Create Post",
+            "edit_title": "Edit Post",
+            "subtitle": "Write announcements and ministry updates with a rich editor.",
+            "title": "Title",
+            "slug": "Slug",
+            "content": "Content",
+            "published_at": "Publish at",
+            "expires_at": "Expires at",
+            "content_hint": "Use rich text or Markdown mode for better formatting.",
+            "save": "Publish post",
+            "update": "Update post"
+        }
+    },
+    "dashboard": {
+        "workspace": "Workspace",
+        "title": "Role-based modular dashboard",
+        "current_profile": "Current profile",
+        "profile_context": "Current profile: {role}. Blocks and shortcuts adapt to your role in the platform.",
+        "modules": "Modules",
+        "recommended_actions": "Recommended actions",
+        "open_module": "Open module",
+        "roles": {
+            "member": "Member",
+            "leader": "Leader",
+            "media": "Media",
+            "admin": "Administrator",
+            "superadmin": "Super Admin",
+            "system": "System"
+        },
+        "module": {
+            "organize_events": {
+                "title": "Organize events",
+                "description": "Manage schedule, forms, and support team."
+            },
+            "track_registrations": {
+                "title": "Track registrations",
+                "description": "View answers and registration status from the community."
+            },
+            "publish_updates": {
+                "title": "Publish updates",
+                "description": "Use the posts area for ministry announcements."
+            },
+            "gallery_curation": {
+                "title": "Gallery curation",
+                "description": "Moderate images and videos shared by members."
+            },
+            "visual_posts": {
+                "title": "Visual posts",
+                "description": "Create stories and weekly communication cards."
+            },
+            "coverage_schedule": {
+                "title": "Coverage schedule",
+                "description": "Plan capture and production for each event."
+            },
+            "platform_governance": {
+                "title": "Platform governance",
+                "description": "Track platform health, people, and church configuration."
+            },
+            "review_content": {
+                "title": "Review content",
+                "description": "Validate highlighted publications and materials."
+            },
+            "monitor_events": {
+                "title": "Monitor events",
+                "description": "Consolidated view of agenda and participation."
+            },
+            "my_events": {
+                "title": "My next events",
+                "description": "Find meetings and confirm your participation."
+            },
+            "community_gallery": {
+                "title": "Community gallery",
+                "description": "Relive the best moments from church programs."
+            },
+            "account_settings": {
+                "title": "Account settings",
+                "description": "Review your profile data and personal preferences."
+            },
+            "security_settings": {
+                "title": "Account security",
+                "description": "Update your password, 2FA and passkeys."
+            },
+            "recent_updates": {
+                "title": "Recent updates",
+                "description": "Read recent church notices and news."
+            },
+            "visual_identity": {
+                "title": "Visual identity",
+                "description": "Adjust logo, colors, and institutional contacts."
+            },
+            "user_management": {
+                "title": "User management",
+                "description": "Track system profiles, roles, and access."
+            },
+            "multicongregation": {
+                "title": "Multicongregations",
+                "description": "Manage headquarters and branches centrally."
+            },
+            "logs_metrics": {
+                "title": "Logs and metrics",
+                "description": "Access platform indicators and operational overview."
+            }
+        },
+        "kpis": {
+            "events": "Events",
+            "gallery": "Gallery",
+            "posts": "Posts"
+        }
+    },
+    "editor": {
+        "label": "Rich content editor"
+    }
+}

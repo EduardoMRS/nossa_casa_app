@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CategoryType;
 use App\Enums\MediaStatus;
+use App\Http\Requests\Media\StoreMediaRequest;
+use App\Http\Requests\Media\UpdateMediaStatusRequest;
 use App\Models\Media;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
 class MediaController extends Controller
 {
     use UploadsMedia;
+    use ManagesChurchCategories;
 
     public function index()
     {
@@ -23,69 +30,106 @@ class MediaController extends Controller
         return response()->json($media->load(['categories', 'comments.user']));
     }
 
-    public function store(Request $request)
+    public function store(StoreMediaRequest $request)
     {
-        $validated = $request->validate([
-            'file_path' => ['nullable'],
-            'file'      => ['nullable'], // Permite receber na chave 'file' também se for multipart
-            'mimetype'  => ['nullable', 'string', 'max:255'],
-            'size'      => ['nullable', 'integer', 'min:0'],
-            'gallery'   => ['boolean'],
-        ]);
-        
+        $validated = $request->validated();
+
         $church = $request->user()->church;
         abort_unless($church && $church->exists(), 422, __('church.membership_upload_media_required'));
 
-        // Extrai o arquivo tentando de 'file' (upload) ou 'file_path' (string)
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
-        if(!$fileInput) {
+
+        if (! $fileInput) {
             return response()->json(['error' => 'No file provided.'], 422);
         }
-        
+
+        $fileData = getFileMetadata($fileInput);
         $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
 
         $media = Media::create([
             'file_path' => $mediaPath,
-            'mimetype' => $validated['mimetype'] ?? null,
-            'size' => $validated['size'] ?? null,
+            'mimetype' => $validated['mimetype'] ?? ($fileData['mime_type'] ?? null),
+            'size' => $validated['size'] ?? ($fileData['size'] ?? null),
             'gallery' => $validated['gallery'] ?? false,
             'uploader_id' => $request->user()->id,
             'church_id' => $church->id,
             'status' => MediaStatus::PENDING,
         ]);
+        $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $church->id));
 
         return response()->json($media, 201);
     }
 
     public function update(Request $request, Media $media)
     {
+        $this->ensureChurchAccess($request, $media->church_id);
         $this->ensureOwnerOrModerator($request, $media->uploader_id);
-        $media->update($request->validate([
+        $validated = $request->validate([
+            'file_path' => ['nullable'],
+            'file' => ['nullable'],
+            'mimetype' => ['nullable', 'string', 'max:255'],
+            'size' => ['nullable', 'integer', 'min:0'],
             'gallery' => ['sometimes', 'boolean'],
             'status' => ['sometimes', Rule::enum(MediaStatus::class)],
-        ]));
+
+        ]);
+
+        $fileInput = $request->file('file') ?? $request->file('file_path') ?? ($request->has('file_path') ? $request->input('file_path') : null);
+        $updates = [
+            'gallery' => $validated['gallery'] ?? $media->gallery,
+            'status' => $validated['status'] ?? $media->status,
+            'mimetype' => $validated['mimetype'] ?? $media->mimetype,
+            'size' => $validated['size'] ?? $media->size,
+        ];
+
+        if ($request->hasFile('file') || $request->hasFile('file_path') || $request->has('file_path')) {
+            $updates['file_path'] = $this->handleMediaUpload($fileInput, "church/{$media->church_id}/media", $media->file_path);
+
+            if ($fileInput !== null) {
+                $fileData = getFileMetadata($fileInput);
+                $updates['mimetype'] = $validated['mimetype'] ?? ($fileData['mime_type'] ?? $updates['mimetype']);
+                $updates['size'] = $validated['size'] ?? ($fileData['size'] ?? $updates['size']);
+            }
+        }
+
+        $media->update($updates);
+        if ($request->has('category_ids')) {
+            $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $media->church_id));
+        }
 
         return response()->json($media);
     }
 
     public function destroy(Request $request, Media $media)
     {
+        $this->ensureChurchAccess($request, $media->church_id);
         $this->ensureOwnerOrModerator($request, $media->uploader_id);
+
+        if ($media->file_path) {
+            Storage::disk('public')->delete($media->file_path);
+        }
+
         $media->delete();
 
         return response()->noContent();
     }
 
-    public function pending()
+    public function pending(Request $request)
     {
-        return response()->json(Media::pending()->with('uploader:id,first_name,last_name')->paginate(15));
+        $churchId = $request->user()->church?->id;
+
+        abort_unless($churchId, 422, 'A church membership is required to moderate media.');
+
+        return response()->json(Media::pending()
+            ->where('church_id', $churchId)
+            ->with('uploader:id,first_name,last_name')
+            ->paginate(15));
     }
 
-    public function updateStatus(Request $request, Media $media)
+    public function updateStatus(UpdateMediaStatusRequest $request, Media $media)
     {
-        $validated = $request->validate([
-            'status' => ['required', Rule::enum(MediaStatus::class)],
-        ]);
+        $this->ensureChurchAccess($request, $media->church_id);
+        $validated = $request->validated();
 
         $media->update(['status' => $validated['status']]);
 

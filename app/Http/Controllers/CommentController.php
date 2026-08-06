@@ -27,6 +27,9 @@ class CommentController extends Controller
             'content' => ['required', 'string', 'max:5000'],
         ]);
 
+        $commentable = $this->findCommentable($validated['commentable_type'], $validated['commentable_id']);
+        $this->ensureChurchAccess($request, $this->commentableChurchId($commentable));
+
         $comment = Comment::create([
             ...$validated,
             'commentable_type' => $this->commentableClass($validated['commentable_type']),
@@ -38,6 +41,7 @@ class CommentController extends Controller
 
     public function update(Request $request, Comment $comment)
     {
+        $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
         $this->ensureOwnerOrModerator($request, $comment->user_id);
         $comment->update($request->validate(['content' => ['required', 'string', 'max:5000']]));
 
@@ -46,6 +50,7 @@ class CommentController extends Controller
 
     public function destroy(Request $request, Comment $comment)
     {
+        $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
         $this->ensureOwnerOrModerator($request, $comment->user_id);
         $comment->delete();
 
@@ -60,5 +65,25 @@ class CommentController extends Controller
             'media' => Media::class,
             'comment' => Comment::class,
         };
+    }
+
+    private function findCommentable(string $type, string $id): Post|Event|Media|Comment
+    {
+        return $this->commentableClass($type)::query()->findOrFail($id);
+    }
+
+    private function commentableChurchId(Post|Event|Media|Comment $commentable): string
+    {
+        if ($commentable instanceof Comment) {
+            $parent = $commentable->commentable;
+
+            abort_unless($parent instanceof Post || $parent instanceof Event || $parent instanceof Media || $parent instanceof Comment, 422);
+
+            return $this->commentableChurchId($parent);
+        }
+
+        abort_unless($commentable->church_id, 422);
+
+        return $commentable->church_id;
     }
 }

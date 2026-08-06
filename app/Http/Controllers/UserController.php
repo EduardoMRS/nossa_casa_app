@@ -29,8 +29,11 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        
+        $churchId = $validated['church_id'] ?? null;
+        unset($validated['church_id']);
+
         $user = User::create($validated);
+        $user->profile()->updateOrCreate(['user_id' => $user->id], ['church_id' => $churchId]);
 
         return response()->json($user, 201);
     }
@@ -59,7 +62,13 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
 
+        $churchId = array_key_exists('church_id', $validated) ? $validated['church_id'] : null;
+        unset($validated['church_id']);
         $user->update($validated);
+
+        if (array_key_exists('church_id', $request->all())) {
+            $user->profile()->updateOrCreate(['user_id' => $user->id], ['church_id' => $churchId]);
+        }
 
         return response()->json($user);
     }

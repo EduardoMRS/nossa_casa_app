@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
+use App\Models\Classroom;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,13 +37,52 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $role = $user?->role?->value ?? (string) $user?->role;
+
+        $branding = [
+            'brand_name' => config('app.name'),
+            'tagline' => '',
+            'banner_title' => '',
+            'banner_subtitle' => '',
+            'primary_color' => '#2f6e79',
+            'secondary_color' => '#5f7d95',
+            'accent_color' => '#c88b4a',
+            'surface_color' => '#f4f7fb',
+            'font_family' => 'Manrope, ui-sans-serif',
+            'logo_url' => '',
+            'icon_name' => 'Sparkles',
+            'contact_email' => '',
+            'contact_phone' => '',
+            'contact_whatsapp' => '',
+            'contact_website' => '',
+        ];
+
+        if ($user?->church) {
+            $setting = Setting::query()->where('church_id', $user->church->id)->first();
+            $savedBranding = $setting?->options['branding'] ?? [];
+
+            if (is_array($savedBranding)) {
+                $branding = array_merge($branding, $savedBranding);
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'branding' => $branding,
+            'permissions' => [
+                'manageBranding' => in_array($role, ['admin', 'superadmin', 'system'], true),
+            ],
+            'classrooms' => [
+                'hasKids' => $user?->church?->id
+                    ? Classroom::query()->where('church_id', $user->church->id)->where('is_kids', true)->exists()
+                    : false,
+            ],
         ];
     }
 }

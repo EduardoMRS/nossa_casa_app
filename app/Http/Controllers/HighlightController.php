@@ -11,6 +11,7 @@ class HighlightController extends Controller
     public function updateChurchHighlights(Request $request, string $churchId)
     {
         $church = Church::findOrFail($churchId);
+        $this->ensureChurchAccess($request, $church->id);
 
         $validated = $request->validate([
             'highlights' => 'required|array',
@@ -28,6 +29,9 @@ class HighlightController extends Controller
                 'event' => \App\Models\Event::class,
                 'media' => \App\Models\Media::class,
             };
+
+            $highlightable = $highlightableClass::query()->findOrFail($item['id']);
+            abort_unless($highlightable->church_id === $church->id, 422, 'Highlights must belong to the selected church.');
 
             return Highlight::create([
                 'highlightable_id' => $item['id'],

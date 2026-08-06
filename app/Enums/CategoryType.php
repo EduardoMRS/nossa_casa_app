@@ -8,4 +8,6 @@ enum CategoryType: string
     case CLASSROOM = 'classroom';
     case EVENT = 'event';
     case MEDIA = 'media';
+    case FORM = 'form';
+    case LIBRARY = 'library';
 }

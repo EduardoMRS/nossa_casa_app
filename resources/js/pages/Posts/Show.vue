@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { 
-    ArrowLeft, Edit, Trash, Calendar, Clock, 
-    MessageCircle, Heart, Reply, Share2, Image as ImageIcon 
-} from '@lucide/vue';
-
-defineOptions({});
+import { computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, Edit, Trash, Calendar, Clock, MessageCircle, Heart } from '@lucide/vue';
+import { destroy } from '@/actions/App/Http/Controllers/PostController';
+import { edit, index } from '@/routes/posts';
 
 // --- Interfaces Baseadas no Payload ---
 export interface UserDetails {
@@ -69,12 +66,32 @@ const props = defineProps<{
     reactions: Reaction[];
 }>();
 
-// --- Utilitários ---
+const page = usePage<{
+    branding?: {
+        primary_color?: string;
+        secondary_color?: string;
+        accent_color?: string;
+        font_family?: string;
+    };
+}>();
+
+const branding = computed(() => page.props.branding ?? {});
+
+const paletteStyle = computed(() => ({
+    '--brand-primary': branding.value.primary_color ?? '#2f6e79',
+    '--brand-secondary': branding.value.secondary_color ?? '#5f7d95',
+    '--brand-accent': branding.value.accent_color ?? '#c88b4a',
+    '--brand-font': branding.value.font_family ?? 'Manrope, ui-sans-serif',
+}));
+
 const formatDate = (dateString: string | null) => {
-    if (!dateString) return '';
+    if (!dateString) {
+        return '';
+    }
+
     return new Date(dateString).toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        hour: '2-digit', minute: '2-digit',
     });
 };
 
@@ -84,237 +101,114 @@ const getInitials = (user: UserDetails) => {
 
 const getTitle = () => props.post.translations?.title || props.post.title;
 
-// --- Ações do Post ---
 const deletePost = () => {
     if (confirm('Tem certeza que deseja excluir esta postagem?')) {
-        router.delete(`/post/${props.post.id}`);
+        router.delete(destroy.url({ post: props.post.id }));
     }
-};
-
-// --- Sistema de Comentários e Reações ---
-const replyingTo = ref<string | null>(null);
-
-const commentForm = useForm({
-    content: '',
-    parent_id: null as string | null
-});
-
-const submitComment = (parentId: string | null = null) => {
-    commentForm.parent_id = parentId;
-    commentForm.post(`/api/post/${props.post.id}/comments`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            commentForm.reset();
-            replyingTo.value = null;
-        }
-    });
-};
-
-const toggleReaction = (content: string, type: string = 'emoji', parentId: string | null = null) => {
-    if (!props.can.react) return;
-    
-    router.post(`/api/post/${props.post.id}/reactions`, {
-        content,
-        type,
-        parent_id: parentId
-    }, { preserveScroll: true });
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-zinc-950 text-zinc-300 p-8">
+    <div class="min-h-screen bg-[#f4f7fb] p-5 text-slate-800 dark:bg-slate-900 dark:text-slate-100 md:p-8" :style="paletteStyle">
         <Head :title="getTitle()" />
 
-        <div class="max-w-4xl mx-auto">
-            <!-- Header/Breadcrumb -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <Link href="/posts" class="flex items-center gap-2 text-zinc-400 hover:text-green-400 transition-colors">
-                    <ArrowLeft class="w-4 h-4" />
+        <div class="mx-auto max-w-5xl space-y-6">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <Link :href="index()" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-white">
+                    <ArrowLeft class="h-4 w-4" />
                     Voltar para lista
                 </Link>
-                
-                <div class="flex gap-3" v-if="can.edit || can.delete">
-                    <Link 
+
+                <div v-if="can.edit || can.delete" class="flex gap-2">
+                    <Link
                         v-if="can.edit"
-                        :href="`/posts/${post.id}/edit`" 
-                        class="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-sm hover:border-green-500 hover:text-green-400 transition-colors"
+                        :href="edit({ post: post.id })"
+                        class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                     >
-                        <Edit class="w-4 h-4" /> Editar
+                        <Edit class="h-4 w-4" />
+                        Editar
                     </Link>
-                    <button 
+                    <button
                         v-if="can.delete"
-                        @click="deletePost" 
-                        class="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-red-500 rounded-sm hover:border-red-500 hover:bg-red-500/10 transition-colors"
+                        @click="deletePost"
+                        class="inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/40 dark:bg-slate-800 dark:hover:bg-red-500/10"
                     >
-                        <Trash class="w-4 h-4" /> Excluir
+                        <Trash class="h-4 w-4" />
+                        Excluir
                     </button>
                 </div>
             </div>
 
-            <!-- Corpo da Postagem -->
-            <article class="bg-zinc-900 border border-zinc-800 rounded-sm overflow-hidden shadow-xl mb-8">
-                <!-- Cover Image (se houver) -->
-                <div v-if="post.medias && post.medias.length > 0" class="w-full h-64 md:h-96 bg-zinc-800 relative overflow-hidden border-b border-zinc-800">
-                    <img :src="post.medias[0].url" class="w-full h-full object-cover opacity-80" alt="Capa da Postagem" />
+            <article class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
+                <div v-if="post.medias && post.medias.length > 0" class="h-64 w-full overflow-hidden border-b border-slate-200 dark:border-slate-700 md:h-96">
+                    <img :src="post.medias[0].url" class="h-full w-full object-cover" alt="Capa da Postagem" />
                 </div>
 
-                <div class="p-8 md:p-12">
-                    <header class="mb-8">
-                        <div class="flex items-center gap-3 mb-6">
-                            <span v-if="post.category" class="px-3 py-1 bg-green-500/10 text-green-400 text-xs font-bold uppercase tracking-wider rounded-sm border border-green-500/20">
+                <div class="p-6 md:p-10">
+                    <header class="mb-7">
+                        <div class="mb-5 flex flex-wrap items-center gap-3">
+                            <span v-if="post.category" class="rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wide" :style="{ borderColor: 'var(--brand-secondary)', color: 'var(--brand-primary)', backgroundColor: 'color-mix(in srgb, var(--brand-primary) 8%, white)' }">
                                 {{ post.category }}
                             </span>
-                            <div class="flex items-center gap-2 text-sm text-zinc-500">
-                                <Calendar class="w-4 h-4" />
+                            <div class="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                                <Calendar class="h-4 w-4" />
                                 <span>{{ formatDate(post.published_at) }}</span>
                             </div>
+                            <div v-if="post.expires_at" class="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-300">
+                                <Clock class="h-4 w-4" />
+                                <span>Expira em {{ formatDate(post.expires_at) }}</span>
+                            </div>
                         </div>
-                        
-                        <h1 class="text-3xl md:text-5xl font-bold text-zinc-100 mb-6 leading-tight">{{ getTitle() }}</h1>
-                        
-                        <!-- Autor -->
+
+                        <h1 class="mb-5 text-3xl font-black leading-tight text-slate-900 dark:text-slate-100 md:text-5xl" :style="{ fontFamily: 'var(--brand-font)' }">{{ getTitle() }}</h1>
+
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-bold text-green-500 border border-zinc-700">
+                            <div class="grid h-10 w-10 place-items-center rounded-full border border-slate-300 bg-slate-100 text-sm font-bold text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100">
                                 {{ getInitials(post.author_details) }}
                             </div>
                             <div class="flex flex-col">
-                                <span class="text-zinc-200 font-medium">{{ post.author_details.first_name }} {{ post.author_details.last_name }}</span>
-                                <span class="text-zinc-500 text-xs">{{ post.author_details.email }}</span>
+                                <span class="font-medium text-slate-800 dark:text-slate-100">{{ post.author_details.first_name }} {{ post.author_details.last_name }}</span>
+                                <span class="text-xs text-slate-500 dark:text-slate-300">{{ post.author_details.email }}</span>
                             </div>
                         </div>
                     </header>
 
-                    <!-- Conteúdo Principal -->
-                    <div class="prose prose-invert prose-zinc max-w-none text-zinc-300 mb-12 whitespace-pre-wrap text-lg leading-relaxed">
+                    <div class="prose max-w-none whitespace-pre-wrap text-base leading-relaxed text-slate-700 dark:prose-invert dark:text-slate-200 md:text-lg">
                         {{ post.content }}
                     </div>
-
-                    <!-- Barra de Ações do Post -->
-                    <footer class="flex flex-wrap items-center justify-between border-t border-zinc-800 pt-6 mt-8 gap-4">
-                        <div class="flex gap-2">
-                            <button 
-                                @click="toggleReaction('👍')"
-                                :disabled="!can.react"
-                                class="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-sm hover:border-green-500 hover:text-green-400 transition-colors disabled:opacity-50"
-                            >
-                                <Heart class="w-4 h-4 text-zinc-400" />
-                                <span>{{ post.metrics.reactions_count }} Curtidas</span>
-                            </button>
-                            <a 
-                                href="#comments"
-                                class="flex items-center gap-2 px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-sm hover:border-blue-500 hover:text-blue-400 transition-colors"
-                            >
-                                <MessageCircle class="w-4 h-4 text-zinc-400" />
-                                <span>{{ post.metrics.comments_count }} Comentários</span>
-                            </a>
-                        </div>
-                        
-                        <div v-if="post.expires_at" class="flex items-center gap-2 text-sm text-zinc-500">
-                            <Clock class="w-4 h-4 text-yellow-500" />
-                            <span>Expira: {{ formatDate(post.expires_at) }}</span>
-                        </div>
-                    </footer>
                 </div>
             </article>
 
-            <!-- Seção de Comentários -->
-            <section id="comments" class="bg-zinc-900 border border-zinc-800 rounded-sm p-8">
-                <h3 class="text-xl font-bold text-zinc-100 mb-6 flex items-center gap-2">
-                    <MessageCircle class="w-5 h-5 text-green-500" />
-                    Comentários ({{ post.metrics.comments_count }})
-                </h3>
-
-                <!-- Formulário de Novo Comentário Principal -->
-                <div class="mb-10" v-if="can.comment">
-                    <form @submit.prevent="submitComment(null)" class="flex flex-col gap-3">
-                        <textarea 
-                            v-model="commentForm.content"
-                            placeholder="Deixe seu comentário..."
-                            rows="3"
-                            class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-3 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all resize-y"
-                            required
-                        ></textarea>
-                        <div class="flex justify-end">
-                            <button 
-                                type="submit" 
-                                :disabled="commentForm.processing || !commentForm.content"
-                                class="bg-green-500 hover:bg-green-400 text-zinc-950 px-6 py-2 rounded-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                Comentar
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Lista de Comentários -->
-                <div class="space-y-8">
-                    <div v-for="comment in comments" :key="comment.id" class="flex gap-4">
-                        <!-- Avatar Comentário -->
-                        <div class="w-10 h-10 shrink-0 rounded-full bg-zinc-950 flex items-center justify-center text-sm font-bold text-green-500 border border-zinc-800">
-                            {{ getInitials(comment.user_details) }}
-                        </div>
-                        
-                        <div class="flex-1 space-y-3">
-                            <div class="bg-zinc-950 border border-zinc-800 p-4 rounded-sm">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="font-medium text-zinc-200">{{ comment.user_details.first_name }} {{ comment.user_details.last_name }}</span>
-                                    <span class="text-xs text-zinc-500">{{ formatDate(comment.created_at) }}</span>
-                                </div>
-                                <p class="text-zinc-300 text-sm whitespace-pre-wrap">{{ comment.content }}</p>
-                            </div>
-
-                            <!-- Ações do Comentário -->
-                            <div class="flex gap-4 text-xs font-medium pl-2">
-                                <button @click="toggleReaction('👍', 'emoji', comment.id)" class="text-zinc-500 hover:text-green-400 transition-colors flex items-center gap-1">
-                                    <Heart class="w-3 h-3" /> Reagir
-                                </button>
-                                <button @click="replyingTo = replyingTo === comment.id ? null : comment.id" class="text-zinc-500 hover:text-green-400 transition-colors flex items-center gap-1">
-                                    <Reply class="w-3 h-3" /> Responder
-                                </button>
-                            </div>
-
-                            <!-- Formulário de Resposta (Inline) -->
-                            <div v-if="replyingTo === comment.id" class="mt-3 pl-4 border-l border-zinc-800">
-                                <form @submit.prevent="submitComment(comment.id)" class="flex flex-col gap-2">
-                                    <textarea 
-                                        v-model="commentForm.content"
-                                        placeholder="Escreva sua resposta..."
-                                        rows="2"
-                                        class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-3 py-2 text-sm rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 transition-all"
-                                        required
-                                    ></textarea>
-                                    <div class="flex justify-end gap-2">
-                                        <button type="button" @click="replyingTo = null" class="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200">Cancelar</button>
-                                        <button type="submit" :disabled="commentForm.processing" class="bg-green-500 text-zinc-950 px-4 py-1.5 text-xs rounded-sm font-semibold hover:bg-green-400 transition-colors">Enviar Resposta</button>
-                                    </div>
-                                </form>
-                            </div>
-
-                            <!-- Respostas Aninhadas (Level 2) -->
-                            <div v-if="comment.replies && comment.replies.length > 0" class="space-y-4 mt-4 pl-4 border-l border-zinc-800">
-                                <div v-for="reply in comment.replies" :key="reply.id" class="flex gap-3">
-                                    <div class="w-8 h-8 shrink-0 rounded-full bg-zinc-950 flex items-center justify-center text-xs font-bold text-green-500 border border-zinc-800">
-                                        {{ getInitials(reply.user_details) }}
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="bg-zinc-950 border border-zinc-800 p-3 rounded-sm">
-                                            <div class="flex items-center justify-between mb-1">
-                                                <span class="font-medium text-zinc-200 text-sm">{{ reply.user_details.first_name }} {{ reply.user_details.last_name }}</span>
-                                                <span class="text-[10px] text-zinc-500">{{ formatDate(reply.created_at) }}</span>
-                                            </div>
-                                            <p class="text-zinc-400 text-sm">{{ reply.content }}</p>
-                                        </div>
-                                        <div class="flex gap-4 text-xs font-medium pl-2 mt-2">
-                                            <button @click="toggleReaction('👍', 'emoji', reply.id)" class="text-zinc-500 hover:text-green-400 transition-colors flex items-center gap-1">
-                                                <Heart class="w-3 h-3" /> Reagir
-                                            </button>
-                                            <!-- Para níveis infinitos, você extrairia isso para um componente <CommentItem /> recursivo -->
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <section class="grid gap-4 md:grid-cols-2">
+                <article class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
+                    <p class="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">Engajamento</p>
+                    <div class="mt-3 flex items-center gap-6 text-slate-700 dark:text-slate-100">
+                        <span class="inline-flex items-center gap-2 text-sm font-semibold">
+                            <Heart class="h-4 w-4" />
+                            {{ post.metrics.reactions_count }} curtidas
+                        </span>
+                        <span class="inline-flex items-center gap-2 text-sm font-semibold">
+                            <MessageCircle class="h-4 w-4" />
+                            {{ post.metrics.comments_count }} comentarios
+                        </span>
                     </div>
+                </article>
+
+                <article class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
+                    <p class="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">Resumo</p>
+                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-200">
+                        {{ comments.length }} comentarios carregados e {{ reactions.length }} reacoes registradas para esta postagem.
+                    </p>
+                </article>
+            </section>
+
+            <section v-if="comments.length" class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
+                <h2 class="text-lg font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">Comentarios recentes</h2>
+                <div class="mt-4 space-y-3">
+                    <article v-for="comment in comments.slice(0, 5)" :key="comment.id" class="rounded-xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ comment.user_details.first_name }} {{ comment.user_details.last_name }}</p>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-200">{{ comment.content }}</p>
+                    </article>
                 </div>
             </section>
         </div>

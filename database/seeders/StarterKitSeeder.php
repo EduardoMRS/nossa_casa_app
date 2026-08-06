@@ -2,83 +2,77 @@
 
 namespace Database\Seeders;
 
-use App\Models\Address;
+use App\Enums\CategoryType;
+use App\Models\AiModel;
 use App\Models\Church;
-use App\Models\User;
-use App\Enums\UserRole;
-use App\Models\UserProfile;
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class StarterKitSeeder extends Seeder
 {
+    /**
+     * Seed the reusable configuration required by every test church.
+     */
     public function run(): void
     {
-        $churchs = Church::all();
+        $this->seedAiModels();
 
-        // Categoria de Post
-        $Postcategories = [
-            ['name' => 'Post', 'slug' => Str::slug('Post'), 'type' => 'post'],
-            ['name' => 'News', 'slug' => Str::slug('News'), 'type' => 'post'],
-            ['name' => 'Anouncements', 'slug' => Str::slug('Anouncements'), 'type' => 'post'],
-            ['name' => 'Events', 'slug' => Str::slug('Events'), 'type' => 'post'],
-            ['name' => 'Testimonies', 'slug' => Str::slug('Testimonies'), 'type' => 'post'],
-            ['name' => 'Devotionals', 'slug' => Str::slug('Devotionals'), 'type' => 'post'],
-            ['name'=> 'Anouncements', 'slug'=> Str::slug('Anouncements'), 'type'=> 'post'],
-            ['name'=> 'Events', 'slug'=> Str::slug('Events'), 'type'=> 'post'],
-            ['name'=> 'Testimonies', 'slug'=> Str::slug('Testimonies'), 'type'=> 'post'],
-            ['name'=> 'Devotionals', 'slug'=> Str::slug('Devotionals'), 'type'=> 'post'],
-        ];
-        // Categoria de Classroom
-        $Classroomcategories = [
-            ['name' => 'Bible Study', 'slug' => Str::slug('Bible Study'), 'type' => 'classroom'],
-            ['name' => 'Prayer Group', 'slug' => Str::slug('Prayer Group'), 'type' => 'classroom'],
-            ['name' => 'Youth Ministry', 'slug' => Str::slug('Youth Ministry'), 'type' => 'classroom'],
-            ['name' => 'Children Ministry', 'slug' => Str::slug('Children Ministry'), 'type' => 'classroom'], 
-        ];
-        // Categoria de Event
-        $Eventcategories = [
-            ['name'=> 'Children Ministry', 'slug'=> Str::slug('Children Ministry'), 'type'=> 'event'],
-            ['name'=> 'Youth Ministry', 'slug'=> Str::slug('Youth Ministry'), 'type'=> 'event'],
-            ['name'=> 'Adult Ministry', 'slug'=> Str::slug('Adult Ministry'), 'type'=> 'event'],
-            ['name'=> 'Community Service', 'slug'=> Str::slug('Community Service'), 'type'=> 'event'],
-        ];
-        // Categoria de Media
-        $Mediacategories = [
-            ['name'=> 'Music', 'slug'=> Str::slug('Music'), 'type'=> 'media'],
-            ['name'=> 'Video', 'slug'=> Str::slug('Video'), 'type'=> 'media'],
-            ['name'=> 'Podcast', 'slug'=> Str::slug('Podcast'), 'type'=> 'media'],
-            ['name'=> 'Blog', 'slug'=> Str::slug('Blog'), 'type'=> 'media'],
-            ['name'=> 'Worship Service', 'slug'=> Str::slug('Worship Service'), 'type'=> 'media'],
-            ['name'=> 'Live Stream', 'slug'=> Str::slug('Live Stream'), 'type'=> 'media'],
-        ];
-
-        $churchs->each(function ($church) use ($Postcategories, $Classroomcategories, $Eventcategories, $Mediacategories) {
-            foreach ($Postcategories as $category) {
-                $church->categories()->updateOrCreate(
-                    ['slug' => $category['slug']],
-                    ['name' => $category['name'], 'type' => $category['type']]
-                );
-            }
-            foreach ($Classroomcategories as $category) {
-                $church->categories()->updateOrCreate(
-                    ['slug' => $category['slug']],
-                    ['name' => $category['name'], 'type' => $category['type']]
-                );
-            }
-            foreach ($Eventcategories as $category) {
-                $church->categories()->updateOrCreate(
-                    ['slug' => $category['slug']],
-                    ['name' => $category['name'], 'type' => $category['type']]
-                );
-            }
-            foreach ($Mediacategories as $category) {
-                $church->categories()->updateOrCreate(
-                    
-                    ['slug' => $category['slug']],
-                    ['name' => $category['name'], 'type' => $category['type']]
-                );
-            }
+        Church::query()->each(function (Church $church): void {
+            $this->seedCategories($church);
+            $this->seedSettings($church);
         });
+    }
+
+    private function seedCategories(Church $church): void
+    {
+        $categorySets = [
+            CategoryType::POST->value => ['Avisos', 'Testemunhos', 'Devocionais', 'Comunidade'],
+            CategoryType::EVENT->value => ['Culto', 'Jovens', 'Kids', 'Casais', 'Ação social'],
+            CategoryType::MEDIA->value => ['Galeria', 'Culto ao vivo', 'Música', 'Vídeo'],
+            CategoryType::FORM->value => ['Inscrições', 'Visitantes', 'Voluntariado', 'Intercessão'],
+            CategoryType::LIBRARY->value => ['Bíblia', 'Estudo', 'Devocional', 'Material de apoio'],
+            CategoryType::CLASSROOM->value => ['Kids', 'Adolescentes', 'Adultos', 'Liderança'],
+        ];
+
+        foreach ($categorySets as $type => $categories) {
+            foreach ($categories as $name) {
+                $church->categories()->updateOrCreate(
+                    ['slug' => Str::slug($name), 'type' => $type],
+                    ['name' => $name, 'type' => $type],
+                );
+            }
+        }
+    }
+
+    private function seedSettings(Church $church): void
+    {
+        Setting::query()->updateOrCreate(
+            ['church_id' => $church->id],
+            ['options' => [
+                'branding' => [
+                    'brand_name' => $church->name,
+                    'tagline' => 'Uma casa para toda a família.',
+                    'primary_color' => '#1e3a8a',
+                    'secondary_color' => '#0f766e',
+                    'accent_color' => '#f59e0b',
+                    'font_family' => 'Manrope, ui-sans-serif',
+                    'contact_email' => 'contato@'.Str::slug($church->name).'.test',
+                ],
+            ]],
+        );
+    }
+
+    private function seedAiModels(): void
+    {
+        foreach ([
+            ['provider' => 'openai', 'model_id' => 'gpt-4.1-mini', 'name' => 'GPT-4.1 Mini', 'position' => 1],
+            ['provider' => 'google', 'model_id' => 'gemini-2.5-flash', 'name' => 'Gemini 2.5 Flash', 'position' => 2],
+        ] as $model) {
+            AiModel::query()->updateOrCreate(
+                ['model_id' => $model['model_id']],
+                [...$model, 'status' => 'active', 'context_length' => 128000, 'input_modalities' => 'text,image', 'output_modalities' => 'text'],
+            );
+        }
     }
 }

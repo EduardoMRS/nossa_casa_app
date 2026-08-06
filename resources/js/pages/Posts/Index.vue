@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Plus, Edit, Trash, Eye, MessageCircle, Heart, Clock } from '@lucide/vue';
-
-defineOptions({});
+import { destroy } from '@/actions/App/Http/Controllers/PostController';
+import { create, edit, show } from '@/routes/posts';
 
 export interface PaginationLink {
     url: string | null;
@@ -34,180 +35,173 @@ export interface Post {
     translations: Record<string, string> | any[];
 }
 
-defineProps<{
+const props = defineProps<{
     posts: {
         data: Post[];
         links: PaginationLink[];
         from: number | null;
         to: number | null;
         total: number;
-    }
+    };
 }>();
+
+const page = usePage<{
+    branding?: {
+        primary_color?: string;
+        secondary_color?: string;
+        accent_color?: string;
+        font_family?: string;
+    };
+}>();
+
+const branding = computed(() => page.props.branding ?? {});
+
+const paletteStyle = computed(() => ({
+    '--brand-primary': branding.value.primary_color ?? '#2f6e79',
+    '--brand-secondary': branding.value.secondary_color ?? '#5f7d95',
+    '--brand-accent': branding.value.accent_color ?? '#c88b4a',
+    '--brand-font': branding.value.font_family ?? 'Manrope, ui-sans-serif',
+}));
 
 const deletePost = (id: string) => {
     if (confirm('Tem certeza que deseja excluir esta postagem?')) {
-        router.delete(`/post/${id}`);
+        router.delete(destroy.url({ post: id }));
     }
 };
 
-// Função para formatar a data ISO para o padrão brasileiro
 const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
+    if (!dateString) {
+        return null;
+    }
+
     return new Date(dateString).toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
-    }).replace(' de ', '/').replace('. de ', '/');
+        minute: '2-digit',
+    });
 };
 
-// Helper para extrair o título (prioriza a tradução se existir, senão usa o original)
 const getTitle = (post: Post) => {
     if (!Array.isArray(post.translations) && post.translations?.title) {
         return post.translations.title;
     }
+
     return post.title;
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-zinc-950 text-zinc-300 p-8">
-        <Head title="Listagem de Postagens" />
+    <div class="min-h-screen bg-[#f4f7fb] p-5 text-slate-800 dark:bg-slate-900 dark:text-slate-100 md:p-8" :style="paletteStyle">
+        <Head title="Postagens" />
 
-        <div class="max-w-7xl mx-auto">
-            <!-- Cabeçalho -->
-            <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-2xl font-bold text-zinc-100 tracking-wide">Postagens</h1>
-                    <p class="text-sm text-zinc-500 mt-1">Gerencie os conteúdos, autores e publicações.</p>
+        <div class="mx-auto max-w-7xl space-y-6">
+            <section class="rounded-3xl border border-slate-200/70 bg-gradient-to-r from-[color:var(--brand-primary)]/90 via-[color:var(--brand-secondary)]/80 to-[color:var(--brand-primary)]/85 p-6 text-white shadow-sm dark:border-slate-700/60 dark:from-[color:var(--brand-primary)]/55 dark:via-[color:var(--brand-secondary)]/45 dark:to-[color:var(--brand-primary)]/50">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 class="text-2xl font-black tracking-tight md:text-3xl" :style="{ fontFamily: 'var(--brand-font)' }">Postagens</h1>
+                        <p class="mt-1 text-sm text-slate-100/90">Gerencie conteudos, autores e publicacoes no mesmo fluxo editorial.</p>
+                    </div>
+                    <Link :href="create()" class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800">
+                        <Plus class="h-4 w-4" />
+                        Nova postagem
+                    </Link>
                 </div>
-                <Link 
-                    href="/posts/create" 
-                    class="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-zinc-950 px-4 py-2 rounded-sm font-semibold transition-colors shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-                >
-                    <Plus class="w-4 h-4" />
-                    Nova Postagem
-                </Link>
-            </div>
+            </section>
 
-            <!-- Tabela -->
-            <div class="bg-zinc-900 border border-zinc-800 rounded-sm overflow-x-auto">
-                <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-zinc-950 border-b border-zinc-800 text-green-400 uppercase tracking-wider text-xs">
-                        <tr>
-                            <th class="px-6 py-4 font-medium">Conteúdo</th>
-                            <th class="px-6 py-4 font-medium">Autor</th>
-                            <th class="px-6 py-4 font-medium">Engajamento</th>
-                            <th class="px-6 py-4 font-medium">Status / Data</th>
-                            <th class="px-6 py-4 font-medium text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-800">
-                        <tr v-for="post in posts.data" :key="post.id" class="hover:bg-zinc-800/40 transition-colors group">
-                            <!-- Conteúdo (Título e Slug) -->
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col max-w-md">
-                                    <span class="text-zinc-100 font-medium truncate" :title="getTitle(post)">
-                                        {{ getTitle(post) }}
-                                    </span>
-                                    <span class="text-xs font-mono text-zinc-500 truncate mt-0.5" :title="post.slug">
-                                        /{{ post.slug }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- Autor -->
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-green-500 border border-zinc-700">
-                                        {{ post.author.first_name.charAt(0) }}{{ post.author.last_name.charAt(0) }}
+            <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-sm">
+                        <thead class="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
+                            <tr>
+                                <th class="px-5 py-3 font-semibold">Conteudo</th>
+                                <th class="px-5 py-3 font-semibold">Autor</th>
+                                <th class="px-5 py-3 font-semibold">Engajamento</th>
+                                <th class="px-5 py-3 font-semibold">Status</th>
+                                <th class="px-5 py-3 text-right font-semibold">Acoes</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-700/80">
+                            <tr v-for="post in props.posts.data" :key="post.id" class="transition hover:bg-slate-50/80 dark:hover:bg-slate-700/20">
+                                <td class="px-5 py-4">
+                                    <p class="max-w-md truncate font-semibold text-slate-900 dark:text-slate-100">{{ getTitle(post) }}</p>
+                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">/{{ post.slug }}</p>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-slate-100 text-xs font-bold text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">
+                                            {{ post.author.first_name.charAt(0) }}{{ post.author.last_name.charAt(0) }}
+                                        </div>
+                                        <span class="text-slate-700 dark:text-slate-200">{{ post.author.first_name }} {{ post.author.last_name }}</span>
                                     </div>
-                                    <div class="flex flex-col">
-                                        <span class="text-zinc-300 text-sm">{{ post.author.first_name }} {{ post.author.last_name }}</span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex items-center gap-4 text-slate-600 dark:text-slate-300">
+                                        <span class="inline-flex items-center gap-1 text-xs">
+                                            <Heart class="h-4 w-4" />
+                                            {{ post.metrics.reactions_count }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 text-xs">
+                                            <MessageCircle class="h-4 w-4" />
+                                            {{ post.metrics.comments_count }}
+                                        </span>
                                     </div>
-                                </div>
-                            </td>
-
-                            <!-- Engajamento -->
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-4 text-zinc-400">
-                                    <div class="flex items-center gap-1.5" title="Reações">
-                                        <Heart class="w-4 h-4 text-zinc-500 group-hover:text-red-400 transition-colors" />
-                                        <span class="text-xs">{{ post.metrics.reactions_count }}</span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="inline-flex items-center gap-2 text-sm">
+                                        <Clock class="h-4 w-4" :style="{ color: post.published_at ? 'var(--brand-primary)' : 'var(--brand-secondary)' }" />
+                                        <span class="text-slate-700 dark:text-slate-200">{{ formatDate(post.published_at) ?? 'Rascunho' }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5" title="Comentários">
-                                        <MessageCircle class="w-4 h-4 text-zinc-500 group-hover:text-blue-400 transition-colors" />
-                                        <span class="text-xs">{{ post.metrics.comments_count }}</span>
+                                </td>
+                                <td class="px-5 py-4">
+                                    <div class="flex justify-end gap-2">
+                                        <Link :href="show({ post: post.id })" class="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:text-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white">
+                                            <Eye class="h-4 w-4" />
+                                        </Link>
+                                        <Link :href="edit({ post: post.id })" class="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:text-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white">
+                                            <Edit class="h-4 w-4" />
+                                        </Link>
+                                        <button @click="deletePost(post.id)" class="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 dark:border-red-500/40 dark:hover:bg-red-500/10">
+                                            <Trash class="h-4 w-4" />
+                                        </button>
                                     </div>
-                                </div>
-                            </td>
+                                </td>
+                            </tr>
 
-                            <!-- Status / Data -->
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <Clock class="w-4 h-4" :class="post.published_at ? 'text-green-500' : 'text-zinc-600'" />
-                                    <span :class="post.published_at ? 'text-zinc-300' : 'text-zinc-500 italic'">
-                                        {{ formatDate(post.published_at) ?? 'Rascunho' }}
-                                    </span>
-                                </div>
-                            </td>
+                            <tr v-if="!props.posts.data.length">
+                                <td colspan="5" class="px-5 py-12 text-center text-slate-500 dark:text-slate-300">
+                                    Nenhuma postagem encontrada. Crie a primeira para iniciar o fluxo.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-                            <!-- Ações -->
-                            <td class="px-6 py-4">
-                                <div class="flex justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                                    <Link :href="`/posts/${post.id}`" class="p-2 text-zinc-400 hover:text-green-400 hover:bg-zinc-800 rounded-sm transition-all" title="Visualizar">
-                                        <Eye class="w-4 h-4" />
-                                    </Link>
-                                    <Link :href="`/posts/${post.id}/edit`" class="p-2 text-zinc-400 hover:text-yellow-400 hover:bg-zinc-800 rounded-sm transition-all" title="Editar">
-                                        <Edit class="w-4 h-4" />
-                                    </Link>
-                                    <button @click="deletePost(post.id)" class="p-2 text-zinc-400 hover:text-red-500 hover:bg-zinc-800 rounded-sm transition-all" title="Excluir">
-                                        <Trash class="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+            <section v-if="props.posts.links.length > 3" class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <p class="text-sm text-slate-500 dark:text-slate-300">
+                    Mostrando {{ props.posts.from ?? 0 }} a {{ props.posts.to ?? 0 }} de {{ props.posts.total }} resultados
+                </p>
 
-                        <!-- Empty State -->
-                        <tr v-if="!posts.data.length">
-                            <td colspan="5" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center justify-center text-zinc-500">
-                                    <div class="w-12 h-12 rounded-full bg-zinc-800/50 flex items-center justify-center mb-3 border border-zinc-800">
-                                        <Plus class="w-6 h-6 text-zinc-600" />
-                                    </div>
-                                    <p class="text-base font-medium text-zinc-400">Nenhuma postagem encontrada</p>
-                                    <p class="text-sm mt-1">Crie sua primeira postagem para começar.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginação -->
-            <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4" v-if="posts.links.length > 3">
-                <span class="text-sm text-zinc-500">
-                    Mostrando <strong class="text-zinc-300">{{ posts.from ?? 0 }}</strong> a <strong class="text-zinc-300">{{ posts.to ?? 0 }}</strong> de <strong class="text-zinc-300">{{ posts.total }}</strong> resultados
-                </span>
-                
-                <div class="flex flex-wrap gap-1">
-                    <template v-for="(link, key) in posts.links" :key="key">
-                        <div 
-                            v-if="link.url === null" 
-                            class="px-3 py-1.5 text-sm border border-zinc-800 bg-zinc-950/50 text-zinc-600 rounded-sm cursor-not-allowed" 
-                            v-html="link.label" 
+                <div class="flex flex-wrap gap-2">
+                    <template v-for="(link, key) in props.posts.links" :key="key">
+                        <span
+                            v-if="link.url === null"
+                            class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                            v-html="link.label"
                         />
-                        <Link 
-                            v-else 
-                            :href="link.url" 
-                            class="px-3 py-1.5 text-sm border rounded-sm transition-colors"
-                            :class="link.active ? 'border-green-500 text-green-400 bg-green-500/10 font-medium' : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:border-green-500 hover:text-green-400'"
+                        <Link
+                            v-else
+                            :href="link.url"
+                            class="rounded-lg border px-3 py-1.5 text-sm"
+                            :class="link.active ? 'border-transparent text-white' : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'"
+                            :style="link.active ? { backgroundColor: 'var(--brand-primary)' } : undefined"
                             v-html="link.label"
                         />
                     </template>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </template>

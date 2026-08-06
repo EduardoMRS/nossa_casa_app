@@ -22,7 +22,7 @@ abstract class Controller
     {
         $role = $request->user()->role;
 
-        if (in_array($role, [UserRole::MEDIA, UserRole::ADMIN, UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if (in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::ADMIN, UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return;
         }
 

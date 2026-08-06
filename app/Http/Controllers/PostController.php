@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CategoryType;
 use App\Models\Post;
+use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class PostController extends Controller
 {
+    use ManagesChurchCategories;
+
     public function index()
     {
         // Utilizando o local scope "visible" criado no seu model
@@ -48,6 +52,7 @@ class PostController extends Controller
         abort_unless($validated['church_id'], 422, __('church.membership_post_create_required'));
 
         $post = Post::create($validated);
+        $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $validated['church_id']));
 
         return response()->json($post, 201);
     }
@@ -73,6 +78,9 @@ class PostController extends Controller
         ]);
 
         $post->update($validated);
+        if ($request->has('category_ids')) {
+            $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $post->church_id));
+        }
 
         return response()->json($post);
     }

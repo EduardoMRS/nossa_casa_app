@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Comment extends Model
 {
@@ -34,6 +35,11 @@ class Comment extends Model
         return $this->morphTo(Post::class, 'commentable');
     }
 
+    public function commentable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     public function media()
     {
         return $this->morphTo(Media::class, 'commentable');
@@ -53,7 +59,6 @@ class Comment extends Model
     {
         return $this->user?->details ?? null;
     }
-    
     // Auto-relacionamento polimórfico: Um comentário pode ter respostas (outros comentários)
     public function replies()
     {
@@ -65,7 +70,6 @@ class Comment extends Model
     {
         return $this->morphMany(Reaction::class, 'reactionable');
     }
-    
     public function getMetricsAttribute()
     {
         return [

@@ -11,7 +11,6 @@ class PrayerRequestController extends Controller
     {
         // Retorna o histórico de orações do usuário logado
         $requests = PrayerRequest::where('user_id', $request->user()->id)->paginate(15);
-        
         return response()->json($requests);
     }
 
@@ -22,10 +21,15 @@ class PrayerRequestController extends Controller
             'is_anonymous' => 'nullable|boolean',
         ]);
 
+        $isAnonymous = (bool) ($validated['is_anonymous'] ?? false);
+        unset($validated['is_anonymous']);
+
         // Vincula ao usuário caso ele esteja autenticado (suporta submissão pública e privada)
-        if ($request->user()) {
+        if ($request->user() && ! $isAnonymous) {
             $validated['user_id'] = $request->user()->id;
         }
+
+        $validated['church_id'] = $request->user()?->church?->id;
 
         $prayerRequest = PrayerRequest::create($validated);
 

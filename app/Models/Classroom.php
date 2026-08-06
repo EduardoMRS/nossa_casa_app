@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Classroom extends Model
 {
@@ -16,6 +17,8 @@ class Classroom extends Model
         'description',
         'min_age',
         'max_age',
+        'gender_restriction',
+        'is_kids',
         'max_members',
         'church_id',
         'teacher_id',
@@ -25,6 +28,13 @@ class Classroom extends Model
         'teacher_details',
         'translations',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_kids' => 'boolean',
+        ];
+    }
 
     public function church()
     {
@@ -58,9 +68,9 @@ class Classroom extends Model
     }
     
 
-    public function presences()
+    public function presences(): HasMany
     {
-        return $this->belongsToMany(User::class, 'classroom_presences')->withPivot('check_in', 'check_out');
+        return $this->hasMany(ClassroomPresence::class);
     }
 
     public function posts()

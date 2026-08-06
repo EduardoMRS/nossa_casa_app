@@ -46,44 +46,37 @@ Route::post('prayer-requests', [PrayerRequestController::class, 'store']);
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    
+
     // Acesso Geral (Membro e superiores)
     Route::middleware('role:member|leader|media|admin|superadmin|system')->group(function () {
         Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy']);
-        Route::apiResource('media', MediaController::class)
-            ->parameters(['media' => 'media'])
-            ->only(['store']);
-        
+
         Route::post('event/{event}/checkin', [EventController::class, 'checkin']);
-        
+
         // Histórico de pedidos de oração do usuário logado
         Route::get('prayer-requests', [PrayerRequestController::class, 'index']);
-        
+
         // Envio de formulário de inscrição para eventos
         Route::post('forms/{form}/responses', [FormResponseController::class, 'store']);
     });
-
-    Route::get('classroom/{classroom}', [ClassroomController::class, 'show']);
 
     // Acesso de Liderança (Líder ou superior)
     Route::middleware('role:leader|admin|superadmin|system')->group(function () {
         // Relacionamentos Pessoais
         Route::post('users/{user}/family-relationship', [UserRelationshipController::class, 'store']);
-        
+
         // Gestão de Aulas e Presenças
         Route::post('classrooms/{classroom}/check-in', [ClassroomController::class, 'checkIn']);
-        Route::delete('classrooms/{classroom}/check-out', [ClassroomController::class, 'checkOut']);
-        
+        Route::post('classrooms/{classroom}/check-out', [ClassroomController::class, 'checkOut']);
+
         // Categorização Genérica
         Route::post('items/{item_type}/{item}/categorize', [CategoryController::class, 'categorizeItem']);
     });
 
     // Acesso Estrito de Liderança (Apenas Leader) - Mantendo sua estrutura original
-    Route::middleware('role:leader')->group(function () {
+    Route::middleware('role:leader|admin|superadmin|system')->group(function () {
         Route::apiResource('forms', FormController::class);
-        Route::post('classroom', [ClassroomController::class, 'store']);
-        Route::put('classroom/{classroom}', [ClassroomController::class, 'update']);
-        Route::delete('classroom/{classroom}', [ClassroomController::class, 'destroy']);
+        Route::apiResource('classrooms', ClassroomController::class);
         Route::post('event', [EventController::class, 'store']);
         Route::put('event/{event}', [EventController::class, 'update']);
         Route::delete('event/{event}', [EventController::class, 'destroy']);
@@ -93,13 +86,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:media|leader|admin|superadmin|system')->group(function () {
         Route::apiResource('media', MediaController::class)
             ->parameters(['media' => 'media'])
-            ->only(['update', 'destroy']);
-        
+            ->only(['store', 'update', 'destroy']);
+
         Route::post('post', [PostController::class, 'store']);
         Route::put('post/{post}', [PostController::class, 'update']);
         Route::delete('post/{post}', [PostController::class, 'destroy']);
     });
-    
+
     // Acesso Exclusivo para Moderação de Mídia e Destaques (Media e Superiores)
     Route::middleware('role:media|admin|superadmin|system')->group(function () {
         Route::get('admin/media/pending', [MediaController::class, 'pending']);

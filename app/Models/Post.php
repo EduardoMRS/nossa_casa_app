@@ -73,6 +73,11 @@ class Post extends Model
         return $this->morphToMany(Media::class, 'mediable');
     }
 
+    public function forms()
+    {
+        return $this->morphToMany(Form::class, 'formable', 'form_relations');
+    }
+
     // Relacionamento Polimórfico: Um post pode ter vários comentários
     public function comments()
     {
@@ -86,14 +91,17 @@ class Post extends Model
 
     public function scopeVisible($query)
     {
-        $user = auth()->user();
-        $church = $user->church;
-        return $query->where('church_id', $church->id)
-                     ->where('published_at', '<=', now())
-                     ->where(function ($query) {
-                         $query->whereNull('expires_at')
-                               ->orWhere('expires_at', '>', now());
-                     });
+        $query->where('published_at', '<=', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+
+        if ($churchId = auth()->user()?->church?->id) {
+            $query->where('church_id', $churchId);
+        }
+
+        return $query;
     }
 
     public function scopeExpired($query)

@@ -1,160 +1,161 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3';
-import { Save, ArrowLeft } from '@lucide/vue';
 import { computed } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Save } from '@lucide/vue';
+import CategorySelector from '@/components/CategorySelector.vue';
+import MarkdownWysiwyg from '@/components/MarkdownWysiwyg.vue';
+import { useI18n } from '@/lib/i18n';
+import { store, update } from '@/actions/App/Http/Controllers/PostController';
 
-defineOptions({});
-
-export interface Post {
+type PostResource = {
     id?: string;
     title: string;
     slug: string;
     content: string;
     published_at?: string | null;
     expires_at?: string | null;
-    author_id?: string | null;
-    church_id?: string | null;
-    category?: string | null;
-}
+    category_ids?: string[];
+};
+
+type CategoryOption = {
+    id: string;
+    name: string;
+    slug: string;
+    type: string;
+};
 
 const props = defineProps<{
-    post?: Post;
-    available_categories: { id: string; name: string }[];
+    post?: PostResource;
+    categories: CategoryOption[];
 }>();
 
-const isEditing = computed(() => !!props.post?.id);
+const { t } = useI18n();
+const isEditing = computed(() => Boolean(props.post?.id));
+
+const toDateTimeLocal = (value?: string | null) => {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+};
 
 const form = useForm({
     title: props.post?.title ?? '',
     slug: props.post?.slug ?? '',
-    categories: props.post?.category ? [props.post?.category] : [],
     content: props.post?.content ?? '',
-    published_at: props.post?.published_at ?? '',
-    expires_at: props.post?.expires_at ?? '',
-    author_id: props.post?.author_id ?? '',
-    church_id: props.post?.church_id ?? '',
+    published_at: toDateTimeLocal(props.post?.published_at),
+    expires_at: toDateTimeLocal(props.post?.expires_at),
+    category_ids: props.post?.category_ids ? [...props.post.category_ids] : [],
 });
 
+const slugify = (value: string): string => {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+};
+
 const submit = () => {
-    if (isEditing.value) {
-        form.put(`/api/post/${props.post?.id}`);
-    } else {
-        form.post('/api/post');
+    if (!form.slug && form.title) {
+        form.slug = slugify(form.title);
     }
+
+    if (isEditing.value && props.post?.id) {
+        form.put(update.url({ post: props.post.id }), {
+            preserveScroll: true,
+        });
+
+        return;
+    }
+
+    form.post(store.url(), {
+        preserveScroll: true,
+    });
 };
 </script>
 
 <template>
-    <div class="min-h-screen bg-zinc-950 text-zinc-300 p-8">
-        <Head :title="isEditing ? 'Editar Postagem' : 'Criar Postagem'" />
+    <div class="min-h-screen bg-[#f9f4ed] text-[#3a2e22]">
+        <Head :title="isEditing ? t('posts.form.edit_title') : t('posts.form.create_title')" />
 
-        <div class="max-w-4xl mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold text-zinc-100 tracking-wide">
-                    <span class="text-green-400">/</span> {{ isEditing ? 'Editar Postagem' : 'Nova Postagem' }}
-                </h1>
-                <Link href="/posts" class="flex items-center gap-2 text-zinc-400 hover:text-green-400 transition-colors">
-                    <ArrowLeft class="w-4 h-4" />
-                    Voltar
+        <main class="mx-auto max-w-5xl px-5 py-8 md:px-8 md:py-10">
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#aa5b2f]">News Studio</p>
+                    <h1 class="text-3xl font-black [font-family:Manrope,ui-sans-serif]">
+                        {{ isEditing ? t('posts.form.edit_title') : t('posts.form.create_title') }}
+                    </h1>
+                    <p class="mt-1 text-sm text-[#6d5a4a]">{{ t('posts.form.subtitle') }}</p>
+                </div>
+
+                <Link href="/posts" class="inline-flex items-center gap-2 rounded-xl border border-[#e6d5c2] bg-white px-4 py-2 text-sm font-semibold text-[#5b422f]">
+                    <ArrowLeft class="h-4 w-4" />
+                    {{ t('nav.back') }}
                 </Link>
             </div>
 
-            <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-sm">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Título -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Título <span class="text-green-500">*</span></label>
-                            <input 
-                                v-model="form.title" 
-                                type="text" 
-                                maxlength="255"
-                                required
-                                class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                            />
-                            <div v-if="form.errors.title" class="text-red-500 text-xs">{{ form.errors.title }}</div>
-                        </div>
-
-                        <!-- Slug -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Slug <span class="text-green-500">*</span></label>
-                            <input 
-                                v-model="form.slug" 
-                                type="text" 
-                                maxlength="255"
-                                required
-                                class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm font-mono focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all"
-                            />
-                            <div v-if="form.errors.slug" class="text-red-500 text-xs">{{ form.errors.slug }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Categoria -->
+            <form @submit.prevent="submit" class="space-y-6 rounded-3xl border border-[#ecdfcf] bg-white p-6 shadow-sm md:p-8">
+                <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
-                        <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Categoria</label>
-                        <!-- change to multselect -->
-                        <select 
-                            v-model="form.categories" 
-                            multiple
-                            class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all cursor-pointer"
-                        >
-                            <option value="" disabled>Selecione uma categoria...</option>
-                            <option 
-                                v-for="category in available_categories" 
-                                :key="category.id" 
-                                :value="category.name"
-                            >
-                                {{ category.name }}
-                            </option>
-                        </select>
-                        <div v-if="form.errors.categories" class="text-red-500 text-xs">{{ form.errors.categories }}</div>
+                        <label class="text-sm font-bold text-[#5b422f]">{{ t('posts.form.title') }}</label>
+                        <input v-model="form.title" type="text" class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm" />
+                        <p v-if="form.errors.title" class="text-xs text-red-600">{{ form.errors.title }}</p>
                     </div>
 
-                    <!-- Conteúdo -->
                     <div class="space-y-2">
-                        <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Conteúdo <span class="text-green-500">*</span></label>
-                        <textarea 
-                            v-model="form.content" 
-                            rows="8"
-                            required
-                            class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all resize-y"
-                        ></textarea>
-                        <div v-if="form.errors.content" class="text-red-500 text-xs">{{ form.errors.content }}</div>
+                        <label class="text-sm font-bold text-[#5b422f]">{{ t('posts.form.slug') }}</label>
+                        <input v-model="form.slug" type="text" class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm" />
+                        <p v-if="form.errors.slug" class="text-xs text-red-600">{{ form.errors.slug }}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-bold text-[#5b422f]">{{ t('posts.form.content') }}</label>
+                        <span class="text-xs text-[#8f7561]">{{ t('posts.form.content_hint') }}</span>
+                    </div>
+                    <MarkdownWysiwyg v-model="form.content" />
+                    <p v-if="form.errors.content" class="text-xs text-red-600">{{ form.errors.content }}</p>
+                </div>
+
+                <CategorySelector
+                    v-model="form.category_ids"
+                    :categories="categories"
+                    label="Categorias da postagem"
+                    hint="Selecione as categorias desta igreja"
+                />
+
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-[#5b422f]">{{ t('posts.form.published_at') }}</label>
+                        <input v-model="form.published_at" type="datetime-local" class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm" />
+                        <p v-if="form.errors.published_at" class="text-xs text-red-600">{{ form.errors.published_at }}</p>
                     </div>
 
-                    <!-- Datas -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Publicação (Opcional)</label>
-                            <input 
-                                v-model="form.published_at" 
-                                type="datetime-local" 
-                                class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all [color-scheme:dark]"
-                            />
-                        </div>
-                        <div class="space-y-2">
-                            <label class="block text-sm font-medium text-zinc-400 uppercase tracking-wider">Expiração (Opcional)</label>
-                            <input 
-                                v-model="form.expires_at" 
-                                type="datetime-local" 
-                                class="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 px-4 py-2 rounded-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 transition-all [color-scheme:dark]"
-                            />
-                        </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-[#5b422f]">{{ t('posts.form.expires_at') }}</label>
+                        <input v-model="form.expires_at" type="datetime-local" class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm" />
+                        <p v-if="form.errors.expires_at" class="text-xs text-red-600">{{ form.errors.expires_at }}</p>
                     </div>
+                </div>
 
-                    <!-- Botão de Ação -->
-                    <div class="pt-4 flex justify-end">
-                        <button 
-                            type="submit" 
-                            :disabled="form.processing"
-                            class="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-zinc-950 px-6 py-2 rounded-sm font-semibold transition-colors shadow-[0_0_10px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Save class="w-4 h-4" />
-                            {{ isEditing ? 'Atualizar' : 'Salvar' }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div class="flex justify-end pt-2">
+                    <button
+                        type="submit"
+                        :disabled="form.processing"
+                        class="inline-flex items-center gap-2 rounded-xl bg-[#a84d24] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#933f1b] disabled:opacity-60"
+                    >
+                        <Save class="h-4 w-4" />
+                        {{ isEditing ? t('posts.form.update') : t('posts.form.save') }}
+                    </button>
+                </div>
+            </form>
+        </main>
     </div>
 </template>

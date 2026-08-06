@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 
 class Form extends Model
 {
@@ -26,16 +26,28 @@ class Form extends Model
 
     protected $table = 'forms';
 
-    public function events() {
+    public function events()
+    {
         return $this->morphedByMany(Event::class, 'formable', 'form_relations');
     }
 
-    public function posts() {
+    public function posts()
+    {
         return $this->morphedByMany(Post::class, 'formable', 'form_relations');
     }
 
     public function responses() {
         return $this->hasMany(FormResponse::class);
+    }
+
+    public function categories()
+    {
+        return $this->morphToMany(Category::class, 'categorizable');
+    }
+
+    public function getCategoryAttribute()
+    {
+        return join(', ', $this->categories()->pluck('name')->toArray());
     }
 
     public function translations()
@@ -48,13 +60,4 @@ class Form extends Model
         return $this->translations()->pluck('content', 'translatable_column');
     }
 
-    public function categories()
-    {
-        return $this->morphToMany(Category::class, 'categorizable', 'category_relations');
-    }
-
-    public function getCategoryAttribute()
-    {
-        return join(', ', $this->categories()->pluck('name')->toArray());
-    }
 }

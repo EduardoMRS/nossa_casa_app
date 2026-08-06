@@ -1,15 +1,21 @@
-<?php // app/Http/Controllers/EventController.php
+<?php
+
+// app/Http/Controllers/EventController.php
 
 namespace App\Http\Controllers;
 
+use App\Enums\CategoryType;
+use App\Http\Requests\Event\StoreEventRequest;
+use App\Http\Requests\Event\UpdateEventRequest;
 use App\Models\Event;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use App\Traits\UploadsMedia;
+use App\Traits\ManagesChurchCategories;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
     use UploadsMedia;
+    use ManagesChurchCategories;
 
     public function index()
     {
@@ -18,19 +24,10 @@ class EventController extends Controller
         return response()->json($events);
     }
 
-    public function store(Request $request)
+    public function store(StoreEventRequest $request)
     {
         $user = auth()->user();
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:events',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
-            'description' => 'nullable|string',
-            'start_time' => 'required|date',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
-            'cover_path' => 'nullable'
-        ]);
+        $data = $request->validated();
 
         $data['church_id'] = $user->church->id ?? null;
         $data['author_id'] = $user->id;
@@ -42,6 +39,7 @@ class EventController extends Controller
         }
 
         $event = Event::create($data);
+        $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $data['church_id']));
 
         return response()->json($event, 201);
     }
@@ -53,21 +51,12 @@ class EventController extends Controller
         return response()->json($event);
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateEventRequest $request, string $id)
     {
         $event = Event::findOrFail($id);
         $this->ensureChurchAccess($request, $event->church_id);
 
-        $validated = $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('events')->ignore($event->id)],
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
-            'description' => 'nullable|string',
-            'start_time' => 'sometimes|required|date',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
-            'cover_path' => 'sometimes|nullable', 
-        ]);
+        $validated = $request->validated();
 
         if (array_key_exists('cover_path', $validated)) {
             $file = $request->file('cover_path') ?? $request->input('cover_path');
@@ -75,6 +64,9 @@ class EventController extends Controller
         }
 
         $event->update($validated);
+        if ($request->has('category_ids')) {
+            $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $event->church_id));
+        }
 
         return response()->json($event);
     }
@@ -83,19 +75,26 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($id);
         $this->ensureChurchAccess(request(), $event->church_id);
-        
+
         // Opcional: deletar o arquivo cover ao excluir o evento
         // if ($event->cover_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($event->cover_path);
-        
+
         $event->delete();
 
         return response()->json(null, 204);
     }
 
-     public function checkin(Request $request, string $id)
+    public function checkin(Request $request, string $id)
     {
         $event = Event::findOrFail($id);
         $user = $request->user();
+        $this->ensureChurchAccess($request, $event->church_id);
+
+        abort_unless(
+            $event->users()->whereKey($user->id)->exists(),
+            422,
+            'Event registration is required before check-in.'
+        );
 
         // Check if the user has already checked in
         if ($event->confirmations()->where('user_id', $user->id)->exists()) {

@@ -1,0 +1,219 @@
+{
+    "locale": {
+        "switcher": "Idioma"
+    },
+    "nav": {
+        "home": "Home",
+        "events": "Events",
+        "gallery": "Gallery",
+        "back": "Back",
+        "dashboard": "Dashboard",
+        "login": "Entrar"
+    },
+    "actions": {
+        "create": "Create",
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "update": "Update",
+        "upload": "Upload",
+        "delete": "Delete"
+    },
+    "home": {
+        "meta_title": "Home",
+        "hero": {
+            "kicker": "Comunidade viva",
+            "title": "Bem-vindo ao ecossistema Nossa Casa",
+            "description": "Agenda, conteudo e inscricoes conectados em uma experiencia unica para membros, lideres e equipe de midia.",
+            "cta_events": "Explorar eventos",
+            "cta_gallery": "Ver galeria"
+        },
+        "stats": {
+            "events": "Eventos",
+            "gallery": "Midias na galeria",
+            "posts": "Posts e avisos"
+        },
+        "featured": {
+            "kicker": "Destaques",
+            "title": "Proximos eventos",
+            "view_all": "Ver todos",
+            "view_detail": "Ver detalhe"
+        },
+        "latest_posts": {
+            "kicker": "Comunicacao",
+            "title": "Ultimos avisos"
+        }
+    },
+    "events": {
+        "shared": {
+            "community": "Comunidade",
+            "start": "Inicio",
+            "end": "Fim"
+        },
+        "index": {
+            "meta_title": "Eventos",
+            "hero": {
+                "kicker": "Agenda da comunidade",
+                "title": "Eventos em destaque e proximos encontros",
+                "description": "Esta tela ja esta conectada com o backend e lista eventos reais cadastrados no sistema."
+            },
+            "no_description": "Sem descricao cadastrada.",
+            "view_details": "Ver detalhes",
+            "pagination": "Mostrando {from} - {to} de {total} eventos"
+        },
+        "show": {
+            "register": "Inscrever-se agora",
+            "manage_registration": "Gerenciar inscricao",
+            "registrations_unavailable": "Inscricoes ainda nao disponiveis",
+            "back_to_events": "Voltar para eventos",
+            "about": "Sobre o evento",
+            "registration": "Inscricao",
+            "categories": "Categorias",
+            "form_not_configured": "Formulario principal ainda nao configurado para este evento."
+        },
+        "register": {
+            "title": "Inscricao no evento",
+            "back_to_event": "Voltar para detalhe do evento",
+            "already_registered": "Sua inscricao ja foi registrada. Atualize os dados se precisar.",
+            "login_required": "Para enviar sua inscricao, faca login primeiro.",
+            "submit": "Enviar inscricao",
+            "submitting": "Enviando...",
+            "success": "Inscricao enviada com sucesso.",
+            "error": "Nao foi possivel enviar a inscricao. Tente novamente.",
+            "schema_empty": "Este formulario ainda nao possui campos configurados.",
+            "select": "Selecione",
+            "invalid_field": "Campo invalido",
+            "mark_option": "Marcar opcao",
+            "until": "ate"
+        },
+        "form": {
+            "create_title": "Create Event",
+            "edit_title": "Edit Event",
+            "subtitle": "Describe your event with rich formatting and publish it for your church.",
+            "title": "Title",
+            "slug": "Slug",
+            "description": "Description",
+            "start_time": "Start date and time",
+            "end_time": "End date and time",
+            "cover": "Cover image",
+            "cover_hint": "Recommended: landscape image, at least 1280x720.",
+            "description_hint": "Use Markdown or WYSIWYG mode to format the event content.",
+            "save": "Publish event",
+            "update": "Update event"
+        }
+    },
+    "posts": {
+        "form": {
+            "create_title": "Create Post",
+            "edit_title": "Edit Post",
+            "subtitle": "Write announcements and ministry updates with a rich editor.",
+            "title": "Title",
+            "slug": "Slug",
+            "content": "Content",
+            "published_at": "Publish at",
+            "expires_at": "Expires at",
+            "content_hint": "Use rich text or Markdown mode for better formatting.",
+            "save": "Publish post",
+            "update": "Update post"
+        }
+    },
+    "dashboard": {
+        "workspace": "Workspace",
+        "title": "Dashboard modular por role",
+        "current_profile": "Perfil atual",
+        "profile_context": "Perfil atual: {role}. Blocos e atalhos mudam de acordo com seu papel na plataforma.",
+        "modules": "Modulos",
+        "recommended_actions": "Acoes recomendadas",
+        "open_module": "Abrir modulo",
+        "roles": {
+            "member": "Membro",
+            "leader": "Lider",
+            "media": "Midia",
+            "admin": "Administrador",
+            "superadmin": "Super Admin",
+            "system": "Sistema"
+        },
+        "module": {
+            "organize_events": {
+                "title": "Organizar eventos",
+                "description": "Gerencie agenda, formularios e equipe de apoio."
+            },
+            "track_registrations": {
+                "title": "Acompanhar inscritos",
+                "description": "Veja respostas e status das inscricoes da comunidade."
+            },
+            "publish_updates": {
+                "title": "Publicar comunicados",
+                "description": "Use a area de posts para avisos ministeriais."
+            },
+            "gallery_curation": {
+                "title": "Curadoria de galeria",
+                "description": "Modere imagens e videos enviados pelos membros."
+            },
+            "visual_posts": {
+                "title": "Posts visuais",
+                "description": "Crie stories e cards para comunicacao semanal."
+            },
+            "coverage_schedule": {
+                "title": "Agenda de cobertura",
+                "description": "Planeje captacao de cada evento."
+            },
+            "platform_governance": {
+                "title": "Governanca da plataforma",
+                "description": "Acompanhe saude, pessoas e configuracoes da igreja."
+            },
+            "review_content": {
+                "title": "Revisar conteudos",
+                "description": "Valide publicacoes e materiais em destaque."
+            },
+            "monitor_events": {
+                "title": "Monitorar eventos",
+                "description": "Visao consolidada de agenda e participacao."
+            },
+            "my_events": {
+                "title": "Meus proximos eventos",
+                "description": "Encontre encontros e confirme sua participacao."
+            },
+            "community_gallery": {
+                "title": "Galeria da comunidade",
+                "description": "Reviva os melhores momentos das programacoes."
+            },
+            "account_settings": {
+                "title": "Configuracoes da conta",
+                "description": "Revise seus dados cadastrais e preferencias pessoais."
+            },
+            "security_settings": {
+                "title": "Seguranca da conta",
+                "description": "Atualize senha, 2FA e passkeys da sua conta."
+            },
+            "recent_updates": {
+                "title": "Atualizacoes recentes",
+                "description": "Acesse avisos e novidades da igreja."
+            },
+            "visual_identity": {
+                "title": "Identidade visual",
+                "description": "Ajuste logo, cores e contatos institucionais."
+            },
+            "user_management": {
+                "title": "Gestao de usuarios",
+                "description": "Acompanhe perfis, papeis e acessos do sistema."
+            },
+            "multicongregation": {
+                "title": "Multicongregacoes",
+                "description": "Administre matriz e filiais de forma centralizada."
+            },
+            "logs_metrics": {
+                "title": "Logs e metricas",
+                "description": "Acesse indicadores e visao operacional da plataforma."
+            }
+        },
+        "kpis": {
+            "events": "Eventos",
+            "gallery": "Galeria",
+            "posts": "Posts"
+        }
+    },
+    "editor": {
+        "label": "Rich content editor"
+    }
+}

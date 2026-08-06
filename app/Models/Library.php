@@ -21,6 +21,11 @@ class Library extends Model
         'translations',
     ];
 
+    public function categories()
+    {
+        return $this->morphToMany(Category::class, 'categorizable');
+    }
+
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translatable');

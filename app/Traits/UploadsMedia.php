@@ -2,18 +2,18 @@
 
 namespace App\Traits;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 trait UploadsMedia
 {
     /**
      * Lida com o upload de um arquivo, salvando via Storage e gerando o path.
      *
-     * @param UploadedFile|string|null $file Arquivo ou caminho do arquivo a ser enviado
-     * @param string $directory Diretório base no Storage (ex: 'events/covers')
-     * @param string|null $oldPath Caminho do arquivo antigo para ser substituído (opcional)
+     * @param  UploadedFile|string|null  $file  Arquivo ou caminho do arquivo a ser enviado
+     * @param  string  $directory  Diretório base no Storage (ex: 'events/covers')
+     * @param  string|null  $oldPath  Caminho do arquivo antigo para ser substituído (opcional)
      * @return string|null Retorna o caminho do arquivo salvo ou null se a imagem for removida/ausente
      */
     protected function handleMediaUpload(UploadedFile|string|null $file, string $directory, ?string $oldPath = null): ?string
@@ -23,6 +23,7 @@ trait UploadsMedia
             if ($oldPath && Storage::disk('public')->exists($oldPath)) {
                 Storage::disk('public')->delete($oldPath);
             }
+
             return null;
         }
 
@@ -39,19 +40,29 @@ trait UploadsMedia
                 Storage::disk('public')->delete($oldPath);
             }
             $path = $file->store($directory, 'public');
-            
         } elseif (is_string($file)) {
             $fileData = getFileMetadata($file);
-            
+
             if ($fileData['exists']) {
                 if ($oldPath && Storage::disk('public')->exists($oldPath)) {
                     Storage::disk('public')->delete($oldPath);
                 }
-                
-                // Pega o resource, salva via putFile e fecha o stream
+
                 $resource = $fileData['handler']();
-                $path = Storage::disk('public')->putFile($directory, $resource);
-                
+                $extension = strtolower(pathinfo((string) $fileData['name'], PATHINFO_EXTENSION));
+                $filename = Str::uuid()->toString();
+
+                if ($extension !== '') {
+                    $filename .= '.'.$extension;
+                }
+
+                $path = $directory.'/'.$filename;
+                $stored = Storage::disk('public')->put($path, $resource);
+
+                if (! $stored) {
+                    $path = null;
+                }
+
                 if (is_resource($resource)) {
                     fclose($resource);
                 }
