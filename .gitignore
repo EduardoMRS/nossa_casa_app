@@ -40,3 +40,4 @@ AllModels.php
 AllMigrations.php
 docs/api.json
 public/
+laravel
