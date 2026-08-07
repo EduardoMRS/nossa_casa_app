@@ -8,9 +8,12 @@ import {
     MessageCircle,
     Heart,
     Clock,
+    Tags,
 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { destroy } from '@/actions/App/Http/Controllers/PostController';
+import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
+import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import { useI18n } from '@/lib/i18n';
 import { create, edit, show } from '@/routes/posts';
 
@@ -52,8 +55,10 @@ const props = defineProps<{
         to: number | null;
         total: number;
     };
+    categories: ManagedCategory[];
 }>();
 const { locale, t } = useI18n();
+const categoriesOpen = ref(false);
 
 const page = usePage<{
     branding?: {
@@ -114,7 +119,7 @@ const getTitle = (post: Post) => {
 
         <div class="mx-auto max-w-7xl space-y-6">
             <section
-                class="rounded-3xl border border-slate-200/70 bg-gradient-to-r from-[color:var(--brand-primary)]/90 via-[color:var(--brand-secondary)]/80 to-[color:var(--brand-primary)]/85 p-6 text-white shadow-sm dark:border-slate-700/60 dark:from-[color:var(--brand-primary)]/55 dark:via-[color:var(--brand-secondary)]/45 dark:to-[color:var(--brand-primary)]/50"
+                class="rounded-2xl border border-indigo-900 bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white shadow-sm"
             >
                 <div
                     class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
@@ -130,13 +135,22 @@ const getTitle = (post: Post) => {
                             {{ t('posts.index.description') }}
                         </p>
                     </div>
-                    <Link
-                        :href="create()"
-                        class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800"
-                    >
-                        <Plus class="h-4 w-4" />
-                        {{ t('posts.index.new') }}
-                    </Link>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold"
+                            @click="categoriesOpen = true"
+                        >
+                            <Tags class="size-4" />{{
+                                t('admin.categories.title')
+                            }}</button
+                        ><Link
+                            :href="create()"
+                            class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800"
+                        >
+                            <Plus class="h-4 w-4" />
+                            {{ t('posts.index.new') }}
+                        </Link>
+                    </div>
                 </div>
             </section>
 
@@ -327,5 +341,11 @@ const getTitle = (post: Post) => {
                 </div>
             </section>
         </div>
+        <CategoryManagerModal
+            :open="categoriesOpen"
+            category-type="post"
+            :categories="categories"
+            @close="categoriesOpen = false"
+        />
     </div>
 </template>

@@ -13,6 +13,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PrayerRequestController;
+use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRelationshipController;
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function () {
     // Acesso Geral (Membro e superiores)
     Route::middleware('role:member|leader|media|admin|superadmin|system')->group(function () {
         Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy']);
+        Route::post('reactions', [ReactionController::class, 'store']);
+        Route::delete('reactions/{reaction}', [ReactionController::class, 'destroy']);
 
         Route::post('event/{event}/checkin', [EventController::class, 'checkin']);
 
@@ -84,6 +87,7 @@ Route::middleware('auth')->group(function () {
 
     // Acesso de Mídia / Comunicação
     Route::middleware('role:media|leader|admin|superadmin|system')->group(function () {
+        Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
         Route::apiResource('media', MediaController::class)
             ->parameters(['media' => 'media'])
             ->only(['store', 'update', 'destroy']);
@@ -105,7 +109,6 @@ Route::middleware('auth')->group(function () {
         Route::apiResource('church', ChurchController::class)->except(['index', 'show']);
         Route::apiResource('community', CommunityController::class)->except(['index', 'show']);
         Route::apiResource('user', UserController::class);
-        Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
         Route::apiResource('settings', SettingController::class);
         Route::apiResource('networks', NetworkController::class);
     });

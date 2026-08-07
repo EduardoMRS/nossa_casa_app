@@ -110,4 +110,9 @@ class Church extends Model
     {
         return $this->belongsTo(Community::class);
     }
+
+    public function library()
+    {
+        return $this->hasMany(Library::class);
+    }
 }

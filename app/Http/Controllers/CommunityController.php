@@ -4,6 +4,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Community;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
@@ -24,6 +25,8 @@ class CommunityController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureSystemAccess($request);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:communities',
@@ -53,6 +56,7 @@ class CommunityController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $this->ensureSystemAccess($request);
         $community = Community::findOrFail($id);
 
         $validated = $request->validate([
@@ -73,11 +77,17 @@ class CommunityController extends Controller
         return response()->json($community);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
+        $this->ensureSystemAccess($request);
         $community = Community::findOrFail($id);
         $community->delete();
 
         return response()->json(null, 204);
+    }
+
+    private function ensureSystemAccess(Request $request): void
+    {
+        abort_unless($request->user()?->role === UserRole::SYSTEM, 403);
     }
 }

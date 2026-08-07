@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
-import { index as eventsIndex, register as registerEvent } from '@/routes/events';
 import { useI18n } from '@/lib/i18n';
+import {
+    index as eventsIndex,
+    register as registerEvent,
+} from '@/routes/events';
 
 type EventDetail = {
     id: string;
@@ -61,14 +65,27 @@ const coverStyle = computed(() => {
 <template>
     <Head :title="event.title" />
 
-    <div class="min-h-screen bg-[#f5f6f2] text-[#111b2d]">
+    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
         <PublicHeader active="events" />
 
-        <main class="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-10">
-            <section class="relative overflow-hidden rounded-3xl p-7 text-white md:p-10" :style="coverStyle">
-                <p class="mb-2 text-xs uppercase tracking-[0.2em] text-[#b9ece6]">{{ event.church?.name ?? t('events.shared.community') }}</p>
-                <h1 class="max-w-4xl text-3xl font-black [font-family:Manrope,ui-sans-serif] md:text-5xl">{{ event.title }}</h1>
-                <p class="mt-3 max-w-3xl text-sm text-[#d8f6ef] md:text-base">{{ dateRange }}</p>
+        <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+            <section
+                class="relative overflow-hidden rounded-3xl p-7 text-white md:p-10"
+                :style="coverStyle"
+            >
+                <p
+                    class="mb-2 text-xs tracking-[0.2em] text-[#b9ece6] uppercase"
+                >
+                    {{ event.church?.name ?? t('events.shared.community') }}
+                </p>
+                <h1
+                    class="max-w-4xl [font-family:Manrope,ui-sans-serif] text-3xl font-black md:text-5xl"
+                >
+                    {{ event.title }}
+                </h1>
+                <p class="mt-3 max-w-3xl text-sm text-[#d8f6ef] md:text-base">
+                    {{ dateRange }}
+                </p>
 
                 <div class="mt-6 flex flex-wrap gap-3">
                     <Link
@@ -76,7 +93,11 @@ const coverStyle = computed(() => {
                         :href="registerEvent({ event: event.slug })"
                         class="rounded-full bg-white px-5 py-2.5 text-sm font-extrabold text-[#0b3d44]"
                     >
-                        {{ registration.already_registered ? t('events.show.manage_registration') : t('events.show.register') }}
+                        {{
+                            registration.already_registered
+                                ? t('events.show.manage_registration')
+                                : t('events.show.register')
+                        }}
                     </Link>
                     <span
                         v-else
@@ -94,21 +115,46 @@ const coverStyle = computed(() => {
             </section>
 
             <section class="mt-7 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-                <article class="rounded-3xl border border-[#d8e2ec] bg-white p-6 md:p-8">
-                    <h2 class="mb-4 text-xl font-black [font-family:Manrope,ui-sans-serif]">{{ t('events.show.about') }}</h2>
-                    <div class="prose prose-slate max-w-none text-[#23384d]" v-html="event.description_html" />
+                <article
+                    class="rounded-3xl border border-[#d8e2ec] bg-white p-6 md:p-8"
+                >
+                    <h2
+                        class="mb-4 [font-family:Manrope,ui-sans-serif] text-xl font-black"
+                    >
+                        {{ t('events.show.about') }}
+                    </h2>
+                    <div
+                        class="prose prose-slate max-w-none text-[#23384d]"
+                        v-html="event.description_html"
+                    />
                 </article>
 
                 <aside class="space-y-4">
-                    <section class="rounded-2xl border border-[#d8e2ec] bg-white p-5">
-                        <p class="text-xs uppercase tracking-[0.14em] text-[#5b7388]">{{ t('events.show.registration') }}</p>
+                    <section
+                        class="rounded-2xl border border-[#d8e2ec] bg-white p-5"
+                    >
+                        <p
+                            class="text-xs tracking-[0.14em] text-[#5b7388] uppercase"
+                        >
+                            {{ t('events.show.registration') }}
+                        </p>
                         <p class="mt-2 text-sm text-[#3f566c]">
-                            {{ registration.form_title ?? t('events.show.form_not_configured') }}
+                            {{
+                                registration.form_title ??
+                                t('events.show.form_not_configured')
+                            }}
                         </p>
                     </section>
 
-                    <section v-if="event.categories?.length" class="rounded-2xl border border-[#d8e2ec] bg-white p-5">
-                        <p class="text-xs uppercase tracking-[0.14em] text-[#5b7388]">{{ t('events.show.categories') }}</p>
+                    <section
+                        v-if="event.categories?.length"
+                        class="rounded-2xl border border-[#d8e2ec] bg-white p-5"
+                    >
+                        <p
+                            class="text-xs tracking-[0.14em] text-[#5b7388] uppercase"
+                        >
+                            {{ t('events.show.categories') }}
+                        </p>
                         <div class="mt-3 flex flex-wrap gap-2">
                             <span
                                 v-for="category in event.categories"
@@ -122,5 +168,6 @@ const coverStyle = computed(() => {
                 </aside>
             </section>
         </main>
+        <PublicFooter />
     </div>
 </template>

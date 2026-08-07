@@ -28,6 +28,7 @@ type CategoryOption = {
 const props = defineProps<{
     event?: EventResource;
     categories: CategoryOption[];
+    returnUrl: string;
 }>();
 
 const { t } = useI18n();
@@ -189,7 +190,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <Link
-                    href="/events"
+                    :href="props.returnUrl"
                     class="inline-flex items-center gap-2 rounded-xl border border-[#c4d2df] bg-white px-4 py-2 text-sm font-semibold text-[#23384f]"
                 >
                     <ArrowLeft class="h-4 w-4" />

@@ -11,6 +11,7 @@ use App\Models\Media;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
@@ -47,6 +48,12 @@ class CategoryController extends Controller
             ]),
         ]);
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.category_created')]);
+
+            return back();
+        }
+
         return response()->json($category, 201);
     }
 
@@ -60,13 +67,25 @@ class CategoryController extends Controller
             'type' => ['sometimes', 'required', Rule::enum(CategoryType::class)],
         ]));
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.category_updated')]);
+
+            return back();
+        }
+
         return response()->json($category);
     }
 
-    public function destroy(Category $category)
+    public function destroy(Request $request, Category $category)
     {
-        $this->ensureChurchAccess(request(), $category->church_id);
+        $this->ensureChurchAccess($request, $category->church_id);
         $category->delete();
+
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.category_deleted')]);
+
+            return back();
+        }
 
         return response()->noContent();
     }

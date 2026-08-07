@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
@@ -17,6 +17,7 @@ class UserProfile extends Model
         'community_id',
         'avatar_path',
         'gender',
+        'medical_notes',
     ];
 
     protected $table = 'user_profiles';

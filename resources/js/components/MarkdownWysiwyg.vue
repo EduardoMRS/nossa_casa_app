@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Editor from '@toast-ui/editor';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import '@toast-ui/editor/dist/toastui-editor.css';
 
 type Props = {

@@ -19,7 +19,8 @@ test('a minor receives a one-time checkout pin and requires it for classroom che
     $checkIn = $this->actingAs($leader)->postJson("/api/classrooms/{$classroom->id}/check-in", ['user_id' => $child->id]);
     $checkIn->assertSuccessful()->assertJsonPath('message', __('checkin.checkin_success'));
     $pin = $checkIn->json('checkout_pin');
-    expect($pin)->toMatch('/^\d{6}$/');
+    expect($pin)->toMatch('/^\d{6}$/')
+        ->and(ClassroomPresence::query()->where('classroom_id', $classroom->id)->first()?->checkout_pin_code)->toBe($pin);
 
     $this->actingAs($leader)->postJson("/api/classrooms/{$classroom->id}/check-out", ['user_id' => $child->id, 'pin' => '000000'])
         ->assertStatus(422)
@@ -27,5 +28,7 @@ test('a minor receives a one-time checkout pin and requires it for classroom che
 
     $this->actingAs($leader)->postJson("/api/classrooms/{$classroom->id}/check-out", ['user_id' => $child->id, 'pin' => $pin])->assertSuccessful();
 
-    expect(ClassroomPresence::query()->where('classroom_id', $classroom->id)->whereNotNull('check_out')->exists())->toBeTrue();
+    $presence = ClassroomPresence::query()->where('classroom_id', $classroom->id)->whereNotNull('check_out')->first();
+    expect($presence)->not->toBeNull()
+        ->and($presence?->checkout_pin_code)->toBeNull();
 });

@@ -11,8 +11,8 @@ const localeStorageKey = 'ncapp.locale';
 const localeCookieKey = 'ncapp_locale';
 
 const catalogs: Record<SupportedLocale, Catalog> = {
-    en: en as Catalog,
-    pt: pt as Catalog,
+    en: en as unknown as Catalog,
+    pt: pt as unknown as Catalog,
 };
 
 const detectLocale = (): SupportedLocale => {

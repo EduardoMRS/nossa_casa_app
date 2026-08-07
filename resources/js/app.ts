@@ -1,10 +1,10 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import axios from 'axios';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
-import axios from 'axios';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -13,10 +13,21 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
-        const publicPages = ['Home', 'Welcome', 'Events/Index', 'Events/Show', 'Events/Register', 'Gallery/Index'];
+        const publicPages = [
+            'Home',
+            'Welcome',
+            'Events/Index',
+            'Events/Show',
+            'Events/Register',
+            'Posts/PublicShow',
+            'Gallery/Index',
+            'Library/Index',
+        ];
 
         switch (true) {
             case publicPages.includes(name):
+                return null;
+            case name === 'settings/Workspace':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -30,7 +41,6 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
-
 
 // This will set light / dark mode on page load...
 initializeTheme();

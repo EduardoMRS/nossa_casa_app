@@ -102,6 +102,7 @@ class ClassroomController extends Controller
             $checkoutPin = (string) random_int(100000, 999999);
             $presence->update([
                 'checkout_pin' => Hash::make($checkoutPin),
+                'checkout_pin_code' => $checkoutPin,
                 'pin_generated_at' => now(),
             ]);
         }
@@ -130,7 +131,7 @@ class ClassroomController extends Controller
             throw ValidationException::withMessages(['pin' => 'O PIN de retirada informado não confere.']);
         }
 
-        $presence->update(['check_out' => now()]);
+        $presence->update(['check_out' => now(), 'checkout_pin_code' => null]);
 
         return response()->json(['message' => __('checkin.checkout_success')]);
     }

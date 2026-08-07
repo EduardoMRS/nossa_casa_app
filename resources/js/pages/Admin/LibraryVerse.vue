@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    FileText,
+    Pencil,
+    Plus,
+    Sparkles,
+    Tags,
+    Trash2,
+    X,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
+import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
-import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
 
 type VerseData = {
@@ -18,7 +24,6 @@ type VerseData = {
     version: string;
     has_record: boolean;
 };
-
 type LibraryItem = {
     id: string;
     title: string;
@@ -28,21 +33,21 @@ type LibraryItem = {
     preview_url: string | null;
     category_ids: string[];
 };
-
-type CategoryOption = {
-    id: string;
-    name: string;
-    slug: string;
-    type: string;
-};
-
 const props = defineProps<{
     verse: VerseData;
     libraries: LibraryItem[];
-    categories: CategoryOption[];
+    categories: ManagedCategory[];
 }>();
 const { t } = useI18n();
-
+const verseOpen = ref(false);
+const libraryOpen = ref(false);
+const categoriesOpen = ref(false);
+const editing = ref<LibraryItem | null>(null);
+const processing = ref(false);
+const errors = ref<Record<string, string>>({});
+const inputType = ref<'url' | 'file'>('file');
+const selectedFile = ref<File | null>(null);
+const localPreview = ref('');
 const verseForm = reactive({
     book: props.verse.book,
     chapter: String(props.verse.chapter || ''),
@@ -50,570 +55,420 @@ const verseForm = reactive({
     content: props.verse.content,
     version: props.verse.version,
 });
-
-const libraryForm = reactive({
+const form = reactive({
     title: '',
     description: '',
     type: '',
     file_path: '',
     category_ids: [] as string[],
 });
-
-const libraryErrors = ref<Record<string, string>>({});
-const verseErrors = ref<Record<string, string>>({});
-const processingLibrary = ref(false);
-const processingVerse = ref(false);
-const editingLibraryId = ref<string | null>(null);
-const libraryInputType = ref<'url' | 'file'>('url');
-const selectedLibraryFile = ref<File | null>(null);
-const selectedLibraryPreviewUrl = ref<string>('');
-
-const currentEditingLibrary = computed(() => {
-    if (!editingLibraryId.value) {
-        return null;
+const preview = computed(
+    () =>
+        localPreview.value ||
+        (inputType.value === 'url' ? form.file_path : '') ||
+        editing.value?.preview_url ||
+        '',
+);
+const revokePreview = (): void => {
+    if (localPreview.value) {
+        URL.revokeObjectURL(localPreview.value);
     }
 
-    return (
-        props.libraries.find(
-            (library) => library.id === editingLibraryId.value,
-        ) || null
-    );
-});
-
-const selectedLibraryLabel = computed(() => {
-    if (!editingLibraryId.value) {
-        return t('admin.library.new_item');
-    }
-
-    return (
-        props.libraries.find((library) => library.id === editingLibraryId.value)
-            ?.title || t('admin.library.edit_item')
-    );
-});
-
-const libraryPreviewSource = computed(() => {
-    if (libraryInputType.value === 'file') {
-        return (
-            selectedLibraryPreviewUrl.value ||
-            currentEditingLibrary.value?.preview_url ||
-            ''
-        );
-    }
-
-    if (libraryForm.file_path.trim()) {
-        return libraryForm.file_path.trim();
-    }
-
-    return currentEditingLibrary.value?.preview_url || '';
-});
-
-const revokeSelectedPreview = () => {
-    if (selectedLibraryPreviewUrl.value) {
-        URL.revokeObjectURL(selectedLibraryPreviewUrl.value);
-        selectedLibraryPreviewUrl.value = '';
-    }
+    localPreview.value = '';
 };
-
-const fillLibraryForm = (library: LibraryItem) => {
-    editingLibraryId.value = library.id;
-    libraryForm.title = library.title;
-    libraryForm.description = library.description || '';
-    libraryForm.type = library.type;
-    libraryForm.file_path = library.file_path || '';
-    libraryForm.category_ids = [...library.category_ids];
-    libraryInputType.value =
-        library.file_path && library.file_path.startsWith('http')
-            ? 'url'
-            : 'file';
-    selectedLibraryFile.value = null;
-    revokeSelectedPreview();
-    libraryErrors.value = {};
+const openLibrary = (item: LibraryItem | null = null): void => {
+    editing.value = item;
+    form.title = item?.title ?? '';
+    form.description = item?.description ?? '';
+    form.type = item?.type ?? '';
+    form.file_path = item?.file_path?.startsWith('http') ? item.file_path : '';
+    form.category_ids = [...(item?.category_ids ?? [])];
+    inputType.value = item?.file_path?.startsWith('http') ? 'url' : 'file';
+    selectedFile.value = null;
+    errors.value = {};
+    revokePreview();
+    libraryOpen.value = true;
 };
-
-const resetLibraryForm = () => {
-    editingLibraryId.value = null;
-    libraryForm.title = '';
-    libraryForm.description = '';
-    libraryForm.type = '';
-    libraryForm.file_path = '';
-    libraryForm.category_ids = [];
-    libraryInputType.value = 'url';
-    selectedLibraryFile.value = null;
-    revokeSelectedPreview();
-    libraryErrors.value = {};
-};
-
-const handleLibraryTypeChange = (event: Event) => {
-    const target = event.target as HTMLSelectElement;
-    libraryInputType.value = target.value === 'file' ? 'file' : 'url';
-
-    if (libraryInputType.value === 'url') {
-        selectedLibraryFile.value = null;
-        revokeSelectedPreview();
-    }
-};
-
-const handleLibraryFileChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0] ?? null;
-
-    selectedLibraryFile.value = file;
-    revokeSelectedPreview();
+const chooseFile = (event: Event): void => {
+    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    selectedFile.value = file;
+    revokePreview();
 
     if (file) {
-        selectedLibraryPreviewUrl.value = URL.createObjectURL(file);
-        libraryForm.file_path = file.name;
+        localPreview.value = URL.createObjectURL(file);
     }
 };
-
-const submitVerse = async () => {
-    processingVerse.value = true;
-    verseErrors.value = {};
-
-    try {
-        await router.put(
-            '/admin/biblioteca-versiculo/verse',
-            {
-                book: verseForm.book,
-                chapter: Number(verseForm.chapter),
-                verse: Number(verseForm.verse),
-                content: verseForm.content,
-                version: verseForm.version,
-            },
-            {
-                preserveScroll: true,
-                onError: (errors) => {
-                    verseErrors.value = errors as Record<string, string>;
-                },
-            },
-        );
-    } finally {
-        processingVerse.value = false;
-    }
-};
-
-const submitLibrary = async () => {
-    processingLibrary.value = true;
-    libraryErrors.value = {};
-
-    const payload = {
-        title: libraryForm.title,
-        description: libraryForm.description,
-        type: libraryForm.type,
-        file_path:
-            libraryInputType.value === 'file'
-                ? (selectedLibraryFile.value ?? libraryForm.file_path)
-                : libraryForm.file_path,
-        category_ids: libraryForm.category_ids,
+const saveLibrary = (): void => {
+    processing.value = true;
+    const payload: Record<string, any> = {
+        title: form.title,
+        description: form.description,
+        type: form.type,
+        category_ids: form.category_ids,
     };
 
-    try {
-        if (editingLibraryId.value) {
-            await router.put(
-                `/admin/biblioteca-versiculo/library/${editingLibraryId.value}`,
-                payload,
-                {
-                    forceFormData: true,
-                    preserveScroll: true,
-                    onSuccess: resetLibraryForm,
-                    onError: (errors) => {
-                        libraryErrors.value = errors as Record<string, string>;
-                    },
-                },
-            );
-        } else {
-            await router.post('/admin/biblioteca-versiculo/library', payload, {
-                forceFormData: true,
-                preserveScroll: true,
-                onSuccess: resetLibraryForm,
-                onError: (errors) => {
-                    libraryErrors.value = errors as Record<string, string>;
-                },
-            });
-        }
-    } finally {
-        processingLibrary.value = false;
-    }
-};
-
-const deleteLibrary = (library: LibraryItem) => {
-    if (!confirm(t('admin.library.delete_confirm', { title: library.title }))) {
-        return;
+    if (inputType.value === 'file' && selectedFile.value) {
+        payload.file_path = selectedFile.value;
     }
 
-    router.delete(`/admin/biblioteca-versiculo/library/${library.id}`, {
+    if (inputType.value === 'url') {
+        payload.file_path = form.file_path;
+    }
+
+    const options = {
+        forceFormData: true,
         preserveScroll: true,
-        onSuccess: () => {
-            if (editingLibraryId.value === library.id) {
-                resetLibraryForm();
-            }
+        onError: (value: Record<string, string>) => {
+            errors.value = value;
         },
-    });
-};
+        onSuccess: () => {
+            libraryOpen.value = false;
+        },
+        onFinish: () => {
+            processing.value = false;
+        },
+    };
 
-onBeforeUnmount(() => {
-    revokeSelectedPreview();
-});
+    if (editing.value) {
+        router.put(
+            `/admin/biblioteca-versiculo/library/${editing.value.id}`,
+            payload,
+            options,
+        );
+    } else {
+        router.post('/admin/biblioteca-versiculo/library', payload, options);
+    }
+};
+const saveVerse = (): void => {
+    processing.value = true;
+    router.put(
+        '/admin/biblioteca-versiculo/verse',
+        {
+            ...verseForm,
+            chapter: Number(verseForm.chapter),
+            verse: Number(verseForm.verse),
+        },
+        {
+            preserveScroll: true,
+            onError: (value) => {
+                errors.value = value;
+            },
+            onSuccess: () => {
+                verseOpen.value = false;
+            },
+            onFinish: () => {
+                processing.value = false;
+            },
+        },
+    );
+};
+const remove = (item: LibraryItem): void => {
+    if (confirm(t('admin.library.delete_confirm', { title: item.title }))) {
+        router.delete(`/admin/biblioteca-versiculo/library/${item.id}`, {
+            preserveScroll: true,
+        });
+    }
+};
+onBeforeUnmount(revokePreview);
 </script>
 
 <template>
     <Head :title="t('admin.library.title')" />
-
-    <div class="space-y-6 p-4 md:p-6">
-        <Heading
-            variant="small"
-            :title="t('admin.library.heading')"
-            :description="t('admin.library.description')"
-        />
-
-        <section class="grid gap-4 lg:grid-cols-2">
-            <article
-                class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm"
-            >
-                <div
-                    class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"
+    <main class="space-y-6 p-4 md:p-8">
+        <header
+            class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"
+        >
+            <div>
+                <p
+                    class="font-mono text-[10px] font-bold tracking-widest text-amber-300 uppercase"
                 >
-                    <div>
-                        <p
-                            class="text-xs font-semibold tracking-[0.14em] text-emerald-600 uppercase"
-                        >
-                            {{ t('admin.library.verse_of_day') }}
-                        </p>
-                        <h2 class="text-lg font-black text-slate-900">
-                            {{ t('admin.library.devotional_home') }}
-                        </h2>
-                    </div>
-                    <span
-                        class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700"
-                    >
-                        {{
-                            props.verse.has_record
-                                ? t('admin.library.active')
-                                : t('admin.library.no_record')
-                        }}
-                    </span>
-                </div>
-
-                <div class="mt-4 grid gap-4">
-                    <div class="grid gap-2">
-                        <Label for="verse_content">{{
-                            t('admin.library.verse_text')
-                        }}</Label>
-                        <textarea
-                            id="verse_content"
-                            v-model="verseForm.content"
-                            rows="5"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                        />
-                        <InputError :message="verseErrors.content" />
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-3">
-                        <div class="grid gap-2">
-                            <Label for="verse_book">{{
-                                t('admin.library.book')
-                            }}</Label>
-                            <Input id="verse_book" v-model="verseForm.book" />
-                            <InputError :message="verseErrors.book" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="verse_chapter">{{
-                                t('admin.library.chapter')
-                            }}</Label>
-                            <Input
-                                id="verse_chapter"
-                                v-model="verseForm.chapter"
-                                type="number"
-                                min="1"
-                            />
-                            <InputError :message="verseErrors.chapter" />
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="verse_verse">{{
-                                t('admin.library.verse')
-                            }}</Label>
-                            <Input
-                                id="verse_verse"
-                                v-model="verseForm.verse"
-                                type="number"
-                                min="1"
-                            />
-                            <InputError :message="verseErrors.verse" />
-                        </div>
-                    </div>
-
-                    <div class="grid gap-2 md:max-w-xs">
-                        <Label for="verse_version">{{
-                            t('admin.library.version')
-                        }}</Label>
-                        <Input id="verse_version" v-model="verseForm.version" />
-                        <InputError :message="verseErrors.version" />
-                    </div>
-
-                    <div>
-                        <CategorySelector
-                            v-model="libraryForm.category_ids"
-                            :categories="categories"
-                            :label="t('admin.library.categories')"
-                            :hint="t('admin.library.categories_hint')"
-                        />
-                        <Button
-                            :disabled="processingVerse"
-                            @click="submitVerse"
-                        >
-                            {{
-                                processingVerse
-                                    ? t('admin.common.saving')
-                                    : t('admin.library.update_verse')
-                            }}
-                        </Button>
-                    </div>
-                </div>
-            </article>
-
-            <article
-                class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm"
-            >
-                <div
-                    class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3"
+                    {{ t('admin.library.collection') }}
+                </p>
+                <h1 class="mt-2 text-3xl font-black">
+                    {{ t('admin.library.heading') }}
+                </h1>
+                <p class="mt-2 max-w-3xl text-sm text-indigo-100">
+                    {{ t('admin.library.description') }}
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    class="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-sm font-black"
+                    @click="verseOpen = true"
                 >
-                    <div>
-                        <p
-                            class="text-xs font-semibold tracking-[0.14em] text-indigo-600 uppercase"
-                        >
-                            {{ t('admin.library.collection') }}
-                        </p>
-                        <h2 class="text-lg font-black text-slate-900">
-                            {{ t('admin.library.registered_categories') }}
-                        </h2>
-                    </div>
-                    <span
-                        class="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-bold text-indigo-700"
-                        >{{
-                            t('admin.library.items_count', {
-                                count: props.libraries.length,
-                            })
-                        }}</span
-                    >
-                </div>
-
-                <form class="mt-4 grid gap-3" @submit.prevent="submitLibrary">
-                    <div class="grid gap-2">
-                        <Label for="library_source_type">{{
-                            t('admin.library.file_type')
-                        }}</Label>
-                        <select
-                            id="library_source_type"
-                            :value="libraryInputType"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                            @change="handleLibraryTypeChange"
-                        >
-                            <option value="url">URL</option>
-                            <option value="file">
-                                {{ t('gallery.file') }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="grid gap-2">
-                        <Label for="library_title">{{
-                            t('admin.common.title')
-                        }}</Label>
-                        <Input id="library_title" v-model="libraryForm.title" />
-                        <InputError :message="libraryErrors.title" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="library_type">{{
-                            t('admin.library.category_type')
-                        }}</Label>
-                        <Input
-                            id="library_type"
-                            v-model="libraryForm.type"
-                            :placeholder="t('admin.library.type_placeholder')"
-                        />
-                        <InputError :message="libraryErrors.type" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="library_description">{{
-                            t('admin.common.description')
-                        }}</Label>
-                        <textarea
-                            id="library_description"
-                            v-model="libraryForm.description"
-                            rows="4"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm transition outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-                        />
-                        <InputError :message="libraryErrors.description" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="library_file">{{
-                            libraryInputType === 'file'
-                                ? t('admin.library.select_file')
-                                : t('admin.library.file_path')
-                        }}</Label>
-                        <Input
-                            v-if="libraryInputType === 'url'"
-                            id="library_file"
-                            v-model="libraryForm.file_path"
-                            :placeholder="t('gallery.file_placeholder')"
-                        />
-                        <input
-                            v-else
-                            id="library_file"
-                            type="file"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                            @change="handleLibraryFileChange"
-                        />
-                        <InputError :message="libraryErrors.file_path" />
-                    </div>
-
-                    <div
-                        v-if="libraryPreviewSource"
-                        class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
-                    >
-                        <div
-                            class="border-b border-slate-200 px-4 py-2 text-[11px] font-bold tracking-[0.14em] text-slate-500 uppercase"
-                        >
-                            {{ t('admin.library.preview_before_upload') }}
-                        </div>
-                        <div class="p-4">
-                            <img
-                                v-if="
-                                    libraryPreviewSource.match(
-                                        /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i,
-                                    )
-                                "
-                                :src="libraryPreviewSource"
-                                :alt="t('admin.library.preview_alt')"
-                                class="h-48 w-full rounded-xl object-cover"
-                            />
-                            <div
-                                v-else
-                                class="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-white p-4"
-                            >
-                                <div
-                                    class="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600"
-                                >
-                                    {{ t('gallery.file') }}
-                                </div>
-                                <div class="min-w-0">
-                                    <p
-                                        class="truncate text-sm font-semibold text-slate-900"
-                                    >
-                                        {{
-                                            libraryInputType === 'file'
-                                                ? selectedLibraryFile?.name ||
-                                                  t(
-                                                      'admin.library.selected_file',
-                                                  )
-                                                : libraryForm.file_path ||
-                                                  t(
-                                                      'admin.library.path_entered',
-                                                  )
-                                        }}
-                                    </p>
-                                    <p class="text-xs text-slate-500">
-                                        {{ libraryPreviewSource }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <Button :disabled="processingLibrary">
-                            {{
-                                processingLibrary
-                                    ? t('admin.common.saving')
-                                    : selectedLibraryLabel
-                            }}
-                        </Button>
-                        <Button
-                            v-if="editingLibraryId"
-                            type="button"
-                            variant="outline"
-                            @click="resetLibraryForm"
-                        >
-                            {{ t('admin.library.cancel_edit') }}
-                        </Button>
-                    </div>
-                </form>
-            </article>
-        </section>
+                    <Sparkles class="size-4" />{{
+                        t('admin.library.verse_of_day')
+                    }}</button
+                ><button
+                    class="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-sm font-black"
+                    @click="categoriesOpen = true"
+                >
+                    <Tags class="size-4" />{{
+                        t('admin.categories.title')
+                    }}</button
+                ><button
+                    class="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-indigo-950"
+                    @click="openLibrary()"
+                >
+                    <Plus class="size-4" />{{ t('admin.library.new_item') }}
+                </button>
+            </div>
+        </header>
 
         <section
-            class="rounded-3xl border border-slate-200/80 bg-white shadow-sm"
+            class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
-            <div
-                class="flex items-center justify-between border-b border-slate-100 px-5 py-4"
+            <article
+                v-for="item in libraries"
+                :key="item.id"
+                class="overflow-hidden rounded-2xl border bg-white shadow-sm"
             >
-                <h2
-                    class="text-sm font-black tracking-[0.12em] text-slate-700 uppercase"
+                <button
+                    class="grid aspect-[4/3] w-full place-items-center overflow-hidden bg-indigo-50"
+                    @click="openLibrary(item)"
                 >
-                    {{ t('admin.library.registered_collection') }}
-                </h2>
-                <span class="text-xs text-slate-400">{{
-                    t('admin.library.records', {
-                        count: props.libraries.length,
-                    })
-                }}</span>
-            </div>
-
-            <div
-                v-if="props.libraries.length > 0"
-                class="divide-y divide-slate-100"
-            >
-                <div
-                    v-for="library in props.libraries"
-                    :key="library.id"
-                    class="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-start lg:justify-between"
-                >
-                    <div class="space-y-1">
-                        <p class="text-sm font-semibold text-slate-900">
-                            {{ library.title }}
-                        </p>
-                        <p class="text-xs text-slate-500">
-                            {{
-                                library.description ||
-                                t('admin.library.no_description')
-                            }}
-                        </p>
-                        <div
-                            class="flex flex-wrap gap-2 pt-1 text-[11px] font-semibold text-slate-500"
+                    <img
+                        v-if="
+                            item.preview_url?.match(
+                                /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i,
+                            )
+                        "
+                        :src="item.preview_url"
+                        class="h-full w-full object-cover"
+                    /><BookOpen v-else class="size-16 text-indigo-300" />
+                </button>
+                <div class="p-4">
+                    <span
+                        class="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-bold text-indigo-700"
+                        >{{ item.type }}</span
+                    >
+                    <h2 class="mt-3 line-clamp-2 font-black">
+                        {{ item.title }}
+                    </h2>
+                    <p
+                        class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500"
+                    >
+                        {{
+                            item.description ||
+                            t('admin.library.no_description')
+                        }}
+                    </p>
+                    <div class="mt-4 flex gap-2">
+                        <button
+                            class="flex-1 rounded-lg border px-3 py-2 text-xs font-bold text-indigo-700"
+                            @click="openLibrary(item)"
                         >
-                            <span class="rounded-full bg-slate-100 px-2 py-1">{{
-                                library.type
-                            }}</span>
-                            <span
-                                v-if="library.file_path"
-                                class="rounded-full bg-slate-100 px-2 py-1"
-                                >{{ t('admin.common.file_reference') }}</span
-                            >
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            @click="fillLibraryForm(library)"
+                            <Pencil class="mr-1 inline size-3" />{{
+                                t('actions.edit')
+                            }}</button
+                        ><button
+                            class="rounded-lg border px-3 py-2 text-rose-600"
+                            @click="remove(item)"
                         >
-                            {{ t('actions.edit') }}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            @click="deleteLibrary(library)"
-                        >
-                            {{ t('actions.delete') }}
-                        </Button>
+                            <Trash2 class="size-4" />
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <div v-else class="px-5 py-8 text-center text-sm text-slate-500">
-                {{ t('admin.library.empty') }}
-            </div>
+            </article>
+            <button
+                class="grid min-h-64 place-items-center rounded-2xl border-2 border-dashed border-slate-300 bg-white text-sm font-bold text-slate-500 hover:border-indigo-400 hover:text-indigo-700"
+                @click="openLibrary()"
+            >
+                <span class="flex flex-col items-center gap-3"
+                    ><Plus class="size-8" />{{
+                        t('admin.library.new_item')
+                    }}</span
+                >
+            </button>
         </section>
-    </div>
+
+        <div
+            v-if="libraryOpen"
+            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
+            @click.self="libraryOpen = false"
+        >
+            <form
+                class="my-6 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+                @submit.prevent="saveLibrary"
+            >
+                <header
+                    class="flex items-center justify-between border-b px-5 py-4"
+                >
+                    <h2 class="text-xl font-black">
+                        {{
+                            editing
+                                ? t('admin.library.edit_item')
+                                : t('admin.library.new_item')
+                        }}
+                    </h2>
+                    <button
+                        type="button"
+                        class="p-2"
+                        @click="libraryOpen = false"
+                    >
+                        <X class="size-5" />
+                    </button>
+                </header>
+                <div class="grid gap-6 p-5 lg:grid-cols-2">
+                    <div
+                        class="grid min-h-72 place-items-center overflow-hidden rounded-xl border bg-indigo-50"
+                    >
+                        <img
+                            v-if="
+                                preview?.match(
+                                    /\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i,
+                                )
+                            "
+                            :src="preview"
+                            class="max-h-[28rem] w-full object-contain"
+                        /><FileText v-else class="size-20 text-indigo-300" />
+                    </div>
+                    <div class="space-y-4">
+                        <label class="block text-xs font-bold"
+                            >{{ t('admin.common.title')
+                            }}<input
+                                v-model="form.title"
+                                required
+                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                        ><label class="block text-xs font-bold"
+                            >{{ t('admin.library.category_type')
+                            }}<input
+                                v-model="form.type"
+                                required
+                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                        ><label class="block text-xs font-bold"
+                            >{{ t('admin.common.description')
+                            }}<textarea
+                                v-model="form.description"
+                                rows="4"
+                                class="mt-1 w-full rounded-lg border-slate-300"
+                            /></label
+                        ><label class="block text-xs font-bold"
+                            >{{ t('admin.library.file_type')
+                            }}<select
+                                v-model="inputType"
+                                class="mt-1 w-full rounded-lg border-slate-300"
+                            >
+                                <option value="file">
+                                    {{ t('gallery.file') }}
+                                </option>
+                                <option value="url">URL</option>
+                            </select></label
+                        ><input
+                            v-if="inputType === 'file'"
+                            type="file"
+                            class="w-full rounded-lg border p-2 text-sm"
+                            @change="chooseFile"
+                        /><input
+                            v-else
+                            v-model="form.file_path"
+                            class="w-full rounded-lg border-slate-300"
+                        /><CategorySelector
+                            v-model="form.category_ids"
+                            :categories="categories"
+                            :label="t('admin.library.categories')"
+                        />
+                        <p
+                            v-for="message in errors"
+                            :key="message"
+                            class="text-xs text-rose-600"
+                        >
+                            {{ message }}
+                        </p>
+                        <button
+                            :disabled="processing"
+                            class="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-black text-white"
+                        >
+                            {{
+                                processing
+                                    ? t('admin.common.saving')
+                                    : t('admin.common.save')
+                            }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div
+            v-if="verseOpen"
+            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
+            @click.self="verseOpen = false"
+        >
+            <form
+                class="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
+                @submit.prevent="saveVerse"
+            >
+                <header class="mb-5 flex items-center justify-between">
+                    <div>
+                        <p
+                            class="text-[10px] font-bold tracking-wider text-emerald-600 uppercase"
+                        >
+                            {{ t('admin.library.devotional_home') }}
+                        </p>
+                        <h2 class="text-xl font-black">
+                            {{ t('admin.library.verse_of_day') }}
+                        </h2>
+                    </div>
+                    <button type="button" @click="verseOpen = false">
+                        <X class="size-5" />
+                    </button>
+                </header>
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold"
+                        >{{ t('admin.library.verse_text')
+                        }}<textarea
+                            v-model="verseForm.content"
+                            required
+                            rows="5"
+                            class="mt-1 w-full rounded-lg border-slate-300"
+                        />
+                    </label>
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        <label class="text-xs font-bold"
+                            >{{ t('admin.library.book')
+                            }}<input
+                                v-model="verseForm.book"
+                                required
+                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                        ><label class="text-xs font-bold"
+                            >{{ t('admin.library.chapter')
+                            }}<input
+                                v-model="verseForm.chapter"
+                                required
+                                type="number"
+                                min="1"
+                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                        ><label class="text-xs font-bold"
+                            >{{ t('admin.library.verse')
+                            }}<input
+                                v-model="verseForm.verse"
+                                required
+                                type="number"
+                                min="1"
+                                class="mt-1 w-full rounded-lg border-slate-300"
+                        /></label>
+                    </div>
+                    <label class="block text-xs font-bold"
+                        >{{ t('admin.library.version')
+                        }}<input
+                            v-model="verseForm.version"
+                            required
+                            class="mt-1 w-full rounded-lg border-slate-300" /></label
+                    ><button
+                        :disabled="processing"
+                        class="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white"
+                    >
+                        {{ t('admin.library.update_verse') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+        <CategoryManagerModal
+            :open="categoriesOpen"
+            category-type="library"
+            :categories="categories"
+            @close="categoriesOpen = false"
+        />
+    </main>
 </template>

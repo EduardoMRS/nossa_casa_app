@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
@@ -11,6 +11,11 @@ type UserItem = {
     role: string | { value: string };
     birth_date: string | null;
     church?: { id: string; name: string } | null;
+    profile?: {
+        phone?: string | null;
+        gender?: string | null;
+        location_lang?: string | null;
+    } | null;
 };
 type Option = { value: string; label: string };
 type ChurchOption = { id: string; name: string };
@@ -32,6 +37,9 @@ const form = ref({
     role: 'member',
     birth_date: '',
     church_id: '',
+    phone: '',
+    gender: '',
+    location_lang: 'pt-BR',
 });
 const filtered = computed(() =>
     users.value.filter((user) =>
@@ -50,6 +58,9 @@ function start(user?: UserItem): void {
               role: typeof user.role === 'string' ? user.role : user.role.value,
               birth_date: user.birth_date ?? '',
               church_id: user.church?.id ?? '',
+              phone: user.profile?.phone ?? '',
+              gender: user.profile?.gender ?? '',
+              location_lang: user.profile?.location_lang ?? 'pt-BR',
           }
         : {
               first_name: '',
@@ -58,8 +69,36 @@ function start(user?: UserItem): void {
               role: 'member',
               birth_date: '',
               church_id: '',
+              phone: '',
+              gender: '',
+              location_lang: 'pt-BR',
           };
     open.value = true;
+}
+function roleValue(user: UserItem): string {
+    return typeof user.role === 'string' ? user.role : user.role.value;
+}
+function sendReset(user: UserItem): void {
+    router.post(
+        `/admin/gestao-usuarios/${user.id}/redefinir-senha`,
+        {},
+        { preserveScroll: true },
+    );
+}
+async function remove(user: UserItem): Promise<void> {
+    if (
+        ['system', 'superadmin'].includes(roleValue(user)) ||
+        !window.confirm(
+            t('admin.users.delete_confirm', {
+                name: `${user.first_name} ${user.last_name}`,
+            }),
+        )
+    ) {
+        return;
+    }
+
+    await axios.delete(`/api/user/${user.id}`);
+    users.value = users.value.filter((item) => item.id !== user.id);
 }
 async function save(): Promise<void> {
     if (editing.value) {
@@ -79,7 +118,7 @@ async function save(): Promise<void> {
     <Head :title="t('admin.users.title')" />
     <main class="space-y-6 p-4 md:p-8">
         <header
-            class="flex flex-col justify-between gap-4 rounded-3xl bg-gradient-to-br from-slate-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"
+            class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white shadow-sm md:flex-row md:items-end"
         >
             <div>
                 <p
@@ -151,12 +190,31 @@ async function save(): Promise<void> {
                         >
                     </div>
                 </div>
-                <button
-                    class="rounded-lg px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
-                    @click="start(user)"
-                >
-                    {{ t('actions.edit') }}
-                </button>
+                <div class="flex flex-col items-end gap-1">
+                    <button
+                        class="rounded-lg px-3 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-50"
+                        @click="start(user)"
+                    >
+                        {{ t('actions.edit') }}</button
+                    ><button
+                        class="rounded-lg px-3 py-1 text-xs font-bold text-amber-700 hover:bg-amber-50"
+                        @click="sendReset(user)"
+                    >
+                        {{ t('admin.users.reset_password') }}</button
+                    ><button
+                        v-if="
+                            !['system', 'superadmin'].includes(roleValue(user))
+                        "
+                        class="rounded-lg px-3 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50"
+                        @click="remove(user)"
+                    >
+                        {{ t('actions.delete') }}</button
+                    ><span
+                        v-else
+                        class="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase"
+                        >{{ t('admin.users.protected') }}</span
+                    >
+                </div>
             </article>
         </section>
         <div
@@ -229,6 +287,28 @@ async function save(): Promise<void> {
                         v-model="form.birth_date"
                         type="date"
                         class="rounded-lg border-slate-300"
+                    /><input
+                        v-model="form.phone"
+                        type="tel"
+                        class="rounded-lg border-slate-300"
+                        :placeholder="t('admin.branding.phone')"
+                    /><select
+                        v-model="form.gender"
+                        class="rounded-lg border-slate-300"
+                    >
+                        <option value="">
+                            {{ t('admin.classrooms.gender.none') }}
+                        </option>
+                        <option value="male">
+                            {{ t('admin.classrooms.gender.male') }}
+                        </option>
+                        <option value="female">
+                            {{ t('admin.classrooms.gender.female') }}
+                        </option></select
+                    ><input
+                        v-model="form.location_lang"
+                        class="rounded-lg border-slate-300"
+                        placeholder="pt-BR"
                     />
                 </div>
                 <div class="flex justify-end gap-2">

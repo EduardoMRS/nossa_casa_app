@@ -20,6 +20,8 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureRoleCanBeAssigned($request, (string) $request->input('role'));
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -28,16 +30,19 @@ class UserController extends Controller
             'birth_date' => 'nullable|date',
             'role' => ['required', Rule::enum(UserRole::class)],
             'church_id' => 'nullable|string|exists:churches,id',
+            'phone' => ['nullable', 'string', 'max:30'],
+            'gender' => ['nullable', Rule::in(['male', 'female'])],
+            'location_lang' => ['nullable', 'string', 'max:10'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        $churchId = $validated['church_id'] ?? null;
-        unset($validated['church_id']);
+        $profile = collect($validated)->only(['church_id', 'phone', 'gender', 'location_lang'])->all();
+        unset($validated['church_id'], $validated['phone'], $validated['gender'], $validated['location_lang']);
 
         $user = User::create($validated);
-        $user->profile()->updateOrCreate(['user_id' => $user->id], ['church_id' => $churchId]);
+        $user->profile()->updateOrCreate(['user_id' => $user->id], $profile);
 
-        return response()->json($user, 201);
+        return response()->json($user->load(['profile', 'church']), 201);
     }
 
     public function show(string $id)
@@ -51,6 +56,7 @@ class UserController extends Controller
     public function update(Request $request, string $id)
     {
         $user = User::findOrFail($id);
+        $this->ensureCanManage($request, $user);
 
         $validated = $request->validate([
             'first_name' => 'sometimes|required|string|max:255',
@@ -60,28 +66,62 @@ class UserController extends Controller
             'birth_date' => 'nullable|date',
             'role' => ['sometimes', 'required', Rule::enum(UserRole::class)],
             'church_id' => 'nullable|string|exists:churches,id',
+            'phone' => ['nullable', 'string', 'max:30'],
+            'gender' => ['nullable', Rule::in(['male', 'female'])],
+            'location_lang' => ['nullable', 'string', 'max:10'],
         ]);
+
+        if (isset($validated['role'])) {
+            $this->ensureRoleCanBeAssigned($request, $validated['role']);
+        }
 
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         }
 
-        $churchId = array_key_exists('church_id', $validated) ? $validated['church_id'] : null;
-        unset($validated['church_id']);
+        $profileKeys = ['church_id', 'phone', 'gender', 'location_lang'];
+        $profile = collect($validated)->only($profileKeys)->all();
+        foreach ($profileKeys as $profileKey) {
+            unset($validated[$profileKey]);
+        }
         $user->update($validated);
 
-        if (array_key_exists('church_id', $request->all())) {
-            $user->profile()->updateOrCreate(['user_id' => $user->id], ['church_id' => $churchId]);
+        if ($profile !== []) {
+            $user->profile()->updateOrCreate(['user_id' => $user->id], $profile);
         }
 
-        return response()->json($user);
+        return response()->json($user->load(['profile', 'church']));
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $user = User::findOrFail($id);
+        $this->ensureCanManage($request, $user);
+        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403, 'Protected users cannot be deleted.');
         $user->delete();
 
         return response()->json(null, 204);
+    }
+
+    private function ensureCanManage(Request $request, User $user): void
+    {
+        $actor = $request->user();
+        $actorRole = $actor?->role?->value ?? (string) $actor?->role;
+
+        if ($actorRole === UserRole::ADMIN->value) {
+            abort_unless($user->church?->id === $actor?->church?->id, 403);
+            abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403);
+        }
+
+        if ($actorRole === UserRole::SUPERADMIN->value) {
+            abort_if($user->role === UserRole::SYSTEM, 403);
+        }
+    }
+
+    private function ensureRoleCanBeAssigned(Request $request, string $role): void
+    {
+        $actorRole = $request->user()?->role?->value ?? (string) $request->user()?->role;
+        abort_if($role === UserRole::SYSTEM->value && $actorRole !== UserRole::SYSTEM->value, 403);
+        abort_if($role === UserRole::SUPERADMIN->value && $actorRole === UserRole::ADMIN->value, 403);
     }
 }

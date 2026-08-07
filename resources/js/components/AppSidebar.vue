@@ -16,7 +16,6 @@ import {
     Users,
     UserRoundCog,
     Heart,
-    HandHelping,
     School,
     PanelsTopLeft,
 } from '@lucide/vue';
@@ -24,7 +23,6 @@ import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
-import NavUser from '@/components/NavUser.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -46,11 +44,8 @@ import { index as adminKidsMinistryIndex } from '@/routes/admin/kidsMinistry';
 import { index as adminLibraryVerseIndex } from '@/routes/admin/libraryVerse';
 import { index as adminLogsMetricsIndex } from '@/routes/admin/logsMetrics';
 import { index as adminMultiCongregationIndex } from '@/routes/admin/multiCongregation';
-import { index as adminMyPrayersIndex } from '@/routes/admin/myPrayers';
-import { index as adminPrayerRequestsIndex } from '@/routes/admin/prayerRequests';
 import { index as adminUserManagementIndex } from '@/routes/admin/userManagement';
 import { index as adminWallModerationIndex } from '@/routes/admin/wallModeration';
-import { index as eventsIndex } from '@/routes/events';
 import { index as postsIndex } from '@/routes/posts';
 import type { NavItem } from '@/types';
 
@@ -64,6 +59,7 @@ const page = usePage<{
     };
     classrooms?: {
         hasKids?: boolean;
+        separateKidsMinistry?: boolean;
     };
 }>();
 
@@ -90,6 +86,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: t('nav.dashboard'),
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: t('admin.prayers.title'),
+        href: '/minhas-oracoes',
+        icon: Heart,
     },
 ]);
 
@@ -129,7 +130,7 @@ const communicationNavItems = computed<NavItem[]>(() => [
 const ministriesNavItems = computed<NavItem[]>(() => [
     {
         title: t('nav.events'),
-        href: eventsIndex(),
+        href: '/admin/eventos',
         icon: CalendarDays,
     },
     {
@@ -137,21 +138,16 @@ const ministriesNavItems = computed<NavItem[]>(() => [
         href: adminFormsIndex(),
         icon: ClipboardList,
     },
-    {
-        title: t('navigation.intercession'),
-        href: adminPrayerRequestsIndex(),
-        icon: HandHelping,
-    },
-    {
-        title: t('admin.classrooms.kids_title'),
-        href: adminKidsMinistryIndex(),
-        icon: School,
-    },
-    {
-        title: t('admin.prayers.title'),
-        href: adminMyPrayersIndex(),
-        icon: Heart,
-    },
+    ...(page.props.classrooms?.hasKids &&
+    page.props.classrooms?.separateKidsMinistry
+        ? [
+              {
+                  title: t('admin.classrooms.kids_title'),
+                  href: adminKidsMinistryIndex(),
+                  icon: School,
+              },
+          ]
+        : []),
 ]);
 
 const administrationNavItems = computed<NavItem[]>(() => [
@@ -175,11 +171,15 @@ const administrationNavItems = computed<NavItem[]>(() => [
         href: adminClassroomsIndex(),
         icon: PanelsTopLeft,
     },
-    {
-        title: t('admin.logs.title'),
-        href: adminLogsMetricsIndex(),
-        icon: ListChecks,
-    },
+    ...(role.value === 'system'
+        ? [
+              {
+                  title: t('admin.logs.title'),
+                  href: adminLogsMetricsIndex(),
+                  icon: ListChecks,
+              },
+          ]
+        : []),
 ]);
 
 const footerNavItems = computed<NavItem[]>(() => [
@@ -231,7 +231,6 @@ const footerNavItems = computed<NavItem[]>(() => [
 
         <SidebarFooter>
             <NavFooter :items="footerNavItems" />
-            <NavUser />
         </SidebarFooter>
     </Sidebar>
     <slot />

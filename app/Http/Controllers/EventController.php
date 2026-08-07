@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class EventController extends Controller
 {
@@ -44,6 +45,12 @@ class EventController extends Controller
         $event = Event::create($data);
         $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $data['church_id']));
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.event_created')]);
+
+            return redirect()->route('admin.events.index');
+        }
+
         return response()->json($event, 201);
     }
 
@@ -72,18 +79,30 @@ class EventController extends Controller
             $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $event->church_id));
         }
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.event_updated')]);
+
+            return redirect()->route('admin.events.index');
+        }
+
         return response()->json($event);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $event = Event::findOrFail($id);
-        $this->ensureChurchAccess(request(), $event->church_id);
+        $this->ensureChurchAccess($request, $event->church_id);
 
         // Opcional: deletar o arquivo cover ao excluir o evento
         // if ($event->cover_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($event->cover_path);
 
         $event->delete();
+
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.event_deleted')]);
+
+            return redirect()->route('admin.events.index');
+        }
 
         return response()->json(null, 204);
     }

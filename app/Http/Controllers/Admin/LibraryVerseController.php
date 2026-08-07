@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\CategoryType;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Library;
 use App\Models\Vercicle;
 use App\Traits\ManagesChurchCategories;
@@ -15,17 +14,23 @@ use Inertia\Response;
 
 class LibraryVerseController extends Controller
 {
-    use UploadsMedia;
     use ManagesChurchCategories;
+    use UploadsMedia;
 
     public function index(): Response
     {
         $churchId = request()->user()?->church?->id;
 
         return Inertia::render('Admin/LibraryVerse', [
-            'verse' => $this->versePayload(),
+            'verse' => $this->versePayload($churchId),
             'categories' => $this->availableChurchCategories($churchId, CategoryType::LIBRARY->value),
-            'libraries' => Library::query()->latest()->get()->map(fn (Library $library) => $this->libraryPayload($library))->values(),
+            'libraries' => Library::query()
+                ->where('church_id', $churchId)
+                ->where('type', '!=', 'Versiculo do Dia')
+                ->latest()
+                ->get()
+                ->map(fn (Library $library) => $this->libraryPayload($library))
+                ->values(),
         ]);
     }
 
@@ -113,7 +118,7 @@ class LibraryVerseController extends Controller
             ],
         );
 
-        $verse = Vercicle::query()->latest()->first();
+        $verse = Vercicle::query()->where('library_id', $library->id)->latest()->first();
 
         if ($verse === null) {
             $verse = Vercicle::query()->create([
@@ -127,9 +132,12 @@ class LibraryVerseController extends Controller
         return back();
     }
 
-    private function versePayload(): array
+    private function versePayload(?string $churchId): array
     {
-        $verse = Vercicle::query()->latest()->first();
+        $verse = Vercicle::query()
+            ->whereHas('library', fn ($query) => $query->where('church_id', $churchId))
+            ->latest()
+            ->first();
 
         return [
             'book' => $verse?->book ?? '',

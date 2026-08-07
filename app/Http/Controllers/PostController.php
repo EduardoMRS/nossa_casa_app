@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class PostController extends Controller
 {
@@ -56,6 +57,12 @@ class PostController extends Controller
         $post = Post::create($validated);
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $validated['church_id']));
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.post_created')]);
+
+            return redirect()->route('posts.index');
+        }
+
         return response()->json($post, 201);
     }
 
@@ -85,14 +92,26 @@ class PostController extends Controller
             $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $post->church_id));
         }
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.post_updated')]);
+
+            return redirect()->route('posts.index');
+        }
+
         return response()->json($post);
     }
 
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
         $post = Post::findOrFail($id);
-        $this->ensureChurchAccess(request(), $post->church_id);
+        $this->ensureChurchAccess($request, $post->church_id);
         $post->delete();
+
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.post_deleted')]);
+
+            return redirect()->route('posts.index');
+        }
 
         return response()->json(null, 204);
     }

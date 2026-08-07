@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Upload, X } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
 
@@ -59,6 +61,7 @@ const uploadPreviewUrl = ref<string>('');
 const selectedCategoryIds = ref<string[]>([]);
 const uploadProcessing = ref(false);
 const uploadError = ref('');
+const uploadOpen = ref(false);
 
 const clearUploadPreview = () => {
     if (uploadPreviewUrl.value) {
@@ -121,6 +124,7 @@ const submitUpload = () => {
                 uploadType.value = 'url';
                 selectedCategoryIds.value = [];
                 clearUploadPreview();
+                uploadOpen.value = false;
             },
             onError: (errors) => {
                 uploadError.value = String(
@@ -144,140 +148,157 @@ onBeforeUnmount(() => {
 <template>
     <Head :title="t('gallery.meta_title')" />
 
-    <div class="min-h-screen bg-[#fbf8f1] text-[#33271f]">
+    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
         <PublicHeader active="gallery" />
 
-        <main class="mx-auto max-w-7xl px-5 py-8 md:px-8 md:py-10">
+        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <section
-                class="mb-8 rounded-3xl bg-gradient-to-r from-[#a84d24] via-[#cc6c33] to-[#d68e3f] p-7 text-white md:p-10"
+                class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
             >
-                <p
-                    class="mb-2 text-xs tracking-[0.2em] text-[#ffe6c3] uppercase"
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight md:text-3xl">
+                        {{ t('gallery.title') }}
+                    </h1>
+                    <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                        {{ t('gallery.description') }}
+                    </p>
+                </div>
+                <button
+                    v-if="canUploadMedia"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 sm:self-center"
+                    @click="uploadOpen = true"
                 >
-                    {{ t('gallery.kicker') }}
-                </p>
-                <h1
-                    class="mb-2 [font-family:Manrope,ui-sans-serif] text-3xl font-black md:text-4xl"
-                >
-                    {{ t('gallery.title') }}
-                </h1>
-                <p class="max-w-3xl text-sm text-[#fff2df] md:text-base">
-                    {{ t('gallery.description') }}
-                </p>
+                    <Upload class="size-4" /> {{ t('gallery.upload') }}
+                </button>
             </section>
 
-            <section
-                v-if="canUploadMedia"
-                class="mb-8 rounded-3xl border border-[#eadfce] bg-white p-5 shadow-sm md:p-6"
+            <div
+                v-if="canUploadMedia && uploadOpen"
+                class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
+                @click.self="uploadOpen = false"
             >
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <p
-                            class="text-xs font-semibold tracking-[0.18em] text-[#91573a] uppercase"
-                        >
-                            {{ t('gallery.upload_kicker') }}
-                        </p>
-                        <h2 class="text-xl font-black text-[#2f241c]">
-                            {{ t('gallery.upload_title') }}
-                        </h2>
-                    </div>
-
-                    <select
-                        :value="uploadType"
-                        class="rounded-xl border border-[#e0d2c3] bg-white px-3 py-2 text-sm font-semibold text-[#5a402f]"
-                        @change="handleUploadTypeChange"
-                    >
-                        <option value="url">URL</option>
-                        <option value="file">{{ t('gallery.file') }}</option>
-                    </select>
-                </div>
-
-                <div
-                    class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_240px] md:items-start"
+                <section
+                    class="relative my-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl md:p-6"
                 >
-                    <div class="space-y-3">
-                        <input
-                            v-if="uploadType === 'file'"
-                            type="file"
-                            accept="image/*,video/*,application/pdf"
-                            class="w-full rounded-xl border border-[#e0d2c3] px-3 py-2.5 text-sm"
-                            @change="handleUploadFileChange"
-                        />
-                        <input
-                            v-else
-                            v-model="uploadUrl"
-                            type="text"
-                            :placeholder="t('gallery.file_placeholder')"
-                            class="w-full rounded-xl border border-[#e0d2c3] px-3 py-2.5 text-sm"
-                        />
+                    <button
+                        class="absolute top-4 right-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                        @click="uploadOpen = false"
+                    >
+                        <X class="size-4" />
+                    </button>
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3"
+                    >
+                        <div>
+                            <p
+                                class="text-xs font-semibold tracking-[0.18em] text-indigo-500 uppercase"
+                            >
+                                {{ t('gallery.upload_kicker') }}
+                            </p>
+                            <h2 class="text-xl font-black text-slate-950">
+                                {{ t('gallery.upload_title') }}
+                            </h2>
+                        </div>
 
-                        <p class="text-xs text-[#7d695b]">
-                            {{ t('gallery.upload_hint') }}
-                        </p>
-                        <p
-                            v-if="uploadError"
-                            class="text-xs font-semibold text-red-600"
+                        <select
+                            :value="uploadType"
+                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+                            @change="handleUploadTypeChange"
                         >
-                            {{ uploadError }}
-                        </p>
-
-                        <CategorySelector
-                            v-model="selectedCategoryIds"
-                            :categories="categories"
-                            :label="t('gallery.categories')"
-                            :hint="t('gallery.categories_hint')"
-                        />
+                            <option value="url">URL</option>
+                            <option value="file">
+                                {{ t('gallery.file') }}
+                            </option>
+                        </select>
                     </div>
 
                     <div
-                        class="rounded-2xl border border-dashed border-[#e0d2c3] bg-[#fcf8f2] p-3"
+                        class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_240px] md:items-start"
                     >
-                        <p
-                            class="mb-2 text-xs font-bold tracking-[0.16em] text-[#91573a] uppercase"
-                        >
-                            {{ t('gallery.preview') }}
-                        </p>
-                        <img
-                            v-if="uploadPreview"
-                            :src="uploadPreview"
-                            :alt="t('gallery.preview_alt')"
-                            class="h-44 w-full rounded-xl object-cover"
-                        />
+                        <div class="space-y-3">
+                            <input
+                                v-if="uploadType === 'file'"
+                                type="file"
+                                accept="image/*,video/*,application/pdf"
+                                class="w-full rounded-xl border border-[#e0d2c3] px-3 py-2.5 text-sm"
+                                @change="handleUploadFileChange"
+                            />
+                            <input
+                                v-else
+                                v-model="uploadUrl"
+                                type="text"
+                                :placeholder="t('gallery.file_placeholder')"
+                                class="w-full rounded-xl border border-[#e0d2c3] px-3 py-2.5 text-sm"
+                            />
+
+                            <p class="text-xs text-[#7d695b]">
+                                {{ t('gallery.upload_hint') }}
+                            </p>
+                            <p
+                                v-if="uploadError"
+                                class="text-xs font-semibold text-red-600"
+                            >
+                                {{ uploadError }}
+                            </p>
+
+                            <CategorySelector
+                                v-model="selectedCategoryIds"
+                                :categories="categories"
+                                :label="t('gallery.categories')"
+                                :hint="t('gallery.categories_hint')"
+                            />
+                        </div>
+
                         <div
-                            v-else
-                            class="flex h-44 items-center justify-center rounded-xl bg-white text-sm text-[#907a6b]"
+                            class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3"
                         >
-                            {{ t('gallery.no_selection') }}
+                            <p
+                                class="mb-2 text-xs font-bold tracking-[0.16em] text-indigo-500 uppercase"
+                            >
+                                {{ t('gallery.preview') }}
+                            </p>
+                            <img
+                                v-if="uploadPreview"
+                                :src="uploadPreview"
+                                :alt="t('gallery.preview_alt')"
+                                class="h-44 w-full rounded-xl object-cover"
+                            />
+                            <div
+                                v-else
+                                class="flex h-44 items-center justify-center rounded-xl bg-white text-sm text-[#907a6b]"
+                            >
+                                {{ t('gallery.no_selection') }}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="mt-4 flex justify-end">
-                    <button
-                        type="button"
-                        :disabled="uploadProcessing"
-                        class="rounded-full bg-[#a84d24] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8f421d] disabled:cursor-not-allowed disabled:opacity-60"
-                        @click="submitUpload"
-                    >
-                        {{
-                            uploadProcessing
-                                ? t('gallery.uploading')
-                                : t('gallery.upload')
-                        }}
-                    </button>
-                </div>
-            </section>
+                    <div class="mt-4 flex justify-end">
+                        <button
+                            type="button"
+                            :disabled="uploadProcessing"
+                            class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            @click="submitUpload"
+                        >
+                            {{
+                                uploadProcessing
+                                    ? t('gallery.uploading')
+                                    : t('gallery.upload')
+                            }}
+                        </button>
+                    </div>
+                </section>
+            </div>
 
             <section
-                class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6"
+                class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
             >
                 <article
                     v-for="item in props.media.data"
                     :key="item.id"
-                    class="group overflow-hidden rounded-xl border border-[#eadfce] bg-white shadow-sm"
+                    class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                     <div
-                        class="relative aspect-square overflow-hidden bg-[#f6ede0]"
+                        class="relative aspect-square overflow-hidden bg-slate-100"
                     >
                         <img
                             :src="item.url"
@@ -346,5 +367,6 @@ onBeforeUnmount(() => {
                 </div>
             </section>
         </main>
+        <PublicFooter />
     </div>
 </template>

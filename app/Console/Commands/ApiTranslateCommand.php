@@ -281,6 +281,7 @@ class ApiTranslateCommand extends Command
      */
     private function translateDynamicContent(array $locales): void
     {
+        // TODO: Otimizar para separar por tamanho de texto ao inves de se limitar por chunck pois em alguns casos o texto será muito pequeno e em outros muito grande, o que pode gerar problemas de tradução. Talvez seja interessante separar por tamanho de texto e não por quantidade de registros.
         $translatedCount = 0;
 
         foreach (self::DYNAMIC_CONTENT_FIELDS as $modelClass => $columns) {

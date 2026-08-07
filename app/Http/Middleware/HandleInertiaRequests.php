@@ -57,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             'contact_whatsapp' => '',
             'contact_website' => '',
         ];
+        $setting = null;
 
         if ($user?->church) {
             $setting = Setting::query()->where('church_id', $user->church->id)->first();
@@ -83,6 +84,7 @@ class HandleInertiaRequests extends Middleware
                 'hasKids' => $user?->church?->id
                     ? Classroom::query()->where('church_id', $user->church->id)->where('is_kids', true)->exists()
                     : false,
+                'separateKidsMinistry' => (bool) ($setting?->options['classrooms']['separate_kids_ministry'] ?? true),
             ],
         ];
     }

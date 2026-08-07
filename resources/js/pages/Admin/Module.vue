@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import { useI18n } from '@/lib/i18n';
 
 type ModuleStat = {
@@ -48,35 +49,22 @@ defineOptions({
     <Head :title="moduleText('title', props.title)" />
 
     <div class="space-y-6 p-4 md:p-6">
-        <section
-            class="rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm"
+        <AdminPageHeader
+            :kicker="moduleText('subtitle', props.subtitle)"
+            :title="moduleText('title', props.title)"
+            :description="moduleText('description', props.description)"
         >
-            <p
-                class="text-xs font-semibold tracking-[0.16em] text-slate-500 uppercase"
-            >
-                {{ moduleText('subtitle', props.subtitle) }}
-            </p>
-            <h1 class="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                {{ moduleText('title', props.title) }}
-            </h1>
-            <p class="mt-2 max-w-3xl text-sm text-slate-600">
-                {{ moduleText('description', props.description) }}
-            </p>
-
-            <div
-                v-if="props.actions.length > 0"
-                class="mt-5 flex flex-wrap gap-2"
-            >
+            <template v-if="props.actions.length > 0">
                 <Link
                     v-for="(action, index) in props.actions"
                     :key="`${action.label}-${action.href}`"
                     :href="action.href"
-                    class="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+                    class="inline-flex items-center rounded-xl border border-white/25 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/10"
                 >
                     {{ moduleText(`actions.${index}`, action.label) }}
                 </Link>
-            </div>
-        </section>
+            </template>
+        </AdminPageHeader>
 
         <section
             v-if="props.stats.length > 0"

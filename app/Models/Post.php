@@ -96,13 +96,26 @@ class Post extends Model
 
     public function scopeVisible($query)
     {
+        $user = auth()->user();
+        $role = $user?->role?->value ?? (string) $user?->role;
+
+        if ($user && in_array($role, ['leader', 'media', 'admin', 'superadmin', 'system'], true)) {
+            if ($role === 'system') {
+                return $query;
+            }
+
+            if ($churchId = $user->profile?->church_id) {
+                return $query->where('church_id', $churchId);
+            }
+        }
+
         $query->where('published_at', '<=', now())
             ->where(function ($query) {
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             });
 
-        if ($churchId = auth()->user()?->church?->id) {
+        if ($churchId = $user?->profile?->church_id) {
             $query->where('church_id', $churchId);
         }
 

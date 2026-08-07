@@ -2,6 +2,8 @@
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import AdminPageHeader from '@/components/AdminPageHeader.vue';
+import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import { useI18n } from '@/lib/i18n';
 
 type Linkable = { id: string; title: string };
@@ -14,6 +16,7 @@ type FormElement = {
     required?: boolean;
     options?: string[];
     width?: 'full' | 'half' | 'third';
+    mobile_width?: 'full' | 'half';
     size?: 'auto' | 'fixed';
     height?: number;
     placeholder?: string;
@@ -39,6 +42,7 @@ const props = defineProps<{
 const { t } = useI18n();
 const selected = ref<ManagedForm | null>(null);
 const editorOpen = ref(false);
+const categoriesOpen = ref(false);
 const saving = ref(false);
 const error = ref('');
 const fields = ref<FormElement[]>([]);
@@ -98,6 +102,7 @@ function emptyElement(type = 'text'): FormElement {
             ? [t('admin.forms.option_one')]
             : [],
         width: 'full',
+        mobile_width: 'full',
         size: 'auto',
         height: 4,
         placeholder: '',
@@ -158,6 +163,18 @@ function needsOptions(field: FormElement): boolean {
     return ['select', 'radio'].includes(field.type);
 }
 
+function fieldWidthClass(field: FormElement): string {
+    const mobile = field.mobile_width === 'half' ? 'col-span-6' : 'col-span-12';
+    const desktop =
+        field.width === 'half'
+            ? 'md:col-span-6'
+            : field.width === 'third'
+              ? 'md:col-span-4'
+              : 'md:col-span-12';
+
+    return `${mobile} ${desktop}`;
+}
+
 async function save(): Promise<void> {
     try {
         saving.value = true;
@@ -203,23 +220,31 @@ function closeEditor(): void {
     <main
         class="grid gap-6 p-4 xl:grid-cols-[20rem_minmax(0,1fr)_19rem] xl:p-6"
     >
+        <AdminPageHeader
+            class="xl:col-span-3"
+            :kicker="t('navigation.ministries')"
+            :title="t('admin.forms.title')"
+            :description="t('admin.forms.description')"
+        >
+            <button
+                class="rounded-xl border border-white/30 px-4 py-3 text-sm font-black text-white"
+                @click="categoriesOpen = true"
+            >
+                {{ t('admin.categories.title') }}
+            </button>
+            <button
+                class="rounded-xl bg-white px-4 py-3 text-sm font-black text-indigo-950"
+                @click="startNew"
+            >
+                {{ t('admin.forms.new') }}
+            </button>
+        </AdminPageHeader>
         <section class="space-y-4">
-            <header class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-black">
-                        {{ t('admin.forms.title') }}
-                    </h1>
-                    <p class="text-sm text-slate-500">
-                        {{ t('admin.forms.description') }}
-                    </p>
-                </div>
-                <button
-                    class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-bold text-white"
-                    @click="startNew"
-                >
-                    {{ t('admin.forms.new') }}
-                </button>
-            </header>
+            <h2
+                class="text-sm font-black tracking-wider text-slate-500 uppercase"
+            >
+                {{ t('admin.forms.registered') }}
+            </h2>
             <article
                 v-for="item in props.forms"
                 :key="item.id"
@@ -246,23 +271,32 @@ function closeEditor(): void {
             class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-sm lg:p-8"
         >
             <div
-                class="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]"
+                class="mx-auto grid w-full max-w-[96rem] gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]"
             >
                 <form
-                    class="space-y-5 rounded-2xl border bg-white p-5 shadow-sm"
+                    class="space-y-5 rounded-2xl border bg-white p-5 text-slate-900 shadow-sm"
                     @submit.prevent="save"
                 >
-                    <header>
-                        <h2 class="text-xl font-black">
-                            {{
-                                selected
-                                    ? t('admin.forms.edit')
-                                    : t('admin.forms.new')
-                            }}
-                        </h2>
-                        <p class="text-sm text-slate-500">
-                            {{ t('admin.forms.editor_description') }}
-                        </p>
+                    <header class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-black">
+                                {{
+                                    selected
+                                        ? t('admin.forms.edit')
+                                        : t('admin.forms.new')
+                                }}
+                            </h2>
+                            <p class="text-sm text-slate-500">
+                                {{ t('admin.forms.editor_description') }}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="rounded-lg border px-3 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                            @click="closeEditor"
+                        >
+                            {{ t('a11y.close') }}
+                        </button>
                     </header>
                     <p
                         v-if="error"
@@ -362,6 +396,23 @@ function closeEditor(): void {
                                             <option value="third">
                                                 {{
                                                     t('admin.forms.width_third')
+                                                }}
+                                            </option>
+                                        </select></label
+                                    ><label class="text-sm"
+                                        >{{ t('admin.forms.mobile_width')
+                                        }}<select
+                                            v-model="field.mobile_width"
+                                            class="mt-1 w-full rounded-lg border-slate-300"
+                                        >
+                                            <option value="full">
+                                                {{
+                                                    t('admin.forms.width_full')
+                                                }}
+                                            </option>
+                                            <option value="half">
+                                                {{
+                                                    t('admin.forms.width_half')
                                                 }}
                                             </option>
                                         </select></label
@@ -481,30 +532,26 @@ function closeEditor(): void {
                         {{ saving ? t('admin.common.saving') : submitLabel }}
                     </button>
                 </form>
-                <aside class="rounded-2xl border bg-white p-5">
+                <aside
+                    class="h-fit rounded-2xl border bg-white p-5 text-slate-900"
+                >
                     <h2 class="font-black">{{ t('admin.common.preview') }}</h2>
-                    <div class="mt-4 grid grid-cols-3 gap-3">
+                    <div class="mt-4 grid grid-cols-12 gap-3">
                         <template
                             v-for="field in fields"
                             :key="`preview-${field.id}`"
                             ><h3
                                 v-if="field.type === 'heading'"
-                                class="col-span-3 text-lg font-black"
+                                class="col-span-12 text-lg font-black"
                             >
                                 {{ field.label }}
                             </h3>
                             <hr
                                 v-else-if="field.type === 'divider'"
-                                class="col-span-3 border-slate-200" />
+                                class="col-span-12 border-slate-200" />
                             <div
                                 v-else-if="field.type !== 'line_break'"
-                                :class="
-                                    field.width === 'half'
-                                        ? 'col-span-3 md:col-span-1'
-                                        : field.width === 'third'
-                                          ? 'col-span-1'
-                                          : 'col-span-3'
-                                "
+                                :class="fieldWidthClass(field)"
                             >
                                 <label class="text-sm font-semibold"
                                     >{{ field.label
@@ -542,18 +589,23 @@ function closeEditor(): void {
                                     class="mt-1 w-full rounded-lg border-slate-300"
                                 />
                             </div>
-                            <div v-else class="col-span-3 h-2"
+                            <div v-else class="col-span-12 h-2"
                         /></template>
                     </div>
                 </aside>
             </div>
-            <button
-                type="button"
-                class="mx-auto mt-4 block rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-700 shadow"
-                @click="closeEditor"
-            >
-                {{ t('admin.common.close_editor') }}
-            </button>
         </div>
+        <CategoryManagerModal
+            :open="categoriesOpen"
+            category-type="form"
+            :categories="
+                categories.map((category) => ({
+                    ...category,
+                    slug: (category as any).slug ?? '',
+                    type: 'form',
+                }))
+            "
+            @close="categoriesOpen = false"
+        />
     </main>
 </template>

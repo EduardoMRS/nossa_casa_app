@@ -12,6 +12,7 @@ use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class MediaController extends Controller
 {
@@ -59,6 +60,12 @@ class MediaController extends Controller
         ]);
         $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $church->id));
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.media_submitted')]);
+
+            return back();
+        }
+
         return response()->json($media, 201);
     }
 
@@ -99,6 +106,12 @@ class MediaController extends Controller
             $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $media->church_id));
         }
 
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.media_updated')]);
+
+            return back();
+        }
+
         return response()->json($media);
     }
 
@@ -112,6 +125,12 @@ class MediaController extends Controller
         }
 
         $media->delete();
+
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.media_deleted')]);
+
+            return back();
+        }
 
         return response()->noContent();
     }
@@ -134,6 +153,12 @@ class MediaController extends Controller
         $validated = $request->validated();
 
         $media->update(['status' => $validated['status']]);
+
+        if ($request->header('X-Inertia')) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.media_moderated')]);
+
+            return back();
+        }
 
         return response()->json($media);
     }

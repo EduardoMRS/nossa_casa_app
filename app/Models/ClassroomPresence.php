@@ -16,10 +16,11 @@ class ClassroomPresence extends Model
         'check_in',
         'check_out',
         'checkout_pin',
+        'checkout_pin_code',
         'pin_generated_at',
     ];
 
-    protected $hidden = ['checkout_pin'];
+    protected $hidden = ['checkout_pin', 'checkout_pin_code'];
 
     protected function casts(): array
     {
@@ -27,6 +28,7 @@ class ClassroomPresence extends Model
             'check_in' => 'datetime',
             'check_out' => 'datetime',
             'pin_generated_at' => 'datetime',
+            'checkout_pin_code' => 'encrypted',
         ];
     }
 

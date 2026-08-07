@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
-import Heading from '@/components/Heading.vue';
+import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,8 +48,8 @@ const { t } = useI18n();
     <Head :title="t('admin.branding.title')" />
 
     <div class="space-y-6 p-4 md:p-6">
-        <Heading
-            variant="small"
+        <AdminPageHeader
+            :kicker="t('admin.branding.title')"
             :title="t('admin.branding.heading')"
             :description="t('admin.branding.description')"
         />

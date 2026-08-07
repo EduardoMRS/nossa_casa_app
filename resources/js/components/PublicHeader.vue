@@ -1,63 +1,173 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    CalendarDays,
+    Image,
+    LibraryBig,
+    Menu,
+    X,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import UserMenuContent from '@/components/UserMenuContent.vue';
+import { getInitials } from '@/composables/useInitials';
 import { useI18n } from '@/lib/i18n';
-import { dashboard, login } from '@/routes';
-import { home } from '@/routes';
+import { home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 
-type PublicNavKey = 'home' | 'events' | 'gallery';
+type PublicNavKey = 'home' | 'events' | 'gallery' | 'library';
 
-const props = withDefaults(
-    defineProps<{
-        active?: PublicNavKey;
-    }>(),
-    {
-        active: 'home',
-    },
-);
-
+const props = withDefaults(defineProps<{ active?: PublicNavKey }>(), {
+    active: 'home',
+});
 const page = usePage();
+const mobileOpen = ref(false);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+const user = computed(() => page.props.auth?.user);
 const { t } = useI18n();
 
-const navClass = (key: PublicNavKey): string => {
-    return props.active === key
-        ? 'rounded-full bg-[#0b3d44] px-4 py-2 text-white'
-        : 'rounded-full border border-[#c5d3df] px-4 py-2 text-[#234] hover:border-[#0b3d44] hover:text-[#0b3d44]';
-};
+const navItems = computed(() => [
+    {
+        key: 'home' as const,
+        label: t('nav.home'),
+        href: home(),
+        icon: BookOpen,
+    },
+    {
+        key: 'events' as const,
+        label: t('nav.events'),
+        href: eventsIndex(),
+        icon: CalendarDays,
+    },
+    {
+        key: 'gallery' as const,
+        label: t('nav.gallery'),
+        href: galleryIndex(),
+        icon: Image,
+    },
+    {
+        key: 'library' as const,
+        label: t('nav.library'),
+        href: '/biblioteca',
+        icon: LibraryBig,
+    },
+]);
+
+const navClass = (key: PublicNavKey): string =>
+    props.active === key
+        ? 'bg-indigo-950 text-white ring-1 ring-indigo-700'
+        : 'text-indigo-100 hover:bg-indigo-800 hover:text-white';
 </script>
 
 <template>
-    <header class="border-b border-[#dbe2e8] bg-white/80 backdrop-blur">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4 md:px-8">
-            <Link :href="home()" class="text-lg font-black tracking-tight [font-family:Manrope,ui-sans-serif]">Nossa Casa</Link>
+    <header
+        class="sticky top-0 z-40 border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
+    >
+        <div
+            class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+        >
+            <Link :href="home()" class="group flex shrink-0 items-center gap-3">
+                <span
+                    class="grid size-10 place-items-center rounded-xl border border-white/25 bg-white/10 text-lg font-black transition group-hover:scale-105"
+                    >NC</span
+                >
+                <span class="hidden sm:block">
+                    <strong class="block text-base leading-tight"
+                        >Nossa Casa</strong
+                    >
+                    <small
+                        class="block font-mono text-[9px] font-bold tracking-[0.2em] text-indigo-200 uppercase"
+                        >{{ t('nav.faith_community') }}</small
+                    >
+                </span>
+            </Link>
 
-            <nav class="flex items-center gap-2 text-sm font-medium [font-family:Manrope,ui-sans-serif]">
-                <Link :href="home()" :class="navClass('home')">{{ t('nav.home') }}</Link>
-                <Link :href="eventsIndex()" :class="navClass('events')">{{ t('nav.events') }}</Link>
-                <Link :href="galleryIndex()" :class="navClass('gallery')">{{ t('nav.gallery') }}</Link>
+            <nav class="hidden items-center gap-1 md:flex">
+                <Link
+                    v-for="item in navItems"
+                    :key="item.key"
+                    :href="item.href"
+                    :class="navClass(item.key)"
+                    class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition"
+                >
+                    <component :is="item.icon" class="size-4" />
+                    {{ item.label }}
+                </Link>
             </nav>
 
             <div class="flex items-center gap-2">
                 <LocaleSwitcher />
-                <Link
-                    v-if="isAuthenticated"
-                    :href="dashboard()"
-                    class="rounded-full border border-[#c5d3df] bg-white px-4 py-2 text-sm font-semibold text-[#1b334a]"
-                >
-                    {{ t('nav.dashboard') }}
-                </Link>
+                <DropdownMenu v-if="isAuthenticated && user">
+                    <DropdownMenuTrigger :as-child="true">
+                        <Button
+                            variant="ghost"
+                            class="h-10 gap-2 rounded-full border border-indigo-700 px-1.5 pr-3 text-white hover:bg-indigo-950 hover:text-white"
+                        >
+                            <span
+                                class="hidden max-w-36 truncate text-xs font-semibold lg:block"
+                                >{{ user.name }}</span
+                            >
+                            <Avatar class="size-8 ring-2 ring-amber-400/70">
+                                <AvatarImage
+                                    v-if="user.avatar"
+                                    :src="user.avatar"
+                                    :alt="user.name"
+                                />
+                                <AvatarFallback
+                                    class="bg-indigo-950 text-white"
+                                    >{{
+                                        getInitials(user.name)
+                                    }}</AvatarFallback
+                                >
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-56"
+                        ><UserMenuContent :user="user"
+                    /></DropdownMenuContent>
+                </DropdownMenu>
                 <Link
                     v-else
                     :href="login()"
-                    class="rounded-full bg-[#12354f] px-4 py-2 text-sm font-semibold text-white"
+                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-indigo-950 shadow-sm"
+                    >{{ t('nav.login') }}</Link
                 >
-                    {{ t('nav.login') }}
-                </Link>
+                <button
+                    class="rounded-lg p-2 text-indigo-100 hover:bg-indigo-800 md:hidden"
+                    :aria-label="t('nav.menu')"
+                    @click="mobileOpen = !mobileOpen"
+                >
+                    <X v-if="mobileOpen" class="size-5" /><Menu
+                        v-else
+                        class="size-5"
+                    />
+                </button>
             </div>
         </div>
+
+        <nav
+            v-if="mobileOpen"
+            class="grid grid-cols-2 gap-2 border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
+        >
+            <Link
+                v-for="item in navItems"
+                :key="item.key"
+                :href="item.href"
+                :class="navClass(item.key)"
+                class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold"
+                @click="mobileOpen = false"
+            >
+                <component :is="item.icon" class="size-4" /> {{ item.label }}
+            </Link>
+        </nav>
     </header>
 </template>

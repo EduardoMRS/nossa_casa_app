@@ -41,17 +41,15 @@ it('allows admin to open all admin workspace routes', function () {
     $routes = [
         'admin.branding.edit',
         'admin.highlights.index',
+        'admin.events.index',
         'admin.galleryModeration.index',
         'admin.wallModeration.index',
         'admin.libraryVerse.index',
         'admin.forms.index',
-        'admin.prayerRequests.index',
         'admin.kidsMinistry.index',
-        'admin.myPrayers.index',
         'admin.userManagement.index',
         'admin.multiCongregation.index',
         'admin.classrooms.index',
-        'admin.logsMetrics.index',
     ];
 
     foreach ($routes as $routeName) {
@@ -59,6 +57,9 @@ it('allows admin to open all admin workspace routes', function () {
             ->get(route($routeName))
             ->assertSuccessful();
     }
+
+    $this->actingAs($admin)->get(route('admin.prayerRequests.index'))->assertRedirect('/admin/minhas-oracoes');
+    $this->actingAs($admin)->get(route('admin.myPrayers.index'))->assertRedirect('/minhas-oracoes');
 });
 
 it('blocks members from admin workspace routes', function () {
@@ -69,6 +70,7 @@ it('blocks members from admin workspace routes', function () {
     $routes = [
         'admin.branding.edit',
         'admin.highlights.index',
+        'admin.events.index',
         'admin.galleryModeration.index',
         'admin.wallModeration.index',
         'admin.libraryVerse.index',
@@ -87,4 +89,12 @@ it('blocks members from admin workspace routes', function () {
             ->get(route($routeName))
             ->assertForbidden();
     }
+});
+
+it('restricts operational logs and metrics to system users', function () {
+    $admin = createAdminUserWithChurch();
+    $system = User::factory()->create(['role' => UserRole::SYSTEM]);
+
+    $this->actingAs($admin)->get(route('admin.logsMetrics.index'))->assertForbidden();
+    $this->actingAs($system)->get(route('admin.logsMetrics.index'))->assertSuccessful();
 });

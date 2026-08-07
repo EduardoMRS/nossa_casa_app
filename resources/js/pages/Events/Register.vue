@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { store as storeResponse } from '@/actions/App/Http/Controllers/FormResponseController';
+import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
 import { login } from '@/routes';
@@ -23,6 +24,7 @@ interface SchemaField {
     helpText: string;
     options: SchemaOption[];
     width: 'full' | 'half' | 'third';
+    mobileWidth: 'full' | 'half';
     size: 'auto' | 'fixed';
     height: number;
     structural: boolean;
@@ -129,6 +131,7 @@ const schemaFields = computed<SchemaField[]>(() => {
                 width: ['half', 'third'].includes(String(record.width))
                     ? (String(record.width) as 'half' | 'third')
                     : 'full',
+                mobileWidth: record.mobile_width === 'half' ? 'half' : 'full',
                 size: record.size === 'fixed' ? 'fixed' : 'auto',
                 height: Math.max(1, Number(record.height ?? 4)),
                 structural,
@@ -164,15 +167,18 @@ const updateFieldValue = (field: SchemaField, value: unknown): void => {
 };
 
 const fieldWidthClass = (field: SchemaField): string => {
+    const mobileClass =
+        field.mobileWidth === 'half' ? 'col-span-6' : 'col-span-12';
+
     if (field.width === 'half') {
-        return 'md:col-span-1';
+        return `${mobileClass} md:col-span-6`;
     }
 
     if (field.width === 'third') {
-        return 'md:col-span-1';
+        return `${mobileClass} md:col-span-4`;
     }
 
-    return 'md:col-span-2';
+    return `${mobileClass} md:col-span-12`;
 };
 
 const submit = async () => {
@@ -225,7 +231,7 @@ const formatDate = (value: string): string => {
 <template>
     <Head :title="`${t('events.register.title')} - ${event.title}`" />
 
-    <div class="min-h-screen bg-[#f5f6f2] text-[#111b2d]">
+    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
         <PublicHeader active="events" />
 
         <main class="mx-auto max-w-5xl px-5 py-8 md:px-8 md:py-10">
@@ -308,7 +314,7 @@ const formatDate = (value: string): string => {
                         {{ t('events.register.schema_empty') }}
                     </div>
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div class="grid grid-cols-12 gap-5">
                         <template
                             v-for="field in schemaFields"
                             :key="field.key"
@@ -481,5 +487,6 @@ const formatDate = (value: string): string => {
                 </form>
             </section>
         </main>
+        <PublicFooter />
     </div>
 </template>

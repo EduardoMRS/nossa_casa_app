@@ -5,7 +5,10 @@ use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
+use App\Models\Church;
 use App\Models\Event;
+use App\Models\Highlight;
+use App\Models\Library;
 use App\Models\Media;
 use App\Models\Post;
 use Illuminate\Http\Request;
@@ -37,11 +40,18 @@ if (! function_exists('categoriesForChurchAndType')) {
 }
 
 Route::get('/', function () {
+    $eventHighlightOrder = Highlight::query()
+        ->where('highlightable_type', Event::class)
+        ->orderBy('order')
+        ->pluck('highlightable_id')
+        ->flip();
     $featuredEvents = Event::query()
         ->with('church:id,name,slug')
         ->orderBy('start_time', 'asc')
-        ->limit(3)
+        ->limit(30)
         ->get()
+        ->sortBy(fn (Event $event) => $eventHighlightOrder->get($event->id, PHP_INT_MAX))
+        ->take(3)
         ->map(function (Event $event) {
             $event->localize(relations: ['church']);
 
@@ -56,11 +66,19 @@ Route::get('/', function () {
             ];
         });
 
+    $postHighlightOrder = Highlight::query()
+        ->where('highlightable_type', Post::class)
+        ->orderBy('order')
+        ->pluck('highlightable_id')
+        ->flip();
     $latestPosts = Post::query()
+        ->visible()
         ->orderByDesc('published_at')
         ->orderByDesc('created_at')
-        ->limit(3)
+        ->limit(30)
         ->get()
+        ->sortBy(fn (Post $post) => $postHighlightOrder->get($post->id, PHP_INT_MAX))
+        ->take(3)
         ->map(function (Post $post) {
             $post->localize();
 
@@ -68,7 +86,10 @@ Route::get('/', function () {
                 'id' => $post->id,
                 'title' => $post->title,
                 'slug' => $post->slug,
-                'excerpt' => Str::limit(strip_tags((string) $post->content), 120),
+                'excerpt' => Str::limit((string) preg_replace('/\s+/', ' ', trim(strip_tags(Str::markdown((string) $post->content, [
+                    'html_input' => 'strip',
+                    'allow_unsafe_links' => false,
+                ])))), 120),
                 'published_at' => $post->published_at,
             ];
         });
@@ -83,6 +104,21 @@ Route::get('/', function () {
         'latestPosts' => $latestPosts,
     ]);
 })->name('home');
+
+Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file_path) {
+    $filePathFull = "church/{$church_id}/library/{$file_path}";
+    $library = Church::find($church_id)->library()->where('file_path', $filePathFull)
+        ->firstOrFail();
+
+    $library->localize();
+    $file = getFileMetadata($library->file_path);
+    if (! file_exists($file['path'])) {
+        abort(404);
+    }
+
+    return response()->file($file['path']);
+})->name('library.show');
+
 Route::get('/events', function () {
     $events = Event::query()
         ->with('church:id,name,slug')
@@ -95,7 +131,12 @@ Route::get('/events', function () {
                 'id' => $event->id,
                 'title' => $event->title,
                 'slug' => $event->slug,
-                'description' => $event->description,
+                'description' => $event->description
+                    ? (string) preg_replace('/\s+/', ' ', trim(strip_tags(Str::markdown($event->description, [
+                        'html_input' => 'strip',
+                        'allow_unsafe_links' => false,
+                    ]))))
+                    : null,
                 'cover_path' => $event->cover_path,
                 'start_time' => $event->start_time,
                 'end_time' => $event->end_time,
@@ -105,6 +146,53 @@ Route::get('/events', function () {
 
     return Inertia::render('Events/Index', ['events' => $events]);
 })->name('events.index');
+
+Route::get('/publicacoes/{slug}', function (string $slug) {
+    $post = Post::query()
+        ->visible()
+        ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
+        ->where('slug', $slug)
+        ->firstOrFail();
+    $post->localize(relations: ['church', 'categories']);
+    $comments = $post->comments()->with('user:id,first_name,last_name')->latest()->get();
+    $reactions = $post->reactions()->with('user:id,first_name,last_name')->latest()->get();
+    $authenticatedUser = request()->user();
+    $authenticatedRole = $authenticatedUser?->role?->value ?? (string) $authenticatedUser?->role;
+    $canInteract = $authenticatedRole === 'system' || $authenticatedUser?->profile?->church_id === $post->church_id;
+
+    return Inertia::render('Posts/PublicShow', [
+        'post' => [
+            'id' => $post->id,
+            'title' => $post->title,
+            'slug' => $post->slug,
+            'contentHtml' => Str::markdown((string) $post->content, [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]),
+            'published_at' => $post->published_at,
+            'church' => $post->church,
+            'author' => $post->author,
+            'category' => $post->categories->pluck('name')->join(', '),
+            'cover_url' => $post->medias->first()?->url,
+            'metrics' => [
+                'comments_count' => $comments->count(),
+                'reactions_count' => $reactions->count(),
+            ],
+        ],
+        'comments' => $comments,
+        'reactions' => $reactions,
+        'canInteract' => $canInteract,
+    ]);
+})->name('posts.public.show');
+
+Route::get('/biblioteca', function () {
+    $items = Library::query()
+        ->latest()
+        ->paginate(18)
+        ->through(fn (Library $item): Library => $item->localize());
+
+    return Inertia::render('Library/Index', ['items' => $items]);
+})->name('library.index');
 
 Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
     $event->load('church:id,name,slug');
@@ -256,7 +344,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'admin', 'superadmin', 'system' => [
                 ['title_key' => 'dashboard.module.platform_governance.title', 'description_key' => 'dashboard.module.platform_governance.description', 'href' => route('dashboard')],
                 ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('admin.highlights.index')],
-                ['title_key' => 'dashboard.module.monitor_events.title', 'description_key' => 'dashboard.module.monitor_events.description', 'href' => route('events.index')],
+                ['title_key' => 'dashboard.module.monitor_events.title', 'description_key' => 'dashboard.module.monitor_events.description', 'href' => route('admin.events.index')],
                 ['title_key' => 'dashboard.module.visual_identity.title', 'description_key' => 'dashboard.module.visual_identity.description', 'href' => route('admin.branding.edit')],
                 ['title_key' => 'dashboard.module.user_management.title', 'description_key' => 'dashboard.module.user_management.description', 'href' => route('admin.userManagement.index')],
                 ['title_key' => 'dashboard.module.multicongregation.title', 'description_key' => 'dashboard.module.multicongregation.description', 'href' => route('admin.multiCongregation.index')],
@@ -280,6 +368,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('dashboard');
 
+    Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])
+        ->middleware('role:member|leader|media|admin|superadmin|system')
+        ->name('myPrayers.index');
+
     Route::prefix('admin')
         ->name('admin.')
         ->middleware('role:admin|superadmin|system')
@@ -289,6 +381,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/categorias', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
             Route::get('/destaques', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');
+            Route::get('/eventos', [AdminWorkspaceController::class, 'events'])->name('events.index');
             Route::get('/moderar-galeria', [AdminWorkspaceController::class, 'galleryModeration'])->name('galleryModeration.index');
             Route::get('/moderar-mural', [AdminWorkspaceController::class, 'wallModeration'])->name('wallModeration.index');
             Route::get('/biblioteca-versiculo', [LibraryVerseController::class, 'index'])->name('libraryVerse.index');
@@ -297,13 +390,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
             Route::put('/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
             Route::get('/formularios', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
-            Route::get('/pedidos-intercessao', [AdminWorkspaceController::class, 'prayerRequests'])->name('prayerRequests.index');
+            Route::redirect('/pedidos-intercessao', '/admin/minhas-oracoes')->name('prayerRequests.index');
             Route::get('/ministerio-kids', [AdminWorkspaceController::class, 'kidsMinistry'])->name('kidsMinistry.index');
-            Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])->name('myPrayers.index');
+            Route::redirect('/minhas-oracoes', '/minhas-oracoes')->name('myPrayers.index');
             Route::get('/gestao-usuarios', [AdminWorkspaceController::class, 'userManagement'])->name('userManagement.index');
             Route::get('/multicongregacoes', [AdminWorkspaceController::class, 'multiCongregation'])->name('multiCongregation.index');
             Route::get('/salas-aula', [AdminWorkspaceController::class, 'classrooms'])->name('classrooms.index');
-            Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->name('logsMetrics.index');
+            Route::put('/salas-aula/configuracoes', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
+            Route::post('/gestao-usuarios/{user}/redefinir-senha', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
+            Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:system')->name('logsMetrics.index');
         });
 
     // // Churches (Igrejas)
@@ -311,14 +406,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/churches/create', function () { return Inertia::render('Churches/Create'); })->name('churches.create');
     // Route::get('/churches/{id}/edit', function ($id) { return Inertia::render('Churches/Edit', ['id' => $id]); })->name('churches.edit');
 
-    Route::get('/events/create', function () {
+    Route::get('/gestao/eventos/criar', function () {
         return Inertia::render('Events/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
+            'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
-    })->name('events.create');
+    })->middleware('role:leader|admin|superadmin|system')->name('events.create');
 
-    Route::get('/events/{event}/edit', function (string $event) {
+    Route::get('/gestao/eventos/{event}/editar', function (string $event) {
         $resource = Event::query()->findOrFail($event);
+        abort_unless($resource->church_id === request()->user()?->profile?->church_id, 403);
 
         return Inertia::render('Events/Form', [
             'event' => [
@@ -332,35 +429,45 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'category_ids' => $resource->categories()->pluck('categories.id')->all(),
             ],
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
+            'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
-    })->name('events.edit');
+    })->middleware('role:leader|admin|superadmin|system')->name('events.edit');
 
     Route::get('/posts', function () {
-        $posts = Post::visible()->orderBy('created_at', 'desc')->paginate(10)->through(function ($post) {
-            $post->localize();
+        $churchId = request()->user()?->church?->id;
+        $posts = Post::query()
+            ->where('church_id', $churchId)
+            ->with('author:id,first_name,last_name,email')
+            ->orderByDesc('created_at')
+            ->paginate(10)
+            ->through(function ($post) {
+                $post->localize();
 
-            return [
-                'id' => $post->id,
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'content' => $post->content,
-                'published_at' => $post->published_at,
-                'expires_at' => $post->expires_at,
-                'author' => $post->author_details,
-                'metrics' => $post->metrics,
-                'translations' => $post->translations,
-                'media' => $post->medias()->get()->map(function ($media) {
-                    return [
-                        'id' => $media->id,
-                        'name' => $media->name,
-                        'url' => $media->url,
-                        'type' => $media->type,
-                    ];
-                }),
-            ];
-        });
+                return [
+                    'id' => $post->id,
+                    'title' => $post->title,
+                    'slug' => $post->slug,
+                    'content' => $post->content,
+                    'published_at' => $post->published_at,
+                    'expires_at' => $post->expires_at,
+                    'author' => $post->author_details,
+                    'metrics' => $post->metrics,
+                    'translations' => $post->translations,
+                    'media' => $post->medias()->get()->map(function ($media) {
+                        return [
+                            'id' => $media->id,
+                            'name' => $media->name,
+                            'url' => $media->url,
+                            'type' => $media->type,
+                        ];
+                    }),
+                ];
+            });
 
-        return Inertia::render('Posts/Index', ['posts' => $posts]);
+        return Inertia::render('Posts/Index', [
+            'posts' => $posts,
+            'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
+        ]);
     })->name('posts.index');
     Route::get('/posts/create', function () {
         return Inertia::render('Posts/Form', [
@@ -368,7 +475,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('posts.create');
     Route::get('/posts/{post}/edit', function ($post) {
-        $post = Post::visible()->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        $post = Post::query()->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $church = $post->church;
         $props = [
             'available_categories' => $church->categories()->get(['id', 'name'])->each->makeHidden('translations'),
@@ -387,7 +495,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
     Route::get('/posts/{post}', function () {
-        $post = Post::visible()->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        $post = Post::query()->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $post->localize(relations: ['church', 'categories']);
         $props = [
             'can' => [
@@ -397,6 +506,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'react' => auth()->user()->can('react', $post),
             ],
             'post' => $post,
+            'contentHtml' => Str::markdown((string) $post->content, [
+                'html_input' => 'strip',
+                'allow_unsafe_links' => false,
+            ]),
             'author' => $post->author_details,
             'metrics' => $post->metrics,
             'translations' => $post->translations,
@@ -408,8 +521,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     'type' => $media->type,
                 ];
             }),
-            'comments' => $post->comments()->with('replies')->orderBy('created_at', 'desc')->get(),
-            'reactions' => $post->reactions()->get(),
+            'comments' => $post->comments()->with(['user:id,first_name,last_name', 'replies.user:id,first_name,last_name'])->orderBy('created_at', 'desc')->get(),
+            'reactions' => $post->reactions()->with('user:id,first_name,last_name')->get(),
         ];
 
         return Inertia::render('Posts/Show', $props);

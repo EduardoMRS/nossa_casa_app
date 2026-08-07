@@ -1,0 +1,243 @@
+<script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { Pencil, Plus, Tags, Trash2, X } from '@lucide/vue';
+import { reactive, ref, watch } from 'vue';
+import { useI18n } from '@/lib/i18n';
+
+export type ManagedCategory = {
+    id: string;
+    name: string;
+    slug: string;
+    type: string;
+};
+
+const props = defineProps<{
+    open: boolean;
+    categoryType: string;
+    categories: ManagedCategory[];
+    title?: string;
+}>();
+const emit = defineEmits<{ close: [] }>();
+const { t } = useI18n();
+const editingId = ref<string | null>(null);
+const processing = ref(false);
+const errors = ref<Record<string, string>>({});
+const form = reactive({ name: '', slug: '' });
+
+const slugify = (value: string): string =>
+    value
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+watch(
+    () => form.name,
+    (value) => {
+        if (!editingId.value) {
+            form.slug = slugify(value);
+        }
+    },
+);
+
+const reset = (): void => {
+    editingId.value = null;
+    form.name = '';
+    form.slug = '';
+    errors.value = {};
+};
+
+const edit = (category: ManagedCategory): void => {
+    editingId.value = category.id;
+    form.name = category.name;
+    form.slug = category.slug;
+    errors.value = {};
+};
+
+const save = (): void => {
+    processing.value = true;
+    const options = {
+        preserveScroll: true,
+        onError: (validationErrors: Record<string, string>) => {
+            errors.value = validationErrors;
+        },
+        onSuccess: () => {
+            reset();
+            router.reload({ only: ['categories'] });
+        },
+        onFinish: () => {
+            processing.value = false;
+        },
+    };
+    const payload = {
+        name: form.name,
+        slug: form.slug || slugify(form.name),
+        type: props.categoryType,
+    };
+
+    if (editingId.value) {
+        router.put(`/api/categories/${editingId.value}`, payload, options);
+
+        return;
+    }
+
+    router.post('/api/categories', payload, options);
+};
+
+const remove = (category: ManagedCategory): void => {
+    if (
+        !window.confirm(
+            t('admin.categories.delete_confirm', { name: category.name }),
+        )
+    ) {
+        return;
+    }
+
+    router.delete(`/api/categories/${category.id}`, {
+        preserveScroll: true,
+        onSuccess: () => router.reload({ only: ['categories'] }),
+    });
+};
+</script>
+
+<template>
+    <div
+        v-if="open"
+        class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/65 p-4 backdrop-blur-sm"
+        @click.self="emit('close')"
+    >
+        <section
+            class="my-6 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        >
+            <header
+                class="flex items-center justify-between border-b border-slate-200 px-5 py-4"
+            >
+                <div>
+                    <p
+                        class="font-mono text-[10px] font-bold tracking-wider text-indigo-500 uppercase"
+                    >
+                        {{ t('admin.categories.title') }}
+                    </p>
+                    <h2 class="text-xl font-black text-slate-950">
+                        {{ title ?? t('admin.categories.church_categories') }}
+                    </h2>
+                </div>
+                <button
+                    class="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                    @click="emit('close')"
+                >
+                    <X class="size-5" />
+                </button>
+            </header>
+            <div class="grid gap-6 p-5 lg:grid-cols-[1fr_0.72fr]">
+                <div class="overflow-hidden rounded-xl border border-slate-200">
+                    <table class="w-full text-left text-sm">
+                        <thead
+                            class="bg-slate-50 text-[10px] font-bold tracking-wider text-slate-500 uppercase"
+                        >
+                            <tr>
+                                <th class="px-4 py-3">
+                                    {{ t('admin.common.name') }}
+                                </th>
+                                <th class="px-4 py-3">Slug</th>
+                                <th class="px-4 py-3 text-right">
+                                    {{ t('posts.index.actions') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr
+                                v-for="category in categories"
+                                :key="category.id"
+                            >
+                                <td class="px-4 py-3 font-bold text-slate-800">
+                                    {{ category.name }}
+                                </td>
+                                <td
+                                    class="px-4 py-3 font-mono text-xs text-slate-400"
+                                >
+                                    {{ category.slug }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex justify-end gap-1">
+                                        <button
+                                            class="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                                            @click="edit(category)"
+                                        >
+                                            <Pencil class="size-4" /></button
+                                        ><button
+                                            class="rounded-lg p-2 text-rose-600 hover:bg-rose-50"
+                                            @click="remove(category)"
+                                        >
+                                            <Trash2 class="size-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p
+                        v-if="!categories.length"
+                        class="p-8 text-center text-sm text-slate-400"
+                    >
+                        {{ t('admin.categories.empty') }}
+                    </p>
+                </div>
+                <form
+                    class="h-fit space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                    @submit.prevent="save"
+                >
+                    <div class="flex items-center justify-between">
+                        <h3 class="flex items-center gap-2 font-black">
+                            <Tags class="size-4 text-indigo-600" />{{
+                                editingId
+                                    ? t('admin.categories.edit')
+                                    : t('admin.categories.new')
+                            }}
+                        </h3>
+                        <button
+                            v-if="editingId"
+                            type="button"
+                            class="text-xs font-bold text-slate-500"
+                            @click="reset"
+                        >
+                            {{ t('admin.common.clear') }}
+                        </button>
+                    </div>
+                    <label class="block text-xs font-bold text-slate-600"
+                        >{{ t('admin.common.name')
+                        }}<input
+                            v-model="form.name"
+                            required
+                            class="mt-1 w-full rounded-lg border-slate-200 bg-white text-sm"
+                    /></label>
+                    <p v-if="errors.name" class="text-xs text-rose-600">
+                        {{ errors.name }}
+                    </p>
+                    <label class="block text-xs font-bold text-slate-600"
+                        >Slug<input
+                            v-model="form.slug"
+                            required
+                            class="mt-1 w-full rounded-lg border-slate-200 bg-white text-sm"
+                    /></label>
+                    <p v-if="errors.slug" class="text-xs text-rose-600">
+                        {{ errors.slug }}
+                    </p>
+                    <button
+                        :disabled="processing"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                        <Plus class="size-4" />{{
+                            editingId
+                                ? t('admin.categories.update')
+                                : t('admin.categories.create')
+                        }}
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+</template>

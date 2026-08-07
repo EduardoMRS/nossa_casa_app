@@ -17,6 +17,16 @@ class Highlight extends Model
         'order',
     ];
 
+    public function highlightable()
+    {
+        return $this->morphTo();
+    }
+
+    public function church()
+    {
+        return $this->belongsTo(Church::class);
+    }
+
     public function posts()
     {
         return $this->morphedByMany(Post::class, 'highlightable');

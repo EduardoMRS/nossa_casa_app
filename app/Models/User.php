@@ -1,24 +1,21 @@
 <?php
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
+use App\Enums\UserRelationships;
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use App\Enums\UserRole;
-use App\Enums\UserRelationships;
 
 class User extends Authenticatable implements PasskeyUser
 {
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasUlids;
+    use HasFactory, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     protected $fillable = [
         'first_name',
@@ -27,6 +24,11 @@ class User extends Authenticatable implements PasskeyUser
         'password',
         'birth_date',
         'role',
+    ];
+
+    protected $appends = [
+        'name',
+        'avatar',
     ];
 
     protected $hidden = [
@@ -57,7 +59,6 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasOne(UserProfile::class);
     }
-    
 
     public function posts()
     {
@@ -84,6 +85,21 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(UserRelationship::class, 'user_id');
     }
 
+    public function relatedRelationships()
+    {
+        return $this->hasMany(UserRelationship::class, 'related_user_id');
+    }
+
+    public function classrooms()
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_users');
+    }
+
+    public function registeredEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_users')->withPivot('status');
+    }
+
     public function scopeFamily($query)
     {
         return $query->whereHas(UserRelationship::class, function ($q) {
@@ -103,17 +119,30 @@ class User extends Authenticatable implements PasskeyUser
         $this->role = UserRole::from($role);
         $this->save();
     }
-    
+
+    public function getNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    public function getAvatarAttribute(): ?string
+    {
+        $avatarPath = $this->profile?->avatar_path;
+
+        return $avatarPath ? genUrl($avatarPath) : null;
+    }
+
     /**
      * Check if the user has a specific role or any of the roles in an array.
-     * @param string|array|UserRole $role role or array of roles to check against
-     * @return bool
+     *
+     * @param  string|array|UserRole  $role  role or array of roles to check against
      */
-    public function hasRole( $role): bool
+    public function hasRole($role): bool
     {
         if (is_array($role)) {
-            return in_array($this->role, array_map(fn($r) => UserRole::from($r), $role));
+            return in_array($this->role, array_map(fn ($r) => UserRole::from($r), $role));
         }
+
         return $this->role === UserRole::from($role);
     }
 
@@ -139,7 +168,7 @@ class User extends Authenticatable implements PasskeyUser
                 'id',
                 'first_name',
                 'last_name',
-                'email'
+                'email',
             ]);
     }
 }

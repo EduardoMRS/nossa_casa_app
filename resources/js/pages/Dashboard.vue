@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { useI18n } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 
@@ -68,39 +68,99 @@ defineOptions({
 <template>
     <Head :title="t('dashboard.title')" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden bg-[#f4f7fb] p-4 text-slate-800 dark:bg-slate-900 dark:text-slate-100 md:p-6" :style="paletteStyle">
+    <div
+        class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden bg-[#f4f7fb] p-4 text-slate-800 md:p-6 dark:bg-slate-900 dark:text-slate-100"
+        :style="paletteStyle"
+    >
         <section
-            class="rounded-3xl border border-slate-200/70 bg-gradient-to-r from-[color:var(--brand-primary)]/90 via-[color:var(--brand-secondary)]/90 to-[color:var(--brand-primary)]/85 p-6 text-white shadow-sm dark:border-slate-700/60 dark:from-[color:var(--brand-primary)]/55 dark:via-[color:var(--brand-secondary)]/50 dark:to-[color:var(--brand-primary)]/50 md:p-8"
+            class="rounded-2xl border border-indigo-900 bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white shadow-sm md:p-8"
         >
-            <p class="mb-1 text-xs uppercase tracking-[0.2em] text-slate-100/80">{{ t('dashboard.workspace') }}</p>
-            <h1 class="text-3xl font-black md:text-4xl" :style="{ fontFamily: 'var(--brand-font)' }">
+            <p
+                class="mb-1 text-xs tracking-[0.2em] text-slate-100/80 uppercase"
+            >
+                {{ t('dashboard.workspace') }}
+            </p>
+            <h1
+                class="text-3xl font-black md:text-4xl"
+                :style="{ fontFamily: 'var(--brand-font)' }"
+            >
                 {{ branding.banner_title || t('dashboard.title') }}
             </h1>
             <p class="mt-2 text-sm text-slate-100/90 md:text-base">
-                {{ branding.banner_subtitle || t('dashboard.profile_context', { role: roleLabel }) }}
+                {{
+                    branding.banner_subtitle ||
+                    t('dashboard.profile_context', { role: roleLabel })
+                }}
             </p>
-            <p v-if="branding.contact_email" class="mt-3 text-xs font-semibold text-slate-100/80">{{ branding.contact_email }}</p>
+            <p
+                v-if="branding.contact_email"
+                class="mt-3 text-xs font-semibold text-slate-100/80"
+            >
+                {{ branding.contact_email }}
+            </p>
         </section>
 
         <section class="grid gap-4 md:grid-cols-3">
-            <article class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
-                <p class="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">{{ t('dashboard.kpis.events') }}</p>
-                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">{{ kpis.events }}</p>
+            <article
+                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+            >
+                <p
+                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                >
+                    {{ t('dashboard.kpis.events') }}
+                </p>
+                <p
+                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
+                    :style="{ fontFamily: 'var(--brand-font)' }"
+                >
+                    {{ kpis.events }}
+                </p>
             </article>
-            <article class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
-                <p class="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">{{ t('dashboard.kpis.gallery') }}</p>
-                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">{{ kpis.gallery }}</p>
+            <article
+                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+            >
+                <p
+                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                >
+                    {{ t('dashboard.kpis.gallery') }}
+                </p>
+                <p
+                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
+                    :style="{ fontFamily: 'var(--brand-font)' }"
+                >
+                    {{ kpis.gallery }}
+                </p>
             </article>
-            <article class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70">
-                <p class="text-xs uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">{{ t('dashboard.kpis.posts') }}</p>
-                <p class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">{{ kpis.posts }}</p>
+            <article
+                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+            >
+                <p
+                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                >
+                    {{ t('dashboard.kpis.posts') }}
+                </p>
+                <p
+                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
+                    :style="{ fontFamily: 'var(--brand-font)' }"
+                >
+                    {{ kpis.posts }}
+                </p>
             </article>
         </section>
 
         <section>
             <div class="mb-3">
-                <p class="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">{{ t('dashboard.modules') }}</p>
-                <h2 class="text-2xl font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">{{ t('dashboard.recommended_actions') }}</h2>
+                <p
+                    class="text-xs tracking-[0.2em] text-slate-500 uppercase dark:text-slate-300"
+                >
+                    {{ t('dashboard.modules') }}
+                </p>
+                <h2
+                    class="text-2xl font-black text-slate-900 dark:text-slate-100"
+                    :style="{ fontFamily: 'var(--brand-font)' }"
+                >
+                    {{ t('dashboard.recommended_actions') }}
+                </h2>
             </div>
 
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -109,8 +169,15 @@ defineOptions({
                     :key="module.title_key"
                     class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
                 >
-                    <h3 class="text-lg font-black text-slate-900 dark:text-slate-100" :style="{ fontFamily: 'var(--brand-font)' }">{{ t(module.title_key) }}</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">{{ t(module.description_key) }}</p>
+                    <h3
+                        class="text-lg font-black text-slate-900 dark:text-slate-100"
+                        :style="{ fontFamily: 'var(--brand-font)' }"
+                    >
+                        {{ t(module.title_key) }}
+                    </h3>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        {{ t(module.description_key) }}
+                    </p>
                     <Link
                         :href="module.href"
                         class="mt-4 inline-flex rounded-full px-4 py-2 text-xs font-bold text-white"

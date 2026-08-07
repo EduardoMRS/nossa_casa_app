@@ -22,4 +22,9 @@ class Vercicle extends Model
     protected $appends = [
         'translations',
     ];
+
+    public function library()
+    {
+        return $this->belongsTo(Library::class);
+    }
 }

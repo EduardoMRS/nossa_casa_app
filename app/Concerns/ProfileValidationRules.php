@@ -13,11 +13,17 @@ trait ProfileValidationRules
      *
      * @return array<string, array<int, ValidationRule|array<mixed>|string>>
      */
-    protected function profileRules(?int $userId = null): array
+    protected function profileRules(int|string|null $userId = null): array
     {
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
+            'avatar' => ['nullable', 'image', 'max:5120'],
+            'community_id' => ['nullable', 'string', 'exists:communities,id'],
+            'church_id' => ['nullable', 'string', 'exists:churches,id'],
         ];
     }
 
@@ -36,7 +42,7 @@ trait ProfileValidationRules
      *
      * @return array<int, ValidationRule|array<mixed>|string>
      */
-    protected function emailRules(?int $userId = null): array
+    protected function emailRules(int|string|null $userId = null): array
     {
         return [
             'required',
