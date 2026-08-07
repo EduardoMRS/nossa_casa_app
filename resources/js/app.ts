@@ -1,17 +1,33 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import axios from 'axios';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
+        const publicPages = [
+            'Home',
+            'Welcome',
+            'Events/Index',
+            'Events/Show',
+            'Events/Register',
+            'Posts/PublicShow',
+            'Gallery/Index',
+            'Library/Index',
+        ];
+
         switch (true) {
-            case name === 'Welcome':
+            case publicPages.includes(name):
+                return null;
+            case name === 'settings/Workspace':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

@@ -5,7 +5,10 @@ import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegi
 import Heading from '@/components/Heading.vue';
 import PasskeyItem from '@/components/PasskeyItem.vue';
 import PasskeyRegister from '@/components/PasskeyRegister.vue';
+import { useI18n } from '@/lib/i18n';
 import type { Passkey } from '@/types/auth';
+
+const { t } = useI18n();
 
 export type Props = {
     canManagePasskeys?: boolean;
@@ -33,8 +36,8 @@ const handleRegisterSuccess = () => {
     <div v-if="canManagePasskeys" class="space-y-6">
         <Heading
             variant="small"
-            title="Passkeys"
-            description="Manage your passkeys for passwordless sign-in"
+            :title="t('settings.passkeys.title')"
+            :description="t('settings.passkeys.description')"
         />
 
         <div class="overflow-hidden rounded-lg border border-border">
@@ -53,9 +56,9 @@ const handleRegisterSuccess = () => {
                 >
                     <KeyRound class="h-7 w-7 text-muted-foreground" />
                 </div>
-                <p class="font-medium">No passkeys yet</p>
+                <p class="font-medium">{{ t('settings.passkeys.empty') }}</p>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    Add a passkey to sign in without a password
+                    {{ t('settings.passkeys.empty_hint') }}
                 </p>
             </div>
         </div>

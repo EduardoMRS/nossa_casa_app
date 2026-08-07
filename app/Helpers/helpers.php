@@ -1,0 +1,139 @@
+<?php
+
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Crypt;
+
+if (! function_exists('getFileMetadata')) {
+    /**
+     * Helper to get file metadata
+     *
+     * @param  UploadedFile|string|null  $filepath  filepath, file base64 string, or URL
+     * @return array{
+     *  exists: bool,
+     *  mime_type:string,
+     *  handler: callable,
+     *  size: int,
+     *  origin: string,
+     *  path: string,
+     *  name: string,
+     * }
+     */
+    function getFileMetadata($filepath)
+    {
+        $metadata = [
+            'exists' => false,
+            'mime_type' => '',
+            'handler' => null,
+            'size' => 0,
+            'origin' => '',
+            'path' => '',
+            'name' => '',
+        ];
+
+        if (filter_var($filepath, FILTER_VALIDATE_URL)) {
+            $metadata['origin'] = 'url';
+            $metadata['handler'] = function () use ($filepath) {
+                return fopen($filepath, 'r');
+            };
+
+            $path = (string) parse_url($filepath, PHP_URL_PATH);
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+            $metadata['exists'] = true;
+            $metadata['mime_type'] = match ($extension) {
+                'pdf' => 'application/pdf',
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'svg' => 'image/svg+xml',
+                'txt' => 'text/plain',
+                'csv' => 'text/csv',
+                'json' => 'application/json',
+                'xml' => 'application/xml',
+                default => 'application/octet-stream',
+            };
+            $metadata['size'] = 0;
+            $metadata['path'] = $filepath;
+            $metadata['name'] = basename($path !== '' ? $path : $filepath);
+
+            return $metadata;
+        } elseif ($filepath instanceof UploadedFile && $filepath->isValid()) {
+            $metadata['origin'] = 'local';
+            $metadata['handler'] = function () use ($filepath) {
+                return fopen($filepath->getRealPath(), 'r');
+            };
+            $filepath = $filepath->getRealPath();
+        } elseif (file_exists($filepath)) {
+            $metadata['origin'] = 'local';
+            $metadata['handler'] = function () use ($filepath) {
+                return fopen($filepath, 'r');
+            };
+        } else {
+            $disks = config('filesystems.disks', []);
+
+            foreach ($disks as $diskName => $diskConfig) {
+                if (! is_array($diskConfig)) {
+                    continue;
+                }
+
+                $driver = $diskConfig['driver'] ?? null;
+
+                if ($driver === 's3'
+                    && (! class_exists(League\Flysystem\AwsS3V3\PortableVisibilityConverter::class)
+                        || blank($diskConfig['bucket'] ?? null))) {
+                    continue;
+                }
+
+                try {
+                    $disk = Storage::disk($diskName);
+
+                    if (! $disk->exists($filepath)) {
+                        continue;
+                    }
+
+                    $metadata['exists'] = true;
+                    $metadata['origin'] = $driver === 'local' ? 'local' : 'cloud';
+                    $metadata['handler'] = function () use ($diskName, $filepath) {
+                        return Storage::disk($diskName)->readStream($filepath);
+                    };
+                    $metadata['mime_type'] = $disk->mimeType($filepath) ?: 'application/octet-stream';
+                    $metadata['size'] = $disk->size($filepath);
+                    $metadata['path'] = $driver === 'local' ? $disk->path($filepath) : $filepath;
+                    $metadata['name'] = basename($filepath);
+
+                    return $metadata;
+                } catch (Throwable) {
+                    continue;
+                }
+            }
+
+            return $metadata;
+        }
+
+        $metadata['exists'] = true;
+        $metadata['mime_type'] = mime_content_type($filepath);
+        $metadata['size'] = filesize($filepath);
+        $metadata['path'] = realpath($filepath);
+        $metadata['name'] = basename($filepath);
+
+        return $metadata;
+    }
+}
+
+if (! function_exists('genUrl')) {
+    /**
+     * Helper to generate a secure URL for a file path
+     * TODO: reduce the size of the encrypted string to make it more user-friendly
+     *
+     * @param  string  $filePath  The file path to encrypt and generate a URL for
+     * @return string The generated secure URL
+     */
+    function genUrl($filePath)
+    {
+        $encryptedPath = Crypt::encryptString($filePath);
+        $url = route('secure-file', ['encryptedFile' => $encryptedPath]);
+
+        return $url;
+    }
+}

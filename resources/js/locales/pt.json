@@ -1,0 +1,936 @@
+{
+    "a11y": {
+        "more": "Mais",
+        "close": "Fechar",
+        "sidebar_title": "Barra lateral",
+        "sidebar_description": "Exibe a barra lateral móvel.",
+        "toggle_sidebar": "Alternar barra lateral",
+        "breadcrumb": "Breadcrumbs",
+        "loading": "Carregando",
+        "show_password": "Mostrar senha",
+        "hide_password": "Ocultar senha"
+    },
+    "welcome": {
+        "meta_title": "Bem-vindo",
+        "dashboard": "Painel",
+        "login": "Fazer login",
+        "register": "Registrar",
+        "title": "Vamos começar",
+        "description": "O Laravel tem um ecossistema incrivelmente rico. Sugerimos começar com o seguinte.",
+        "read": "Ler o",
+        "documentation": "Documentação",
+        "watch_tutorials": "Assista a tutoriais de vídeo em",
+        "deploy": "Implantar agora"
+    },
+    "locale": {
+        "switcher": "Idioma"
+    },
+    "nav": {
+        "home": "Início",
+        "events": "Eventos",
+        "gallery": "Galeria",
+        "library": "Biblioteca",
+        "back": "Voltar",
+        "dashboard": "Painel",
+        "login": "Entrar",
+        "menu": "Abrir menu",
+        "faith_community": "Comunidade de fé"
+    },
+    "navigation": {
+        "menu": "Menu de navegação",
+        "shortcuts": "Atalhos",
+        "communication": "Comunicação e conteúdo",
+        "ministries": "Ministérios e membros",
+        "administration": "Administração e configurações",
+        "highlights": "Destaques",
+        "intercession": "Solicitações de intercessão",
+        "documentation": "Documentação",
+        "repository": "Repositório"
+    },
+    "actions": {
+        "back": "Voltar",
+        "create": "Criar",
+        "edit": "Editar",
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "update": "Atualizar",
+        "upload": "Enviar",
+        "delete": "Excluir"
+    },
+    "gallery": {
+        "meta_title": "Galeria",
+        "kicker": "Memórias visuais",
+        "title": "Galeria de fotos e vídeos da comunidade",
+        "description": "Explore mídia compartilhada pela comunidade e aprovada pela equipe de moderação.",
+        "upload_kicker": "Envio de mídia",
+        "upload_title": "Adicionar um novo item à galeria",
+        "file": "Arquivo",
+        "file_placeholder": "https://... ou caminho do arquivo",
+        "upload_hint": "Perfis autorizados podem enviar arquivos à galeria; a moderação continua disponível no painel privado.",
+        "categories": "Categorias de mídia",
+        "categories_hint": "Selecione as categorias da sua igreja",
+        "preview": "Pré-visualização",
+        "preview_alt": "Pré-visualização de mídia",
+        "no_selection": "Nenhum mídia selecionada",
+        "uploading": "Enviando...",
+        "upload": "Enviar à galeria",
+        "upload_error": "A mídia não pôde ser enviada.",
+        "item_alt": "Mídia da galeria",
+        "anonymous": "Anônimo",
+        "pagination": "Mostrando {from} - {to} de {total} itens"
+    },
+    "auth": {
+        "common": {
+            "workspace": "Espaço de administração",
+            "name": "Nome",
+            "full_name": "Nome completo",
+            "email": "Endereço de e‑mail",
+            "password": "Senha",
+            "confirm_password": "Confirmar senha"
+        },
+        "login": {
+            "meta_title": "Entrar",
+            "title": "Entrar na sua conta",
+            "description": "Insira seu e‑mail e senha abaixo para entrar",
+            "forgot_password": "Esqueceu sua senha?",
+            "remember": "Lembrar-me",
+            "submit": "Entrar",
+            "no_account": "Não tem conta?",
+            "sign_up": "Criar conta"
+        },
+        "register": {
+            "meta_title": "Registrar",
+            "title": "Criar conta",
+            "description": "Insira seus dados abaixo para criar sua conta",
+            "submit": "Criar conta",
+            "has_account": "Já tem conta?"
+        },
+        "forgot": {
+            "meta_title": "Esqueceu a senha",
+            "title": "Esqueceu a senha",
+            "description": "Insira seu e‑mail para receber o link de redefinição de senha",
+            "submit": "Enviar link de redefinição de senha",
+            "return_to": "Ou, retorne a"
+        },
+        "reset": {
+            "meta_title": "Redefinir senha",
+            "title": "Redefinir senha",
+            "description": "Por favor, insira sua nova senha abaixo",
+            "submit": "Redefinir senha"
+        },
+        "confirm": {
+            "meta_title": "Confirmar senha",
+            "title": "Confirmar senha",
+            "description": "Esta é uma área segura do aplicativo. Por favor, confirme sua senha antes de continuar.",
+            "passkey": "Confirmar com chave de acesso",
+            "confirming": "Confirmando...",
+            "separator": "Ou confirme com senha",
+            "submit": "Confirmar senha"
+        },
+        "verify": {
+            "meta_title": "Verificação de e‑mail",
+            "title": "Verificação de e‑mail",
+            "description": "Por favor, verifique seu endereço de e‑mail clicando no link que acabamos de enviar a você.",
+            "sent": "Um novo link de verificação foi enviado ao e‑mail que você forneceu durante o registro.",
+            "resend": "Reenviar e‑mail de verificação",
+            "logout": "Sair"
+        },
+        "two_factor": {
+            "meta_title": "Autenticação de dois fatores",
+            "recovery_title": "Código de recuperação",
+            "recovery_description": "Por favor, confirme o acesso à sua conta inserindo um dos códigos de recuperação de emergência.",
+            "authentication_title": "Código de autenticação",
+            "authentication_description": "Insira o código de autenticação fornecido pelo seu aplicativo de autenticação.",
+            "use_authentication": "fazer login usando um código de autenticação",
+            "use_recovery": "fazer login usando um código de recuperação",
+            "continue": "Continuar",
+            "or_you_can": "ou você pode",
+            "recovery_placeholder": "Insira o código de recuperação"
+        }
+    },
+    "settings": {
+        "title": "Configurações",
+        "description": "Gerencie seu perfil e configurações da conta",
+        "profile": {
+            "nav": "Perfil",
+            "name": "Nome completo",
+            "birth_date": "Data de nascimento",
+            "phone": "Telefone / WhatsApp",
+            "gender": "Gênero",
+            "avatar": "Foto de perfil",
+            "other": "Outros",
+            "save": "Salvar perfil",
+            "breadcrumb": "Configurações de perfil",
+            "meta_title": "Configurações de perfil",
+            "title": "Perfil",
+            "description": "Atualize seu nome e endereço de e‑mail",
+            "unverified": "Seu endereço de e‑mail não foi verificado.",
+            "resend": "Clique aqui para reenviar o e‑mail de verificação.",
+            "sent": "Um novo link de verificação foi enviado ao seu e‑mail."
+        },
+        "workspace": {
+            "title": "Minha conta",
+            "account": "Centro de membros",
+            "profile": "Perfil",
+            "name": "Nome completo",
+            "birth_date": "Data de nascimento",
+            "phone": "Telefone / WhatsApp",
+            "gender": "Gênero",
+            "avatar": "Foto de perfil",
+            "other": "Outros",
+            "save": "Salvar perfil",
+            "events": "Minhas inscrições",
+            "classrooms": "Meus salões de aula",
+            "prayers": "Meus pedidos de intercessão",
+            "relationships": "Relações",
+            "community": "Comunidade",
+            "church": "Congregação",
+            "select_community": "Selecionar uma comunidade",
+            "select_church": "Selecionar uma congregação",
+            "browse_events": "Navegar o calendário completo de eventos",
+            "new_prayer": "Novo pedido de intercessão",
+            "prayer_placeholder": "Compartilhe seu pedido de oração...",
+            "send_prayer": "Enviar pedido",
+            "family_management": "Gerenciamento de Família e Ministério de Crianças",
+            "family_management_hint": "Registre membros da família, responsáveis e crianças para facilitar o check-in e a retirada segura.",
+            "authorized_adults": "Adultos autorizados",
+            "no_authorized_adults": "Sem outros adultos autorizados.",
+            "authorize_adult": "Autorizar adulto ou responsável",
+            "authorize": "Autorizar",
+            "registered_children": "Meus filhos registrados",
+            "checkout_pin": "Código de retirada",
+            "checked_in": "Check-in realizado",
+            "no_children": "Nenhum filho registrado.",
+            "add_child": "Registrar um filho na família",
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "medical_notes": "Observações médicas, alergias ou cuidados especiais",
+            "register_child": "Registrar filho",
+            "no_events": "Você ainda não está registrado(a) em nenhum evento.",
+            "no_classrooms": "Você ainda não faz parte de nenhuma sala de aula.",
+            "no_prayers": "Você ainda não enviou pedidos de intercessão.",
+            "no_relationships": "Nenhuma relação familiar registrada.",
+            "add_relationship": "Adicionar membro da família ou filho",
+            "family_member": "Pessoa",
+            "select_person": "Selecionar uma pessoa",
+            "relationship": "Relação",
+            "responsible_for": "Eu sou responsável por este filho",
+            "child_of": "Esta pessoa é meu guardião",
+            "add": "Adicionar relação",
+            "remove_relationship_confirm": "Remover esta relação?",
+            "relationship_types": {
+                "parent": "Guardião",
+                "child": "Filho",
+                "spouse": "Cônjuge",
+                "friend": "Amigo",
+                "follower": "Seguidor",
+                "blocked": "Bloqueado"
+            }
+        },
+        "security": {
+            "nav": "Segurança",
+            "breadcrumb": "Configurações de segurança",
+            "meta_title": "Configurações de segurança",
+            "title": "Atualizar senha",
+            "description": "Certifique‑se de que sua conta está usando uma senha longa e aleatória para permanecer segura.",
+            "current_password": "Senha atual",
+            "new_password": "Nova senha"
+        },
+        "appearance": {
+            "nav": "Aparência",
+            "breadcrumb": "Configurações de aparência",
+            "meta_title": "Configurações de aparência",
+            "title": "Configurações de aparência",
+            "description": "Atualize as configurações de aparência da sua conta",
+            "light": "Claro",
+            "dark": "Escuro",
+            "system": "Sistema"
+        },
+        "delete_account": {
+            "title": "Excluir conta",
+            "description": "Exclua sua conta e todos os seus recursos",
+            "warning": "Aviso",
+            "warning_text": "Por favor, proceda com cautela, isso não pode ser revertido.",
+            "confirm_title": "Você tem certeza que deseja excluir sua conta?",
+            "confirm_description": "Quando sua conta for excluída, todos os seus recursos e dados serão permanentemente excluídos. Insira sua senha para confirmar."
+        },
+        "passkeys": {
+            "title": "Chaves de acesso",
+            "description": "Gerencie suas chaves de acesso para login sem senha",
+            "empty": "Nenhuma chave de acesso ainda",
+            "empty_hint": "Adicione uma chave de acesso para entrar sem senha",
+            "added": "Adicionado {date}",
+            "last_used": "Última utilização {date}",
+            "remove_title": "Remover chave de acesso",
+            "remove_description": "Você tem certeza de que deseja remover a “{name}” chave de acesso? Você não poderá mais usá‑la para fazer login.",
+            "removing": "Removendo...",
+            "unsupported": "Chaves de acesso não são suportadas neste navegador.",
+            "add": "Adicionar chave de acesso",
+            "name": "Nome da chave de acesso",
+            "placeholder": "ex.: MacBook Pro, iPhone",
+            "name_hint": "Um nome ajuda a identificar esta chave de acesso posteriormente.",
+            "registering": "Registrando...",
+            "register": "Registrar chave de acesso"
+        },
+        "two_factor": {
+            "title": "Autenticação de dois fatores",
+            "description": "Gerencie as configurações de autenticação de dois fatores",
+            "disabled_hint": "Quando habilitado, você será solicitado a inserir um código seguro de um aplicativo compatível com TOTP durante o login.",
+            "enabled_hint": "Você será solicitado a inserir um código seguro e aleatório do seu aplicativo autenticador durante o login.",
+            "continue_setup": "Continuar configuração",
+            "enable": "Habilitar 2FA",
+            "disable": "Desabilitar 2FA",
+            "recovery_codes": "Códigos de recuperação de 2FA",
+            "recovery_description": "Códigos de recuperação permitem que você recupere o acesso se perder seu dispositivo de 2FA. Armazene-os em um gerenciador de senhas seguro.",
+            "hide_codes": "Ocultar códigos de recuperação",
+            "view_codes": "Ver códigos de recuperação",
+            "regenerate": "Gerar códigos novamente",
+            "recovery_hint": "Cada código de recuperação pode ser usado apenas uma vez e é removido após o uso. Regere-os quando precisar de mais.",
+            "enabled_title": "Autenticação de dois fatores habilitada",
+            "enabled_description": "A autenticação de dois fatores está agora habilitada. Escaneie o código QR ou insira a chave de configuração no seu aplicativo autenticador.",
+            "verify_title": "Verificar código de autenticação",
+            "verify_description": "Insira o código de 6 dígitos do seu aplicativo autenticador",
+            "enable_title": "Habilitar autenticação de dois fatores",
+            "enable_description": "Escaneie o código QR ou insira a chave de configuração no seu aplicativo autenticador para concluir a configuração.",
+            "close": "Fechar",
+            "manual_code": "ou, insira o código manualmente",
+            "confirm": "Confirmar"
+        }
+    },
+    "admin": {
+        "common": {
+            "save": "Salvar",
+            "back_dashboard": "Voltar ao painel",
+            "clear": "Limpar",
+            "name": "Nome",
+            "title": "Título",
+            "description": "Descrição",
+            "type": "Tipo",
+            "slug": "Slug",
+            "status": "Status",
+            "mimetype": "Tipo MIME",
+            "file_reference": "PDF / Link",
+            "items": "{count} itens",
+            "saving": "Salvando...",
+            "remove": "Remover",
+            "preview": "Pré-visualização",
+            "select": "Selecionar",
+            "close_editor": "Fechar editor",
+            "recent_activity": "Atividade recente",
+            "no_recent_records": "Sem registros recentes para este módulo."
+        },
+        "branding": {
+            "title": "Identidade visual",
+            "heading": "Identidade visual da Igreja",
+            "description": "Configure cores, títulos, logotipo e canais de contato usados em experiências privadas e públicas.",
+            "brand_name": "Nome da marca",
+            "tagline": "Slogan",
+            "banner_title": "Título do banner",
+            "banner_subtitle": "Legenda do banner",
+            "font_family": "Família de fontes",
+            "icon_name": "Ícone principal",
+            "logo_url": "URL do logotipo",
+            "website": "Site",
+            "primary_color": "Cor principal",
+            "secondary_color": "Cor secundária",
+            "accent_color": "Cor de destaque",
+            "surface_color": "Cor de fundo",
+            "phone": "Telefone",
+            "save": "Salvar configurações visuais"
+        },
+        "categories": {
+            "all_types": "Todos os tipos",
+            "title": "Categorias",
+            "subtitle": "Organização de conteúdo",
+            "description": "Organize o conteúdo da igreja por tipo para eventos, posts, mídia, salas de aula e formulários.",
+            "new": "Nova categoria",
+            "edit": "Editar categoria",
+            "create": "Criar categoria",
+            "update": "Atualizar categoria",
+            "delete_confirm": "Excluir categoria \"{name}\"?",
+            "church_categories": "Categorias da igreja",
+            "grouped": "Organizado por tipo",
+            "count": "{count} categorias",
+            "empty": "Nenhuma categoria registrada para este tipo.",
+            "none_available": "Nenhuma categoria disponível para esta igreja.",
+            "types": {
+                "post": "Posts",
+                "event": "Eventos",
+                "media": "Mídia",
+                "classroom": "Salas de aula",
+                "form": "Formulários",
+                "library": "Biblioteca",
+                "user": "Usuários"
+            }
+        },
+        "classrooms": {
+            "student_profile": "Perfil do estudante",
+            "guardians": "Guardians e família",
+            "title": "Salas de aula",
+            "kids_title": "Ministério Kids",
+            "description": "Gerencie grupos de idade, elegibilidade por gênero, alunos e presença.",
+            "new": "Nova sala de aula",
+            "edit": "Editar sala de aula",
+            "manage_tab": "Gerenciar salas de aula",
+            "attendance_tab": "Check-in e checkout",
+            "select_room": "Selecione uma sala de aula",
+            "attendance_hint": "Selecione um aluno para registrar entrada ou saída.",
+            "empty_attendance": "Crie uma sala de aula e adicione alunos para iniciar a presença.",
+            "years": "anos",
+            "present": "{count} presentes",
+            "open": "Abrir sala de aula",
+            "checkin": "Confirmar entrada",
+            "checkout": "Confirmar saída",
+            "min_age": "Idade mínima",
+            "max_age": "Idade máxima",
+            "gender_restriction": "Restrição de gênero",
+            "is_kids": "Esta é uma sala de crianças (PIN necessária na finalização)",
+            "max_members": "Limite de alunos",
+            "students": "Alunos",
+            "save": "Salvar sala",
+            "save_error": "A sala não pôde ser salva.",
+            "pin_generated": "PIN de checkout para {name}: {pin}",
+            "pin_prompt": "PIN de checkout para {name} (deixe em branco quando não for necessário):",
+            "checkin_success": "Check-in concluído.",
+            "checkin_error": "Check-in não pôde ser concluído.",
+            "checkout_error": "Saída não pôde ser concluída.",
+            "checkout_success": "Finalização do checkout concluída.",
+            "filters": "Filtros",
+            "age": "Idade do estudante",
+            "all_rooms": "Todas as salas de aula",
+            "regular_rooms": "Salas de aula não para crianças",
+            "separate_kids": "Exibir Ministério Kids separadamente",
+            "open_room": "Sala aberta",
+            "checked_in": "Presente",
+            "not_checked_in": "Não conferido",
+            "no_students": "Nenhum estudante vinculado a esta sala.",
+            "manage_students": "Adicionar ou remover estudantes",
+            "gender": {
+                "none": "Sem restrição",
+                "all": "Todos os gêneros",
+                "male": "Masculino",
+                "female": "Feminino"
+            }
+        },
+        "forms": {
+            "registered": "Formulários registrados",
+            "title": "Formulários",
+            "description": "Construtor visual e links de conteúdo.",
+            "new": "Novo formulário",
+            "edit": "Editar formulário",
+            "create": "Criar formulário",
+            "save_changes": "Salvar alterações",
+            "card_summary": "{responses} respostas · {links} links",
+            "editor_description": "Adicionar campos e elementos de conteúdo sem editar código.",
+            "add_element": "Adicionar elemento",
+            "label": "Rótulo",
+            "identifier": "Identificador",
+            "width": "Largura",
+            "width_full": "Linha completa",
+            "width_half": "Linha metade",
+            "width_third": "Um terço",
+            "mobile_width": "Largura em telas pequenas",
+            "size": "Tamanho",
+            "dynamic": "Dinâmico",
+            "fixed": "Estático",
+            "required": "Obrigatório",
+            "height": "Altura (linhas)",
+            "options": "Opções (uma por linha)",
+            "visual_element": "Elemento visual sem resposta do participante.",
+            "new_heading": "Novo cabeçalho",
+            "new_field": "Novo campo",
+            "option_one": "Opção 1",
+            "save_error": "O formulário não pôde ser salvo.",
+            "delete_confirm": "Excluir formulário “{title}”?",
+            "types": {
+                "text": "Texto curto",
+                "email": "E‑mail",
+                "number": "Número",
+                "date": "Data",
+                "textarea": "Texto longo",
+                "select": "Lista",
+                "radio": "Escolha única",
+                "checkbox": "Caixa de seleção",
+                "heading": "Título",
+                "divider": "Divisor",
+                "line_break": "Quebra de linha"
+            }
+        },
+        "logs": {
+            "title": "Logs e métricas",
+            "kicker": "Visão geral operacional",
+            "description": "Um resumo ao vivo da atividade da plataforma.",
+            "system": "Sistema",
+            "empty": "Nenhuma atividade recente.",
+            "environment": "Ambiente",
+            "pending_jobs": "Tarefas pendentes",
+            "failed_jobs": "Tarefas falhas",
+            "search": "Filtrar entradas de log",
+            "stats": [
+                "Usuários",
+                "Eventos",
+                "Publicações",
+                "Comentários",
+                "Mídia",
+                "Formulários"
+            ]
+        },
+        "prayers": {
+            "title": "Pedidos de oração",
+            "community_title": "Pedidos de intercessão",
+            "kicker": "Vida espiritual",
+            "description": "Acompanhe os pedidos de oração que você compartilhou com a igreja.",
+            "new": "Novo pedido",
+            "new_title": "Novo pedido de oração",
+            "placeholder": "Escreva seu pedido...",
+            "submit": "Enviar pedido",
+            "empty": "Você ainda não enviou nenhum pedido.",
+            "anonymous": "Pedido anônimo",
+            "mine": "Meu pedido",
+            "send_anonymously": "Enviar anonimamente",
+            "stats": ["Pedidos enviados", "Pedidos da igreja"]
+        },
+        "wall": {
+            "title": "Moderar parede",
+            "kicker": "Comunicação",
+            "description": "Revise as conversas recentes e mantenha a comunidade acolhedora.",
+            "remove_confirm": "Remover este comentário?",
+            "recent_comments": "Comentários recentes",
+            "items_page": "{count} itens nesta página",
+            "removed_user": "Usuário removido",
+            "search": "Pesquisar comentários",
+            "all_types": "Todos os tipos de conteúdo",
+            "removed": "Comentário removido.",
+            "empty": "Nenhum comentário para revisar.",
+            "stats": [
+                "Total de comentários",
+                "Publicações com comentários",
+                "Eventos com comentários"
+            ]
+        },
+        "multicongregation": {
+            "title": "Multicongregações",
+            "kicker": "Estrutura",
+            "description": "Visão unificada de escritórios, filiais e comunidades.",
+            "new_church": "Nova igreja",
+            "edit_church": "Editar igreja",
+            "new_community": "Nova comunidade",
+            "edit_community": "Editar comunidade",
+            "communities": "Comunidades",
+            "community_description": "Descrição da comunidade",
+            "church_count": "{count} congregações",
+            "empty_churches": "Não há congregações registradas nesta comunidade.",
+            "delete_church_confirm": "Excluir a congregação \"{name}\"?",
+            "delete_community_confirm": "Excluir a comunidade \"{name}\"? As congregações vinculadas não terão mais comunidade.",
+            "save_error": "A alteração não pôde ser salva.",
+            "churches": "Igrejas",
+            "networks": "Escritórios e filiais",
+            "no_community": "Nenhuma comunidade",
+            "members": "{count} membros",
+            "empty_networks": "Nenhum link registrado.",
+            "stats": ["Igrejas", "Comunidades", "Vínculos de sede/filial"],
+            "status": {
+                "active": "Ativo",
+                "inactive": "Inativo",
+                "closed": "Fechado",
+                "deleted": "Excluído"
+            }
+        },
+        "users": {
+            "title": "Gerenciamento de usuários",
+            "kicker": "Administração",
+            "description": "Papéis, acesso e filiação à igreja em um só lugar.",
+            "new": "Novo usuário",
+            "edit": "Editar usuário",
+            "search_placeholder": "Pesquise por nome ou e‑mail",
+            "found": "Encontrado {count}",
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "no_church": "Sem igreja",
+            "reset_password": "Enviar redefinição de senha",
+            "protected": "Conta protegida",
+            "delete_confirm": "Excluir usuário \"{name}\"?",
+            "stats": ["Total de usuários", "Administradores", "Membros"]
+        },
+        "media": {
+            "title": "Moderar galeria",
+            "subtitle": "Comunicação e conteúdo",
+            "description": "Acompanhe aprovações, edite mídias e gerencie publicações da comunidade.",
+            "crud": "Gerenciamento de mídia",
+            "new": "Carregar nova mídia",
+            "edit": "Editar mídia",
+            "update": "Atualizar mídia",
+            "upload": "Carregar mídia",
+            "delete_confirm": "Excluir esta mídia?",
+            "source": "Origem",
+            "file_url": "Arquivo / URL",
+            "public_gallery": "Visível na galeria pública",
+            "category_hint": "Filtre pela igreja atual",
+            "size": "Tamanho (bytes)",
+            "select_preview": "Selecione mídia para pré-visualização",
+            "workflow_hint": "Upload, edição e aprovação usam o mesmo fluxo simplificado.",
+            "queue": "Fila de moderação",
+            "recent": "Mídia recente",
+            "no_author": "Sem autor",
+            "approve": "Aprovar",
+            "reject": "Rejeitar",
+            "empty": "Nenhuma mídia registrada ainda.",
+            "actions": ["Abrir galeria pública", "Ir para o painel"],
+            "stats": ["Mídia submetida", "Pendente", "Aprovado", "Rejeitado"],
+            "status": {
+                "pending": "Pendente",
+                "approved": "Aprovado",
+                "rejected": "Rejeitado"
+            }
+        },
+        "library": {
+            "title": "Biblioteca e versículo",
+            "heading": "Biblioteca digital e gestão devocional",
+            "description": "Gerencie a leitura diária e os materiais disponíveis para download e estudo.",
+            "verse_of_day": "Verso do dia",
+            "devotional_home": "Casa devocional",
+            "active": "Ativo",
+            "no_record": "Sem registro",
+            "verse_text": "Texto do verso",
+            "book": "Livro",
+            "chapter": "Capítulo",
+            "verse": "Versículo",
+            "version": "Versão / tradução",
+            "categories": "Categorias da biblioteca",
+            "categories_hint": "Use categorias apenas da igreja atual",
+            "update_verse": "Atualizar verso da casa",
+            "collection": "Coleção",
+            "registered_categories": "Categorias registradas",
+            "items_count": "{count} obras",
+            "new_item": "Novo trabalho",
+            "edit_item": "Editar trabalho",
+            "file_type": "Tipo de arquivo",
+            "category_type": "Categoria / tipo",
+            "type_placeholder": "Devocional, estudo, notícias...",
+            "select_file": "Selecionar arquivo",
+            "file_path": "URL / caminho do arquivo",
+            "preview_before_upload": "Pré-visualização antes do upload",
+            "preview_alt": "Pré-visualização do arquivo",
+            "selected_file": "Arquivo selecionado",
+            "path_entered": "Caminho/URL inserido",
+            "cancel_edit": "Cancelar edição",
+            "registered_collection": "Livros e scripts registrados",
+            "records": "{count} registros",
+            "no_description": "Sem descrição",
+            "empty": "Nenhum trabalho registrado ainda.",
+            "delete_confirm": "Excluir “{title}”?"
+        },
+        "events": {
+            "title": "Gerenciar eventos",
+            "kicker": "Agendar e inscrições",
+            "description": "Crie, atualize, revise inscrições e gerencie seus eventos da igreja.",
+            "new": "Novo evento",
+            "event": "Evento",
+            "schedule": "Horário",
+            "registration": "Inscrições",
+            "registration_summary": "{users} participantes · {forms} formulários",
+            "delete_confirm": "Excluir evento \"{title}\"?",
+            "empty": "Nenhum evento foi criado para esta igreja."
+        },
+        "highlights": {
+            "title": "Destaques",
+            "kicker": "Conteúdo em destaque",
+            "description": "Selecione e organize posts, eventos e mídia que aparecem prominentemente para a comunidade.",
+            "add": "Adicionar conteúdo",
+            "choose": "Escolher um item",
+            "order": "Ordem de exibição",
+            "empty": "Nenhum destaque selecionado.",
+            "saved": "Destaques atualizados.",
+            "save_error": "Destaques não puderam ser atualizados."
+        },
+        "modules": {
+            "highlights": {
+                "title": "Destaques",
+                "subtitle": "Comunicação e conteúdo",
+                "description": "Gerencie os destaques visuais exibidos à comunidade nas principais canais.",
+                "stats": [
+                    "Destaques ativos",
+                    "Publicações publicadas",
+                    "Eventos publicados"
+                ],
+                "actions": [
+                    "Gerenciar publicações",
+                    "Abrir eventos",
+                    "Identidade visual"
+                ]
+            },
+            "library": {
+                "title": "Biblioteca e versículo",
+                "subtitle": "Comunicação e conteúdo",
+                "description": "Gerencie materiais devocionais, a coleção digital e os versículos destacados.",
+                "stats": [
+                    "Materiais da biblioteca",
+                    "Versos registrados",
+                    "Categorias de conteúdo"
+                ],
+                "actions": ["Abrir casa pública", "Revisar destaques"]
+            },
+            "prayer_requests": {
+                "title": "Pedidos de intercessão",
+                "subtitle": "Ministérios e membros",
+                "description": "Revise solicitações recebidas e organize o acompanhamento pastoral.",
+                "stats": [
+                    "Solicitações recebidas",
+                    "Solicitações anônimas",
+                    "Solicitações identificadas"
+                ],
+                "actions": ["Abrir minhas orações", "Ir para o painel"]
+            }
+        }
+    },
+    "library": {
+        "kicker": "Conhecimento e fé",
+        "title": "Biblioteca comunitária",
+        "description": "Navegue por estudos, devotionais, livros e materiais compartilhados por sua igreja.",
+        "open": "Abrir material",
+        "empty": "Ainda não há materiais disponíveis."
+    },
+    "home": {
+        "meta_title": "Casa",
+        "hero": {
+            "kicker": "Comunidade viva",
+            "title": "Bem-vindo ao ecossistema Nossa Casa",
+            "description": "Agendamento, conteúdo e inscrições conectados em uma experiência perfeita para membros, líderes e equipe de mídia.",
+            "cta_events": "Explorar eventos",
+            "cta_gallery": "Ver galeria"
+        },
+        "stats": {
+            "events": "Eventos",
+            "gallery": "Mídia da galeria",
+            "posts": "Posts e atualizações"
+        },
+        "featured": {
+            "kicker": "Destaques",
+            "title": "Eventos futuros",
+            "view_all": "Ver tudo",
+            "view_detail": "Ver detalhes"
+        },
+        "latest_posts": {
+            "kicker": "Comunicação",
+            "title": "Últimas atualizações"
+        }
+    },
+    "events": {
+        "shared": {
+            "community": "Comunidade",
+            "start": "Iniciar",
+            "end": "Finalizar"
+        },
+        "index": {
+            "meta_title": "Eventos",
+            "hero": {
+                "kicker": "Agenda comunitária",
+                "title": "Nossa Programação e Eventos",
+                "description": "Mantenha-se atualizado com serviços, reuniões, conferências e atividades especiais da comunidade."
+            },
+            "tabs": {
+                "future": "Próximos eventos",
+                "ongoing": "Acontecendo agora",
+                "past": "Eventos passados"
+            },
+            "empty": "Nenhum evento encontrado para este período.",
+            "no_description": "Sem descrição disponível.",
+            "view_details": "Ver detalhes",
+            "pagination": "Mostrando {from} - {to} de {total} eventos"
+        },
+        "show": {
+            "register": "Registrar agora",
+            "manage_registration": "Gerenciar inscrição",
+            "registrations_unavailable": "Inscrições ainda não estão disponíveis",
+            "back_to_events": "Voltar para eventos",
+            "about": "Sobre este evento",
+            "registration": "Inscrição",
+            "categories": "Categorias",
+            "form_not_configured": "O formulário principal ainda não foi configurado para este evento."
+        },
+        "register": {
+            "title": "Inscrição de evento",
+            "back_to_event": "Voltar para detalhes do evento",
+            "already_registered": "Sua inscrição já está salva. Atualize suas informações se necessário.",
+            "login_required": "Você precisa fazer login antes de enviar sua inscrição.",
+            "submit": "Enviar inscrição",
+            "submitting": "Enviando...",
+            "success": "Inscrição enviada com sucesso.",
+            "error": "Não foi possível enviar sua inscrição. Por favor, tente novamente.",
+            "schema_empty": "Este formulário ainda não tem campos configurados.",
+            "select": "Selecionar",
+            "invalid_field": "Campo inválido",
+            "mark_option": "Marcar opção",
+            "until": "até"
+        },
+        "form": {
+            "studio": "Estúdio de Conteúdo",
+            "create_title": "Criar Evento",
+            "edit_title": "Editar Evento",
+            "subtitle": "Descreva seu evento com formatação rica e publique-o para sua igreja.",
+            "title": "Título",
+            "slug": "Slug",
+            "description": "Descrição",
+            "start_time": "Data e hora de início",
+            "end_time": "Data e hora de término",
+            "cover": "Imagem de capa",
+            "cover_hint": "Recomendado: imagem landscape, pelo menos 1280x720.",
+            "description_hint": "Use Markdown ou modo WYSIWYG para formatar o conteúdo do evento.",
+            "save": "Publicar evento",
+            "update": "Atualizar evento"
+        }
+    },
+    "posts": {
+        "shared": {
+            "delete_confirm": "Você tem certeza que deseja excluir este post?"
+        },
+        "public": {
+            "back_home": "Voltar para a página inicial"
+        },
+        "index": {
+            "meta_title": "Posts",
+            "title": "Posts",
+            "description": "Gerencie conteúdo, autores e publicações em um único fluxo de trabalho editorial.",
+            "new": "Novo post",
+            "content": "Conteúdo",
+            "author": "Autor",
+            "engagement": "Engajamento",
+            "status": "Status",
+            "actions": "Ações",
+            "draft": "Rascunho",
+            "empty": "Nenhum post encontrado. Crie o primeiro para iniciar o fluxo de trabalho.",
+            "pagination": "Mostrando {from} a {to} de {total} resultados"
+        },
+        "show": {
+            "comment_placeholder": "Escreva um comentário...",
+            "comment_submit": "Publicar comentário",
+            "login_to_interact": "Faça login com uma conta da comunidade para comentar e reagir.",
+            "no_comments": "Sem comentários ainda.",
+            "reactions": "Reações",
+            "comments_label": "Comentários",
+            "react": "Reagir",
+            "back": "Voltar para posts",
+            "cover_alt": "Capa do post",
+            "expires_at": "Expira em {date}",
+            "engagement": "Engajamento",
+            "likes": "{count} curtidas",
+            "comments": "{count} comentários",
+            "summary": "Resumo",
+            "summary_text": "{comments} comentários carregados e {reactions} reações registradas para este post.",
+            "recent_comments": "Comentários recentes"
+        },
+        "form": {
+            "studio": "Estúdio de Notícias",
+            "create_title": "Criar Post",
+            "edit_title": "Editar Post",
+            "subtitle": "Escreva anúncios e atualizações de ministério com um editor rico.",
+            "title": "Título",
+            "slug": "Slug",
+            "content": "Conteúdo",
+            "published_at": "Publicar em",
+            "expires_at": "Vence em",
+            "content_hint": "Use modo de texto rico ou Markdown para melhor formatação.",
+            "save": "Publicar post",
+            "update": "Atualizar post"
+        }
+    },
+    "dashboard": {
+        "workspace": "Espaço de trabalho",
+        "title": "Painel modular baseado em papéis",
+        "current_profile": "Perfil atual",
+        "profile_context": "Perfil atual: {role}. Blocos e atalhos se adaptam à sua função na plataforma.",
+        "modules": "Módulos",
+        "recommended_actions": "Ações recomendadas",
+        "open_module": "Abrir módulo",
+        "roles": {
+            "member": "Membro",
+            "leader": "Líder",
+            "media": "Mídia",
+            "admin": "Administrador",
+            "superadmin": "Super Administrador",
+            "system": "Sistema"
+        },
+        "module": {
+            "organize_events": {
+                "title": "Organizar eventos",
+                "description": "Gerencie o cronograma, formulários e a equipe de suporte."
+            },
+            "track_registrations": {
+                "title": "Acompanhar inscrições",
+                "description": "Veja respostas e status de inscrição da comunidade."
+            },
+            "publish_updates": {
+                "title": "Publicar atualizações",
+                "description": "Use a área de posts para anúncios do ministério."
+            },
+            "gallery_curation": {
+                "title": "Curadoria de galeria",
+                "description": "Modere imagens e vídeos compartilhados pelos membros."
+            },
+            "visual_posts": {
+                "title": "Posts visuais",
+                "description": "Crie histórias e cartões de comunicação semanais."
+            },
+            "coverage_schedule": {
+                "title": "Cronograma de cobertura",
+                "description": "Planeje a captura e produção para cada evento."
+            },
+            "platform_governance": {
+                "title": "Governança da plataforma",
+                "description": "Acompanhe a saúde da plataforma, pessoas e configuração da igreja."
+            },
+            "review_content": {
+                "title": "Revisar conteúdo",
+                "description": "Valide publicações e materiais destacados."
+            },
+            "monitor_events": {
+                "title": "Monitorar eventos",
+                "description": "Visão consolidada da agenda e participação."
+            },
+            "my_events": {
+                "title": "Meus próximos eventos",
+                "description": "Encontre reuniões e confirme sua participação."
+            },
+            "community_gallery": {
+                "title": "Galeria comunitária",
+                "description": "Reviva os melhores momentos dos programas da igreja."
+            },
+            "account_settings": {
+                "title": "Configurações da conta",
+                "description": "Revise seus dados de perfil e preferências pessoais."
+            },
+            "security_settings": {
+                "title": "Segurança da conta",
+                "description": "Atualize sua senha, 2FA e chaves de acesso."
+            },
+            "recent_updates": {
+                "title": "Atualizações recentes",
+                "description": "Leia os recentes avisos e notícias da igreja."
+            },
+            "visual_identity": {
+                "title": "Identidade visual",
+                "description": "Ajuste o logotipo, cores e contatos institucionais."
+            },
+            "user_management": {
+                "title": "Gerenciamento de usuários",
+                "description": "Acompanhe perfis do sistema, papéis e acesso."
+            },
+            "multicongregation": {
+                "title": "Multicongregações",
+                "description": "Gerencie a sede e as filiais centralmente."
+            },
+            "logs_metrics": {
+                "title": "Logs e métricas",
+                "description": "Acesse indicadores da plataforma e visão geral operacional."
+            }
+        },
+        "kpis": {
+            "events": "Eventos",
+            "gallery": "Galeria",
+            "posts": "Postagens"
+        }
+    },
+    "editor": {
+        "label": "Editor de conteúdo rico"
+    }
+}

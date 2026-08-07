@@ -12,7 +12,10 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
+import { useI18n } from '@/lib/i18n';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
+
+const { t } = useI18n();
 
 const { recoveryCodesList, fetchRecoveryCodes, errors } = useTwoFactorAuth();
 const isRecoveryCodesVisible = ref<boolean>(false);
@@ -42,11 +45,12 @@ onMounted(async () => {
     <Card class="w-full">
         <CardHeader>
             <CardTitle class="flex gap-3">
-                <LockKeyhole class="size-4" />2FA recovery codes
+                <LockKeyhole class="size-4" />{{
+                    t('settings.two_factor.recovery_codes')
+                }}
             </CardTitle>
             <CardDescription>
-                Recovery codes let you regain access if you lose your 2FA
-                device. Store them in a secure password manager.
+                {{ t('settings.two_factor.recovery_description') }}
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -58,8 +62,11 @@ onMounted(async () => {
                         :is="isRecoveryCodesVisible ? EyeOff : Eye"
                         class="size-4"
                     />
-                    {{ isRecoveryCodesVisible ? 'Hide' : 'View' }} recovery
-                    codes
+                    {{
+                        isRecoveryCodesVisible
+                            ? t('settings.two_factor.hide_codes')
+                            : t('settings.two_factor.view_codes')
+                    }}
                 </Button>
 
                 <Form
@@ -75,7 +82,7 @@ onMounted(async () => {
                         type="submit"
                         :disabled="processing"
                     >
-                        <RefreshCw /> Regenerate codes
+                        <RefreshCw /> {{ t('settings.two_factor.regenerate') }}
                     </Button>
                 </Form>
             </div>
@@ -111,10 +118,7 @@ onMounted(async () => {
                         </div>
                     </div>
                     <p class="text-xs text-muted-foreground select-none">
-                        Each recovery code can be used once to access your
-                        account and will be removed after use. If you need more,
-                        click
-                        <span class="font-bold">Regenerate codes</span> above.
+                        {{ t('settings.two_factor.recovery_hint') }}
                     </p>
                 </div>
             </div>

@@ -18,6 +18,8 @@ Homestead.json
 /resources/js/actions
 /resources/js/routes
 /resources/js/wayfinder
+composer.lock
+package-lock.json
 
 # IDEs
 .idea/
@@ -33,3 +35,8 @@ node_modules/
 
 # macOS
 .DS_Store   
+
+AllModels.php
+AllMigrations.php
+docs/api.json
+public/
