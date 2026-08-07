@@ -45,12 +45,12 @@ const filteredEvents = computed(() => {
         const endsAt = new Date(event.end_time).getTime();
 
         if (activeTab.value === 'past') {
-return endsAt < now;
-}
+            return endsAt < now;
+        }
 
         if (activeTab.value === 'ongoing') {
-return startsAt <= now && endsAt >= now;
-}
+            return startsAt <= now && endsAt >= now;
+        }
 
         return startsAt > now;
     });

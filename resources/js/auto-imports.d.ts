@@ -6,5 +6,5 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const axios: typeof import('axios').default
+    const axios: typeof import('axios').default;
 }
