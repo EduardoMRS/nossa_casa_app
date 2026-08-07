@@ -156,9 +156,10 @@
             "name": "Nome completo",
             "birth_date": "Data de nascimento",
             "phone": "Telefone / WhatsApp",
-            "gender": "G\u00eanero",
-            "other": "Outro",
-            "save": "Salvar dados cadastrais",
+            "gender": "Gênero",
+            "avatar": "Foto de perfil",
+            "other": "Outros",
+            "save": "Salvar perfil",
             "breadcrumb": "Configurações de perfil",
             "meta_title": "Configurações de perfil",
             "title": "Perfil",
@@ -169,61 +170,61 @@
         },
         "workspace": {
             "title": "Minha conta",
-            "account": "Central do membro",
+            "account": "Centro de membros",
             "profile": "Perfil",
             "name": "Nome completo",
             "birth_date": "Data de nascimento",
             "phone": "Telefone / WhatsApp",
-            "gender": "G\u00eanero",
-            "avatar": "Foto do perfil",
-            "other": "Outro",
-            "save": "Salvar dados cadastrais",
-            "events": "Minhas inscri\u00e7\u00f5es",
-            "classrooms": "Minhas salas",
-            "prayers": "Meus pedidos de intercess\u00e3o",
-            "relationships": "Relacionamentos",
+            "gender": "Gênero",
+            "avatar": "Foto de perfil",
+            "other": "Outros",
+            "save": "Salvar perfil",
+            "events": "Minhas inscrições",
+            "classrooms": "Meus salões de aula",
+            "prayers": "Meus pedidos de intercessão",
+            "relationships": "Relações",
             "community": "Comunidade",
-            "church": "Congrega\u00e7\u00e3o",
-            "select_community": "Selecione a comunidade",
-            "select_church": "Selecione a congrega\u00e7\u00e3o",
-            "browse_events": "Ver agenda completa de eventos",
-            "new_prayer": "Novo pedido de intercess\u00e3o",
-            "prayer_placeholder": "Compartilhe seu pedido de ora\u00e7\u00e3o...",
+            "church": "Congregação",
+            "select_community": "Selecionar uma comunidade",
+            "select_church": "Selecionar uma congregação",
+            "browse_events": "Navegar o calendário completo de eventos",
+            "new_prayer": "Novo pedido de intercessão",
+            "prayer_placeholder": "Compartilhe seu pedido de oração...",
             "send_prayer": "Enviar pedido",
-            "family_management": "Gest\u00e3o de Fam\u00edlia e Minist\u00e9rio Infantil",
-            "family_management_hint": "Cadastre familiares, respons\u00e1veis e crian\u00e7as para facilitar o check-in e a retirada segura.",
+            "family_management": "Gerenciamento de Família e Ministério de Crianças",
+            "family_management_hint": "Registre membros da família, responsáveis e crianças para facilitar o check-in e a retirada segura.",
             "authorized_adults": "Adultos autorizados",
-            "no_authorized_adults": "Nenhum outro adulto autorizado.",
-            "authorize_adult": "Autorizar adulto ou respons\u00e1vel",
+            "no_authorized_adults": "Sem outros adultos autorizados.",
+            "authorize_adult": "Autorizar adulto ou responsável",
             "authorize": "Autorizar",
-            "registered_children": "Minhas crian\u00e7as cadastradas",
-            "checkout_pin": "PIN para retirada",
-            "checked_in": "Em sala",
-            "no_children": "Nenhuma crian\u00e7a cadastrada.",
-            "add_child": "Cadastrar crian\u00e7a na fam\u00edlia",
-            "first_name": "Primeiro nome",
+            "registered_children": "Meus filhos registrados",
+            "checkout_pin": "Código de retirada",
+            "checked_in": "Check-in realizado",
+            "no_children": "Nenhum filho registrado.",
+            "add_child": "Registrar um filho na família",
+            "first_name": "Nome",
             "last_name": "Sobrenome",
-            "medical_notes": "Observa\u00e7\u00f5es m\u00e9dicas, alergias ou cuidados",
-            "register_child": "Cadastrar crian\u00e7a",
-            "no_events": "Voc\u00ea ainda n\u00e3o est\u00e1 inscrito em eventos.",
-            "no_classrooms": "Voc\u00ea ainda n\u00e3o faz parte de uma sala.",
-            "no_prayers": "Voc\u00ea ainda n\u00e3o enviou pedidos de intercess\u00e3o.",
-            "no_relationships": "Nenhum relacionamento familiar cadastrado.",
-            "add_relationship": "Adicionar familiar ou crian\u00e7a",
+            "medical_notes": "Observações médicas, alergias ou cuidados especiais",
+            "register_child": "Registrar filho",
+            "no_events": "Você ainda não está registrado(a) em nenhum evento.",
+            "no_classrooms": "Você ainda não faz parte de nenhuma sala de aula.",
+            "no_prayers": "Você ainda não enviou pedidos de intercessão.",
+            "no_relationships": "Nenhuma relação familiar registrada.",
+            "add_relationship": "Adicionar membro da família ou filho",
             "family_member": "Pessoa",
-            "select_person": "Selecione uma pessoa",
-            "relationship": "V\u00ednculo",
-            "responsible_for": "Sou respons\u00e1vel por esta crian\u00e7a",
-            "child_of": "Esta pessoa \u00e9 minha respons\u00e1vel",
-            "add": "Adicionar relacionamento",
-            "remove_relationship_confirm": "Deseja remover este relacionamento?",
+            "select_person": "Selecionar uma pessoa",
+            "relationship": "Relação",
+            "responsible_for": "Eu sou responsável por este filho",
+            "child_of": "Esta pessoa é meu guardião",
+            "add": "Adicionar relação",
+            "remove_relationship_confirm": "Remover esta relação?",
             "relationship_types": {
-                "parent": "Respons\u00e1vel",
-                "child": "Filho(a)",
-                "spouse": "C\u00f4njuge",
-                "friend": "Amigo(a)",
-                "follower": "Seguidor(a)",
-                "blocked": "Bloqueado(a)"
+                "parent": "Guardião",
+                "child": "Filho",
+                "spouse": "Cônjuge",
+                "friend": "Amigo",
+                "follower": "Seguidor",
+                "blocked": "Bloqueado"
             }
         },
         "security": {
@@ -363,8 +364,8 @@
             }
         },
         "classrooms": {
-            "student_profile": "Perfil do aluno",
-            "guardians": "ResponsÃ¡veis e familiares",
+            "student_profile": "Perfil do estudante",
+            "guardians": "Guardians e família",
             "title": "Salas de aula",
             "kids_title": "Ministério Kids",
             "description": "Gerencie grupos de idade, elegibilidade por gênero, alunos e presença.",
@@ -393,17 +394,17 @@
             "checkin_success": "Check-in concluído.",
             "checkin_error": "Check-in não pôde ser concluído.",
             "checkout_error": "Saída não pôde ser concluída.",
-            "checkout_success": "Checkout concluído.",
+            "checkout_success": "Finalização do checkout concluída.",
             "filters": "Filtros",
-            "age": "Idade do aluno",
-            "all_rooms": "Todas as salas",
-            "regular_rooms": "Salas que não são Kids",
+            "age": "Idade do estudante",
+            "all_rooms": "Todas as salas de aula",
+            "regular_rooms": "Salas de aula não para crianças",
             "separate_kids": "Exibir Ministério Kids separadamente",
             "open_room": "Sala aberta",
             "checked_in": "Presente",
-            "not_checked_in": "Aguardando check-in",
-            "no_students": "Nenhum aluno vinculado a esta sala.",
-            "manage_students": "Adicionar ou remover alunos",
+            "not_checked_in": "Não conferido",
+            "no_students": "Nenhum estudante vinculado a esta sala.",
+            "manage_students": "Adicionar ou remover estudantes",
             "gender": {
                 "none": "Sem restrição",
                 "all": "Todos os gêneros",
@@ -412,7 +413,7 @@
             }
         },
         "forms": {
-            "registered": "Formul\u00e1rios cadastrados",
+            "registered": "Formulários registrados",
             "title": "Formulários",
             "description": "Construtor visual e links de conteúdo.",
             "new": "Novo formulário",
@@ -428,7 +429,7 @@
             "width_full": "Linha completa",
             "width_half": "Linha metade",
             "width_third": "Um terço",
-            "mobile_width": "Largura em telas menores",
+            "mobile_width": "Largura em telas pequenas",
             "size": "Tamanho",
             "dynamic": "Dinâmico",
             "fixed": "Estático",
@@ -462,9 +463,9 @@
             "system": "Sistema",
             "empty": "Nenhuma atividade recente.",
             "environment": "Ambiente",
-            "pending_jobs": "Jobs pendentes",
-            "failed_jobs": "Jobs com falha",
-            "search": "Filtrar registros do log",
+            "pending_jobs": "Tarefas pendentes",
+            "failed_jobs": "Tarefas falhas",
+            "search": "Filtrar entradas de log",
             "stats": [
                 "Usuários",
                 "Eventos",
@@ -487,7 +488,10 @@
             "anonymous": "Pedido anônimo",
             "mine": "Meu pedido",
             "send_anonymously": "Enviar anonimamente",
-            "stats": ["Pedidos enviados", "Pedidos da igreja"]
+            "stats": [
+                "Pedidos enviados",
+                "Pedidos da igreja"
+            ]
         },
         "wall": {
             "title": "Moderar parede",
@@ -518,16 +522,20 @@
             "communities": "Comunidades",
             "community_description": "Descrição da comunidade",
             "church_count": "{count} congregações",
-            "empty_churches": "Nenhuma congregação cadastrada nesta comunidade.",
+            "empty_churches": "Não há congregações registradas nesta comunidade.",
             "delete_church_confirm": "Excluir a congregação \"{name}\"?",
-            "delete_community_confirm": "Excluir a comunidade \"{name}\"? As congregações vinculadas ficarão sem comunidade.",
-            "save_error": "Não foi possível salvar a alteração.",
+            "delete_community_confirm": "Excluir a comunidade \"{name}\"? As congregações vinculadas não terão mais comunidade.",
+            "save_error": "A alteração não pôde ser salva.",
             "churches": "Igrejas",
             "networks": "Escritórios e filiais",
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
-            "stats": ["Igrejas", "Comunidades", "Vínculos de sede/filial"],
+            "stats": [
+                "Igrejas",
+                "Comunidades",
+                "Vínculos de sede/filial"
+            ],
             "status": {
                 "active": "Ativo",
                 "inactive": "Inativo",
@@ -548,8 +556,12 @@
             "no_church": "Sem igreja",
             "reset_password": "Enviar redefinição de senha",
             "protected": "Conta protegida",
-            "delete_confirm": "Excluir o usuário \"{name}\"?",
-            "stats": ["Total de usuários", "Administradores", "Membros"]
+            "delete_confirm": "Excluir usuário \"{name}\"?",
+            "stats": [
+                "Total de usuários",
+                "Administradores",
+                "Membros"
+            ]
         },
         "media": {
             "title": "Moderar galeria",
@@ -574,8 +586,16 @@
             "approve": "Aprovar",
             "reject": "Rejeitar",
             "empty": "Nenhuma mídia registrada ainda.",
-            "actions": ["Abrir galeria pública", "Ir para o painel"],
-            "stats": ["Mídia submetida", "Pendente", "Aprovado", "Rejeitado"],
+            "actions": [
+                "Abrir galeria pública",
+                "Ir para o painel"
+            ],
+            "stats": [
+                "Mídia submetida",
+                "Pendente",
+                "Aprovado",
+                "Rejeitado"
+            ],
             "status": {
                 "pending": "Pendente",
                 "approved": "Aprovado",
@@ -621,26 +641,26 @@
         },
         "events": {
             "title": "Gerenciar eventos",
-            "kicker": "Agenda e inscrições",
-            "description": "Crie, edite, acompanhe inscrições e gerencie os eventos da sua igreja.",
+            "kicker": "Agendar e inscrições",
+            "description": "Crie, atualize, revise inscrições e gerencie seus eventos da igreja.",
             "new": "Novo evento",
             "event": "Evento",
-            "schedule": "Programação",
+            "schedule": "Horário",
             "registration": "Inscrições",
             "registration_summary": "{users} participantes · {forms} formulários",
-            "delete_confirm": "Excluir o evento \"{title}\"?",
+            "delete_confirm": "Excluir evento \"{title}\"?",
             "empty": "Nenhum evento foi criado para esta igreja."
         },
         "highlights": {
             "title": "Destaques",
-            "kicker": "Conteúdo em evidência",
-            "description": "Selecione e ordene postagens, eventos e mídias exibidos em destaque para a comunidade.",
+            "kicker": "Conteúdo em destaque",
+            "description": "Selecione e organize posts, eventos e mídia que aparecem prominentemente para a comunidade.",
             "add": "Adicionar conteúdo",
-            "choose": "Escolha um item",
+            "choose": "Escolher um item",
             "order": "Ordem de exibição",
             "empty": "Nenhum destaque selecionado.",
             "saved": "Destaques atualizados.",
-            "save_error": "Não foi possível atualizar os destaques."
+            "save_error": "Destaques não puderam ser atualizados."
         },
         "modules": {
             "highlights": {
@@ -667,7 +687,10 @@
                     "Versos registrados",
                     "Categorias de conteúdo"
                 ],
-                "actions": ["Abrir casa pública", "Revisar destaques"]
+                "actions": [
+                    "Abrir casa pública",
+                    "Revisar destaques"
+                ]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercessão",
@@ -678,16 +701,19 @@
                     "Solicitações anônimas",
                     "Solicitações identificadas"
                 ],
-                "actions": ["Abrir minhas orações", "Ir para o painel"]
+                "actions": [
+                    "Abrir minhas orações",
+                    "Ir para o painel"
+                ]
             }
         }
     },
     "library": {
         "kicker": "Conhecimento e fé",
-        "title": "Biblioteca da comunidade",
-        "description": "Explore estudos, devocionais, livros e materiais compartilhados pela sua igreja.",
+        "title": "Biblioteca comunitária",
+        "description": "Navegue por estudos, devotionais, livros e materiais compartilhados por sua igreja.",
         "open": "Abrir material",
-        "empty": "Nenhum material está disponível ainda."
+        "empty": "Ainda não há materiais disponíveis."
     },
     "home": {
         "meta_title": "Casa",
@@ -724,13 +750,13 @@
             "meta_title": "Eventos",
             "hero": {
                 "kicker": "Agenda comunitária",
-                "title": "Nossa Agenda & Programação",
-                "description": "Fique por dentro dos cultos, encontros, conferências e atividades especiais da nossa comunidade."
+                "title": "Nossa Programação e Eventos",
+                "description": "Mantenha-se atualizado com serviços, reuniões, conferências e atividades especiais da comunidade."
             },
             "tabs": {
                 "future": "Próximos eventos",
                 "ongoing": "Acontecendo agora",
-                "past": "Eventos anteriores"
+                "past": "Eventos passados"
             },
             "empty": "Nenhum evento encontrado para este período.",
             "no_description": "Sem descrição disponível.",
@@ -784,7 +810,7 @@
             "delete_confirm": "Você tem certeza que deseja excluir este post?"
         },
         "public": {
-            "back_home": "Voltar para o início"
+            "back_home": "Voltar para a página inicial"
         },
         "index": {
             "meta_title": "Posts",
@@ -801,12 +827,12 @@
             "pagination": "Mostrando {from} a {to} de {total} resultados"
         },
         "show": {
-            "comment_placeholder": "Escreva um comentÃ¡rio...",
-            "comment_submit": "Publicar comentÃ¡rio",
-            "login_to_interact": "Entre com uma conta da comunidade para comentar e reagir.",
-            "no_comments": "Nenhum comentÃ¡rio ainda.",
-            "reactions": "ReaÃ§Ãµes",
-            "comments_label": "ComentÃ¡rios",
+            "comment_placeholder": "Escreva um comentário...",
+            "comment_submit": "Publicar comentário",
+            "login_to_interact": "Faça login com uma conta da comunidade para comentar e reagir.",
+            "no_comments": "Sem comentários ainda.",
+            "reactions": "Reações",
+            "comments_label": "Comentários",
             "react": "Reagir",
             "back": "Voltar para posts",
             "cover_alt": "Capa do post",
