@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { setLocale,  useI18n } from '@/lib/i18n';
-import type {SupportedLocale} from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
+import type { SupportedLocale } from '@/lib/i18n';
 
-const { locale, t } = useI18n();
+const { locale, setLocale, t } = useI18n();
 
 const selectedLocale = computed({
     get: () => locale.value,

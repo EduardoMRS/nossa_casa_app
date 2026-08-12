@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CalendarDays, Eye, MessageCircle, Send } from '@lucide/vue';
+import { usePage } from '@inertiajs/vue3';
+import { CalendarDays, Eye, Heart, MessageCircle, Send } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
@@ -15,6 +16,7 @@ export type CommentItem = {
     content: string;
     created_at: string;
     user_details?: Person | null;
+    reactions?: ReactionItem[];
 };
 export type ReactionItem = {
     id: string;
@@ -42,6 +44,7 @@ const props = defineProps<{
     canInteract: boolean;
 }>();
 const { locale, t } = useI18n();
+const page = usePage();
 const comment = ref('');
 const processing = ref(false);
 const reacting = ref('');
@@ -56,6 +59,10 @@ const groupedReactions = computed(() =>
                 .length,
         }))
         .filter((item) => item.count),
+);
+const currentUserId = computed(() => String(page.props.auth?.user?.id ?? ''));
+const ownPostReaction = computed(() =>
+    reactionItems.value.find((item) => item.user_id === currentUserId.value),
 );
 
 const formatDate = (value: string | null): string =>
@@ -79,7 +86,7 @@ const submitComment = async (): Promise<void> => {
             commentable_id: props.post.id,
             content: comment.value,
         });
-        commentItems.value.unshift(response.data);
+        commentItems.value.unshift({ ...response.data, reactions: [] });
         comment.value = '';
     } finally {
         processing.value = false;
@@ -94,6 +101,15 @@ const react = async (content: string): Promise<void> => {
     reacting.value = content;
 
     try {
+        if (ownPostReaction.value?.content === content) {
+            await axios.delete(`/api/reactions/${ownPostReaction.value.id}`);
+            reactionItems.value = reactionItems.value.filter(
+                (item) => item.id !== ownPostReaction.value?.id,
+            );
+
+            return;
+        }
+
         const response = await axios.post<ReactionItem>('/api/reactions', {
             reactionable_type: 'post',
             reactionable_id: props.post.id,
@@ -102,6 +118,43 @@ const react = async (content: string): Promise<void> => {
         });
         reactionItems.value = [
             ...reactionItems.value.filter(
+                (item) => item.user_id !== response.data.user_id,
+            ),
+            response.data,
+        ];
+    } finally {
+        reacting.value = '';
+    }
+};
+
+const reactToComment = async (commentItem: CommentItem): Promise<void> => {
+    if (!props.canInteract) {
+        return;
+    }
+
+    const ownReaction = (commentItem.reactions ?? []).find(
+        (item) => item.user_id === currentUserId.value,
+    );
+    reacting.value = commentItem.id;
+
+    try {
+        if (ownReaction) {
+            await axios.delete(`/api/reactions/${ownReaction.id}`);
+            commentItem.reactions = (commentItem.reactions ?? []).filter(
+                (item) => item.id !== ownReaction.id,
+            );
+
+            return;
+        }
+
+        const response = await axios.post<ReactionItem>('/api/reactions', {
+            reactionable_type: 'comment',
+            reactionable_id: commentItem.id,
+            content: '❤️',
+            type: 'emoji',
+        });
+        commentItem.reactions = [
+            ...(commentItem.reactions ?? []).filter(
                 (item) => item.user_id !== response.data.user_id,
             ),
             response.data,
@@ -195,6 +248,12 @@ const react = async (content: string): Promise<void> => {
                         type="button"
                         :disabled="!canInteract || reacting !== ''"
                         class="flex items-center justify-center gap-1 rounded-lg py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
+                        :class="
+                            ownPostReaction?.content === emoji
+                                ? 'bg-slate-100 ring-2 ring-slate-200'
+                                : ''
+                        "
+                        :aria-pressed="ownPostReaction?.content === emoji"
                         @click="react(emoji)"
                     >
                         <span class="text-lg">{{ emoji }}</span>
@@ -273,6 +332,29 @@ const react = async (content: string): Promise<void> => {
                     >
                         {{ item.content }}
                     </p>
+                    <button
+                        type="button"
+                        :disabled="!canInteract || reacting !== ''"
+                        class="mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-rose-600 disabled:opacity-40"
+                        :class="
+                            (item.reactions ?? []).some(
+                                (reaction) =>
+                                    reaction.user_id === currentUserId,
+                            )
+                                ? 'text-rose-600'
+                                : ''
+                        "
+                        :aria-pressed="
+                            (item.reactions ?? []).some(
+                                (reaction) =>
+                                    reaction.user_id === currentUserId,
+                            )
+                        "
+                        @click="reactToComment(item)"
+                    >
+                        <Heart class="size-3.5" />
+                        {{ (item.reactions ?? []).length }}
+                    </button>
                 </article>
             </div>
             <p v-else class="mt-5 text-center text-sm text-slate-400">

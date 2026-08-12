@@ -148,6 +148,22 @@ class PortalController extends Controller
                     'published_at' => $post->published_at,
                 ];
             });
+        $calendarEvents = Event::query()
+            ->where('church_id', $churchId)
+            ->whereBetween('start_time', [now()->subYear()->startOfMonth(), now()->addYear()->endOfMonth()])
+            ->orderBy('start_time')
+            ->get(['id', 'title', 'slug', 'start_time', 'end_time'])
+            ->map(function (Event $event): array {
+                $event->localize();
+
+                return [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'slug' => $event->slug,
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                ];
+            });
 
         return Inertia::render('Home', [
             'stats' => [
@@ -157,6 +173,7 @@ class PortalController extends Controller
             ],
             'featuredEvents' => $featuredEvents,
             'latestPosts' => $latestPosts,
+            'calendarEvents' => $calendarEvents,
         ]);
     }
 }

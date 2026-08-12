@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\CategoryType;
 use App\Enums\MediaStatus;
 use App\Http\Requests\Media\StoreMediaRequest;
+use App\Http\Requests\Media\UpdateMediaRequest;
 use App\Http\Requests\Media\UpdateMediaStatusRequest;
 use App\Models\Media;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class MediaController extends Controller
@@ -71,43 +72,19 @@ class MediaController extends Controller
         return response()->json($media, 201);
     }
 
-    public function update(Request $request, Media $media)
+    public function update(UpdateMediaRequest $request, Media $media)
     {
         $this->ensureChurchAccess($request, $media->church_id);
         $this->ensureOwnerOrModerator($request, $media->uploader_id);
-        $validated = $request->validate([
-            'title' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'file_path' => ['nullable'],
-            'file' => ['nullable'],
-            'mimetype' => ['nullable', 'string', 'max:255'],
-            'size' => ['nullable', 'integer', 'min:0'],
-            'gallery' => ['sometimes', 'boolean'],
-            'status' => ['sometimes', Rule::enum(MediaStatus::class)],
+        $validated = $request->validated();
 
-        ]);
+        $media->update(Arr::only($validated, [
+            'title',
+            'description',
+            'gallery',
+            'status',
+        ]));
 
-        $fileInput = $request->file('file') ?? $request->file('file_path') ?? ($request->has('file_path') ? $request->input('file_path') : null);
-        $updates = [
-            'title' => $request->has('title') ? $validated['title'] : $media->title,
-            'description' => $request->has('description') ? $validated['description'] : $media->description,
-            'gallery' => $validated['gallery'] ?? $media->gallery,
-            'status' => $validated['status'] ?? $media->status,
-            'mimetype' => $validated['mimetype'] ?? $media->mimetype,
-            'size' => $validated['size'] ?? $media->size,
-        ];
-
-        if ($request->hasFile('file') || $request->hasFile('file_path') || $request->has('file_path')) {
-            $updates['file_path'] = $this->handleMediaUpload($fileInput, "church/{$media->church_id}/media", $media->file_path);
-
-            if ($fileInput !== null) {
-                $fileData = getFileMetadata($fileInput);
-                $updates['mimetype'] = $validated['mimetype'] ?? ($fileData['mime_type'] ?? $updates['mimetype']);
-                $updates['size'] = $validated['size'] ?? ($fileData['size'] ?? $updates['size']);
-            }
-        }
-
-        $media->update($updates);
         if ($request->has('category_ids')) {
             $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $media->church_id));
         }

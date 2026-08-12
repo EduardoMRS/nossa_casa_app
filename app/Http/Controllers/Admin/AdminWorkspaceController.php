@@ -90,6 +90,8 @@ class AdminWorkspaceController extends Controller
             ->get()
             ->map(fn (Media $item) => [
                 'id' => $item->id,
+                'title' => $item->title,
+                'description' => $item->description,
                 'file_path' => $item->file_path,
                 'preview_url' => $item->url,
                 'mimetype' => $item->mimetype,

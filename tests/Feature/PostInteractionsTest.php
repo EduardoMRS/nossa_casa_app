@@ -1,9 +1,11 @@
 <?php
 
 use App\Enums\CategoryType;
+use App\Enums\MediaStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Comment;
+use App\Models\Media;
 use App\Models\Post;
 use App\Models\Reaction;
 use App\Models\User;
@@ -79,4 +81,71 @@ test('content managers can maintain church categories while members cannot', fun
         'slug' => 'news',
         'type' => CategoryType::POST->value,
     ]);
+});
+
+test('users can remove only their own reactions from posts media and comments', function () {
+    $church = Church::query()->create(['name' => 'Reaction Church', 'slug' => 'reaction-church']);
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $otherMember = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+    $church->assignMember($otherMember);
+    $post = Post::query()->create([
+        'church_id' => $church->id,
+        'author_id' => $member->id,
+        'title' => 'Reaction target',
+        'slug' => 'reaction-target',
+        'content' => 'Content',
+        'published_at' => now(),
+    ]);
+    $comment = $post->comments()->create([
+        'user_id' => $otherMember->id,
+        'content' => 'Comment target',
+    ]);
+    $media = Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $member->id,
+        'file_path' => 'https://example.test/reaction.jpg',
+        'mimetype' => 'image/jpeg',
+        'size' => 1024,
+        'gallery' => true,
+        'status' => MediaStatus::APPROVED,
+    ]);
+    $postReaction = $post->reactions()->create([
+        'user_id' => $member->id,
+        'content' => '❤️',
+        'type' => 'emoji',
+    ]);
+    $commentReaction = $comment->reactions()->create([
+        'user_id' => $member->id,
+        'content' => '❤️',
+        'type' => 'emoji',
+    ]);
+    $mediaReaction = $media->reactions()->create([
+        'user_id' => $member->id,
+        'content' => '🎉',
+        'type' => 'emoji',
+    ]);
+    $otherReaction = $post->reactions()->create([
+        'user_id' => $otherMember->id,
+        'content' => '🙏',
+        'type' => 'emoji',
+    ]);
+
+    $this->actingAs($member)
+        ->deleteJson('/api/reactions/'.$postReaction->id)
+        ->assertNoContent();
+    $this->actingAs($member)
+        ->deleteJson('/api/reactions/'.$commentReaction->id)
+        ->assertNoContent();
+    $this->actingAs($member)
+        ->deleteJson('/api/reactions/'.$mediaReaction->id)
+        ->assertNoContent();
+    $this->actingAs($member)
+        ->deleteJson('/api/reactions/'.$otherReaction->id)
+        ->assertForbidden();
+
+    expect(Reaction::query()->whereKey($postReaction->id)->exists())->toBeFalse()
+        ->and(Reaction::query()->whereKey($commentReaction->id)->exists())->toBeFalse()
+        ->and(Reaction::query()->whereKey($mediaReaction->id)->exists())->toBeFalse()
+        ->and(Reaction::query()->whereKey($otherReaction->id)->exists())->toBeTrue();
 });

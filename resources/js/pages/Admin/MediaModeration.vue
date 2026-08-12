@@ -18,6 +18,8 @@ import { useI18n } from '@/lib/i18n';
 
 type MediaItem = {
     id: string;
+    title: string | null;
+    description: string | null;
     file_path: string | null;
     preview_url: string | null;
     mimetype: string | null;
@@ -47,10 +49,10 @@ const sourceType = ref<'url' | 'file'>('file');
 const fileUrl = ref('');
 const selectedFile = ref<File | null>(null);
 const localPreview = ref('');
+const mediaTitle = ref('');
+const mediaDescription = ref('');
 const gallery = ref(true);
 const status = ref('pending');
-const mimetype = ref('');
-const size = ref('');
 const categoryIds = ref<string[]>([]);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
@@ -62,7 +64,7 @@ const preview = computed(
         '',
 );
 const previewKind = computed<'image' | 'video' | 'pdf'>(() => {
-    const type = selectedFile.value?.type || mimetype.value;
+    const type = selectedFile.value?.type || selected.value?.mimetype || '';
 
     if (type.startsWith('video/')) {
         return 'video';
@@ -87,10 +89,10 @@ const openUpload = (): void => {
     sourceType.value = 'file';
     fileUrl.value = '';
     selectedFile.value = null;
+    mediaTitle.value = '';
+    mediaDescription.value = '';
     gallery.value = true;
     status.value = 'pending';
-    mimetype.value = '';
-    size.value = '';
     categoryIds.value = [];
     errors.value = {};
     revokePreview();
@@ -101,10 +103,10 @@ const openEditor = (item: MediaItem): void => {
     sourceType.value = item.file_path?.startsWith('http') ? 'url' : 'file';
     fileUrl.value = item.file_path?.startsWith('http') ? item.file_path : '';
     selectedFile.value = null;
+    mediaTitle.value = item.title ?? '';
+    mediaDescription.value = item.description ?? '';
     gallery.value = item.gallery;
     status.value = item.status;
-    mimetype.value = item.mimetype ?? '';
-    size.value = item.size === null ? '' : String(item.size);
     categoryIds.value = [...item.category_ids];
     errors.value = {};
     revokePreview();
@@ -122,19 +124,21 @@ const chooseFile = (event: Event): void => {
 const save = (): void => {
     processing.value = true;
     const payload: Record<string, any> = {
+        title: mediaTitle.value || null,
+        description: mediaDescription.value || null,
         gallery: gallery.value,
         status: status.value,
-        mimetype: mimetype.value || null,
-        size: size.value ? Number(size.value) : null,
         category_ids: categoryIds.value,
     };
 
-    if (sourceType.value === 'url' && fileUrl.value.trim()) {
-        payload.file_path = fileUrl.value.trim();
-    }
+    if (!selected.value) {
+        if (sourceType.value === 'url' && fileUrl.value.trim()) {
+            payload.file_path = fileUrl.value.trim();
+        }
 
-    if (sourceType.value === 'file' && selectedFile.value) {
-        payload.file = selectedFile.value;
+        if (sourceType.value === 'file' && selectedFile.value) {
+            payload.file = selectedFile.value;
+        }
     }
 
     const options = {
@@ -353,29 +357,59 @@ onBeforeUnmount(revokePreview);
                         /><Image v-else class="size-16 text-slate-300" />
                     </div>
                     <div class="space-y-4">
-                        <label class="block text-xs font-bold"
-                            >{{ t('admin.media.source')
-                            }}<select
-                                v-model="sourceType"
-                                class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                        <div
+                            v-if="selected"
+                            class="rounded-xl border border-amber-200 bg-amber-50 p-3"
+                        >
+                            <p class="text-xs font-black text-amber-950">
+                                {{ t('admin.media.original_source') }}
+                            </p>
+                            <p class="mt-1 text-xs break-all text-amber-900">
+                                {{ selected.file_path }}
+                            </p>
+                            <p class="mt-2 text-xs text-amber-800">
+                                {{ t('admin.media.source_locked') }}
+                            </p>
+                            <dl
+                                class="mt-3 grid grid-cols-2 gap-2 text-[11px] text-amber-950"
                             >
-                                <option value="file">
-                                    {{ t('gallery.file') }}
-                                </option>
-                                <option value="url">URL</option>
-                            </select></label
-                        ><label class="block text-xs font-bold"
-                            >{{ t('admin.media.file_url')
-                            }}<input
-                                v-if="sourceType === 'file'"
-                                type="file"
-                                accept="image/*,video/*,application/pdf"
-                                class="mt-1 w-full rounded-lg border p-2 text-sm"
-                                @change="chooseFile" /><input
-                                v-else
-                                v-model="fileUrl"
-                                class="mt-1 w-full rounded-lg border-slate-300 text-sm"
-                        /></label>
+                                <div>
+                                    <dt class="font-bold">MIME</dt>
+                                    <dd>{{ selected.mimetype || '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-bold">
+                                        {{ t('admin.media.size') }}
+                                    </dt>
+                                    <dd>{{ selected.size ?? '—' }}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <template v-else>
+                            <label class="block text-xs font-bold"
+                                >{{ t('admin.media.source')
+                                }}<select
+                                    v-model="sourceType"
+                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                                >
+                                    <option value="file">
+                                        {{ t('gallery.file') }}
+                                    </option>
+                                    <option value="url">URL</option>
+                                </select></label
+                            ><label class="block text-xs font-bold"
+                                >{{ t('admin.media.file_url')
+                                }}<input
+                                    v-if="sourceType === 'file'"
+                                    type="file"
+                                    accept="image/*,video/*,application/pdf"
+                                    class="mt-1 w-full rounded-lg border p-2 text-sm"
+                                    @change="chooseFile" /><input
+                                    v-else
+                                    v-model="fileUrl"
+                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                            /></label>
+                        </template>
                         <p
                             v-for="message in errors"
                             :key="message"
@@ -383,6 +417,22 @@ onBeforeUnmount(revokePreview);
                         >
                             {{ message }}
                         </p>
+                        <label class="block text-xs font-bold"
+                            >{{ t('admin.media.record_title')
+                            }}<input
+                                v-model="mediaTitle"
+                                maxlength="255"
+                                class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                        /></label>
+                        <label class="block text-xs font-bold"
+                            >{{ t('admin.media.record_description')
+                            }}<textarea
+                                v-model="mediaDescription"
+                                maxlength="5000"
+                                rows="4"
+                                class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                            />
+                        </label>
                         <div class="grid grid-cols-2 gap-3">
                             <label class="block text-xs font-bold"
                                 >{{ t('admin.common.status')
@@ -412,19 +462,6 @@ onBeforeUnmount(revokePreview);
                             :categories="categories"
                             :label="t('gallery.categories')"
                         />
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="block text-xs font-bold"
-                                >MIME<input
-                                    v-model="mimetype"
-                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm" /></label
-                            ><label class="block text-xs font-bold"
-                                >{{ t('admin.media.size')
-                                }}<input
-                                    v-model="size"
-                                    type="number"
-                                    class="mt-1 w-full rounded-lg border-slate-300 text-sm"
-                            /></label>
-                        </div>
                         <button
                             :disabled="processing"
                             class="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"

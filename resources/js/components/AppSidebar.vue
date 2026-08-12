@@ -11,7 +11,7 @@ import {
     ListChecks,
     Megaphone,
     MessageSquareWarning,
-    Palette,
+    Settings2,
     Sparkles,
     Users,
     UserRoundCog,
@@ -123,7 +123,7 @@ const communicationNavItems = computed<NavItem[]>(() => [
     {
         title: t('admin.branding.title'),
         href: brandingEdit(),
-        icon: Palette,
+        icon: Settings2,
     },
 ]);
 

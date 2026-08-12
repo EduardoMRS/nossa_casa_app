@@ -8,6 +8,7 @@ import {
     Newspaper,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import { useI18n } from '@/lib/i18n';
 import { dashboard, login, register } from '@/routes';
 
@@ -161,5 +162,6 @@ const featureCards = computed(() => [
                 </div>
             </section>
         </main>
+        <PublicFooter show-locale />
     </div>
 </template>

@@ -4,6 +4,7 @@ import {
     BookOpen,
     CalendarDays,
     Image,
+    LayoutDashboard,
     LibraryBig,
     Menu,
     Newspaper,
@@ -21,16 +22,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
+import { applyBranding } from '@/lib/branding';
 import { useI18n } from '@/lib/i18n';
-import { home, login } from '@/routes';
+import { dashboard, home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 
 type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library';
 
-const props = withDefaults(defineProps<{ active?: PublicNavKey }>(), {
-    active: 'home',
-});
+const props = withDefaults(
+    defineProps<{ active?: PublicNavKey; showLocale?: boolean }>(),
+    {
+        active: 'home',
+        showLocale: true,
+    },
+);
 const page = usePage();
 const mobileOpen = ref(false);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
@@ -39,33 +45,31 @@ const { t } = useI18n();
 const branding = computed(
     () => (page.props.branding ?? {}) as Record<string, string>,
 );
+const canAccessDashboard = computed(
+    () =>
+        isAuthenticated.value &&
+        Boolean(
+            (
+                page.props.permissions as
+                    { accessDashboard?: boolean } | undefined
+            )?.accessDashboard,
+        ),
+);
+const brandInitials = computed(() =>
+    (branding.value.brand_name || 'Nossa Casa')
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join(''),
+);
 
 watchEffect(() => {
     if (typeof document === 'undefined') {
         return;
     }
 
-    const root = document.documentElement.style;
-    root.setProperty(
-        '--church-primary',
-        branding.value.primary_color || '#342f87',
-    );
-    root.setProperty(
-        '--church-secondary',
-        branding.value.secondary_color || '#5f7d95',
-    );
-    root.setProperty(
-        '--church-accent',
-        branding.value.accent_color || '#c88b4a',
-    );
-    root.setProperty(
-        '--church-surface',
-        branding.value.surface_color || '#f8fafc',
-    );
-    root.setProperty(
-        '--church-font',
-        branding.value.font_family || 'Manrope, ui-sans-serif',
-    );
+    applyBranding(branding.value);
 });
 
 const navItems = computed(() => [
@@ -117,16 +121,25 @@ const navClass = (key: PublicNavKey): string =>
         >
             <Link :href="home()" class="group flex shrink-0 items-center gap-3">
                 <span
-                    class="grid size-10 place-items-center rounded-xl border border-white/25 bg-white/10 text-lg font-black transition group-hover:scale-105"
-                    >NC</span
+                    class="grid size-10 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-lg font-black transition group-hover:scale-105"
                 >
+                    <img
+                        v-if="branding.logo_url"
+                        :src="branding.logo_url"
+                        :alt="branding.brand_name || 'Nossa Casa'"
+                        class="h-full w-full bg-white object-contain p-1"
+                    />
+                    <template v-else>{{ brandInitials }}</template>
+                </span>
                 <span class="hidden sm:block">
-                    <strong class="block text-base leading-tight"
-                        >Nossa Casa</strong
-                    >
+                    <strong class="block text-base leading-tight">{{
+                        branding.brand_name || 'Nossa Casa'
+                    }}</strong>
                     <small
                         class="block font-mono text-[9px] font-bold tracking-[0.2em] text-indigo-200 uppercase"
-                        >{{ t('nav.faith_community') }}</small
+                        >{{
+                            branding.tagline || t('nav.faith_community')
+                        }}</small
                     >
                 </span>
             </Link>
@@ -145,7 +158,17 @@ const navClass = (key: PublicNavKey): string =>
             </nav>
 
             <div class="flex items-center gap-2">
-                <LocaleSwitcher />
+                <LocaleSwitcher v-if="showLocale" />
+                <Link
+                    v-if="canAccessDashboard"
+                    :href="dashboard()"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 text-xs font-bold text-white transition hover:bg-white hover:text-indigo-950"
+                >
+                    <LayoutDashboard class="size-4" />
+                    <span class="hidden lg:inline">{{
+                        t('nav.dashboard')
+                    }}</span>
+                </Link>
                 <DropdownMenu v-if="isAuthenticated && user">
                     <DropdownMenuTrigger :as-child="true">
                         <Button

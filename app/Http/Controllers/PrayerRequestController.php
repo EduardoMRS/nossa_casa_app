@@ -2,36 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PrayerRequest;
+use App\Support\ChurchDomainContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\PrayerRequest; // O Model precisará ser criado caso ainda não exista
 
 class PrayerRequestController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        // Retorna o histórico de orações do usuário logado
-        $requests = PrayerRequest::where('user_id', $request->user()->id)->paginate(15);
+        $requests = PrayerRequest::query()
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->paginate(15);
+
         return response()->json($requests);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ChurchDomainContext $domainContext): JsonResponse
     {
         $validated = $request->validate([
-            'content' => 'required|string|max:2000',
-            'is_anonymous' => 'nullable|boolean',
+            'content' => ['required', 'string', 'max:2000'],
+            'is_anonymous' => ['nullable', 'boolean'],
         ]);
-
         $isAnonymous = (bool) ($validated['is_anonymous'] ?? false);
-        unset($validated['is_anonymous']);
 
-        // Vincula ao usuário caso ele esteja autenticado (suporta submissão pública e privada)
-        if ($request->user() && ! $isAnonymous) {
-            $validated['user_id'] = $request->user()->id;
-        }
-
-        $validated['church_id'] = $request->user()?->church?->id;
-
-        $prayerRequest = PrayerRequest::create($validated);
+        $prayerRequest = PrayerRequest::query()->create([
+            'content' => $validated['content'],
+            'user_id' => $request->user() && ! $isAnonymous
+                ? $request->user()->id
+                : null,
+            'church_id' => $domainContext->churchId() ?? $request->user()?->church?->id,
+        ]);
 
         return response()->json($prayerRequest, 201);
     }

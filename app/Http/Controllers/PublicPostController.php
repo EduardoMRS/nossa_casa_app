@@ -95,7 +95,10 @@ class PublicPostController extends Controller
         $post->localize(relations: ['church', 'categories']);
 
         $comments = $post->comments()
-            ->with('user:id,first_name,last_name')
+            ->with([
+                'user:id,first_name,last_name',
+                'reactions.user:id,first_name,last_name',
+            ])
             ->latest()
             ->get();
         $reactions = $post->reactions()

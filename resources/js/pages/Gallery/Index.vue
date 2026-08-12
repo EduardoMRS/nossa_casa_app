@@ -133,6 +133,11 @@ const groupedMediaReactions = computed(() => {
         }))
         .filter((reaction) => reaction.count);
 });
+const ownMediaReaction = computed(() =>
+    selectedMedia.value?.reactions.find(
+        (reaction) => reaction.user_id === String(currentUser.value?.id ?? ''),
+    ),
+);
 
 const openMedia = (item: MediaItem): void => {
     selectedMedia.value = {
@@ -171,6 +176,16 @@ const reactToMedia = async (content: string): Promise<void> => {
     interactionError.value = '';
 
     try {
+        if (ownMediaReaction.value?.content === content) {
+            await axios.delete(`/api/reactions/${ownMediaReaction.value.id}`);
+            selectedMedia.value.reactions =
+                selectedMedia.value.reactions.filter(
+                    (reaction) => reaction.id !== ownMediaReaction.value?.id,
+                );
+
+            return;
+        }
+
         const response = await axios.post<ReactionItem>('/api/reactions', {
             reactionable_type: 'media',
             reactionable_id: selectedMedia.value.id,
@@ -226,6 +241,20 @@ const reactToComment = async (comment: GalleryComment): Promise<void> => {
     interactionError.value = '';
 
     try {
+        const ownReaction = comment.reactions.find(
+            (reaction) =>
+                reaction.user_id === String(currentUser.value?.id ?? ''),
+        );
+
+        if (ownReaction) {
+            await axios.delete(`/api/reactions/${ownReaction.id}`);
+            comment.reactions = comment.reactions.filter(
+                (reaction) => reaction.id !== ownReaction.id,
+            );
+
+            return;
+        }
+
         const response = await axios.post<ReactionItem>('/api/reactions', {
             reactionable_type: 'comment',
             reactionable_id: comment.id,
@@ -618,6 +647,28 @@ onBeforeUnmount(() => {
                                                 interactionProcessing
                                             "
                                             class="inline-flex items-center gap-1 font-bold hover:text-rose-600 disabled:opacity-40"
+                                            :class="
+                                                comment.reactions.some(
+                                                    (reaction) =>
+                                                        reaction.user_id ===
+                                                        String(
+                                                            currentUser?.id ??
+                                                                '',
+                                                        ),
+                                                )
+                                                    ? 'text-rose-600'
+                                                    : ''
+                                            "
+                                            :aria-pressed="
+                                                comment.reactions.some(
+                                                    (reaction) =>
+                                                        reaction.user_id ===
+                                                        String(
+                                                            currentUser?.id ??
+                                                                '',
+                                                        ),
+                                                )
+                                            "
                                             @click="reactToComment(comment)"
                                         >
                                             <Heart class="size-3" />{{
@@ -649,6 +700,14 @@ onBeforeUnmount(() => {
                                             interactionProcessing
                                         "
                                         class="rounded-lg px-2 py-1.5 text-lg transition hover:bg-slate-100 disabled:opacity-40"
+                                        :class="
+                                            ownMediaReaction?.content === emoji
+                                                ? 'bg-slate-100 ring-2 ring-slate-200'
+                                                : ''
+                                        "
+                                        :aria-pressed="
+                                            ownMediaReaction?.content === emoji
+                                        "
                                         @click="reactToMedia(emoji)"
                                     >
                                         {{ emoji }}

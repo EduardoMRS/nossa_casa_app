@@ -1,45 +1,61 @@
-import { computed, ref } from 'vue';
+import { computed, inject, ref } from 'vue';
+import type { App, ComputedRef, InjectionKey, Ref } from 'vue';
 import en from '@/locales/en.json';
 import pt from '@/locales/pt.json';
 
 interface Catalog {
     [key: string]: string | Catalog;
 }
+
+interface I18nContext {
+    locale: ComputedRef<SupportedLocale>;
+    setLocale: (locale: SupportedLocale) => void;
+    t: (key: string, replacements?: Record<string, string | number>) => string;
+}
+
 export type SupportedLocale = 'en' | 'pt';
 
 const localeStorageKey = 'ncapp.locale';
 const localeCookieKey = 'ncapp_locale';
+const i18nKey: InjectionKey<I18nContext> = Symbol('ncapp-i18n');
 
 const catalogs: Record<SupportedLocale, Catalog> = {
     en: en as unknown as Catalog,
     pt: pt as unknown as Catalog,
 };
 
-const detectLocale = (): SupportedLocale => {
+const normalizeLocale = (locale: unknown): SupportedLocale | null => {
+    if (typeof locale !== 'string') {
+        return null;
+    }
+
+    const normalized = locale.toLowerCase().replace('_', '-').split('-')[0];
+
+    return normalized in catalogs ? (normalized as SupportedLocale) : null;
+};
+
+const detectBrowserLocale = (): SupportedLocale => {
     if (typeof document === 'undefined') {
         return 'en';
     }
 
-    const persisted = localStorage.getItem(
-        localeStorageKey,
-    ) as SupportedLocale | null;
-
-    if (persisted && persisted in catalogs) {
-        return persisted;
-    }
-
-    const htmlLang = document.documentElement.lang
-        ?.toLowerCase()
-        .split('-')[0] as SupportedLocale | undefined;
-
-    return htmlLang && htmlLang in catalogs ? htmlLang : 'en';
+    return (
+        normalizeLocale(document.documentElement.lang) ??
+        normalizeLocale(localStorage.getItem(localeStorageKey)) ??
+        normalizeLocale(navigator.language) ??
+        'en'
+    );
 };
 
-const activeLocale = ref<SupportedLocale>(detectLocale());
+const persistLocale = (locale: SupportedLocale): void => {
+    if (typeof document === 'undefined') {
+        return;
+    }
 
-if (typeof document !== 'undefined') {
-    document.cookie = `${localeCookieKey}=${activeLocale.value}; Path=/; SameSite=Lax; Max-Age=31536000`;
-}
+    document.documentElement.lang = locale;
+    localStorage.setItem(localeStorageKey, locale);
+    document.cookie = `${localeCookieKey}=${locale}; Path=/; SameSite=Lax; Max-Age=31536000`;
+};
 
 const readPath = (source: Catalog, path: string): string | undefined => {
     const segments = path.split('.');
@@ -71,19 +87,8 @@ const interpolate = (
     });
 };
 
-export const setLocale = (locale: SupportedLocale): void => {
-    if (locale in catalogs) {
-        activeLocale.value = locale;
-
-        if (typeof document !== 'undefined') {
-            document.documentElement.lang = locale;
-            localStorage.setItem(localeStorageKey, locale);
-            document.cookie = `${localeCookieKey}=${locale}; Path=/; SameSite=Lax; Max-Age=31536000`;
-        }
-    }
-};
-
-export const useI18n = () => {
+const createI18nContext = (initialLocale: SupportedLocale): I18nContext => {
+    const activeLocale: Ref<SupportedLocale> = ref(initialLocale);
     const locale = computed(() => activeLocale.value);
 
     const t = (
@@ -100,9 +105,29 @@ export const useI18n = () => {
         return interpolate(result, replacements);
     };
 
+    const setLocale = (nextLocale: SupportedLocale): void => {
+        if (!(nextLocale in catalogs)) {
+            return;
+        }
+
+        activeLocale.value = nextLocale;
+        persistLocale(nextLocale);
+    };
+
     return {
         locale,
         setLocale,
         t,
     };
 };
+
+const fallbackContext = createI18nContext(detectBrowserLocale());
+
+export const installI18n = (app: App, locale: unknown): void => {
+    const initialLocale = normalizeLocale(locale) ?? detectBrowserLocale();
+
+    app.provide(i18nKey, createI18nContext(initialLocale));
+    persistLocale(initialLocale);
+};
+
+export const useI18n = (): I18nContext => inject(i18nKey, fallbackContext);

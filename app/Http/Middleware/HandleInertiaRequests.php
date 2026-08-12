@@ -53,12 +53,15 @@ class HandleInertiaRequests extends Middleware
             'accent_color' => '#c88b4a',
             'surface_color' => '#f4f7fb',
             'font_family' => 'Manrope, ui-sans-serif',
+            'logo_path' => '',
             'logo_url' => '',
             'icon_name' => 'Sparkles',
             'contact_email' => '',
             'contact_phone' => '',
             'contact_whatsapp' => '',
-            'contact_website' => '',
+            'address' => '',
+            'map_embed' => '',
+            'weekly_schedule' => [],
         ];
         $setting = null;
 
@@ -69,6 +72,10 @@ class HandleInertiaRequests extends Middleware
             $savedBranding = $setting?->options['branding'] ?? [];
 
             if (is_array($savedBranding)) {
+                if (! empty($savedBranding['logo_path'])) {
+                    $savedBranding['logo_url'] = genUrl($savedBranding['logo_path']);
+                }
+
                 $branding = array_merge($branding, $savedBranding);
             }
         }
@@ -107,6 +114,7 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => $branding,
             'permissions' => [
+                'accessDashboard' => in_array($role, ['leader', 'media', 'admin', 'superadmin', 'system'], true),
                 'manageBranding' => in_array($role, ['admin', 'superadmin', 'system'], true),
             ],
             'classrooms' => [

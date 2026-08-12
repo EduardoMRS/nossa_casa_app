@@ -334,23 +334,45 @@
             "no_recent_records": "Sem registros recentes para este módulo."
         },
         "branding": {
-            "title": "Identidade visual",
-            "heading": "Identidade visual da Igreja",
-            "description": "Configure cores, títulos, logotipo e canais de contato usados em experiências privadas e públicas.",
+            "title": "Configurações da church",
+            "heading": "Configurações da church",
+            "description": "Configure domínio, logotipo, identidade visual, contatos, localização e programação semanal.",
             "brand_name": "Nome da marca",
             "tagline": "Slogan",
             "banner_title": "Título do banner",
             "banner_subtitle": "Legenda do banner",
             "font_family": "Família de fontes",
             "icon_name": "Ícone principal",
-            "logo_url": "URL do logotipo",
-            "website": "Site",
+            "logo_file": "Logotipo da church",
+            "logo_preview": "Pré-visualização do logotipo da church",
+            "logo_hint": "Envie uma imagem JPG, PNG ou WebP de até 4 MB.",
+            "remove_logo": "Remover logotipo atual",
+            "keep_logo": "Manter logotipo atual",
+            "domain_title": "Domínio de acesso da church",
+            "domain_description": "Defina o endereço que os membros usarão para acessar esta church.",
+            "domain": "Domínio",
+            "domain_hint": "Informe somente o domínio, sem protocolo ou caminhos. Se o campo ficar vazio, será usado o domínio atual.",
             "primary_color": "Cor principal",
             "secondary_color": "Cor secundária",
             "accent_color": "Cor de destaque",
             "surface_color": "Cor de fundo",
             "phone": "Telefone",
-            "save": "Salvar configurações visuais"
+            "location_title": "Localização e endereço",
+            "location_description": "Informe como os visitantes chegam à igreja e, se desejar, incorpore um mapa seguro.",
+            "address": "Endereço completo",
+            "map_embed": "Mapa incorporado",
+            "map_embed_placeholder": "Cole a URL ou o iframe do Google Maps/OpenStreetMap",
+            "map_embed_hint": "São aceitos embeds HTTPS do Google Maps e OpenStreetMap.",
+            "schedule_title": "Programação semanal",
+            "schedule_description": "Cadastre cultos e atividades recorrentes; itens com o mesmo título serão agrupados na página inicial.",
+            "schedule_add": "Adicionar horário",
+            "schedule_name": "Título",
+            "schedule_day": "Dia da semana",
+            "schedule_start": "Início",
+            "schedule_end": "Fim",
+            "schedule_remove": "Remover horário",
+            "schedule_empty": "Nenhuma programação semanal cadastrada.",
+            "save": "Salvar configurações da church"
         },
         "categories": {
             "all_types": "Todos os tipos",
@@ -595,6 +617,10 @@
             "delete_confirm": "Excluir esta mídia?",
             "source": "Origem",
             "file_url": "Arquivo / URL",
+            "original_source": "Origem original",
+            "source_locked": "O arquivo original e sua origem não podem ser substituídos após o cadastro.",
+            "record_title": "Título",
+            "record_description": "Descrição",
             "public_gallery": "Visível na galeria pública",
             "category_hint": "Filtre pela igreja atual",
             "size": "Tamanho (bytes)",
@@ -687,7 +713,7 @@
                 "actions": [
                     "Gerenciar publicações",
                     "Abrir eventos",
-                    "Identidade visual"
+                    "Configurações da church"
                 ]
             },
             "library": {
@@ -728,7 +754,8 @@
             "title": "Bem-vindo ao ecossistema Nossa Casa",
             "description": "Agendamento, conteúdo e inscrições conectados em uma experiência perfeita para membros, líderes e equipe de mídia.",
             "cta_events": "Explorar eventos",
-            "cta_gallery": "Ver galeria"
+            "cta_gallery": "Ver galeria",
+            "next_event": "Próximo evento"
         },
         "stats": {
             "events": "Eventos",
@@ -744,7 +771,45 @@
         "latest_posts": {
             "kicker": "Comunicação",
             "title": "Últimas atualizações"
+        },
+        "calendar": {
+            "kicker": "Agenda da comunidade",
+            "title": "Calendário da igreja",
+            "previous": "Mês anterior",
+            "next": "Próximo mês",
+            "selected_day": "Programação do dia",
+            "weekly": "Programação semanal",
+            "event": "Evento",
+            "empty": "Não há eventos ou programações para este dia."
+        },
+        "prayer": {
+            "title": "Pedido de oração",
+            "description": "Compartilhe seu pedido com o ministério de intercessão. Não é necessário fazer login.",
+            "sending_as": "Seu pedido será enviado como {name}.",
+            "placeholder": "Escreva aqui seu pedido de oração...",
+            "anonymous": "Enviar de forma anônima",
+            "submit": "Enviar pedido",
+            "sending": "Enviando...",
+            "success": "Seu pedido foi enviado. Estaremos orando por você.",
+            "error": "Não foi possível enviar o pedido. Tente novamente."
+        },
+        "visit": {
+            "kicker": "Venha nos visitar",
+            "title": "Localização e contato",
+            "map_title": "Mapa de localização da igreja"
+        },
+        "schedule": {
+            "title": "Programação semanal"
         }
+    },
+    "weekdays": {
+        "sunday": "Domingo",
+        "monday": "Segunda-feira",
+        "tuesday": "Terça-feira",
+        "wednesday": "Quarta-feira",
+        "thursday": "Quinta-feira",
+        "friday": "Sexta-feira",
+        "saturday": "Sábado"
     },
     "events": {
         "shared": {
@@ -962,8 +1027,8 @@
                 "description": "Leia os recentes avisos e notícias da igreja."
             },
             "visual_identity": {
-                "title": "Identidade visual",
-                "description": "Ajuste o logotipo, cores e contatos institucionais."
+                "title": "Configurações da church",
+                "description": "Ajuste domínio, logotipo, cores, contatos, localização e programação semanal."
             },
             "user_management": {
                 "title": "Gerenciamento de usuários",

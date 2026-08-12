@@ -38,5 +38,6 @@ return [
         'media_deleted' => 'Media deleted successfully.',
         'media_moderated' => 'Media moderation updated.',
         'classrooms_updated' => 'Classroom settings updated.',
+        'church_settings_updated' => 'Church settings updated successfully.',
     ],
 ];

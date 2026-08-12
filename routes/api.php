@@ -39,7 +39,8 @@ Route::apiResource('media', MediaController::class)
 Route::get('comments', [CommentController::class, 'index']);
 
 // Formulário de pedido de oração (Aberto ao público)
-Route::post('prayer-requests', [PrayerRequestController::class, 'store']);
+Route::post('prayer-requests', [PrayerRequestController::class, 'store'])
+    ->middleware('throttle:10,1');
 
 /*
 |--------------------------------------------------------------------------

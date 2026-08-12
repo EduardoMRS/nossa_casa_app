@@ -334,23 +334,45 @@
             "no_recent_records": "No recent records for this module."
         },
         "branding": {
-            "title": "Visual identity",
-            "heading": "Church visual identity",
-            "description": "Configure colors, titles, logo, and contact channels used across private and public experiences.",
+            "title": "Church settings",
+            "heading": "Church settings",
+            "description": "Configure the domain, logo, visual identity, contact information, location, and weekly schedule.",
             "brand_name": "Brand name",
             "tagline": "Tagline",
             "banner_title": "Banner title",
             "banner_subtitle": "Banner subtitle",
             "font_family": "Font family",
             "icon_name": "Primary icon",
-            "logo_url": "Logo URL",
-            "website": "Website",
+            "logo_file": "Church logo",
+            "logo_preview": "Church logo preview",
+            "logo_hint": "Upload a JPG, PNG, or WebP image up to 4 MB.",
+            "remove_logo": "Remove current logo",
+            "keep_logo": "Keep current logo",
+            "domain_title": "Church access domain",
+            "domain_description": "Define the address members will use to access this church.",
+            "domain": "Domain",
+            "domain_hint": "Enter only the domain, without protocol or paths. The current domain is used when this field is left empty.",
             "primary_color": "Primary color",
             "secondary_color": "Secondary color",
             "accent_color": "Accent color",
             "surface_color": "Surface color",
             "phone": "Phone",
-            "save": "Save visual settings"
+            "location_title": "Location and address",
+            "location_description": "Tell visitors how to reach the church and optionally embed a secure map.",
+            "address": "Full address",
+            "map_embed": "Embedded map",
+            "map_embed_placeholder": "Paste a Google Maps/OpenStreetMap URL or iframe",
+            "map_embed_hint": "HTTPS embeds from Google Maps and OpenStreetMap are accepted.",
+            "schedule_title": "Weekly schedule",
+            "schedule_description": "Register recurring services and activities; entries with the same title are grouped on the home page.",
+            "schedule_add": "Add time",
+            "schedule_name": "Title",
+            "schedule_day": "Weekday",
+            "schedule_start": "Starts",
+            "schedule_end": "Ends",
+            "schedule_remove": "Remove time",
+            "schedule_empty": "No weekly schedule has been registered.",
+            "save": "Save church settings"
         },
         "categories": {
             "all_types": "All types",
@@ -606,6 +628,10 @@
             "delete_confirm": "Delete this media?",
             "source": "Source",
             "file_url": "File / URL",
+            "original_source": "Original source",
+            "source_locked": "The original file and its source cannot be replaced after registration.",
+            "record_title": "Title",
+            "record_description": "Description",
             "public_gallery": "Visible in the public gallery",
             "category_hint": "Filter by the current church",
             "size": "Size (bytes)",
@@ -706,7 +732,7 @@
                 "actions": {
                     "0": "Manage posts",
                     "1": "Open events",
-                    "2": "Visual identity"
+                    "2": "Church settings"
                 }
             },
             "library": {
@@ -753,7 +779,8 @@
             "title": "Welcome to the Nossa Casa ecosystem",
             "description": "Schedule, content, and registrations connected in one seamless experience for members, leaders, and media team.",
             "cta_events": "Explore events",
-            "cta_gallery": "View gallery"
+            "cta_gallery": "View gallery",
+            "next_event": "Next event"
         },
         "stats": {
             "events": "Events",
@@ -769,7 +796,45 @@
         "latest_posts": {
             "kicker": "Communication",
             "title": "Latest updates"
+        },
+        "calendar": {
+            "kicker": "Community schedule",
+            "title": "Church calendar",
+            "previous": "Previous month",
+            "next": "Next month",
+            "selected_day": "Schedule for this day",
+            "weekly": "Weekly schedule",
+            "event": "Event",
+            "empty": "There are no events or scheduled activities for this day."
+        },
+        "prayer": {
+            "title": "Prayer request",
+            "description": "Share your request with the intercession ministry. Signing in is not required.",
+            "sending_as": "Your request will be submitted as {name}.",
+            "placeholder": "Write your prayer request here...",
+            "anonymous": "Submit anonymously",
+            "submit": "Send request",
+            "sending": "Sending...",
+            "success": "Your request was sent. We will be praying for you.",
+            "error": "The request could not be sent. Please try again."
+        },
+        "visit": {
+            "kicker": "Come visit us",
+            "title": "Location and contact",
+            "map_title": "Church location map"
+        },
+        "schedule": {
+            "title": "Weekly schedule"
         }
+    },
+    "weekdays": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
     },
     "events": {
         "shared": {
@@ -987,8 +1052,8 @@
                 "description": "Read recent church notices and news."
             },
             "visual_identity": {
-                "title": "Visual identity",
-                "description": "Adjust logo, colors, and institutional contacts."
+                "title": "Church settings",
+                "description": "Adjust domain, logo, colors, contacts, location, and weekly schedule."
             },
             "user_management": {
                 "title": "User management",
