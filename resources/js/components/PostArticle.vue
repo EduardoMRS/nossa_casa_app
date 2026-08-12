@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, Heart, MessageCircle, Send, Tags } from '@lucide/vue';
+import { CalendarDays, Eye, MessageCircle, Send } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
@@ -29,6 +29,7 @@ export type ArticlePost = {
     published_at: string | null;
     category?: string | null;
     cover_url?: string | null;
+    views_count?: number;
     author?: Person | null;
     church?: { name: string } | null;
     metrics: { comments_count: number; reactions_count: number };
@@ -43,12 +44,15 @@ const props = defineProps<{
 const { locale, t } = useI18n();
 const comment = ref('');
 const processing = ref(false);
+const reacting = ref('');
+const commentItems = ref<CommentItem[]>([...props.comments]);
+const reactionItems = ref<ReactionItem[]>([...props.reactions]);
 const emojis = ['👍', '❤️', '🙏', '🎉'];
 const groupedReactions = computed(() =>
     emojis
         .map((emoji) => ({
             emoji,
-            count: props.reactions.filter((item) => item.content === emoji)
+            count: reactionItems.value.filter((item) => item.content === emoji)
                 .length,
         }))
         .filter((item) => item.count),
@@ -70,219 +74,211 @@ const submitComment = async (): Promise<void> => {
     processing.value = true;
 
     try {
-        await axios.post('/api/comments', {
+        const response = await axios.post<CommentItem>('/api/comments', {
             commentable_type: 'post',
             commentable_id: props.post.id,
             content: comment.value,
         });
+        commentItems.value.unshift(response.data);
         comment.value = '';
-        window.location.reload();
     } finally {
         processing.value = false;
     }
 };
 
 const react = async (content: string): Promise<void> => {
-    await axios.post('/api/reactions', {
-        reactionable_type: 'post',
-        reactionable_id: props.post.id,
-        content,
-        type: 'emoji',
-    });
-    window.location.reload();
+    if (!props.canInteract) {
+        return;
+    }
+
+    reacting.value = content;
+
+    try {
+        const response = await axios.post<ReactionItem>('/api/reactions', {
+            reactionable_type: 'post',
+            reactionable_id: props.post.id,
+            content,
+            type: 'emoji',
+        });
+        reactionItems.value = [
+            ...reactionItems.value.filter(
+                (item) => item.user_id !== response.data.user_id,
+            ),
+            response.data,
+        ];
+    } finally {
+        reacting.value = '';
+    }
 };
 </script>
 
 <template>
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div class="space-y-6">
-            <article
-                class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-            >
-                <img
-                    v-if="post.cover_url"
-                    :src="post.cover_url"
-                    :alt="post.title"
-                    class="max-h-[32rem] w-full object-cover"
-                />
-                <div class="p-6 md:p-9">
-                    <div
-                        class="flex flex-wrap items-center gap-2 text-[10px] font-bold tracking-wider text-indigo-600 uppercase"
-                    >
-                        <span v-if="post.church">{{ post.church.name }}</span
-                        ><span v-if="post.category">· {{ post.category }}</span>
-                    </div>
-                    <h1
-                        class="mt-3 text-3xl leading-tight font-black text-slate-950 md:text-5xl"
-                    >
-                        {{ post.title }}
-                    </h1>
-                    <div
-                        class="mt-4 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-5 text-xs text-slate-500"
-                    >
-                        <span
-                            v-if="post.author"
-                            class="font-bold text-slate-700"
-                            >{{ post.author.first_name }}
-                            {{ post.author.last_name }}</span
-                        ><span class="inline-flex items-center gap-1.5"
-                            ><CalendarDays class="size-4" />{{
-                                formatDate(post.published_at)
-                            }}</span
-                        >
-                    </div>
-                    <div
-                        class="markdown-content mt-7 text-[15px] leading-7 text-slate-700"
-                        v-html="post.contentHtml"
-                    />
-                </div>
-            </article>
-
-            <section
-                class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-            >
+    <div class="min-w-0 space-y-6">
+        <article
+            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        >
+            <img
+                v-if="post.cover_url"
+                :src="post.cover_url"
+                :alt="post.title"
+                class="max-h-[36rem] w-full object-cover"
+            />
+            <div class="p-6 md:p-9">
                 <div
-                    class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4"
+                    class="flex flex-wrap items-center gap-2 text-[10px] font-bold tracking-wider uppercase"
+                    :style="{ color: 'var(--church-primary)' }"
                 >
-                    <h2 class="flex items-center gap-2 text-lg font-black">
-                        <MessageCircle class="size-5 text-indigo-600" />{{
-                            t('posts.show.recent_comments')
+                    <span v-if="post.church">{{ post.church.name }}</span>
+                    <span v-if="post.category">· {{ post.category }}</span>
+                </div>
+                <h1
+                    class="mt-3 text-3xl leading-tight font-black text-slate-950 md:text-5xl"
+                >
+                    {{ post.title }}
+                </h1>
+                <div
+                    class="mt-4 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-5 text-xs text-slate-500"
+                >
+                    <span v-if="post.author" class="font-bold text-slate-700">
+                        {{ post.author.first_name }} {{ post.author.last_name }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <CalendarDays class="size-4" />{{
+                            formatDate(post.published_at)
                         }}
-                    </h2>
-                    <span
-                        class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500"
-                        >{{ comments.length }}</span
-                    >
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <Eye class="size-4" />{{ post.views_count ?? 0 }}
+                    </span>
                 </div>
-                <form
-                    v-if="canInteract"
-                    class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
-                    @submit.prevent="submitComment"
-                >
-                    <textarea
-                        v-model="comment"
-                        rows="3"
-                        class="w-full resize-none border-0 bg-transparent text-sm shadow-none focus:ring-0"
-                        :placeholder="t('posts.show.comment_placeholder')"
-                    />
-                    <div class="flex justify-end">
-                        <button
-                            :disabled="processing"
-                            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
-                        >
-                            <Send class="size-4" />{{
-                                t('posts.show.comment_submit')
-                            }}
-                        </button>
-                    </div>
-                </form>
-                <p
-                    v-else
-                    class="mt-4 rounded-lg bg-indigo-50 p-3 text-xs text-indigo-700"
-                >
-                    {{ t('posts.show.login_to_interact') }}
-                </p>
-                <div v-if="comments.length" class="mt-4 space-y-3">
-                    <article
-                        v-for="item in comments"
-                        :key="item.id"
-                        class="rounded-lg border border-slate-100 bg-slate-50 p-4"
-                    >
-                        <div class="flex items-center justify-between gap-3">
-                            <strong class="text-sm text-slate-800"
-                                >{{ item.user_details?.first_name }}
-                                {{ item.user_details?.last_name }}</strong
-                            ><time class="text-[10px] text-slate-400">{{
-                                formatDate(item.created_at)
-                            }}</time>
-                        </div>
-                        <p
-                            class="mt-2 text-sm leading-6 whitespace-pre-wrap text-slate-600"
-                        >
-                            {{ item.content }}
-                        </p>
-                    </article>
-                </div>
-                <p v-else class="mt-5 text-center text-sm text-slate-400">
-                    {{ t('posts.show.no_comments') }}
-                </p>
-            </section>
-        </div>
+                <div
+                    class="markdown-content mt-7 text-[15px] leading-7 text-slate-700"
+                    v-html="post.contentHtml"
+                />
+            </div>
 
-        <aside class="space-y-4 lg:sticky lg:top-24">
-            <section
-                class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-                <p
-                    class="font-mono text-[10px] font-bold tracking-wider text-slate-400 uppercase"
+            <section class="border-t border-slate-100 px-5 py-3 md:px-9">
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500"
                 >
-                    {{ t('posts.show.engagement') }}
-                </p>
-                <div class="mt-3 grid grid-cols-2 gap-2">
-                    <div class="rounded-lg bg-rose-50 p-3">
-                        <Heart class="size-4 text-rose-500" /><strong
-                            class="mt-1 block text-lg"
-                            >{{ post.metrics.reactions_count }}</strong
-                        ><span class="text-[10px] text-slate-500">{{
-                            t('posts.show.reactions')
+                    <div class="flex items-center gap-2">
+                        <span
+                            v-if="groupedReactions.length"
+                            class="flex -space-x-1"
+                        >
+                            <span
+                                v-for="item in groupedReactions"
+                                :key="item.emoji"
+                                class="grid size-6 place-items-center rounded-full border-2 border-white bg-slate-100 text-xs"
+                                >{{ item.emoji }}</span
+                            >
+                        </span>
+                        <span>{{
+                            t('posts.show.reaction_count', {
+                                count: reactionItems.length,
+                            })
                         }}</span>
                     </div>
-                    <div class="rounded-lg bg-indigo-50 p-3">
-                        <MessageCircle class="size-4 text-indigo-500" /><strong
-                            class="mt-1 block text-lg"
-                            >{{ post.metrics.comments_count }}</strong
-                        ><span class="text-[10px] text-slate-500">{{
-                            t('posts.show.comments_label')
-                        }}</span>
-                    </div>
+                    <span>{{
+                        t('posts.show.comment_count', {
+                            count: commentItems.length,
+                        })
+                    }}</span>
                 </div>
-            </section>
-            <section
-                class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-                <p class="flex items-center gap-2 text-sm font-black">
-                    <Heart class="size-4 text-rose-500" />{{
-                        t('posts.show.react')
-                    }}
-                </p>
-                <div class="mt-3 flex flex-wrap gap-2">
+
+                <div
+                    class="mt-3 grid grid-cols-4 border-t border-slate-100 pt-2"
+                >
                     <button
                         v-for="emoji in emojis"
                         :key="emoji"
-                        :disabled="!canInteract"
-                        class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-lg transition hover:-translate-y-0.5 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        type="button"
+                        :disabled="!canInteract || reacting !== ''"
+                        class="flex items-center justify-center gap-1 rounded-lg py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
                         @click="react(emoji)"
                     >
-                        {{ emoji }}
+                        <span class="text-lg">{{ emoji }}</span>
                     </button>
                 </div>
-                <div
-                    v-if="groupedReactions.length"
-                    class="mt-3 flex flex-wrap gap-2"
+                <p
+                    v-if="!canInteract"
+                    class="mt-2 text-center text-xs text-slate-500"
                 >
-                    <span
-                        v-for="item in groupedReactions"
-                        :key="item.emoji"
-                        class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold"
-                        >{{ item.emoji }} {{ item.count }}</span
-                    >
-                </div>
-            </section>
-            <section
-                v-if="post.category"
-                class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-                <p class="flex items-center gap-2 text-sm font-black">
-                    <Tags class="size-4 text-indigo-600" />{{
-                        t('events.show.categories')
-                    }}
+                    {{ t('posts.show.login_to_interact') }}
                 </p>
-                <span
-                    class="mt-3 inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700"
-                    >{{ post.category }}</span
-                >
             </section>
-        </aside>
+        </article>
+
+        <section
+            class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+        >
+            <div
+                class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4"
+            >
+                <h2 class="flex items-center gap-2 text-lg font-black">
+                    <MessageCircle
+                        class="size-5"
+                        :style="{ color: 'var(--church-primary)' }"
+                    />
+                    {{ t('posts.show.recent_comments') }}
+                </h2>
+                <span
+                    class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500"
+                >
+                    {{ commentItems.length }}
+                </span>
+            </div>
+
+            <form
+                v-if="canInteract"
+                class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                @submit.prevent="submitComment"
+            >
+                <textarea
+                    v-model="comment"
+                    rows="3"
+                    class="w-full resize-none border-0 bg-transparent text-sm shadow-none focus:ring-0"
+                    :placeholder="t('posts.show.comment_placeholder')"
+                />
+                <div class="flex justify-end">
+                    <button
+                        :disabled="processing"
+                        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+                        :style="{ backgroundColor: 'var(--church-primary)' }"
+                    >
+                        <Send class="size-4" />{{
+                            t('posts.show.comment_submit')
+                        }}
+                    </button>
+                </div>
+            </form>
+
+            <div v-if="commentItems.length" class="mt-4 space-y-3">
+                <article
+                    v-for="item in commentItems"
+                    :key="item.id"
+                    class="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <strong class="text-sm text-slate-800">
+                            {{ item.user_details?.first_name }}
+                            {{ item.user_details?.last_name }}
+                        </strong>
+                        <time class="text-[10px] text-slate-400">{{
+                            formatDate(item.created_at)
+                        }}</time>
+                    </div>
+                    <p
+                        class="mt-2 text-sm leading-6 whitespace-pre-wrap text-slate-600"
+                    >
+                        {{ item.content }}
+                    </p>
+                </article>
+            </div>
+            <p v-else class="mt-5 text-center text-sm text-slate-400">
+                {{ t('posts.show.no_comments') }}
+            </p>
+        </section>
     </div>
 </template>
 
@@ -320,13 +316,13 @@ const react = async (content: string): Promise<void> => {
     padding-left: 1.5em;
 }
 .markdown-content :deep(a) {
-    color: #4f46e5;
+    color: var(--church-primary, #4f46e5);
     font-weight: 700;
     text-decoration: underline;
 }
 .markdown-content :deep(blockquote) {
-    border-left: 4px solid #6366f1;
-    background: #eef2ff;
+    border-left: 4px solid var(--church-primary, #6366f1);
+    background: #f8fafc;
     padding: 0.75em 1em;
     font-style: italic;
 }

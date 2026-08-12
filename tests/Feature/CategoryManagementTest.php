@@ -11,7 +11,7 @@ test('admin can manage categories for the current church', function () {
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 
-    $this->actingAs($admin)->get('/admin/categorias')->assertSuccessful();
+    $this->actingAs($admin)->get('/dashboard/categorias')->assertSuccessful();
 
     $this->actingAs($admin)->postJson('/api/categories', [
         'name' => 'Devocionais',
@@ -41,5 +41,5 @@ test('member cannot access the category management screen', function () {
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($member);
 
-    $this->actingAs($member)->get('/admin/categorias')->assertForbidden();
+    $this->actingAs($member)->get('/dashboard/categorias')->assertForbidden();
 });

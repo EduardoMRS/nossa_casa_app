@@ -20,7 +20,13 @@ defineProps<{
 const { t } = useI18n();
 </script>
 <template>
-    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
+    <div
+        class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :style="{
+            backgroundColor: 'var(--church-surface, #f8fafc)',
+            fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',
+        }"
+    >
         <Head :title="t('library.title')" />
         <PublicHeader active="library" />
         <main

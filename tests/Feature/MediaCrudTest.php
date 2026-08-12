@@ -44,6 +44,8 @@ test('leader can upload media from a stored file path string', function () {
 
     try {
         $response = $this->actingAs($leader)->postJson('/api/media', [
+            'title' => 'Leadership handbook',
+            'description' => 'A resource shared with the gallery.',
             'file_path' => $sourcePath,
             'gallery' => true,
         ]);
@@ -53,6 +55,8 @@ test('leader can upload media from a stored file path string', function () {
         $media = Media::query()->latest()->firstOrFail();
 
         expect($media->church_id)->toBe($church->id);
+        expect($media->title)->toBe('Leadership handbook');
+        expect($media->description)->toBe('A resource shared with the gallery.');
         expect($media->status)->toBe(MediaStatus::PENDING);
         expect($media->file_path)->toStartWith('church/'.$church->id.'/media/');
         expect(Storage::disk('public')->exists($media->file_path))->toBeTrue();

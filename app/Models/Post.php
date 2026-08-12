@@ -18,11 +18,17 @@ class Post extends Model
         'expires_at',
         'author_id',
         'church_id',
+        'views_count',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
+        'views_count' => 'integer',
+    ];
+
+    protected $attributes = [
+        'views_count' => 0,
     ];
 
     protected $appends = [
@@ -120,6 +126,17 @@ class Post extends Model
         }
 
         return $query;
+    }
+
+    public function scopePublished($query)
+    {
+        return $query
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 
     public function scopeExpired($query)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ChurchStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,9 +32,14 @@ class ChurchController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if ($request->filled('domain')) {
+            $request->merge(['domain' => ChurchDomainContext::normalizeDomain($request->string('domain')->toString())]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:churches',
+            'domain' => ['nullable', 'string', 'max:255', 'not_in:'.app(ChurchDomainContext::class)->mainHost(), Rule::unique('churches')],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',
@@ -55,9 +61,18 @@ class ChurchController extends Controller
         $church = Church::findOrFail($id);
         $this->ensureCommunityAccess($request, $church);
 
+        if ($request->has('domain')) {
+            $request->merge([
+                'domain' => $request->filled('domain')
+                    ? ChurchDomainContext::normalizeDomain($request->string('domain')->toString())
+                    : null,
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('churches')->ignore($church->id)],
+            'domain' => ['sometimes', 'nullable', 'string', 'max:255', 'not_in:'.app(ChurchDomainContext::class)->mainHost(), Rule::unique('churches')->ignore($church->id)],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['sometimes', 'required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',

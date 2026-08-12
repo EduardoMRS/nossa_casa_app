@@ -105,7 +105,7 @@ test('translations attribute returns only content for the current locale', funct
 test('public index and show responses use the requested content locale', function () {
     ['event' => $event] = createLocalizedEventFixtures();
 
-    $this->withCookie('ncapp_locale', 'pt')
+    $this->withUnencryptedCookie('ncapp_locale', 'pt')
         ->get('/events')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
@@ -124,7 +124,7 @@ test('public index and show responses use the requested content locale', functio
 test('registration page localizes form schema while edit pages keep original content', function () {
     ['leader' => $leader, 'event' => $event] = createLocalizedEventFixtures();
 
-    $this->withCookie('ncapp_locale', 'pt')
+    $this->withUnencryptedCookie('ncapp_locale', 'pt')
         ->get("/events/{$event->slug}/register")
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
@@ -136,8 +136,8 @@ test('registration page localizes form schema while edit pages keep original con
         );
 
     $this->actingAs($leader)
-        ->withCookie('ncapp_locale', 'pt')
-        ->get("/events/{$event->id}/edit")
+        ->withUnencryptedCookie('ncapp_locale', 'pt')
+        ->get(route('events.edit', ['event' => $event->id]))
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('event.title', 'Original Event')

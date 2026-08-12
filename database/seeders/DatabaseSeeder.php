@@ -13,8 +13,8 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $systemEmail = env('APP_USER_SYSTEM_EMAIL', 'system@nossacasa.test');
-        $systemPassword = env('APP_USER_SYSTEM_PASSWORD', 'password');
+        $systemEmail = env('APP_USER_SYSTEM_EMAIL') ?: 'system@nossacasa.test';
+        $systemPassword = env('APP_USER_SYSTEM_PASSWORD') ?: 'password';
 
         // 1. Cria o usuário do Sistema (Super System admin)
         $superadmin = User::updateOrCreate(
@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug('Nossa Comunidade Teste'),
             ],
             [
+                'owner_id' => $superadmin->id,
                 'name' => 'Nossa Comunidade Teste',
                 'description' => 'Comunidade de Testes para o Sistema Nossa Casa',
                 'found_date' => '2026-07-16',
@@ -60,6 +61,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Nossa Casa Teste',
                 'found_date' => '2026-07-16',
+                'domain' => 'nossa.localhost',
             ]
         );
 

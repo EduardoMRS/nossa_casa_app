@@ -13,6 +13,11 @@ class CheckInClassroomRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['user_id' => ['required', 'string', 'exists:users,id']];
+        return [
+            'user_id' => ['required', 'string', 'exists:users,id'],
+            'guardian_user_id' => ['nullable', 'string', 'exists:users,id'],
+            'handoff_name' => ['nullable', 'string', 'max:255'],
+            'handoff_phone' => ['nullable', 'string', 'max:40'],
+        ];
     }
 }

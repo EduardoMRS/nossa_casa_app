@@ -45,12 +45,12 @@ const filteredEvents = computed(() => {
         const endsAt = new Date(event.end_time).getTime();
 
         if (activeTab.value === 'past') {
-return endsAt < now;
-}
+            return endsAt < now;
+        }
 
         if (activeTab.value === 'ongoing') {
-return startsAt <= now && endsAt >= now;
-}
+            return startsAt <= now && endsAt >= now;
+        }
 
         return startsAt > now;
     });
@@ -66,7 +66,13 @@ const formatDate = (date: string): string =>
 
 <template>
     <Head :title="t('events.index.meta_title')" />
-    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
+    <div
+        class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :style="{
+            backgroundColor: 'var(--church-surface, #f8fafc)',
+            fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',
+        }"
+    >
         <PublicHeader active="events" />
         <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <header class="max-w-2xl space-y-1">

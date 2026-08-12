@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Http\Responses;
+
+use App\Enums\UserRole;
+use App\Support\ChurchDomainContext;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+
+class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
+{
+    public function __construct(private readonly ChurchDomainContext $context) {}
+
+    public function toResponse($request): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+        $domainChurch = $this->context->church();
+        $userChurch = $user?->church;
+
+        if ($domainChurch && $user && $user->role !== UserRole::SYSTEM && $userChurch?->id !== $domainChurch->id) {
+            $request->session()->put('church_membership_pending', $domainChurch->id);
+
+            return $this->response($request, route('home', absolute: false), [
+                'membership_confirmation' => true,
+            ]);
+        }
+
+        if ($this->context->isMainDomain() && $userChurch?->domain) {
+            $token = Str::random(64);
+            Cache::put('church-auth-handoff:'.$token, [
+                'user_id' => $user->id,
+                'church_id' => $userChurch->id,
+                'user_agent' => hash('sha256', (string) $request->userAgent()),
+            ], now()->addMinutes(2));
+
+            return $this->response(
+                $request,
+                $this->context->churchUrl($userChurch, 'auth/handoff?token='.urlencode($token)),
+            );
+        }
+
+        return $this->response($request, route('dashboard', absolute: false));
+    }
+
+    /** @param array<string, mixed> $extra */
+    private function response($request, string $url, array $extra = []): JsonResponse|RedirectResponse
+    {
+        if ($request->wantsJson()) {
+            return response()->json(['two_factor' => false, 'redirect' => $url, ...$extra]);
+        }
+
+        return redirect()->to($url);
+    }
+}

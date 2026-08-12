@@ -16,6 +16,9 @@ class CheckOutClassroomRequest extends FormRequest
         return [
             'user_id' => ['required', 'string', 'exists:users,id'],
             'pin' => ['nullable', 'digits:6'],
+            'guardian_user_id' => ['nullable', 'string', 'exists:users,id'],
+            'handoff_name' => ['nullable', 'string', 'max:255'],
+            'handoff_phone' => ['nullable', 'string', 'max:40'],
         ];
     }
 }

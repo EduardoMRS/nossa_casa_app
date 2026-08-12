@@ -53,8 +53,8 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
             'member@nossacasa.test',
             'child@nossacasa.test',
         ])->count())->toBe(8)
-        ->and(User::query()->where('email', 'guest@nossacasa.test')->value('role'))->toBe(UserRole::GUEST->value)
-        ->and(User::query()->where('email', 'superadmin@nossacasa.test')->value('role'))->toBe(UserRole::SUPERADMIN->value)
+        ->and(User::query()->where('email', 'guest@nossacasa.test')->value('role'))->toBe(UserRole::GUEST)
+        ->and(User::query()->where('email', 'superadmin@nossacasa.test')->value('role'))->toBe(UserRole::SUPERADMIN)
         ->and($form->events()->whereKey($event->id)->exists())->toBeTrue()
         ->and($form->posts()->whereKey($post->id)->exists())->toBeTrue()
         ->and(FormResponse::query()->where('form_id', $form->id)->where('user_id', User::query()->where('email', 'member@nossacasa.test')->value('id'))->exists())->toBeTrue()

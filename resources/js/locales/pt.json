@@ -25,7 +25,12 @@
     "locale": {
         "switcher": "Idioma"
     },
+    "notifications": {
+        "title": "Avisos",
+        "child_released": "{child} saiu da sala {classroom} com {person}."
+    },
     "nav": {
+        "posts": "Publicações",
         "home": "Início",
         "events": "Eventos",
         "gallery": "Galeria",
@@ -64,6 +69,8 @@
         "description": "Explore mídia compartilhada pela comunidade e aprovada pela equipe de moderação.",
         "upload_kicker": "Envio de mídia",
         "upload_title": "Adicionar um novo item à galeria",
+        "title_placeholder": "Título da mídia",
+        "description_placeholder": "Conte a história por trás desta mídia...",
         "file": "Arquivo",
         "file_placeholder": "https://... ou caminho do arquivo",
         "upload_hint": "Perfis autorizados podem enviar arquivos à galeria; a moderação continua disponível no painel privado.",
@@ -77,6 +84,12 @@
         "upload_error": "A mídia não pôde ser enviada.",
         "item_alt": "Mídia da galeria",
         "anonymous": "Anônimo",
+        "close": "Fechar visualização",
+        "no_comments": "Nenhum comentário ainda. Seja a primeira pessoa a interagir.",
+        "comment_placeholder": "Adicione um comentário...",
+        "comment_submit": "Publicar comentário",
+        "login_to_interact": "Entre com uma conta vinculada a esta igreja para comentar e reagir.",
+        "interaction_error": "Não foi possível concluir a interação. Tente novamente.",
         "pagination": "Mostrando {from} - {to} de {total} itens"
     },
     "auth": {
@@ -96,7 +109,8 @@
             "remember": "Lembrar-me",
             "submit": "Entrar",
             "no_account": "Não tem conta?",
-            "sign_up": "Criar conta"
+            "sign_up": "Criar conta",
+            "church_context": "Você está entrando em {church}. Se seu perfil pertencer a outra congregação, será necessário confirmar a mudança de vínculo."
         },
         "register": {
             "meta_title": "Registrar",
@@ -395,6 +409,20 @@
             "checkin_error": "Check-in não pôde ser concluído.",
             "checkout_error": "Saída não pôde ser concluída.",
             "checkout_success": "Finalização do checkout concluída.",
+            "checkout_pin": "PIN de retirada",
+            "scan_qr": "Ler QR Code com a câmera",
+            "stop_scanner": "Parar câmera",
+            "scanner_unavailable": "Este navegador não oferece leitura nativa de QR Code. Digite o PIN manualmente.",
+            "camera_error": "Não foi possível acessar a câmera. Verifique a permissão e use o PIN manual.",
+            "who_is_dropping_off": "Quem está deixando a criança?",
+            "who_is_picking_up": "Quem está retirando a criança?",
+            "handoff_hint": "Selecione um responsável vinculado ou informe os dados da outra pessoa.",
+            "other_person": "Outra pessoa",
+            "handoff_name": "Nome completo",
+            "handoff_phone": "Telefone para contato",
+            "outsider_notification": "Os responsáveis vinculados receberão um aviso sobre esta retirada.",
+            "confirm_regular_checkin": "Confirme a entrada deste aluno na sala.",
+            "confirm_regular_checkout": "Confirme a saída deste aluno da sala.",
             "filters": "Filtros",
             "age": "Idade do estudante",
             "all_rooms": "Todas as salas de aula",
@@ -488,10 +516,7 @@
             "anonymous": "Pedido anônimo",
             "mine": "Meu pedido",
             "send_anonymously": "Enviar anonimamente",
-            "stats": [
-                "Pedidos enviados",
-                "Pedidos da igreja"
-            ]
+            "stats": ["Pedidos enviados", "Pedidos da igreja"]
         },
         "wall": {
             "title": "Moderar parede",
@@ -528,14 +553,13 @@
             "save_error": "A alteração não pôde ser salva.",
             "churches": "Igrejas",
             "networks": "Escritórios e filiais",
+            "requests": "Solicitações",
+            "empty_requests": "Nenhuma solicitação de congregação encontrada.",
+            "domain": "Domínio personalizado (ex.: igreja.exemplo.com)",
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
-            "stats": [
-                "Igrejas",
-                "Comunidades",
-                "Vínculos de sede/filial"
-            ],
+            "stats": ["Igrejas", "Comunidades", "Vínculos de sede/filial"],
             "status": {
                 "active": "Ativo",
                 "inactive": "Inativo",
@@ -557,11 +581,7 @@
             "reset_password": "Enviar redefinição de senha",
             "protected": "Conta protegida",
             "delete_confirm": "Excluir usuário \"{name}\"?",
-            "stats": [
-                "Total de usuários",
-                "Administradores",
-                "Membros"
-            ]
+            "stats": ["Total de usuários", "Administradores", "Membros"]
         },
         "media": {
             "title": "Moderar galeria",
@@ -586,16 +606,8 @@
             "approve": "Aprovar",
             "reject": "Rejeitar",
             "empty": "Nenhuma mídia registrada ainda.",
-            "actions": [
-                "Abrir galeria pública",
-                "Ir para o painel"
-            ],
-            "stats": [
-                "Mídia submetida",
-                "Pendente",
-                "Aprovado",
-                "Rejeitado"
-            ],
+            "actions": ["Abrir galeria pública", "Ir para o painel"],
+            "stats": ["Mídia submetida", "Pendente", "Aprovado", "Rejeitado"],
             "status": {
                 "pending": "Pendente",
                 "approved": "Aprovado",
@@ -687,10 +699,7 @@
                     "Versos registrados",
                     "Categorias de conteúdo"
                 ],
-                "actions": [
-                    "Abrir casa pública",
-                    "Revisar destaques"
-                ]
+                "actions": ["Abrir casa pública", "Revisar destaques"]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercessão",
@@ -701,10 +710,7 @@
                     "Solicitações anônimas",
                     "Solicitações identificadas"
                 ],
-                "actions": [
-                    "Abrir minhas orações",
-                    "Ir para o painel"
-                ]
+                "actions": ["Abrir minhas orações", "Ir para o painel"]
             }
         }
     },
@@ -810,7 +816,26 @@
             "delete_confirm": "Você tem certeza que deseja excluir este post?"
         },
         "public": {
-            "back_home": "Voltar para a página inicial"
+            "back_home": "Voltar para a página inicial",
+            "kicker": "Notícias da comunidade",
+            "title": "Publicações",
+            "description": "Acompanhe mensagens, avisos e histórias compartilhadas pela sua comunidade.",
+            "empty": "Nenhuma publicação está disponível neste momento.",
+            "about_title": "Sobre este mural",
+            "about_description": "Este espaço reúne conteúdos publicados pela liderança e pelos ministérios da igreja.",
+            "filters_title": "Encontre uma publicação",
+            "search": "Buscar",
+            "search_placeholder": "Título ou conteúdo...",
+            "category": "Categoria",
+            "all_categories": "Todas as categorias",
+            "period": "Período de publicação",
+            "date_from": "Data inicial",
+            "date_to": "Data final",
+            "order": "Ordenação",
+            "latest": "Mais recentes",
+            "most_accessed": "Mais acessados",
+            "apply_filters": "Aplicar filtros",
+            "clear_filters": "Limpar filtros"
         },
         "index": {
             "meta_title": "Posts",
@@ -842,7 +867,11 @@
             "comments": "{count} comentários",
             "summary": "Resumo",
             "summary_text": "{comments} comentários carregados e {reactions} reações registradas para este post.",
-            "recent_comments": "Comentários recentes"
+            "recent_comments": "Comentários recentes",
+            "reaction_count": "{count} reações",
+            "comment_count": "{count} comentários",
+            "related": "Posts relacionados",
+            "latest": "Publicações recentes"
         },
         "form": {
             "studio": "Estúdio de Notícias",
@@ -953,6 +982,74 @@
             "events": "Eventos",
             "gallery": "Galeria",
             "posts": "Postagens"
+        }
+    },
+    "membership": {
+        "title": "Você ainda não faz parte desta congregação",
+        "description": "Seu acesso foi autenticado, mas seu perfil pertence a outra igreja. Deseja mudar seu vínculo para {church}?",
+        "switch": "Mudar de congregação",
+        "leave": "Agora não"
+    },
+    "portal": {
+        "meta_title": "Nossa Casa — comunidades de fé",
+        "network_label": "Rede de comunidades",
+        "open_my_church": "Abrir minha igreja",
+        "create_account": "Criar conta",
+        "hero": {
+            "badge": "Tecnologia aberta para comunidades de fé",
+            "title": "Uma casa digital para cada comunidade.",
+            "description": "Conecte congregações, membros, eventos e ministérios em uma plataforma segura, personalizada e preparada para crescer junto com sua comunidade.",
+            "explore": "Conhecer comunidades",
+            "join": "Começar agora",
+            "domains_title": "Identidade própria",
+            "domains_description": "Cada igreja pode usar seu próprio domínio e oferecer conteúdo relevante para seus membros.",
+            "governance_title": "Vínculos protegidos",
+            "governance_description": "Novas congregações são analisadas pelos responsáveis da comunidade antes da ativação."
+        },
+        "communities": {
+            "kicker": "Comunidades participantes",
+            "title": "Encontre uma comunidade perto de você",
+            "description": "Conheça as comunidades cadastradas e acesse diretamente a experiência de cada congregação.",
+            "church_count": "{count} congregações",
+            "main_domain": "Domínio principal",
+            "domain_pending": "Domínio ainda não configurado",
+            "empty": "Ainda não há comunidades públicas cadastradas."
+        },
+        "onboarding": {
+            "register_community": "Cadastrar comunidade",
+            "request_church": "Solicitar nova congregação",
+            "community_kicker": "Nova rede",
+            "church_kicker": "Nova congregação",
+            "approval_notice": "A solicitação será enviada aos responsáveis da comunidade. O domínio somente será ativado após a aprovação.",
+            "send_request": "Enviar para aprovação",
+            "request_sent": "Solicitação enviada com sucesso.",
+            "my_requests": "Minhas solicitações"
+        },
+        "review": {
+            "title": "Solicitações aguardando sua análise",
+            "description": "Confira os dados cadastrais antes de aprovar o vínculo com a comunidade.",
+            "approve": "Aprovar",
+            "reject": "Recusar",
+            "approve_confirm": "Aprovar a congregação {name}?",
+            "reject_reason": "Informe o motivo da recusa:"
+        },
+        "status": {
+            "pending": "Pendente",
+            "approved": "Aprovada",
+            "rejected": "Recusada"
+        },
+        "fields": {
+            "name": "Nome",
+            "slug": "Identificador (slug)",
+            "description": "Descrição",
+            "community": "Comunidade",
+            "domain": "Domínio (ex.: igreja.exemplo.com)",
+            "contact_email": "E-mail de contato",
+            "contact_phone": "Telefone de contato",
+            "address": "Endereço completo"
+        },
+        "errors": {
+            "generic": "Não foi possível concluir a operação."
         }
     },
     "editor": {

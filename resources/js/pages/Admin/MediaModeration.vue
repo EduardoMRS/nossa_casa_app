@@ -173,7 +173,7 @@ onBeforeUnmount(revokePreview);
 
 <template>
     <Head :title="t('admin.media.title')" />
-    <main class="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8">
+    <main class="min-h-screen bg-background p-4 text-foreground md:p-8">
         <div class="mx-auto max-w-7xl space-y-6">
             <header
                 class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"

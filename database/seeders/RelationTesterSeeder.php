@@ -58,11 +58,11 @@ class RelationTesterSeeder extends Seeder
 
         $this->church = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-central'],
-            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10'],
+            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10', 'domain' => 'central.localhost']
         );
         $this->campus = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-norte'],
-            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20'],
+            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20', 'domain' => 'norte.localhost'],
         );
 
         Network::query()->updateOrCreate(
@@ -102,7 +102,7 @@ class RelationTesterSeeder extends Seeder
             );
         }
 
-        foreach ([["parent", "child", UserRelationships::PARENT], ["child", "parent", UserRelationships::CHILD], ["member", "leader", UserRelationships::FRIEND]] as [$user, $relatedUser, $type]) {
+        foreach ([['parent', 'child', UserRelationships::PARENT], ['child', 'parent', UserRelationships::CHILD], ['member', 'leader', UserRelationships::FRIEND]] as [$user, $relatedUser, $type]) {
             $source = $user === 'parent' ? $this->users['admin'] : $this->users[$user];
             $target = $relatedUser === 'parent' ? $this->users['admin'] : $this->users[$relatedUser];
             UserRelationship::query()->updateOrCreate(['user_id' => $source->id, 'related_user_id' => $target->id, 'relationship_type' => $type->value]);

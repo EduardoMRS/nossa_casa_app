@@ -131,18 +131,18 @@ const saveLibrary = (): void => {
 
     if (editing.value) {
         router.put(
-            `/admin/biblioteca-versiculo/library/${editing.value.id}`,
+            `/dashboard/biblioteca-versiculo/library/${editing.value.id}`,
             payload,
             options,
         );
     } else {
-        router.post('/admin/biblioteca-versiculo/library', payload, options);
+        router.post('/dashboard/biblioteca-versiculo/library', payload, options);
     }
 };
 const saveVerse = (): void => {
     processing.value = true;
     router.put(
-        '/admin/biblioteca-versiculo/verse',
+        '/dashboard/biblioteca-versiculo/verse',
         {
             ...verseForm,
             chapter: Number(verseForm.chapter),
@@ -164,7 +164,7 @@ const saveVerse = (): void => {
 };
 const remove = (item: LibraryItem): void => {
     if (confirm(t('admin.library.delete_confirm', { title: item.title }))) {
-        router.delete(`/admin/biblioteca-versiculo/library/${item.id}`, {
+        router.delete(`/dashboard/biblioteca-versiculo/library/${item.id}`, {
             preserveScroll: true,
         });
     }

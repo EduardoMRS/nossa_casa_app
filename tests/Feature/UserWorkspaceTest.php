@@ -69,7 +69,11 @@ test('adding a child creates the reciprocal guardian relationship', function () 
 test('member can update user and profile fields including avatar', function () {
     Storage::fake('public');
     $user = User::factory()->create();
-    $community = Community::query()->create(['name' => 'Selected Community', 'slug' => 'selected-community']);
+    $community = Community::query()->create([
+        'name' => 'Selected Community',
+        'slug' => 'selected-community',
+        'description' => 'Community used to validate profile membership selection.',
+    ]);
     $church = Church::query()->create(['name' => 'Selected Church', 'slug' => 'selected-church', 'community_id' => $community->id]);
 
     $this->actingAs($user)->post(route('profile.update'), [
@@ -96,7 +100,11 @@ test('member can update user and profile fields including avatar', function () {
 });
 
 test('guardian can register a child with care notes', function () {
-    $community = Community::query()->create(['name' => 'Family Community', 'slug' => 'family-community']);
+    $community = Community::query()->create([
+        'name' => 'Family Community',
+        'slug' => 'family-community',
+        'description' => 'Community used to validate family management.',
+    ]);
     $church = Church::query()->create(['name' => 'Family Church Child', 'slug' => 'family-church-child', 'community_id' => $community->id]);
     $guardian = User::factory()->create();
     $guardian->profile()->create(['church_id' => $church->id, 'community_id' => $community->id]);
@@ -144,7 +152,10 @@ test('guardian sees the encrypted pickup pin for a checked in child', function (
     $classroom->members()->attach($child->id);
 
     $pin = $this->actingAs($guardian)
-        ->postJson("/api/classrooms/{$classroom->id}/check-in", ['user_id' => $child->id])
+        ->postJson("/api/classrooms/{$classroom->id}/check-in", [
+            'user_id' => $child->id,
+            'guardian_user_id' => $guardian->id,
+        ])
         ->assertSuccessful()
         ->json('checkout_pin');
 

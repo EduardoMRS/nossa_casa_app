@@ -6,9 +6,11 @@ import {
     Image,
     LibraryBig,
     Menu,
+    Newspaper,
     X,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
+import ChurchMembershipPrompt from '@/components/ChurchMembershipPrompt.vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,7 +26,7 @@ import { home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 
-type PublicNavKey = 'home' | 'events' | 'gallery' | 'library';
+type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library';
 
 const props = withDefaults(defineProps<{ active?: PublicNavKey }>(), {
     active: 'home',
@@ -34,6 +36,37 @@ const mobileOpen = ref(false);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 const user = computed(() => page.props.auth?.user);
 const { t } = useI18n();
+const branding = computed(
+    () => (page.props.branding ?? {}) as Record<string, string>,
+);
+
+watchEffect(() => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const root = document.documentElement.style;
+    root.setProperty(
+        '--church-primary',
+        branding.value.primary_color || '#342f87',
+    );
+    root.setProperty(
+        '--church-secondary',
+        branding.value.secondary_color || '#5f7d95',
+    );
+    root.setProperty(
+        '--church-accent',
+        branding.value.accent_color || '#c88b4a',
+    );
+    root.setProperty(
+        '--church-surface',
+        branding.value.surface_color || '#f8fafc',
+    );
+    root.setProperty(
+        '--church-font',
+        branding.value.font_family || 'Manrope, ui-sans-serif',
+    );
+});
 
 const navItems = computed(() => [
     {
@@ -41,6 +74,12 @@ const navItems = computed(() => [
         label: t('nav.home'),
         href: home(),
         icon: BookOpen,
+    },
+    {
+        key: 'posts' as const,
+        label: t('nav.posts'),
+        href: '/posts',
+        icon: Newspaper,
     },
     {
         key: 'events' as const,
@@ -71,6 +110,7 @@ const navClass = (key: PublicNavKey): string =>
 <template>
     <header
         class="sticky top-0 z-40 border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
+        :style="{ backgroundColor: 'var(--church-primary, #342f87)' }"
     >
         <div
             class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
@@ -169,5 +209,6 @@ const navClass = (key: PublicNavKey): string =>
                 <component :is="item.icon" class="size-4" /> {{ item.label }}
             </Link>
         </nav>
+        <ChurchMembershipPrompt />
     </header>
 </template>

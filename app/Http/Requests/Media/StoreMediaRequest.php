@@ -17,6 +17,8 @@ class StoreMediaRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'title' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'file_path' => ['nullable'],
             'file' => ['nullable'],
             'mimetype' => ['nullable', 'string', 'max:255'],

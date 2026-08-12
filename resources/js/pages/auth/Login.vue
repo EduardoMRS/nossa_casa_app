@@ -24,6 +24,7 @@ defineOptions({
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    church?: { id: string; name: string; domain: string } | null;
 }>();
 const { t } = useI18n();
 </script>
@@ -36,6 +37,13 @@ const { t } = useI18n();
         class="mb-4 text-center text-sm font-medium text-green-600"
     >
         {{ status }}
+    </div>
+
+    <div
+        v-if="church"
+        class="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm text-indigo-900"
+    >
+        {{ t('auth.login.church_context', { church: church.name }) }}
     </div>
 
     <PasskeyVerify />

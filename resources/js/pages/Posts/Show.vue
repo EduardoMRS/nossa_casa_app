@@ -41,12 +41,12 @@ const deletePost = (): void => {
 
 <template>
     <Head :title="article.title" />
-    <main class="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8">
+    <main class="min-h-screen bg-background p-4 text-foreground md:p-8">
         <div class="mx-auto max-w-7xl space-y-5">
             <header class="flex flex-wrap items-center justify-between gap-3">
                 <Link
                     :href="index()"
-                    class="inline-flex items-center gap-2 text-sm font-bold text-indigo-700"
+                    class="inline-flex items-center gap-2 text-sm font-bold text-primary"
                     ><ArrowLeft class="size-4" />{{
                         t('posts.show.back')
                     }}</Link
@@ -55,7 +55,7 @@ const deletePost = (): void => {
                     <Link
                         v-if="can.edit"
                         :href="edit({ post: post.id })"
-                        class="inline-flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-bold"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-bold text-card-foreground shadow-sm"
                         ><Edit class="size-4" />{{ t('actions.edit') }}</Link
                     >
                     <button

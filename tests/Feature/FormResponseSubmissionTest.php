@@ -86,6 +86,10 @@ test('required schema fields are validated on form response submission', functio
         'role' => UserRole::MEMBER,
     ]);
 
+    $attendee->profile()->create([
+        'church_id' => $church->id,
+    ]);
+
     $event = Event::query()->create([
         'church_id' => $church->id,
         'author_id' => $author->id,

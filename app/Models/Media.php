@@ -3,19 +3,21 @@
 namespace App\Models;
 
 use App\Enums\MediaStatus;
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
-    use HasUlids;
+    use HasTranslations, HasUlids;
 
     protected $table = 'medias';
 
     protected $fillable = [
         'uploader_id',
         'church_id',
+        'title',
+        'description',
         'file_path',
         'mimetype',
         'size',
@@ -31,6 +33,7 @@ class Media extends Model
     protected $appends = [
         'url',
         'uploader_details',
+        'translations',
     ];
 
     public function uploader()

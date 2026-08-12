@@ -16,6 +16,7 @@ class Church extends Model
     protected $fillable = [
         'name',
         'slug',
+        'domain',
         'community_id',
         'status',
         'found_date',
@@ -109,6 +110,11 @@ class Church extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
+    }
+
+    public function registrationRequests()
+    {
+        return $this->hasMany(ChurchRegistrationRequest::class, 'approved_church_id');
     }
 
     public function library()

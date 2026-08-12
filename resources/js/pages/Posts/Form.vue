@@ -6,6 +6,7 @@ import { store, update } from '@/actions/App/Http/Controllers/PostController';
 import CategorySelector from '@/components/CategorySelector.vue';
 import MarkdownWysiwyg from '@/components/MarkdownWysiwyg.vue';
 import { useI18n } from '@/lib/i18n';
+import { index } from '@/routes/posts';
 
 type PostResource = {
     id?: string;
@@ -81,7 +82,7 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#f9f4ed] text-[#3a2e22]">
+    <div class="min-h-screen bg-background text-foreground">
         <Head
             :title="
                 isEditing
@@ -94,7 +95,7 @@ const submit = () => {
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <p
-                        class="text-xs font-semibold tracking-[0.2em] text-[#aa5b2f] uppercase"
+                        class="text-xs font-semibold tracking-[0.2em] text-primary uppercase"
                     >
                         {{ t('posts.form.studio') }}
                     </p>
@@ -107,14 +108,14 @@ const submit = () => {
                                 : t('posts.form.create_title')
                         }}
                     </h1>
-                    <p class="mt-1 text-sm text-[#6d5a4a]">
+                    <p class="mt-1 text-sm text-muted-foreground">
                         {{ t('posts.form.subtitle') }}
                     </p>
                 </div>
 
                 <Link
-                    href="/posts"
-                    class="inline-flex items-center gap-2 rounded-xl border border-[#e6d5c2] bg-white px-4 py-2 text-sm font-semibold text-[#5b422f]"
+                    :href="index()"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-bold text-card-foreground shadow-sm"
                 >
                     <ArrowLeft class="h-4 w-4" />
                     {{ t('nav.back') }}
@@ -123,17 +124,17 @@ const submit = () => {
 
             <form
                 @submit.prevent="submit"
-                class="space-y-6 rounded-3xl border border-[#ecdfcf] bg-white p-6 shadow-sm md:p-8"
+                class="space-y-6 rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm md:p-8"
             >
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#5b422f]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.title')
                         }}</label>
                         <input
                             v-model="form.title"
                             type="text"
-                            class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.title"
@@ -144,13 +145,13 @@ const submit = () => {
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#5b422f]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.slug')
                         }}</label>
                         <input
                             v-model="form.slug"
                             type="text"
-                            class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p v-if="form.errors.slug" class="text-xs text-red-600">
                             {{ form.errors.slug }}
@@ -160,10 +161,10 @@ const submit = () => {
 
                 <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-bold text-[#5b422f]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.content')
                         }}</label>
-                        <span class="text-xs text-[#8f7561]">{{
+                        <span class="text-xs text-muted-foreground">{{
                             t('posts.form.content_hint')
                         }}</span>
                     </div>
@@ -182,13 +183,13 @@ const submit = () => {
 
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#5b422f]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.published_at')
                         }}</label>
                         <input
                             v-model="form.published_at"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.published_at"
@@ -199,13 +200,13 @@ const submit = () => {
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#5b422f]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.expires_at')
                         }}</label>
                         <input
                             v-model="form.expires_at"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#ecdcc9] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.expires_at"
@@ -220,7 +221,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-[#a84d24] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#933f1b] disabled:opacity-60"
+                        class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
                     >
                         <Save class="h-4 w-4" />
                         {{

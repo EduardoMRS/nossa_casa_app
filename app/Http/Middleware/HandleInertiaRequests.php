@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Classroom;
 use App\Models\Setting;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,6 +40,8 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $role = $user?->role?->value ?? (string) $user?->role;
+        $domainContext = app(ChurchDomainContext::class);
+        $currentChurch = $domainContext->church();
 
         $branding = [
             'brand_name' => config('app.name'),
@@ -59,8 +62,10 @@ class HandleInertiaRequests extends Middleware
         ];
         $setting = null;
 
-        if ($user?->church) {
-            $setting = Setting::query()->where('church_id', $user->church->id)->first();
+        $brandingChurch = $currentChurch ?? ($domainContext->isMainDomain() ? null : $user?->church);
+
+        if ($brandingChurch) {
+            $setting = Setting::query()->where('church_id', $brandingChurch->id)->first();
             $savedBranding = $setting?->options['branding'] ?? [];
 
             if (is_array($savedBranding)) {
@@ -74,6 +79,30 @@ class HandleInertiaRequests extends Middleware
             'locale' => app()->getLocale(),
             'auth' => [
                 'user' => $user,
+                'notifications' => $user?->unreadNotifications()
+                    ->latest()
+                    ->limit(5)
+                    ->get()
+                    ->map(fn ($notification) => [
+                        'id' => $notification->id,
+                        'type' => $notification->data['type'] ?? null,
+                        'child_name' => $notification->data['child_name'] ?? null,
+                        'classroom_name' => $notification->data['classroom_name'] ?? null,
+                        'pickup_name' => $notification->data['pickup_name'] ?? null,
+                        'pickup_phone' => $notification->data['pickup_phone'] ?? null,
+                        'created_at' => $notification->created_at,
+                    ]) ?? [],
+            ],
+            'churchContext' => [
+                'isMainDomain' => $domainContext->isMainDomain(),
+                'church' => $currentChurch ? [
+                    'id' => $currentChurch->id,
+                    'name' => $currentChurch->name,
+                    'slug' => $currentChurch->slug,
+                    'domain' => $currentChurch->domain,
+                    'community' => $currentChurch->community,
+                ] : null,
+                'membershipPending' => $currentChurch && $request->session()->get('church_membership_pending') === $currentChurch->id,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => $branding,

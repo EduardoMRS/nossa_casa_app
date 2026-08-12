@@ -2,7 +2,9 @@
 import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { usePage } from '@inertiajs/vue3';
+import { Moon, Sun } from '@lucide/vue';
 import { computed } from 'vue';
+import { useAppearance } from '@/composables/useAppearance';
 import { useI18n } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 
@@ -30,20 +32,15 @@ const page = usePage<{
         banner_title?: string;
         banner_subtitle?: string;
         primary_color?: string;
-        secondary_color?: string;
-        accent_color?: string;
-        font_family?: string;
         contact_email?: string;
     };
 }>();
 
 const branding = computed(() => page.props.branding ?? {});
+const { resolvedAppearance, updateAppearance } = useAppearance();
 
 const paletteStyle = computed(() => ({
-    '--brand-primary': branding.value.primary_color ?? '#2f6e79',
-    '--brand-secondary': branding.value.secondary_color ?? '#5f7d95',
-    '--brand-accent': branding.value.accent_color ?? '#c88b4a',
-    '--brand-font': branding.value.font_family ?? 'Manrope, ui-sans-serif',
+    '--dashboard-primary': branding.value.primary_color ?? '#342f87',
 }));
 
 const roleLabel = computed(() => {
@@ -69,21 +66,36 @@ defineOptions({
     <Head :title="t('dashboard.title')" />
 
     <div
-        class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden bg-[#f4f7fb] p-4 text-slate-800 md:p-6 dark:bg-slate-900 dark:text-slate-100"
+        class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden bg-background p-4 text-foreground md:p-8"
         :style="paletteStyle"
     >
         <section
-            class="rounded-2xl border border-indigo-900 bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white shadow-sm md:p-8"
+            class="relative overflow-hidden rounded-2xl border border-slate-900/20 p-6 text-white shadow-sm md:p-8"
+            :style="{ backgroundColor: 'var(--dashboard-primary)' }"
         >
+            <button
+                type="button"
+                class="absolute top-4 right-4 grid size-10 place-items-center rounded-full border border-white/25 bg-black/15 text-white backdrop-blur-sm transition hover:bg-black/25"
+                :aria-label="
+                    resolvedAppearance === 'dark'
+                        ? 'Ativar modo claro'
+                        : 'Ativar modo escuro'
+                "
+                @click="
+                    updateAppearance(
+                        resolvedAppearance === 'dark' ? 'light' : 'dark',
+                    )
+                "
+            >
+                <Sun v-if="resolvedAppearance === 'dark'" class="size-4" />
+                <Moon v-else class="size-4" />
+            </button>
             <p
                 class="mb-1 text-xs tracking-[0.2em] text-slate-100/80 uppercase"
             >
                 {{ t('dashboard.workspace') }}
             </p>
-            <h1
-                class="text-3xl font-black md:text-4xl"
-                :style="{ fontFamily: 'var(--brand-font)' }"
-            >
+            <h1 class="text-3xl font-black md:text-4xl">
                 {{ branding.banner_title || t('dashboard.title') }}
             </h1>
             <p class="mt-2 text-sm text-slate-100/90 md:text-base">
@@ -102,47 +114,38 @@ defineOptions({
 
         <section class="grid gap-4 md:grid-cols-3">
             <article
-                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
-                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
                 >
                     {{ t('dashboard.kpis.events') }}
                 </p>
-                <p
-                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
-                    :style="{ fontFamily: 'var(--brand-font)' }"
-                >
+                <p class="mt-2 text-3xl font-black text-card-foreground">
                     {{ kpis.events }}
                 </p>
             </article>
             <article
-                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
-                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
                 >
                     {{ t('dashboard.kpis.gallery') }}
                 </p>
-                <p
-                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
-                    :style="{ fontFamily: 'var(--brand-font)' }"
-                >
+                <p class="mt-2 text-3xl font-black text-card-foreground">
                     {{ kpis.gallery }}
                 </p>
             </article>
             <article
-                class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
-                    class="text-xs tracking-[0.14em] text-slate-500 uppercase dark:text-slate-300"
+                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
                 >
                     {{ t('dashboard.kpis.posts') }}
                 </p>
-                <p
-                    class="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100"
-                    :style="{ fontFamily: 'var(--brand-font)' }"
-                >
+                <p class="mt-2 text-3xl font-black text-card-foreground">
                     {{ kpis.posts }}
                 </p>
             </article>
@@ -151,14 +154,11 @@ defineOptions({
         <section>
             <div class="mb-3">
                 <p
-                    class="text-xs tracking-[0.2em] text-slate-500 uppercase dark:text-slate-300"
+                    class="text-xs tracking-[0.2em] text-muted-foreground uppercase"
                 >
                     {{ t('dashboard.modules') }}
                 </p>
-                <h2
-                    class="text-2xl font-black text-slate-900 dark:text-slate-100"
-                    :style="{ fontFamily: 'var(--brand-font)' }"
-                >
+                <h2 class="text-2xl font-black text-foreground">
                     {{ t('dashboard.recommended_actions') }}
                 </h2>
             </div>
@@ -167,21 +167,18 @@ defineOptions({
                 <article
                     v-for="module in modules"
                     :key="module.title_key"
-                    class="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+                    class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
                 >
-                    <h3
-                        class="text-lg font-black text-slate-900 dark:text-slate-100"
-                        :style="{ fontFamily: 'var(--brand-font)' }"
-                    >
+                    <h3 class="text-lg font-black text-card-foreground">
                         {{ t(module.title_key) }}
                     </h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    <p class="mt-2 text-sm text-muted-foreground">
                         {{ t(module.description_key) }}
                     </p>
                     <Link
                         :href="module.href"
                         class="mt-4 inline-flex rounded-full px-4 py-2 text-xs font-bold text-white"
-                        :style="{ backgroundColor: 'var(--brand-primary)' }"
+                        :style="{ backgroundColor: 'var(--dashboard-primary)' }"
                     >
                         {{ t('dashboard.open_module') }}
                     </Link>

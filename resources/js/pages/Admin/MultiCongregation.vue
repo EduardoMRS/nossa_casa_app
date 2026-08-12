@@ -2,11 +2,14 @@
 import { Head } from '@inertiajs/vue3';
 import {
     Building2,
+    Check,
+    ClipboardCheck,
     Network as NetworkIcon,
     Pencil,
     Plus,
     Trash2,
     Users,
+    X,
 } from '@lucide/vue';
 import axios from 'axios';
 import { ref } from 'vue';
@@ -24,9 +27,21 @@ type Church = {
     id: string;
     name: string;
     slug: string;
+    domain: string | null;
     status: string;
     community?: { id: string; name: string } | null;
     members_count: number;
+};
+
+type RegistrationRequest = {
+    id: string;
+    name: string;
+    domain: string;
+    description?: string | null;
+    address?: string | null;
+    status: string;
+    community: { name: string };
+    requester: { name: string; email: string };
 };
 
 type Network = {
@@ -39,6 +54,7 @@ const props = defineProps<{
     churches: Church[];
     communities: Community[];
     networks: Network[];
+    registrationRequests: RegistrationRequest[];
     stats: Array<{ label: string; value: number }>;
     canManageCommunities: boolean;
 }>();
@@ -46,7 +62,9 @@ const props = defineProps<{
 const { t } = useI18n();
 const churches = ref([...props.churches]);
 const communities = ref([...props.communities]);
-const tab = ref<'churches' | 'communities' | 'networks'>('churches');
+const tab = ref<'churches' | 'communities' | 'networks' | 'requests'>(
+    'churches',
+);
 const churchModalOpen = ref(false);
 const communityModalOpen = ref(false);
 const editingChurch = ref<Church | null>(null);
@@ -55,6 +73,7 @@ const errorMessage = ref('');
 const churchForm = ref({
     name: '',
     slug: '',
+    domain: '',
     status: 'active',
     community_id: '',
 });
@@ -66,12 +85,14 @@ const openChurchEditor = (church?: Church): void => {
         ? {
               name: church.name,
               slug: church.slug,
+              domain: church.domain ?? '',
               status: church.status,
               community_id: church.community?.id ?? '',
           }
         : {
               name: '',
               slug: '',
+              domain: '',
               status: 'active',
               community_id: props.canManageCommunities
                   ? ''
@@ -181,6 +202,32 @@ const removeCommunity = async (community: Community): Promise<void> => {
         errorMessage.value = requestError(error);
     }
 };
+
+const approveRequest = async (request: RegistrationRequest): Promise<void> => {
+    if (
+        !window.confirm(
+            t('portal.review.approve_confirm', { name: request.name }),
+        )
+    ) {
+return;
+}
+
+    await axios.post(`/onboarding/churches/${request.id}/approve`);
+    window.location.reload();
+};
+
+const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
+    const notes = window.prompt(t('portal.review.reject_reason'));
+
+    if (!notes) {
+return;
+}
+
+    await axios.post(`/onboarding/churches/${request.id}/reject`, {
+        review_notes: notes,
+    });
+    window.location.reload();
+};
 </script>
 
 <template>
@@ -244,6 +291,31 @@ const removeCommunity = async (community: Community): Promise<void> => {
         </p>
 
         <div class="flex flex-wrap gap-5 border-b">
+            <button
+                class="flex items-center gap-2 px-2 py-3 text-sm"
+                :class="
+                    tab === 'requests'
+                        ? 'border-b-2 border-indigo-700 font-black text-indigo-700'
+                        : 'text-slate-400'
+                "
+                @click="tab = 'requests'"
+            >
+                <ClipboardCheck class="size-4" />
+                {{ t('admin.multicongregation.requests') }}
+                <span
+                    v-if="
+                        props.registrationRequests.filter(
+                            (item) => item.status === 'pending',
+                        ).length
+                    "
+                    class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-700"
+                    >{{
+                        props.registrationRequests.filter(
+                            (item) => item.status === 'pending',
+                        ).length
+                    }}</span
+                >
+            </button>
             <button
                 class="flex items-center gap-2 px-2 py-3 text-sm"
                 :class="
@@ -375,7 +447,7 @@ const removeCommunity = async (community: Community): Promise<void> => {
             </article>
         </section>
 
-        <section v-else class="space-y-3">
+        <section v-else-if="tab === 'networks'" class="space-y-3">
             <article
                 v-for="network in props.networks"
                 :key="network.id"
@@ -392,6 +464,75 @@ const removeCommunity = async (community: Community): Promise<void> => {
                 class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
             >
                 {{ t('admin.multicongregation.empty_networks') }}
+            </p>
+        </section>
+
+        <section v-else class="space-y-3">
+            <article
+                v-for="request in props.registrationRequests"
+                :key="request.id"
+                class="rounded-2xl border bg-white p-5 shadow-sm"
+            >
+                <div class="flex flex-col justify-between gap-4 md:flex-row">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2 class="font-black">{{ request.name }}</h2>
+                            <span
+                                class="rounded-full px-2 py-0.5 text-[10px] font-black uppercase"
+                                :class="
+                                    request.status === 'approved'
+                                        ? 'bg-emerald-50 text-emerald-700'
+                                        : request.status === 'rejected'
+                                          ? 'bg-rose-50 text-rose-700'
+                                          : 'bg-amber-50 text-amber-700'
+                                "
+                                >{{
+                                    t(`portal.status.${request.status}`)
+                                }}</span
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">
+                            {{ request.community.name }} ·
+                            {{ request.domain }} ·
+                            {{ request.requester.name }} ({{
+                                request.requester.email
+                            }})
+                        </p>
+                        <p class="mt-3 max-w-3xl text-sm text-slate-600">
+                            {{ request.description }}
+                        </p>
+                        <p
+                            v-if="request.address"
+                            class="mt-2 text-xs text-slate-500"
+                        >
+                            {{ request.address }}
+                        </p>
+                    </div>
+                    <div
+                        v-if="request.status === 'pending'"
+                        class="flex shrink-0 gap-2"
+                    >
+                        <button
+                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-black text-white"
+                            @click="approveRequest(request)"
+                        >
+                            <Check class="size-4" />
+                            {{ t('portal.review.approve') }}
+                        </button>
+                        <button
+                            class="inline-flex items-center gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs font-black text-rose-700"
+                            @click="rejectRequest(request)"
+                        >
+                            <X class="size-4" /> {{ t('portal.review.reject') }}
+                        </button>
+                    </div>
+                </div>
+            </article>
+            <p
+                v-if="!props.registrationRequests.length"
+                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+            >
+                {{ t('admin.multicongregation.empty_requests') }}
             </p>
         </section>
 
@@ -422,6 +563,11 @@ const removeCommunity = async (community: Community): Promise<void> => {
                     required
                     class="w-full rounded-lg border-slate-300"
                     :placeholder="t('admin.common.slug')"
+                />
+                <input
+                    v-model="churchForm.domain"
+                    class="w-full rounded-lg border-slate-300"
+                    :placeholder="t('admin.multicongregation.domain')"
                 />
                 <select
                     v-model="churchForm.status"
