@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/vue3';
 import {
     Baby,
     ArrowLeft,
+    Camera,
     DoorOpen,
     Filter,
     Pencil,
@@ -10,9 +11,10 @@ import {
     Tags,
     UserCheck,
     UserMinus,
+    X,
 } from '@lucide/vue';
 import axios from 'axios';
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
@@ -68,6 +70,20 @@ const openedId = ref('');
 const editorOpen = ref(false);
 const categoriesOpen = ref(false);
 const selectedMember = ref<Member | null>(null);
+const attendanceRoom = ref<Classroom | null>(null);
+const attendanceMember = ref<Member | null>(null);
+const attendanceMode = ref<'checkin' | 'checkout'>('checkin');
+const attendanceOpen = ref(false);
+const attendanceProcessing = ref(false);
+const attendanceError = ref('');
+const guardianUserId = ref('');
+const handoffName = ref('');
+const handoffPhone = ref('');
+const checkoutPin = ref('');
+const scannerActive = ref(false);
+const scannerVideo = ref<HTMLVideoElement | null>(null);
+let scannerStream: MediaStream | null = null;
+let scannerTimer: number | null = null;
 const error = ref('');
 const filterGender = ref('');
 const filterAge = ref<number | null>(null);
@@ -75,6 +91,44 @@ const filterKids = ref(props.kidsOnly ? 'kids' : 'all');
 const openedRoom = computed(
     () => rooms.value.find((room) => room.id === openedId.value) ?? null,
 );
+const guardianOptions = computed<Member[]>(() => {
+    const member = attendanceMember.value;
+
+    if (!member) {
+        return [];
+    }
+
+    const guardians = [
+        ...(member.relationships ?? [])
+            .filter(
+                (relation) => String(relation.relationship_type) === 'child',
+            )
+            .map((relation) => relation.related_user),
+        ...(member.related_relationships ?? [])
+            .filter(
+                (relation) => String(relation.relationship_type) === 'parent',
+            )
+            .map((relation) => relation.user),
+    ].filter((guardian): guardian is Member => Boolean(guardian));
+
+    return Array.from(
+        new Map(guardians.map((guardian) => [guardian.id, guardian])).values(),
+    );
+});
+const attendanceCanSubmit = computed(() => {
+    if (!attendanceRoom.value?.is_kids) {
+        return true;
+    }
+
+    const hasHandoff = Boolean(
+        guardianUserId.value ||
+        (handoffName.value.trim() && handoffPhone.value.trim()),
+    );
+    const hasPin =
+        attendanceMode.value === 'checkin' || /^\d{6}$/.test(checkoutPin.value);
+
+    return hasHandoff && hasPin;
+});
 const filteredRooms = computed(() =>
     rooms.value.filter((room) => {
         const matchesGender =
@@ -151,77 +205,172 @@ async function save(): Promise<void> {
             : t('admin.classrooms.save_error');
     }
 }
-async function checkIn(room: Classroom, member: Member): Promise<void> {
-    try {
-        const { data } = await axios.post(
-            `/api/classrooms/${room.id}/check-in`,
-            { user_id: member.id },
-        );
-
-        if (!room.active_member_ids.includes(member.id)) {
-            room.active_member_ids.push(member.id);
-            room.active_presences_count++;
-        }
-
-        const message = data.checkout_pin
-            ? t('admin.classrooms.pin_generated', {
-                  name: member.first_name,
-                  pin: data.checkout_pin,
-              })
-            : t('admin.classrooms.checkin_success');
-
-        if (data.checkout_pin) {
-            toast.warning(message, { duration: 20000 });
-        } else {
-            toast.success(message);
-        }
-    } catch (caught) {
-        toast.error(
-            axios.isAxiosError(caught)
-                ? Object.values(caught.response?.data?.errors ?? {})
-                      .flat()
-                      .join(' ')
-                : t('admin.classrooms.checkin_error'),
-        );
-    }
+function openAttendance(
+    room: Classroom,
+    member: Member,
+    mode: 'checkin' | 'checkout',
+): void {
+    attendanceRoom.value = room;
+    attendanceMember.value = member;
+    attendanceMode.value = mode;
+    attendanceError.value = '';
+    guardianUserId.value = '';
+    handoffName.value = '';
+    handoffPhone.value = '';
+    checkoutPin.value = '';
+    attendanceOpen.value = true;
 }
-async function checkOut(room: Classroom, member: Member): Promise<void> {
-    const pin = room.is_kids
-        ? window.prompt(
-              t('admin.classrooms.pin_prompt', { name: member.first_name }),
-          )
-        : '';
 
-    if (room.is_kids && pin === null) {
+function closeAttendance(): void {
+    stopScanner();
+    attendanceOpen.value = false;
+}
+
+function parseScannedPin(value: string): string {
+    const match = value.match(/(?:NC-CHECKOUT:)?(\d{6})$/);
+
+    return match?.[1] ?? '';
+}
+
+async function startScanner(): Promise<void> {
+    const BarcodeDetectorConstructor = (
+        window as typeof window & {
+            BarcodeDetector?: new (options: { formats: string[] }) => {
+                detect: (
+                    source: HTMLVideoElement,
+                ) => Promise<Array<{ rawValue: string }>>;
+            };
+        }
+    ).BarcodeDetector;
+
+    if (!BarcodeDetectorConstructor || !navigator.mediaDevices?.getUserMedia) {
+        attendanceError.value = t('admin.classrooms.scanner_unavailable');
+
         return;
     }
 
     try {
-        await axios.post(`/api/classrooms/${room.id}/check-out`, {
-            user_id: member.id,
-            pin,
+        scannerStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
         });
-        room.active_member_ids = room.active_member_ids.filter(
-            (id) => id !== member.id,
+        scannerActive.value = true;
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        if (!scannerVideo.value) {
+            return;
+        }
+
+        scannerVideo.value.srcObject = scannerStream;
+        await scannerVideo.value.play();
+        const detector = new BarcodeDetectorConstructor({
+            formats: ['qr_code'],
+        });
+        scannerTimer = window.setInterval(async () => {
+            if (!scannerVideo.value) {
+                return;
+            }
+
+            const results = await detector.detect(scannerVideo.value);
+            const pin = parseScannedPin(results[0]?.rawValue ?? '');
+
+            if (pin) {
+                checkoutPin.value = pin;
+                stopScanner();
+            }
+        }, 500);
+    } catch {
+        attendanceError.value = t('admin.classrooms.camera_error');
+        stopScanner();
+    }
+}
+
+function stopScanner(): void {
+    if (scannerTimer !== null) {
+        window.clearInterval(scannerTimer);
+        scannerTimer = null;
+    }
+
+    scannerStream?.getTracks().forEach((track) => track.stop());
+    scannerStream = null;
+    scannerActive.value = false;
+}
+
+onUnmounted(stopScanner);
+
+async function submitAttendance(): Promise<void> {
+    const room = attendanceRoom.value;
+    const member = attendanceMember.value;
+
+    if (!room || !member) {
+        return;
+    }
+
+    attendanceProcessing.value = true;
+    attendanceError.value = '';
+    const printWindow =
+        room.is_kids && attendanceMode.value === 'checkin'
+            ? window.open('', '_blank')
+            : null;
+
+    try {
+        const { data } = await axios.post(
+            `/api/classrooms/${room.id}/${attendanceMode.value === 'checkin' ? 'check-in' : 'check-out'}`,
+            {
+                user_id: member.id,
+                guardian_user_id: guardianUserId.value || null,
+                handoff_name: guardianUserId.value ? null : handoffName.value,
+                handoff_phone: guardianUserId.value ? null : handoffPhone.value,
+                pin:
+                    attendanceMode.value === 'checkout'
+                        ? checkoutPin.value
+                        : null,
+            },
         );
-        room.active_presences_count = Math.max(
-            0,
-            room.active_presences_count - 1,
-        );
-        toast.success(t('admin.classrooms.checkout_success'));
+
+        if (attendanceMode.value === 'checkin') {
+            if (!room.active_member_ids.includes(member.id)) {
+                room.active_member_ids.push(member.id);
+                room.active_presences_count++;
+            }
+
+            if (printWindow && data.label_url) {
+                printWindow.location.href = data.label_url;
+            } else {
+                printWindow?.close();
+            }
+
+            toast.success(t('admin.classrooms.checkin_success'));
+        } else {
+            printWindow?.close();
+            room.active_member_ids = room.active_member_ids.filter(
+                (id) => id !== member.id,
+            );
+            room.active_presences_count = Math.max(
+                0,
+                room.active_presences_count - 1,
+            );
+            toast.success(t('admin.classrooms.checkout_success'));
+        }
+
+        closeAttendance();
     } catch (caught) {
-        toast.error(
-            axios.isAxiosError(caught)
-                ? Object.values(caught.response?.data?.errors ?? {})
-                      .flat()
-                      .join(' ')
-                : t('admin.classrooms.checkout_error'),
-        );
+        printWindow?.close();
+        attendanceError.value = axios.isAxiosError(caught)
+            ? Object.values(caught.response?.data?.errors ?? {})
+                  .flat()
+                  .join(' ')
+            : t(
+                  attendanceMode.value === 'checkin'
+                      ? 'admin.classrooms.checkin_error'
+                      : 'admin.classrooms.checkout_error',
+              );
+    } finally {
+        attendanceProcessing.value = false;
     }
 }
 function updateSeparation(value: boolean): void {
     router.put(
-        '/admin/salas-aula/configuracoes',
+        '/dashboard/salas-aula/configuracoes',
         { separate_kids_ministry: value },
         { preserveScroll: true },
     );
@@ -236,7 +385,7 @@ function updateSeparation(value: boolean): void {
                 : t('admin.classrooms.title')
         "
     />
-    <main class="space-y-6 p-4 xl:p-6">
+    <main class="space-y-6 p-4 md:p-8">
         <section v-if="!openedRoom" class="space-y-5">
             <header
                 class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white shadow-sm md:flex-row md:items-end"
@@ -478,13 +627,17 @@ function updateSeparation(value: boolean): void {
                                 )
                             "
                             class="rounded-lg bg-emerald-50 p-2 text-emerald-700"
-                            @click="checkIn(openedRoom, member)"
+                            @click="
+                                openAttendance(openedRoom, member, 'checkin')
+                            "
                         >
                             <UserCheck class="size-4" /></button
                         ><button
                             v-else
                             class="rounded-lg bg-amber-50 p-2 text-amber-700"
-                            @click="checkOut(openedRoom, member)"
+                            @click="
+                                openAttendance(openedRoom, member, 'checkout')
+                            "
                         >
                             <UserMinus class="size-4" />
                         </button>
@@ -501,6 +654,223 @@ function updateSeparation(value: boolean): void {
                 {{ t('admin.classrooms.select_room') }}
             </p>
         </aside>
+
+        <div
+            v-if="attendanceOpen && attendanceRoom && attendanceMember"
+            class="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-md"
+            @click.self="closeAttendance"
+        >
+            <form
+                class="my-8 w-full max-w-xl overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl"
+                @submit.prevent="submitAttendance"
+            >
+                <header
+                    class="flex items-start justify-between bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white"
+                >
+                    <div>
+                        <p
+                            class="text-xs font-black tracking-[0.2em] text-cyan-200 uppercase"
+                        >
+                            {{
+                                attendanceMode === 'checkin'
+                                    ? t('admin.classrooms.checkin')
+                                    : t('admin.classrooms.checkout')
+                            }}
+                        </p>
+                        <h2 class="mt-1 text-2xl font-black">
+                            {{ attendanceMember.first_name }}
+                            {{ attendanceMember.last_name }}
+                        </h2>
+                        <p class="mt-1 text-sm text-indigo-100">
+                            {{ attendanceRoom.name }}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="rounded-full border border-white/25 p-2"
+                        @click="closeAttendance"
+                    >
+                        <X class="size-4" />
+                    </button>
+                </header>
+
+                <div class="space-y-5 p-6">
+                    <p
+                        v-if="attendanceError"
+                        class="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700"
+                    >
+                        {{ attendanceError }}
+                    </p>
+
+                    <template v-if="attendanceRoom.is_kids">
+                        <section
+                            v-if="attendanceMode === 'checkout'"
+                            class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4"
+                        >
+                            <label
+                                class="text-xs font-black tracking-wide text-indigo-950 uppercase"
+                            >
+                                {{ t('admin.classrooms.checkout_pin') }}
+                                <input
+                                    v-model="checkoutPin"
+                                    inputmode="numeric"
+                                    maxlength="6"
+                                    pattern="[0-9]{6}"
+                                    class="mt-2 w-full rounded-xl border-indigo-200 bg-white text-center font-mono text-3xl font-black tracking-[0.28em]"
+                                    placeholder="000000"
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-950 px-4 py-2.5 text-sm font-black text-white"
+                                @click="
+                                    scannerActive
+                                        ? stopScanner()
+                                        : startScanner()
+                                "
+                            >
+                                <Camera class="size-4" />
+                                {{
+                                    scannerActive
+                                        ? t('admin.classrooms.stop_scanner')
+                                        : t('admin.classrooms.scan_qr')
+                                }}
+                            </button>
+                            <video
+                                v-show="scannerActive"
+                                ref="scannerVideo"
+                                muted
+                                playsinline
+                                class="mt-3 aspect-video w-full rounded-xl bg-black object-cover"
+                            />
+                        </section>
+
+                        <section>
+                            <h3 class="text-sm font-black">
+                                {{
+                                    attendanceMode === 'checkin'
+                                        ? t(
+                                              'admin.classrooms.who_is_dropping_off',
+                                          )
+                                        : t(
+                                              'admin.classrooms.who_is_picking_up',
+                                          )
+                                }}
+                            </h3>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ t('admin.classrooms.handoff_hint') }}
+                            </p>
+                            <div
+                                v-if="guardianOptions.length"
+                                class="mt-3 grid gap-2 sm:grid-cols-2"
+                            >
+                                <label
+                                    v-for="guardian in guardianOptions"
+                                    :key="guardian.id"
+                                    class="flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-sm font-bold"
+                                    :class="
+                                        guardianUserId === guardian.id
+                                            ? 'border-indigo-600 bg-indigo-50'
+                                            : 'border-slate-200'
+                                    "
+                                >
+                                    <input
+                                        v-model="guardianUserId"
+                                        type="radio"
+                                        :value="guardian.id"
+                                        @change="
+                                            handoffName = '';
+                                            handoffPhone = '';
+                                        "
+                                    />
+                                    {{ guardian.first_name }}
+                                    {{ guardian.last_name }}
+                                </label>
+                            </div>
+
+                            <label
+                                class="mt-3 flex items-center gap-2 text-sm font-bold"
+                            >
+                                <input
+                                    v-model="guardianUserId"
+                                    type="radio"
+                                    value=""
+                                />
+                                {{ t('admin.classrooms.other_person') }}
+                            </label>
+                            <div
+                                v-if="!guardianUserId"
+                                class="mt-3 grid gap-3 sm:grid-cols-2"
+                            >
+                                <label class="text-xs font-bold text-slate-600"
+                                    >{{ t('admin.classrooms.handoff_name') }}
+                                    <input
+                                        v-model="handoffName"
+                                        required
+                                        class="mt-1 w-full rounded-xl border-slate-300"
+                                    />
+                                </label>
+                                <label class="text-xs font-bold text-slate-600"
+                                    >{{ t('admin.classrooms.handoff_phone') }}
+                                    <input
+                                        v-model="handoffPhone"
+                                        required
+                                        type="tel"
+                                        class="mt-1 w-full rounded-xl border-slate-300"
+                                    />
+                                </label>
+                            </div>
+                            <p
+                                v-if="
+                                    attendanceMode === 'checkout' &&
+                                    !guardianUserId
+                                "
+                                class="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-800"
+                            >
+                                {{
+                                    t('admin.classrooms.outsider_notification')
+                                }}
+                            </p>
+                        </section>
+                    </template>
+
+                    <p
+                        v-else
+                        class="rounded-xl bg-slate-50 p-4 text-sm text-slate-600"
+                    >
+                        {{
+                            attendanceMode === 'checkin'
+                                ? t('admin.classrooms.confirm_regular_checkin')
+                                : t('admin.classrooms.confirm_regular_checkout')
+                        }}
+                    </p>
+
+                    <footer class="flex justify-end gap-3 border-t pt-5">
+                        <button
+                            type="button"
+                            class="rounded-xl border px-4 py-2.5 text-sm font-bold"
+                            @click="closeAttendance"
+                        >
+                            {{ t('actions.cancel') }}
+                        </button>
+                        <button
+                            :disabled="
+                                attendanceProcessing || !attendanceCanSubmit
+                            "
+                            class="rounded-xl bg-indigo-700 px-5 py-2.5 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {{
+                                attendanceProcessing
+                                    ? t('a11y.loading')
+                                    : attendanceMode === 'checkin'
+                                      ? t('admin.classrooms.checkin')
+                                      : t('admin.classrooms.checkout')
+                            }}
+                        </button>
+                    </footer>
+                </div>
+            </form>
+        </div>
 
         <div
             v-if="selectedMember"

@@ -218,7 +218,7 @@ function closeEditor(): void {
 <template>
     <Head :title="t('admin.forms.title')" />
     <main
-        class="grid gap-6 p-4 xl:grid-cols-[20rem_minmax(0,1fr)_19rem] xl:p-6"
+        class="grid gap-6 p-4 md:p-8 xl:grid-cols-[20rem_minmax(0,1fr)_19rem]"
     >
         <AdminPageHeader
             class="xl:col-span-3"

@@ -80,7 +80,7 @@ function roleValue(user: UserItem): string {
 }
 function sendReset(user: UserItem): void {
     router.post(
-        `/admin/gestao-usuarios/${user.id}/redefinir-senha`,
+        `/dashboard/gestao-usuarios/${user.id}/redefinir-senha`,
         {},
         { preserveScroll: true },
     );

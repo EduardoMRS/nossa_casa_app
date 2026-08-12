@@ -1,0 +1,147 @@
+<?php
+
+use App\Enums\UserRole;
+use App\Models\Church;
+use App\Models\Community;
+use App\Models\Post;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    config(['app.url' => 'http://platform.test']);
+    $this->withoutVite();
+});
+
+function createDomainChurch(string $name, string $domain): Church
+{
+    $community = Community::query()->create([
+        'name' => $name.' Community',
+        'slug' => str($name)->slug()->append('-community')->toString(),
+        'description' => 'Community for domain tenancy tests.',
+    ]);
+
+    return Church::query()->create([
+        'name' => $name,
+        'slug' => str($name)->slug()->toString(),
+        'domain' => $domain,
+        'community_id' => $community->id,
+        'status' => 'active',
+    ]);
+}
+
+test('main application domain renders the institutional portal', function () {
+    createDomainChurch('Alpha Church', 'alpha.test');
+
+    $this->get('http://platform.test/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->where('communities.0.churches.0.domain', 'alpha.test'));
+});
+
+test('custom domain renders only content from its church', function () {
+    $alpha = createDomainChurch('Alpha Church', 'alpha.test');
+    $beta = createDomainChurch('Beta Church', 'beta.test');
+    $author = User::factory()->create(['role' => UserRole::MEDIA]);
+    Post::query()->create([
+        'church_id' => $alpha->id,
+        'author_id' => $author->id,
+        'title' => 'Alpha update',
+        'slug' => 'alpha-update',
+        'content' => 'Alpha content',
+        'published_at' => now(),
+    ]);
+    Post::query()->create([
+        'church_id' => $beta->id,
+        'author_id' => $author->id,
+        'title' => 'Beta update',
+        'slug' => 'beta-update',
+        'content' => 'Beta content',
+        'published_at' => now(),
+    ]);
+
+    $this->get('http://alpha.test/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Home')
+            ->has('latestPosts', 1)
+            ->where('latestPosts.0.slug', 'alpha-update')
+            ->where('churchContext.church.id', $alpha->id));
+
+    $this->get('http://alpha.test/publicacoes/beta-update')->assertNotFound();
+});
+
+test('existing session is ended when opening another church domain', function () {
+    $alpha = createDomainChurch('Alpha Church', 'alpha.test');
+    $beta = createDomainChurch('Beta Church', 'beta.test');
+    $user = User::factory()->create();
+    $alpha->assignMember($user);
+
+    $this->actingAs($user)
+        ->get('http://beta.test/')
+        ->assertRedirect();
+
+    $this->assertGuest();
+});
+
+test('login in an unrelated church allows public access and asks for membership switch', function () {
+    $alpha = createDomainChurch('Alpha Church', 'alpha.test');
+    $beta = createDomainChurch('Beta Church', 'beta.test');
+    $user = User::factory()->create(['role' => UserRole::ADMIN]);
+    $alpha->assignMember($user);
+
+    $this->post('http://beta.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect();
+
+    $this->assertAuthenticatedAs($user);
+    $this->assertEquals($beta->id, session('church_membership_pending'));
+
+    $this->get('http://beta.test/')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('churchContext.membershipPending', true));
+
+    $this->post('http://beta.test/church-membership/switch')->assertRedirect();
+    expect($user->fresh()->profile->church_id)->toBe($beta->id)
+        ->and($user->fresh()->role)->toBe(UserRole::MEMBER);
+});
+
+test('login on the main domain redirects through a single use church handoff', function () {
+    $church = createDomainChurch('Alpha Church', 'alpha.test');
+    $user = User::factory()->create();
+    $church->assignMember($user);
+
+    $response = $this->post('http://platform.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $location = $response->headers->get('Location');
+    expect($location)->toStartWith('https://alpha.test/auth/handoff?token=');
+
+    Auth::guard('web')->logout();
+    $this->get($location)->assertRedirect('/dashboard');
+    $this->assertAuthenticatedAs($user);
+    $this->get($location)->assertForbidden();
+});
+
+test('system administrator can configure a normalized custom church domain', function () {
+    $church = createDomainChurch('Configurable Church', 'old-domain.test');
+    $system = User::factory()->create(['role' => UserRole::SYSTEM]);
+
+    $this->actingAs($system)
+        ->putJson("http://platform.test/api/church/{$church->id}", [
+            'domain' => 'https://NEW-DOMAIN.test/welcome',
+        ])
+        ->assertOk()
+        ->assertJsonPath('domain', 'new-domain.test');
+
+    $this->actingAs($system)
+        ->putJson("http://platform.test/api/church/{$church->id}", [
+            'domain' => 'platform.test',
+        ])
+        ->assertUnprocessable();
+});

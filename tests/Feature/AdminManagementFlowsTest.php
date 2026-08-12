@@ -159,6 +159,7 @@ it('shows unpublished church posts in the private post management list', functio
 
 it('lets church editors preview their unpublished posts on the home page', function () {
     $admin = managementUser();
+    $admin->church->update(['domain' => 'editorial-preview.test']);
     $post = Post::query()->create([
         'author_id' => $admin->id,
         'church_id' => $admin->profile->church_id,
@@ -169,7 +170,7 @@ it('lets church editors preview their unpublished posts on the home page', funct
     ]);
 
     $this->actingAs($admin)
-        ->get(route('home'))
+        ->get('http://editorial-preview.test/')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page->where('latestPosts.0.id', $post->id));
 

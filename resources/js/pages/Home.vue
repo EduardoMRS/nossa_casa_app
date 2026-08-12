@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
@@ -40,6 +40,21 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+let restoreDarkMode = false;
+
+onMounted(() => {
+    restoreDarkMode = document.documentElement.classList.contains('dark');
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
+});
+
+onBeforeUnmount(() => {
+    if (restoreDarkMode) {
+        document.documentElement.classList.add('dark');
+    }
+
+    document.documentElement.style.removeProperty('color-scheme');
+});
 
 const formatter = computed(
     () =>
@@ -70,14 +85,26 @@ const statsRows = computed(() => [
 <template>
     <Head :title="t('home.meta_title')" />
 
-    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
+    <div
+        class="public-welcome-light flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :style="{
+            backgroundColor: 'var(--church-surface, #f8fafc)',
+            fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',
+        }"
+    >
         <PublicHeader active="home" />
 
         <main
             class="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-7 sm:px-6 lg:px-8 lg:py-9"
         >
             <section
-                class="grid gap-5 rounded-2xl border border-indigo-900 bg-gradient-to-br from-[#1f1b5b] via-[#2f2a82] to-[#4039a0] p-6 text-white shadow-md md:grid-cols-[1.35fr_0.65fr] md:p-8"
+                class="grid gap-5 rounded-2xl border p-6 text-white shadow-md md:grid-cols-[1.35fr_0.65fr] md:p-8"
+                :style="{
+                    borderColor:
+                        'color-mix(in srgb, var(--church-primary) 75%, black)',
+                    background:
+                        'linear-gradient(135deg, color-mix(in srgb, var(--church-primary) 72%, black), var(--church-primary), color-mix(in srgb, var(--church-primary) 72%, white))',
+                }"
             >
                 <div>
                     <p
@@ -221,7 +248,7 @@ const statsRows = computed(() => [
                         <Link
                             v-for="post in props.latestPosts"
                             :key="post.id"
-                            :href="`/publicacoes/${post.slug}`"
+                            :href="`/posts/${post.slug}`"
                             class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
                         >
                             <h3

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Plus,
     Edit,
@@ -10,8 +10,9 @@ import {
     Clock,
     Tags,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { destroy } from '@/actions/App/Http/Controllers/PostController';
+import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import { useI18n } from '@/lib/i18n';
@@ -60,24 +61,6 @@ const props = defineProps<{
 const { locale, t } = useI18n();
 const categoriesOpen = ref(false);
 
-const page = usePage<{
-    branding?: {
-        primary_color?: string;
-        secondary_color?: string;
-        accent_color?: string;
-        font_family?: string;
-    };
-}>();
-
-const branding = computed(() => page.props.branding ?? {});
-
-const paletteStyle = computed(() => ({
-    '--brand-primary': branding.value.primary_color ?? '#2f6e79',
-    '--brand-secondary': branding.value.secondary_color ?? '#5f7d95',
-    '--brand-accent': branding.value.accent_color ?? '#c88b4a',
-    '--brand-font': branding.value.font_family ?? 'Manrope, ui-sans-serif',
-}));
-
 const deletePost = (id: string) => {
     if (confirm(t('posts.shared.delete_confirm'))) {
         router.delete(destroy.url({ post: id }));
@@ -111,56 +94,36 @@ const getTitle = (post: Post) => {
 </script>
 
 <template>
-    <div
-        class="min-h-screen bg-[#f4f7fb] p-5 text-slate-800 md:p-8 dark:bg-slate-900 dark:text-slate-100"
-        :style="paletteStyle"
-    >
+    <main class="min-h-screen space-y-6 p-4 md:p-8">
         <Head :title="t('posts.index.meta_title')" />
 
         <div class="mx-auto max-w-7xl space-y-6">
-            <section
-                class="rounded-2xl border border-indigo-900 bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white shadow-sm"
+            <AdminPageHeader
+                :kicker="t('navigation.communication')"
+                :title="t('posts.index.title')"
+                :description="t('posts.index.description')"
             >
-                <div
-                    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                <button
+                    class="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/30 px-4 py-2.5 text-sm font-bold text-primary-foreground"
+                    @click="categoriesOpen = true"
                 >
-                    <div>
-                        <h1
-                            class="text-2xl font-black tracking-tight md:text-3xl"
-                            :style="{ fontFamily: 'var(--brand-font)' }"
-                        >
-                            {{ t('posts.index.title') }}
-                        </h1>
-                        <p class="mt-1 text-sm text-slate-100/90">
-                            {{ t('posts.index.description') }}
-                        </p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            class="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold"
-                            @click="categoriesOpen = true"
-                        >
-                            <Tags class="size-4" />{{
-                                t('admin.categories.title')
-                            }}</button
-                        ><Link
-                            :href="create()"
-                            class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-800"
-                        >
-                            <Plus class="h-4 w-4" />
-                            {{ t('posts.index.new') }}
-                        </Link>
-                    </div>
-                </div>
-            </section>
+                    <Tags class="size-4" />{{ t('admin.categories.title') }}
+                </button>
+                <Link
+                    :href="create()"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary-foreground px-4 py-2.5 text-sm font-bold text-primary"
+                >
+                    <Plus class="size-4" />{{ t('posts.index.new') }}
+                </Link>
+            </AdminPageHeader>
 
             <section
-                class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/70"
+                class="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm"
             >
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm">
                         <thead
-                            class="border-b border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300"
+                            class="border-b border-border bg-muted text-muted-foreground"
                         >
                             <tr>
                                 <th class="px-5 py-3 font-semibold">
@@ -180,22 +143,20 @@ const getTitle = (post: Post) => {
                                 </th>
                             </tr>
                         </thead>
-                        <tbody
-                            class="divide-y divide-slate-100 dark:divide-slate-700/80"
-                        >
+                        <tbody class="divide-y divide-border">
                             <tr
                                 v-for="post in props.posts.data"
                                 :key="post.id"
-                                class="transition hover:bg-slate-50/80 dark:hover:bg-slate-700/20"
+                                class="transition hover:bg-muted/60"
                             >
                                 <td class="px-5 py-4">
                                     <p
-                                        class="max-w-md truncate font-semibold text-slate-900 dark:text-slate-100"
+                                        class="max-w-md truncate font-semibold text-card-foreground"
                                     >
                                         {{ getTitle(post) }}
                                     </p>
                                     <p
-                                        class="mt-1 text-xs text-slate-500 dark:text-slate-300"
+                                        class="mt-1 text-xs text-muted-foreground"
                                     >
                                         /{{ post.slug }}
                                     </p>
@@ -203,15 +164,14 @@ const getTitle = (post: Post) => {
                                 <td class="px-5 py-4">
                                     <div class="flex items-center gap-2">
                                         <div
-                                            class="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-slate-100 text-xs font-bold text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
+                                            class="grid h-8 w-8 place-items-center rounded-full border border-border bg-muted text-xs font-bold text-foreground"
                                         >
                                             {{ post.author.first_name.charAt(0)
                                             }}{{
                                                 post.author.last_name.charAt(0)
                                             }}
                                         </div>
-                                        <span
-                                            class="text-slate-700 dark:text-slate-200"
+                                        <span class="text-foreground"
                                             >{{ post.author.first_name }}
                                             {{ post.author.last_name }}</span
                                         >
@@ -219,7 +179,7 @@ const getTitle = (post: Post) => {
                                 </td>
                                 <td class="px-5 py-4">
                                     <div
-                                        class="flex items-center gap-4 text-slate-600 dark:text-slate-300"
+                                        class="flex items-center gap-4 text-muted-foreground"
                                     >
                                         <span
                                             class="inline-flex items-center gap-1 text-xs"
@@ -243,30 +203,27 @@ const getTitle = (post: Post) => {
                                             class="h-4 w-4"
                                             :style="{
                                                 color: post.published_at
-                                                    ? 'var(--brand-primary)'
-                                                    : 'var(--brand-secondary)',
+                                                    ? 'var(--primary)'
+                                                    : 'var(--muted-foreground)',
                                             }"
                                         />
-                                        <span
-                                            class="text-slate-700 dark:text-slate-200"
-                                            >{{
-                                                formatDate(post.published_at) ??
-                                                t('posts.index.draft')
-                                            }}</span
-                                        >
+                                        <span class="text-foreground">{{
+                                            formatDate(post.published_at) ??
+                                            t('posts.index.draft')
+                                        }}</span>
                                     </div>
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex justify-end gap-2">
                                         <Link
                                             :href="show({ post: post.id })"
-                                            class="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:text-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white"
+                                            class="rounded-lg border border-border p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                                         >
                                             <Eye class="h-4 w-4" />
                                         </Link>
                                         <Link
                                             :href="edit({ post: post.id })"
-                                            class="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:text-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:text-white"
+                                            class="rounded-lg border border-border p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
                                         >
                                             <Edit class="h-4 w-4" />
                                         </Link>
@@ -283,7 +240,7 @@ const getTitle = (post: Post) => {
                             <tr v-if="!props.posts.data.length">
                                 <td
                                     colspan="5"
-                                    class="px-5 py-12 text-center text-slate-500 dark:text-slate-300"
+                                    class="px-5 py-12 text-center text-muted-foreground"
                                 >
                                     {{ t('posts.index.empty') }}
                                 </td>
@@ -297,7 +254,7 @@ const getTitle = (post: Post) => {
                 v-if="props.posts.links.length > 3"
                 class="flex flex-col items-center justify-between gap-4 sm:flex-row"
             >
-                <p class="text-sm text-slate-500 dark:text-slate-300">
+                <p class="text-sm text-muted-foreground">
                     {{
                         t('posts.index.pagination', {
                             from: props.posts.from ?? 0,
@@ -314,7 +271,7 @@ const getTitle = (post: Post) => {
                     >
                         <span
                             v-if="link.url === null"
-                            class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500"
+                            class="rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground"
                             v-html="link.label"
                         />
                         <Link
@@ -324,13 +281,12 @@ const getTitle = (post: Post) => {
                             :class="
                                 link.active
                                     ? 'border-transparent text-white'
-                                    : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'
+                                    : 'border-border bg-card text-muted-foreground'
                             "
                             :style="
                                 link.active
                                     ? {
-                                          backgroundColor:
-                                              'var(--brand-primary)',
+                                          backgroundColor: 'var(--primary)',
                                       }
                                     : undefined
                             "
@@ -347,5 +303,5 @@ const getTitle = (post: Post) => {
             :categories="categories"
             @close="categoriesOpen = false"
         />
-    </div>
+    </main>
 </template>

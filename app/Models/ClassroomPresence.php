@@ -13,8 +13,14 @@ class ClassroomPresence extends Model
     protected $fillable = [
         'classroom_id',
         'user_id',
+        'dropoff_user_id',
+        'dropoff_name',
+        'dropoff_phone',
         'check_in',
         'check_out',
+        'pickup_user_id',
+        'pickup_name',
+        'pickup_phone',
         'checkout_pin',
         'checkout_pin_code',
         'pin_generated_at',
@@ -40,5 +46,15 @@ class ClassroomPresence extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function dropoffUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dropoff_user_id');
+    }
+
+    public function pickupUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pickup_user_id');
     }
 }

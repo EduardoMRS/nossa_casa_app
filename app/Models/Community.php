@@ -14,6 +14,7 @@ class Community extends Model
     protected $table = 'communities';
 
     protected $fillable = [
+        'owner_id',
         'slug',
         'name',
         'description',
@@ -28,6 +29,16 @@ class Community extends Model
     public function churches()
     {
         return $this->hasMany(Church::class, 'community_id');
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function churchRegistrationRequests()
+    {
+        return $this->hasMany(ChurchRegistrationRequest::class);
     }
 
     public function assignChurch(Church $church): void

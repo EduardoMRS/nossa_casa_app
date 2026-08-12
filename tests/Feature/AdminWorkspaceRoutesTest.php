@@ -7,6 +7,10 @@ use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Support\Str;
 
+beforeEach(function () {
+    $this->withoutVite();
+});
+
 function createAdminUserWithChurch(): User
 {
     $community = Community::query()->create([
@@ -38,6 +42,9 @@ function createAdminUserWithChurch(): User
 it('allows admin to open all admin workspace routes', function () {
     $admin = createAdminUserWithChurch();
 
+    expect(parse_url(route('admin.events.index'), PHP_URL_PATH))->toBe('/dashboard/eventos')
+        ->and(parse_url(route('posts.index'), PHP_URL_PATH))->toBe('/dashboard/posts');
+
     $routes = [
         'admin.branding.edit',
         'admin.highlights.index',
@@ -58,7 +65,7 @@ it('allows admin to open all admin workspace routes', function () {
             ->assertSuccessful();
     }
 
-    $this->actingAs($admin)->get(route('admin.prayerRequests.index'))->assertRedirect('/admin/minhas-oracoes');
+    $this->actingAs($admin)->get(route('admin.prayerRequests.index'))->assertRedirect('/dashboard/minhas-oracoes');
     $this->actingAs($admin)->get(route('admin.myPrayers.index'))->assertRedirect('/minhas-oracoes');
 });
 

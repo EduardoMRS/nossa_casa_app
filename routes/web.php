@@ -3,14 +3,19 @@
 use App\Enums\CategoryType;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
+use App\Http\Controllers\ChurchOnboardingController;
+use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\PortalController;
+use App\Http\Controllers\PublicGalleryController;
+use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Church;
 use App\Models\Event;
-use App\Models\Highlight;
 use App\Models\Library;
 use App\Models\Media;
 use App\Models\Post;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
@@ -39,73 +44,22 @@ if (! function_exists('categoriesForChurchAndType')) {
     }
 }
 
-Route::get('/', function () {
-    $eventHighlightOrder = Highlight::query()
-        ->where('highlightable_type', Event::class)
-        ->orderBy('order')
-        ->pluck('highlightable_id')
-        ->flip();
-    $featuredEvents = Event::query()
-        ->with('church:id,name,slug')
-        ->orderBy('start_time', 'asc')
-        ->limit(30)
-        ->get()
-        ->sortBy(fn (Event $event) => $eventHighlightOrder->get($event->id, PHP_INT_MAX))
-        ->take(3)
-        ->map(function (Event $event) {
-            $event->localize(relations: ['church']);
+Route::get('/', [PortalController::class, 'index'])->name('home');
 
-            return [
-                'id' => $event->id,
-                'title' => $event->title,
-                'slug' => $event->slug,
-                'excerpt' => Str::limit(strip_tags((string) $event->description), 120),
-                'cover_path' => $event->cover_path,
-                'start_time' => $event->start_time,
-                'church' => $event->church,
-            ];
-        });
+Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
 
-    $postHighlightOrder = Highlight::query()
-        ->where('highlightable_type', Post::class)
-        ->orderBy('order')
-        ->pluck('highlightable_id')
-        ->flip();
-    $latestPosts = Post::query()
-        ->visible()
-        ->orderByDesc('published_at')
-        ->orderByDesc('created_at')
-        ->limit(30)
-        ->get()
-        ->sortBy(fn (Post $post) => $postHighlightOrder->get($post->id, PHP_INT_MAX))
-        ->take(3)
-        ->map(function (Post $post) {
-            $post->localize();
-
-            return [
-                'id' => $post->id,
-                'title' => $post->title,
-                'slug' => $post->slug,
-                'excerpt' => Str::limit((string) preg_replace('/\s+/', ' ', trim(strip_tags(Str::markdown((string) $post->content, [
-                    'html_input' => 'strip',
-                    'allow_unsafe_links' => false,
-                ])))), 120),
-                'published_at' => $post->published_at,
-            ];
-        });
-
-    return Inertia::render('Home', [
-        'stats' => [
-            'events' => Event::query()->count(),
-            'gallery' => Media::visible()->count(),
-            'posts' => Post::query()->count(),
-        ],
-        'featuredEvents' => $featuredEvents,
-        'latestPosts' => $latestPosts,
-    ]);
-})->name('home');
+Route::middleware('auth')->group(function () {
+    Route::post('/onboarding/communities', [ChurchOnboardingController::class, 'storeCommunity'])->name('onboarding.communities.store');
+    Route::post('/onboarding/churches', [ChurchOnboardingController::class, 'storeChurchRequest'])->name('onboarding.churches.store');
+    Route::post('/onboarding/churches/{registrationRequest}/approve', [ChurchOnboardingController::class, 'approve'])->name('onboarding.churches.approve');
+    Route::post('/onboarding/churches/{registrationRequest}/reject', [ChurchOnboardingController::class, 'reject'])->name('onboarding.churches.reject');
+    Route::post('/church-membership/switch', [ChurchOnboardingController::class, 'switchMembership'])->name('church.membership.switch');
+    Route::post('/church-membership/decline', [ChurchOnboardingController::class, 'declineMembership'])->name('church.membership.decline');
+});
 
 Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file_path) {
+    $domainChurchId = app(ChurchDomainContext::class)->churchId();
+    abort_if($domainChurchId && $domainChurchId !== $church_id, 404);
     $filePathFull = "church/{$church_id}/library/{$file_path}";
     $library = Church::find($church_id)->library()->where('file_path', $filePathFull)
         ->firstOrFail();
@@ -120,7 +74,9 @@ Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file
 })->name('library.show');
 
 Route::get('/events', function () {
+    $churchId = app(ChurchDomainContext::class)->churchId();
     $events = Event::query()
+        ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
         ->with('church:id,name,slug')
         ->orderBy('start_time', 'asc')
         ->paginate(18)
@@ -147,46 +103,14 @@ Route::get('/events', function () {
     return Inertia::render('Events/Index', ['events' => $events]);
 })->name('events.index');
 
-Route::get('/publicacoes/{slug}', function (string $slug) {
-    $post = Post::query()
-        ->visible()
-        ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
-        ->where('slug', $slug)
-        ->firstOrFail();
-    $post->localize(relations: ['church', 'categories']);
-    $comments = $post->comments()->with('user:id,first_name,last_name')->latest()->get();
-    $reactions = $post->reactions()->with('user:id,first_name,last_name')->latest()->get();
-    $authenticatedUser = request()->user();
-    $authenticatedRole = $authenticatedUser?->role?->value ?? (string) $authenticatedUser?->role;
-    $canInteract = $authenticatedRole === 'system' || $authenticatedUser?->profile?->church_id === $post->church_id;
+Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public.index');
 
-    return Inertia::render('Posts/PublicShow', [
-        'post' => [
-            'id' => $post->id,
-            'title' => $post->title,
-            'slug' => $post->slug,
-            'contentHtml' => Str::markdown((string) $post->content, [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]),
-            'published_at' => $post->published_at,
-            'church' => $post->church,
-            'author' => $post->author,
-            'category' => $post->categories->pluck('name')->join(', '),
-            'cover_url' => $post->medias->first()?->url,
-            'metrics' => [
-                'comments_count' => $comments->count(),
-                'reactions_count' => $reactions->count(),
-            ],
-        ],
-        'comments' => $comments,
-        'reactions' => $reactions,
-        'canInteract' => $canInteract,
-    ]);
-})->name('posts.public.show');
+Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.public.show');
 
 Route::get('/biblioteca', function () {
+    $churchId = app(ChurchDomainContext::class)->churchId();
     $items = Library::query()
+        ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
         ->latest()
         ->paginate(18)
         ->through(fn (Library $item): Library => $item->localize());
@@ -195,6 +119,7 @@ Route::get('/biblioteca', function () {
 })->name('library.index');
 
 Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
+    abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
     $event->load('church:id,name,slug');
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description', 'forms.schema'])->first();
 
@@ -240,6 +165,7 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
 })->name('events.register');
 
 Route::get('/events/{event:slug}', function (Event $event, Request $request) {
+    abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
     $event->load('church:id,name,slug', 'categories:id,name');
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description'])->first();
 
@@ -273,27 +199,7 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
     ]);
 })->name('events.show');
 
-Route::get('/gallery', function (Request $request) {
-    $media = Media::visible()
-        ->with('uploader:id,first_name,last_name')
-        ->orderByDesc('created_at')
-        ->paginate(24)
-        ->through(function (Media $item) {
-            return [
-                'id' => $item->id,
-                'url' => $item->url,
-                'mimetype' => $item->mimetype,
-                'size' => $item->size,
-                'uploader' => $item->uploader,
-                'created_at' => $item->created_at,
-            ];
-        });
-
-    return Inertia::render('Gallery/Index', [
-        'media' => $media,
-        'categories' => categoriesForChurchAndType($request, CategoryType::MEDIA->value, true),
-    ]);
-})->name('gallery.index');
+Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
 
 Route::get('/d/{encryptedFile}', function ($encryptedFile) {
     try {
@@ -372,7 +278,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:member|leader|media|admin|superadmin|system')
         ->name('myPrayers.index');
 
-    Route::prefix('admin')
+    Route::prefix('dashboard')
         ->name('admin.')
         ->middleware('role:admin|superadmin|system')
         ->group(function () {
@@ -390,7 +296,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
             Route::put('/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
             Route::get('/formularios', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
-            Route::redirect('/pedidos-intercessao', '/admin/minhas-oracoes')->name('prayerRequests.index');
+            Route::redirect('/pedidos-intercessao', '/dashboard/minhas-oracoes')->name('prayerRequests.index');
             Route::get('/ministerio-kids', [AdminWorkspaceController::class, 'kidsMinistry'])->name('kidsMinistry.index');
             Route::redirect('/minhas-oracoes', '/minhas-oracoes')->name('myPrayers.index');
             Route::get('/gestao-usuarios', [AdminWorkspaceController::class, 'userManagement'])->name('userManagement.index');
@@ -401,19 +307,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:system')->name('logsMetrics.index');
         });
 
+    Route::get('/dashboard/salas-aula/presencas/{presence}/etiquetas', [ClassroomController::class, 'labels'])
+        ->middleware('role:leader|admin|superadmin|system')
+        ->name('admin.classrooms.labels');
+
     // // Churches (Igrejas)
     // Route::get('/churches', function () { return Inertia::render('Churches/Index'); })->name('churches.index');
     // Route::get('/churches/create', function () { return Inertia::render('Churches/Create'); })->name('churches.create');
     // Route::get('/churches/{id}/edit', function ($id) { return Inertia::render('Churches/Edit', ['id' => $id]); })->name('churches.edit');
 
-    Route::get('/gestao/eventos/criar', function () {
+    Route::get('/dashboard/eventos/criar', function () {
         return Inertia::render('Events/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
     })->middleware('role:leader|admin|superadmin|system')->name('events.create');
 
-    Route::get('/gestao/eventos/{event}/editar', function (string $event) {
+    Route::get('/dashboard/eventos/{event}/editar', function (string $event) {
         $resource = Event::query()->findOrFail($event);
         abort_unless($resource->church_id === request()->user()?->profile?->church_id, 403);
 
@@ -433,7 +343,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware('role:leader|admin|superadmin|system')->name('events.edit');
 
-    Route::get('/posts', function () {
+    Route::get('/dashboard/posts', function () {
         $churchId = request()->user()?->church?->id;
         $posts = Post::query()
             ->where('church_id', $churchId)
@@ -469,12 +379,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
         ]);
     })->name('posts.index');
-    Route::get('/posts/create', function () {
+    Route::get('/dashboard/posts/create', function () {
         return Inertia::render('Posts/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
         ]);
     })->name('posts.create');
-    Route::get('/posts/{post}/edit', function ($post) {
+    Route::get('/dashboard/posts/{post}/edit', function ($post) {
         $post = Post::query()->with(['church', 'medias'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $church = $post->church;
@@ -494,7 +404,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
-    Route::get('/posts/{post}', function () {
+    Route::get('/dashboard/posts/{post}', function () {
         $post = Post::query()->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $post->localize(relations: ['church', 'categories']);

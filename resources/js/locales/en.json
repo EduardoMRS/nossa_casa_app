@@ -25,7 +25,12 @@
     "locale": {
         "switcher": "Language"
     },
+    "notifications": {
+        "title": "Notices",
+        "child_released": "{child} left classroom {classroom} with {person}."
+    },
     "nav": {
+        "posts": "Posts",
         "home": "Home",
         "events": "Events",
         "gallery": "Gallery",
@@ -64,6 +69,8 @@
         "description": "Explore media shared by the community and approved by the moderation team.",
         "upload_kicker": "Media upload",
         "upload_title": "Add a new gallery item",
+        "title_placeholder": "Media title",
+        "description_placeholder": "Tell the story behind this media...",
         "file": "File",
         "file_placeholder": "https://... or file path",
         "upload_hint": "Authorized profiles can submit files to the gallery; moderation remains available in the private dashboard.",
@@ -77,6 +84,12 @@
         "upload_error": "The media could not be uploaded.",
         "item_alt": "Gallery media",
         "anonymous": "Anonymous",
+        "close": "Close preview",
+        "no_comments": "No comments yet. Be the first person to interact.",
+        "comment_placeholder": "Add a comment...",
+        "comment_submit": "Publish comment",
+        "login_to_interact": "Sign in with an account linked to this church to comment and react.",
+        "interaction_error": "The interaction could not be completed. Please try again.",
         "pagination": "Showing {from} - {to} of {total} items"
     },
     "auth": {
@@ -96,7 +109,8 @@
             "remember": "Remember me",
             "submit": "Log in",
             "no_account": "Don't have an account?",
-            "sign_up": "Sign up"
+            "sign_up": "Sign up",
+            "church_context": "You are signing in to {church}. If your profile belongs to another congregation, you will need to confirm the membership change."
         },
         "register": {
             "meta_title": "Register",
@@ -395,6 +409,20 @@
             "checkin_error": "Check-in could not be completed.",
             "checkout_error": "Checkout could not be completed.",
             "checkout_success": "Checkout completed.",
+            "checkout_pin": "Pickup PIN",
+            "scan_qr": "Scan QR Code with camera",
+            "stop_scanner": "Stop camera",
+            "scanner_unavailable": "This browser does not support native QR scanning. Enter the PIN manually.",
+            "camera_error": "The camera could not be accessed. Check permission and use the PIN manually.",
+            "who_is_dropping_off": "Who is dropping off the child?",
+            "who_is_picking_up": "Who is picking up the child?",
+            "handoff_hint": "Select a linked guardian or enter the other person's details.",
+            "other_person": "Another person",
+            "handoff_name": "Full name",
+            "handoff_phone": "Contact phone",
+            "outsider_notification": "Linked guardians will receive a notice about this pickup.",
+            "confirm_regular_checkin": "Confirm this student's classroom entry.",
+            "confirm_regular_checkout": "Confirm this student's classroom exit.",
             "filters": "Filters",
             "age": "Student age",
             "all_rooms": "All classrooms",
@@ -528,6 +556,9 @@
             "save_error": "The change could not be saved.",
             "churches": "Churches",
             "networks": "Headquarters and branches",
+            "requests": "Requests",
+            "empty_requests": "No congregation requests were found.",
+            "domain": "Custom domain (e.g. church.example.com)",
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
@@ -810,7 +841,26 @@
             "delete_confirm": "Are you sure you want to delete this post?"
         },
         "public": {
-            "back_home": "Back to home"
+            "back_home": "Back to home",
+            "kicker": "Community news",
+            "title": "Posts",
+            "description": "Follow messages, announcements, and stories shared by your community.",
+            "empty": "No posts are available right now.",
+            "about_title": "About this board",
+            "about_description": "This space gathers content published by church leadership and ministries.",
+            "filters_title": "Find a post",
+            "search": "Search",
+            "search_placeholder": "Title or content...",
+            "category": "Category",
+            "all_categories": "All categories",
+            "period": "Publication period",
+            "date_from": "Start date",
+            "date_to": "End date",
+            "order": "Sort order",
+            "latest": "Latest",
+            "most_accessed": "Most accessed",
+            "apply_filters": "Apply filters",
+            "clear_filters": "Clear filters"
         },
         "index": {
             "meta_title": "Posts",
@@ -842,7 +892,11 @@
             "comments": "{count} comments",
             "summary": "Summary",
             "summary_text": "{comments} comments loaded and {reactions} reactions recorded for this post.",
-            "recent_comments": "Recent comments"
+            "recent_comments": "Recent comments",
+            "reaction_count": "{count} reactions",
+            "comment_count": "{count} comments",
+            "related": "Related posts",
+            "latest": "Recent posts"
         },
         "form": {
             "studio": "News Studio",
@@ -953,6 +1007,74 @@
             "events": "Events",
             "gallery": "Gallery",
             "posts": "Posts"
+        }
+    },
+    "membership": {
+        "title": "You are not a member of this congregation yet",
+        "description": "Your access was authenticated, but your profile belongs to another church. Would you like to switch your membership to {church}?",
+        "switch": "Switch congregation",
+        "leave": "Not now"
+    },
+    "portal": {
+        "meta_title": "Nossa Casa — faith communities",
+        "network_label": "Community network",
+        "open_my_church": "Open my church",
+        "create_account": "Create account",
+        "hero": {
+            "badge": "Open technology for faith communities",
+            "title": "A digital home for every community.",
+            "description": "Connect congregations, members, events, and ministries through a secure, personalized platform ready to grow with your community.",
+            "explore": "Explore communities",
+            "join": "Get started",
+            "domains_title": "Your own identity",
+            "domains_description": "Each church can use its own domain and provide relevant content to its members.",
+            "governance_title": "Protected relationships",
+            "governance_description": "New congregations are reviewed by community leaders before activation."
+        },
+        "communities": {
+            "kicker": "Participating communities",
+            "title": "Find a community near you",
+            "description": "Meet registered communities and access each congregation's experience directly.",
+            "church_count": "{count} congregations",
+            "main_domain": "Main domain",
+            "domain_pending": "Domain not configured yet",
+            "empty": "There are no public communities registered yet."
+        },
+        "onboarding": {
+            "register_community": "Register community",
+            "request_church": "Request a new congregation",
+            "community_kicker": "New network",
+            "church_kicker": "New congregation",
+            "approval_notice": "The request will be sent to community leaders. The domain will only be activated after approval.",
+            "send_request": "Send for approval",
+            "request_sent": "Request sent successfully.",
+            "my_requests": "My requests"
+        },
+        "review": {
+            "title": "Requests awaiting your review",
+            "description": "Review the registration details before approving the community relationship.",
+            "approve": "Approve",
+            "reject": "Reject",
+            "approve_confirm": "Approve congregation {name}?",
+            "reject_reason": "Enter the rejection reason:"
+        },
+        "status": {
+            "pending": "Pending",
+            "approved": "Approved",
+            "rejected": "Rejected"
+        },
+        "fields": {
+            "name": "Name",
+            "slug": "Identifier (slug)",
+            "description": "Description",
+            "community": "Community",
+            "domain": "Domain (e.g. church.example.com)",
+            "contact_email": "Contact email",
+            "contact_phone": "Contact phone",
+            "address": "Full address"
+        },
+        "errors": {
+            "generic": "The operation could not be completed."
         }
     },
     "editor": {

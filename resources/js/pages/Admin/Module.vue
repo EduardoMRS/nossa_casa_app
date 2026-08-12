@@ -48,7 +48,7 @@ defineOptions({
 <template>
     <Head :title="moduleText('title', props.title)" />
 
-    <div class="space-y-6 p-4 md:p-6">
+    <div class="space-y-6 p-4 md:p-8">
         <AdminPageHeader
             :kicker="moduleText('subtitle', props.subtitle)"
             :title="moduleText('title', props.title)"

@@ -4,6 +4,7 @@ use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Church;
+use App\Models\Event;
 use App\Models\Form;
 use App\Models\Library;
 use App\Models\Media;
@@ -75,7 +76,7 @@ test('content controllers sync categories for their church and type', function (
 
     $eventResponse->assertCreated();
 
-    $event = \App\Models\Event::query()->where('slug', 'culto-da-familia')->firstOrFail();
+    $event = Event::query()->where('slug', 'culto-da-familia')->firstOrFail();
     expect($event->categories()->pluck('categories.id')->all())->toBe([$eventCategory->id]);
 
     $postResponse = $this->actingAs($leader)->postJson('/api/post', [
@@ -109,7 +110,7 @@ test('content controllers sync categories for their church and type', function (
     file_put_contents($librarySource, '%PDF-1.4 testing');
 
     try {
-        $this->actingAs($admin)->post('/admin/biblioteca-versiculo/library', [
+        $this->actingAs($admin)->post('/dashboard/biblioteca-versiculo/library', [
             'title' => 'Biblioteca de teste',
             'description' => 'Arquivo de teste',
             'type' => 'book',
@@ -126,7 +127,14 @@ test('content controllers sync categories for their church and type', function (
     $this->actingAs($leader)->postJson('/api/forms', [
         'title' => 'Formulario de teste',
         'description' => 'Teste',
-        'schema' => [['type' => 'text', 'label' => 'Nome']],
+        'schema' => [
+            'fields' => [[
+                'id' => 'name',
+                'name' => 'name',
+                'type' => 'text',
+                'label' => 'Nome',
+            ]],
+        ],
         'category_ids' => [$formCategory->id, $libraryCategory->id],
     ])->assertCreated();
 

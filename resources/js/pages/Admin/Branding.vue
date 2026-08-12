@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import InputError from '@/components/InputError.vue';
@@ -30,6 +31,12 @@ type BrandingData = {
 const props = defineProps<{
     branding: BrandingData;
 }>();
+const colors = ref({
+    primary_color: props.branding.primary_color,
+    secondary_color: props.branding.secondary_color,
+    accent_color: props.branding.accent_color,
+    surface_color: props.branding.surface_color,
+});
 
 defineOptions({
     layout: {
@@ -47,7 +54,7 @@ const { t } = useI18n();
 <template>
     <Head :title="t('admin.branding.title')" />
 
-    <div class="space-y-6 p-4 md:p-6">
+    <div class="space-y-6 p-4 md:p-8">
         <AdminPageHeader
             :kicker="t('admin.branding.title')"
             :title="t('admin.branding.heading')"
@@ -61,7 +68,7 @@ const { t } = useI18n();
             v-slot="{ errors, processing }"
         >
             <div
-                class="grid gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm md:p-6"
+                class="grid gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm md:p-6"
             >
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="grid gap-2">
@@ -168,36 +175,57 @@ const { t } = useI18n();
                         <Label for="primary_color">{{
                             t('admin.branding.primary_color')
                         }}</Label>
-                        <Input
-                            id="primary_color"
-                            name="primary_color"
-                            :default-value="props.branding.primary_color"
-                            placeholder="#2f6e79"
-                        />
+                        <div class="flex gap-2">
+                            <input
+                                id="primary_color"
+                                v-model="colors.primary_color"
+                                name="primary_color"
+                                type="color"
+                                class="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
+                            />
+                            <Input
+                                v-model="colors.primary_color"
+                                placeholder="#2f6e79"
+                            />
+                        </div>
                         <InputError :message="errors.primary_color" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="secondary_color">{{
                             t('admin.branding.secondary_color')
                         }}</Label>
-                        <Input
-                            id="secondary_color"
-                            name="secondary_color"
-                            :default-value="props.branding.secondary_color"
-                            placeholder="#5f7d95"
-                        />
+                        <div class="flex gap-2">
+                            <input
+                                id="secondary_color"
+                                v-model="colors.secondary_color"
+                                name="secondary_color"
+                                type="color"
+                                class="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
+                            />
+                            <Input
+                                v-model="colors.secondary_color"
+                                placeholder="#5f7d95"
+                            />
+                        </div>
                         <InputError :message="errors.secondary_color" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="accent_color">{{
                             t('admin.branding.accent_color')
                         }}</Label>
-                        <Input
-                            id="accent_color"
-                            name="accent_color"
-                            :default-value="props.branding.accent_color"
-                            placeholder="#c88b4a"
-                        />
+                        <div class="flex gap-2">
+                            <input
+                                id="accent_color"
+                                v-model="colors.accent_color"
+                                name="accent_color"
+                                type="color"
+                                class="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
+                            />
+                            <Input
+                                v-model="colors.accent_color"
+                                placeholder="#c88b4a"
+                            />
+                        </div>
                         <InputError :message="errors.accent_color" />
                     </div>
                 </div>
@@ -207,12 +235,19 @@ const { t } = useI18n();
                         <Label for="surface_color">{{
                             t('admin.branding.surface_color')
                         }}</Label>
-                        <Input
-                            id="surface_color"
-                            name="surface_color"
-                            :default-value="props.branding.surface_color"
-                            placeholder="#f4f7fb"
-                        />
+                        <div class="flex gap-2">
+                            <input
+                                id="surface_color"
+                                v-model="colors.surface_color"
+                                name="surface_color"
+                                type="color"
+                                class="h-10 w-14 cursor-pointer rounded-md border border-input bg-background p-1"
+                            />
+                            <Input
+                                v-model="colors.surface_color"
+                                placeholder="#f4f7fb"
+                            />
+                        </div>
                         <InputError :message="errors.surface_color" />
                     </div>
                 </div>

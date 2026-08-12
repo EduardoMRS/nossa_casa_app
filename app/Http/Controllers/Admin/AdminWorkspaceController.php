@@ -6,6 +6,7 @@ use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Church;
+use App\Models\ChurchRegistrationRequest;
 use App\Models\Classroom;
 use App\Models\Comment;
 use App\Models\Community;
@@ -365,11 +366,17 @@ class AdminWorkspaceController extends Controller
             $network->parentChurch?->makeHidden('translations');
             $network->childChurch?->makeHidden('translations');
         });
+        $registrationRequests = ChurchRegistrationRequest::query()
+            ->when(! $isSystem, fn ($query) => $query->where('community_id', $communityId))
+            ->with(['community:id,name', 'requester:id,first_name,last_name,email'])
+            ->latest()
+            ->get();
 
         return Inertia::render('Admin/MultiCongregation', [
             'churches' => $churches,
             'communities' => $communities,
             'networks' => $networks,
+            'registrationRequests' => $registrationRequests,
             'canManageCommunities' => $isSystem,
             'stats' => [
                 ['label' => 'Igrejas', 'value' => (clone $churchQuery)->count()],

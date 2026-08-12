@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { Pencil, Plus, Tags, Trash2, X } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
+import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import { useI18n } from '@/lib/i18n';
 
 type CategoryTypeOption = { value: string; label: string };
@@ -102,35 +103,24 @@ const remove = (category: CategoryItem): void => {
 <template>
     <Head :title="t('admin.categories.title')" />
     <main class="space-y-6 p-4 md:p-8">
-        <header
-            class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white shadow-sm md:flex-row md:items-end"
+        <AdminPageHeader
+            :kicker="t('admin.categories.subtitle')"
+            :title="t('admin.categories.title')"
+            :description="t('admin.categories.description')"
         >
-            <div>
-                <p
-                    class="font-mono text-[10px] font-bold tracking-[0.18em] text-indigo-200 uppercase"
-                >
-                    {{ t('admin.categories.subtitle') }}
-                </p>
-                <h1 class="mt-2 text-3xl font-black">
-                    {{ t('admin.categories.title') }}
-                </h1>
-                <p class="mt-2 max-w-2xl text-sm text-indigo-100">
-                    {{ t('admin.categories.description') }}
-                </p>
-            </div>
             <button
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-black text-indigo-950"
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-foreground px-4 py-2.5 text-xs font-black text-primary"
                 @click="openEditor()"
             >
                 <Plus class="size-4" />{{ t('admin.categories.new') }}
             </button>
-        </header>
+        </AdminPageHeader>
 
         <section
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            class="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm"
         >
             <div
-                class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4"
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4"
             >
                 <div class="flex items-center gap-2 font-black">
                     <Tags class="size-5 text-indigo-600" />{{
@@ -139,7 +129,7 @@ const remove = (category: CategoryItem): void => {
                 </div>
                 <select
                     v-model="typeFilter"
-                    class="rounded-lg border-slate-200 text-sm"
+                    class="rounded-lg border-input bg-background text-sm text-foreground"
                 >
                     <option value="">
                         {{ t('admin.categories.all_types') }}
@@ -156,7 +146,7 @@ const remove = (category: CategoryItem): void => {
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left text-sm">
                     <thead
-                        class="bg-slate-50 text-[10px] font-bold tracking-wider text-slate-500 uppercase"
+                        class="bg-muted text-[10px] font-bold tracking-wider text-muted-foreground uppercase"
                     >
                         <tr>
                             <th class="px-5 py-3">
@@ -171,17 +161,19 @@ const remove = (category: CategoryItem): void => {
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-border">
                         <tr
                             v-for="category in filteredCategories"
                             :key="category.id"
-                            class="hover:bg-slate-50"
+                            class="hover:bg-muted/60"
                         >
-                            <td class="px-5 py-4 font-bold text-slate-900">
+                            <td
+                                class="px-5 py-4 font-bold text-card-foreground"
+                            >
                                 {{ category.name }}
                             </td>
                             <td
-                                class="px-5 py-4 font-mono text-xs text-slate-400"
+                                class="px-5 py-4 font-mono text-xs text-muted-foreground"
                             >
                                 {{ category.slug }}
                             </td>
@@ -216,7 +208,7 @@ const remove = (category: CategoryItem): void => {
             </div>
             <p
                 v-if="!filteredCategories.length"
-                class="p-12 text-center text-sm text-slate-400"
+                class="p-12 text-center text-sm text-muted-foreground"
             >
                 {{ t('admin.categories.empty') }}
             </p>
@@ -228,7 +220,7 @@ const remove = (category: CategoryItem): void => {
             @click.self="modalOpen = false"
         >
             <form
-                class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-2xl"
+                class="w-full max-w-lg space-y-4 rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl"
                 @submit.prevent="save"
             >
                 <header class="flex items-center justify-between">
@@ -241,32 +233,32 @@ const remove = (category: CategoryItem): void => {
                     </h2>
                     <button
                         type="button"
-                        class="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                        class="rounded-lg p-2 text-muted-foreground hover:bg-muted"
                         @click="modalOpen = false"
                     >
                         <X class="size-5" />
                     </button>
                 </header>
-                <label class="block text-xs font-bold text-slate-600"
+                <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.common.name')
                     }}<input
                         v-model="form.name"
                         required
-                        class="mt-1 w-full rounded-lg border-slate-200"
+                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                 /></label>
                 <p v-if="errors.name" class="text-xs text-rose-600">
                     {{ errors.name }}
                 </p>
-                <label class="block text-xs font-bold text-slate-600"
+                <label class="block text-xs font-bold text-foreground"
                     >Slug<input
                         v-model="form.slug"
                         required
-                        class="mt-1 w-full rounded-lg border-slate-200" /></label
-                ><label class="block text-xs font-bold text-slate-600"
+                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground" /></label
+                ><label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.common.type')
                     }}<select
                         v-model="form.type"
-                        class="mt-1 w-full rounded-lg border-slate-200"
+                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                     >
                         <option
                             v-for="type in types"
@@ -280,13 +272,13 @@ const remove = (category: CategoryItem): void => {
                 <div class="flex justify-end gap-2">
                     <button
                         type="button"
-                        class="rounded-lg px-4 py-2 text-sm font-bold text-slate-500"
+                        class="rounded-lg px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
                         @click="modalOpen = false"
                     >
                         {{ t('actions.cancel') }}</button
                     ><button
                         :disabled="processing"
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+                        class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
                     >
                         {{ t('actions.save') }}
                     </button>

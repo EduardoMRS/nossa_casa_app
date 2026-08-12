@@ -9,13 +9,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('database seeder creates a default system user when env values are missing', function () {
+test('database seeder creates the configured or default system user', function () {
     putenv('APP_USER_SYSTEM_EMAIL');
     putenv('APP_USER_SYSTEM_PASSWORD');
+    $expectedEmail = env('APP_USER_SYSTEM_EMAIL') ?: 'system@nossacasa.test';
 
     $this->seed(DatabaseSeeder::class);
 
-    $superadmin = User::query()->where('email', 'system@nossacasa.test')->first();
+    $superadmin = User::query()->where('email', $expectedEmail)->first();
 
     expect($superadmin)->not->toBeNull();
     expect($superadmin?->role)->toBe(UserRole::SYSTEM);

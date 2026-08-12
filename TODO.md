@@ -101,3 +101,21 @@ Para manter o projeto universal e localizado dinamicamente, o sistema conta com 
 * **`libraries` e `vercicles`:** Tabelas para prover conteúdo da bíblia, leitura diária e documentos da congregação.
 * **`highlights` (Polimórfica):** `id` (ULID), `highlightable_type`, `highlightable_id`, `church_id`, `order`.
 * **`calendars` (Polimórfica):** `id` (ULID), `calendarable_type`, `calendarable_id`, `church_id`, `date`.
+
+
+### Implementação futura
+- [ ] Worker que recebe RTSPs para transmissão ao vivo de video/audio
+    - a ideia é simples o banco será compartilhado entre o core da aplicação e o/os workers neles serão recebidos os conteudos para transmissão, no core ao um usuário tentar reproduzir a transmissão a mesma vira do worker
+    - ao finalizar a transmissão o conteudo deverá ficar gravado
+    - periodicamente o worker rodará um schedule que enviará o coteudo gravado para o core de forma que libere espaço no worker sejá disponibilizado mais rapidamente via o CDN do core
+    - core e worker terão a mesma estrutura a difereça será que o worker não recebera acesso direto dos usuários
+    - as transmissões em andamento deve aparecer na tela de logs, deve ser possivel derrubar uma conexão por lá
+- [ ] templates dinamicos, deve ser possivel mudar o templade visual das seguintes telas e components
+    - Wellcome
+    - Listagem de postagens publicas
+    - Visualização de postagem publica
+    - Listagem de evento publico
+    - Visualiza de evento publico
+    - Visualização de formulario
+    - Bliblioteca
+    - galeria 

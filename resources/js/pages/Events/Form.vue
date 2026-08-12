@@ -158,7 +158,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#f4f6fa] text-[#14263a]">
+    <div class="min-h-screen bg-background text-foreground">
         <Head
             :title="
                 isEditing
@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <p
-                        class="text-xs font-semibold tracking-[0.2em] text-[#2b6e7d] uppercase"
+                        class="text-xs font-semibold tracking-[0.2em] text-primary uppercase"
                     >
                         {{ t('events.form.studio') }}
                     </p>
@@ -184,14 +184,14 @@ onBeforeUnmount(() => {
                                 : t('events.form.create_title')
                         }}
                     </h1>
-                    <p class="mt-1 text-sm text-[#516478]">
+                    <p class="mt-1 text-sm text-muted-foreground">
                         {{ t('events.form.subtitle') }}
                     </p>
                 </div>
 
                 <Link
                     :href="props.returnUrl"
-                    class="inline-flex items-center gap-2 rounded-xl border border-[#c4d2df] bg-white px-4 py-2 text-sm font-semibold text-[#23384f]"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-bold text-card-foreground shadow-sm"
                 >
                     <ArrowLeft class="h-4 w-4" />
                     {{ t('nav.back') }}
@@ -200,17 +200,17 @@ onBeforeUnmount(() => {
 
             <form
                 @submit.prevent="submit"
-                class="space-y-6 rounded-3xl border border-[#d8e2ec] bg-white p-6 shadow-sm md:p-8"
+                class="space-y-6 rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm md:p-8"
             >
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#22374d]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('events.form.title')
                         }}</label>
                         <input
                             v-model="form.title"
                             type="text"
-                            class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.title"
@@ -221,13 +221,13 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div class="space-y-2">
-                        <label class="text-sm font-bold text-[#22374d]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('events.form.slug')
                         }}</label>
                         <input
                             v-model="form.slug"
                             type="text"
-                            class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p v-if="form.errors.slug" class="text-xs text-red-600">
                             {{ form.errors.slug }}
@@ -237,10 +237,10 @@ onBeforeUnmount(() => {
 
                 <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-bold text-[#22374d]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('events.form.description')
                         }}</label>
-                        <span class="text-xs text-[#678096]">{{
+                        <span class="text-xs text-muted-foreground">{{
                             t('events.form.description_hint')
                         }}</span>
                     </div>
@@ -263,15 +263,15 @@ onBeforeUnmount(() => {
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
                         <label
-                            class="inline-flex items-center gap-2 text-sm font-bold text-[#22374d]"
+                            class="inline-flex items-center gap-2 text-sm font-bold text-foreground"
                         >
-                            <CalendarClock class="h-4 w-4 text-[#2b6e7d]" />
+                            <CalendarClock class="h-4 w-4 text-primary" />
                             {{ t('events.form.start_time') }}
                         </label>
                         <input
                             v-model="form.start_time"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.start_time"
@@ -283,15 +283,15 @@ onBeforeUnmount(() => {
 
                     <div class="space-y-2">
                         <label
-                            class="inline-flex items-center gap-2 text-sm font-bold text-[#22374d]"
+                            class="inline-flex items-center gap-2 text-sm font-bold text-foreground"
                         >
-                            <CalendarClock class="h-4 w-4 text-[#2b6e7d]" />
+                            <CalendarClock class="h-4 w-4 text-primary" />
                             {{ t('events.form.end_time') }}
                         </label>
                         <input
                             v-model="form.end_time"
                             type="datetime-local"
-                            class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2.5 text-sm"
+                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
                         />
                         <p
                             v-if="form.errors.end_time"
@@ -304,12 +304,12 @@ onBeforeUnmount(() => {
 
                 <div class="space-y-2">
                     <div class="flex items-center justify-between gap-3">
-                        <label class="text-sm font-bold text-[#22374d]">{{
+                        <label class="text-sm font-bold text-foreground">{{
                             t('events.form.cover')
                         }}</label>
                         <select
                             :value="coverInputType"
-                            class="rounded-xl border border-[#d4e0ea] bg-white px-3 py-2 text-xs font-semibold text-[#23384f]"
+                            class="rounded-lg border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground"
                             @change="onCoverTypeChange"
                         >
                             <option value="url">URL</option>
@@ -323,19 +323,19 @@ onBeforeUnmount(() => {
                         v-if="coverInputType === 'file'"
                         type="file"
                         accept="image/*"
-                        class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2 text-sm"
+                        class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
                         @change="onCoverChange"
                     />
                     <input
                         v-else
                         v-model="coverPreview"
                         type="text"
-                        class="w-full rounded-xl border border-[#d4e0ea] px-3 py-2 text-sm"
+                        class="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground"
                         :placeholder="t('gallery.file_placeholder')"
                         @input="onCoverUrlInput"
                     />
 
-                    <p class="text-xs text-[#678096]">
+                    <p class="text-xs text-muted-foreground">
                         {{ t('events.form.cover_hint') }}
                     </p>
                     <p
@@ -348,7 +348,7 @@ onBeforeUnmount(() => {
                         v-if="coverPreview"
                         :src="coverPreview"
                         :alt="t('gallery.preview_alt')"
-                        class="mt-2 h-44 w-full rounded-xl object-cover ring-1 ring-[#d7e1ea]"
+                        class="mt-2 h-44 w-full rounded-xl object-cover ring-1 ring-border"
                     />
                 </div>
 
@@ -356,7 +356,7 @@ onBeforeUnmount(() => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-[#0f5564] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#0c4652] disabled:opacity-60"
+                        class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
                     >
                         <Save class="h-4 w-4" />
                         {{

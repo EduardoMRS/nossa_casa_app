@@ -16,10 +16,13 @@ createInertiaApp({
         const publicPages = [
             'Home',
             'Welcome',
+            'Portal/Index',
             'Events/Index',
             'Events/Show',
             'Events/Register',
+            'Posts/PublicIndex',
             'Posts/PublicShow',
+            'Admin/ClassroomLabels',
             'Gallery/Index',
             'Library/Index',
         ];

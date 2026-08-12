@@ -50,6 +50,8 @@ class MediaController extends Controller
         $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
 
         $media = Media::create([
+            'title' => $validated['title'] ?? null,
+            'description' => $validated['description'] ?? null,
             'file_path' => $mediaPath,
             'mimetype' => $validated['mimetype'] ?? ($fileData['mime_type'] ?? null),
             'size' => $validated['size'] ?? ($fileData['size'] ?? null),
@@ -74,6 +76,8 @@ class MediaController extends Controller
         $this->ensureChurchAccess($request, $media->church_id);
         $this->ensureOwnerOrModerator($request, $media->uploader_id);
         $validated = $request->validate([
+            'title' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
             'file_path' => ['nullable'],
             'file' => ['nullable'],
             'mimetype' => ['nullable', 'string', 'max:255'],
@@ -85,6 +89,8 @@ class MediaController extends Controller
 
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? ($request->has('file_path') ? $request->input('file_path') : null);
         $updates = [
+            'title' => $request->has('title') ? $validated['title'] : $media->title,
+            'description' => $request->has('description') ? $validated['description'] : $media->description,
             'gallery' => $validated['gallery'] ?? $media->gallery,
             'status' => $validated['status'] ?? $media->status,
             'mimetype' => $validated['mimetype'] ?? $media->mimetype,

@@ -2,6 +2,10 @@
 
 use App\Models\User;
 
+beforeEach(function () {
+    $this->withoutVite();
+});
+
 test('profile page is displayed', function () {
     $user = User::factory()->create();
 

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'church_domain_session_ended' => 'Your session ended because this domain belongs to another congregation.',
 
     /*
     |--------------------------------------------------------------------------

@@ -130,7 +130,7 @@ const communicationNavItems = computed<NavItem[]>(() => [
 const ministriesNavItems = computed<NavItem[]>(() => [
     {
         title: t('nav.events'),
-        href: '/admin/eventos',
+        href: '/dashboard/eventos',
         icon: CalendarDays,
     },
     {
