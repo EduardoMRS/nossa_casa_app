@@ -4,7 +4,9 @@ import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { installI18n } from '@/lib/i18n';
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -42,6 +44,10 @@ createInertiaApp({
     },
     progress: {
         color: '#4B5563',
+    },
+    withApp: (app, { page }) => {
+        installI18n(app, page.props.locale);
+        applyBranding(page.props.branding);
     },
 });
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Clock3, Globe2, ImageUp, MapPinned, Plus, Trash2 } from '@lucide/vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import InputError from '@/components/InputError.vue';
@@ -11,6 +12,7 @@ import { useI18n } from '@/lib/i18n';
 import { edit } from '@/routes/admin/branding';
 
 type BrandingData = {
+    domain: string;
     brand_name: string;
     tagline: string;
     banner_title: string;
@@ -20,12 +22,22 @@ type BrandingData = {
     accent_color: string;
     surface_color: string;
     font_family: string;
+    logo_path: string;
     logo_url: string;
     icon_name: string;
     contact_email: string;
     contact_phone: string;
     contact_whatsapp: string;
-    contact_website: string;
+    address: string;
+    map_embed: string;
+    weekly_schedule: WeeklySchedule[];
+};
+
+type WeeklySchedule = {
+    title: string;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
 };
 
 const props = defineProps<{
@@ -37,6 +49,46 @@ const colors = ref({
     accent_color: props.branding.accent_color,
     surface_color: props.branding.surface_color,
 });
+const weeklySchedule = ref<WeeklySchedule[]>(
+    props.branding.weekly_schedule.map((item) => ({ ...item })),
+);
+const localLogoPreview = ref('');
+const removeLogo = ref(false);
+const logoPreview = computed(() =>
+    removeLogo.value
+        ? ''
+        : localLogoPreview.value || props.branding.logo_url || '',
+);
+
+const chooseLogo = (event: Event): void => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+
+    if (localLogoPreview.value) {
+        URL.revokeObjectURL(localLogoPreview.value);
+    }
+
+    localLogoPreview.value = file ? URL.createObjectURL(file) : '';
+    removeLogo.value = false;
+};
+
+onBeforeUnmount(() => {
+    if (localLogoPreview.value) {
+        URL.revokeObjectURL(localLogoPreview.value);
+    }
+});
+
+const addSchedule = (): void => {
+    weeklySchedule.value.push({
+        title: '',
+        day_of_week: 0,
+        start_time: '09:00',
+        end_time: '10:00',
+    });
+};
+
+const removeSchedule = (index: number): void => {
+    weeklySchedule.value.splice(index, 1);
+};
 
 defineOptions({
     layout: {
@@ -49,6 +101,15 @@ defineOptions({
     },
 });
 const { t } = useI18n();
+const weekdays = [
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+];
 </script>
 
 <template>
@@ -145,30 +206,91 @@ const { t } = useI18n();
                     </div>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="logo_url">{{
-                            t('admin.branding.logo_url')
+                <section
+                    class="grid gap-5 rounded-2xl border border-border bg-muted/30 p-4 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:p-5"
+                >
+                    <div class="flex items-start gap-4">
+                        <div
+                            class="grid size-24 shrink-0 place-items-center overflow-hidden rounded-2xl border border-border bg-background shadow-sm"
+                        >
+                            <img
+                                v-if="logoPreview"
+                                :src="logoPreview"
+                                :alt="t('admin.branding.logo_preview')"
+                                class="h-full w-full object-contain p-2"
+                            />
+                            <ImageUp
+                                v-else
+                                class="size-9 text-muted-foreground"
+                            />
+                        </div>
+                        <div>
+                            <h2 class="font-bold">
+                                {{ t('admin.branding.logo_file') }}
+                            </h2>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ t('admin.branding.logo_hint') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid gap-3">
+                        <input
+                            id="logo"
+                            name="logo"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            class="w-full rounded-xl border border-input bg-background p-2 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-bold file:text-primary-foreground"
+                            @change="chooseLogo"
+                        />
+                        <input
+                            type="hidden"
+                            name="remove_logo"
+                            :value="removeLogo ? 1 : 0"
+                        />
+                        <button
+                            v-if="logoPreview || props.branding.logo_url"
+                            type="button"
+                            class="justify-self-start text-xs font-bold text-destructive hover:underline"
+                            @click="removeLogo = !removeLogo"
+                        >
+                            {{
+                                removeLogo
+                                    ? t('admin.branding.keep_logo')
+                                    : t('admin.branding.remove_logo')
+                            }}
+                        </button>
+                        <InputError :message="errors.logo" />
+                    </div>
+                </section>
+
+                <section class="grid gap-3 border-t border-border pt-6">
+                    <div class="flex items-start gap-3">
+                        <Globe2 class="mt-0.5 size-5 text-primary" />
+                        <div>
+                            <h2 class="font-bold">
+                                {{ t('admin.branding.domain_title') }}
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{ t('admin.branding.domain_description') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid max-w-2xl gap-2">
+                        <Label for="domain">{{
+                            t('admin.branding.domain')
                         }}</Label>
                         <Input
-                            id="logo_url"
-                            name="logo_url"
-                            :default-value="props.branding.logo_url"
+                            id="domain"
+                            name="domain"
+                            :default-value="props.branding.domain"
+                            placeholder="igreja.exemplo.com"
                         />
-                        <InputError :message="errors.logo_url" />
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('admin.branding.domain_hint') }}
+                        </p>
+                        <InputError :message="errors.domain" />
                     </div>
-                    <div class="grid gap-2">
-                        <Label for="contact_website">{{
-                            t('admin.branding.website')
-                        }}</Label>
-                        <Input
-                            id="contact_website"
-                            name="contact_website"
-                            :default-value="props.branding.contact_website"
-                        />
-                        <InputError :message="errors.contact_website" />
-                    </div>
-                </div>
+                </section>
 
                 <div class="grid gap-4 md:grid-cols-3">
                     <div class="grid gap-2">
@@ -283,6 +405,170 @@ const { t } = useI18n();
                         <InputError :message="errors.contact_whatsapp" />
                     </div>
                 </div>
+
+                <section class="grid gap-4 border-t border-border pt-6">
+                    <div class="flex items-start gap-3">
+                        <MapPinned class="mt-0.5 size-5 text-primary" />
+                        <div>
+                            <h2 class="font-bold">
+                                {{ t('admin.branding.location_title') }}
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{ t('admin.branding.location_description') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="address">{{
+                                t('admin.branding.address')
+                            }}</Label>
+                            <textarea
+                                id="address"
+                                name="address"
+                                rows="4"
+                                class="rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
+                                :value="props.branding.address"
+                            />
+                            <InputError :message="errors.address" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="map_embed">{{
+                                t('admin.branding.map_embed')
+                            }}</Label>
+                            <textarea
+                                id="map_embed"
+                                name="map_embed"
+                                rows="4"
+                                class="rounded-xl border border-input bg-background px-3 py-2 font-mono text-xs text-foreground"
+                                :value="props.branding.map_embed"
+                                :placeholder="
+                                    t('admin.branding.map_embed_placeholder')
+                                "
+                            />
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.map_embed_hint') }}
+                            </p>
+                            <InputError :message="errors.map_embed" />
+                        </div>
+                    </div>
+                </section>
+
+                <section class="grid gap-4 border-t border-border pt-6">
+                    <div
+                        class="flex flex-wrap items-start justify-between gap-3"
+                    >
+                        <div class="flex items-start gap-3">
+                            <Clock3 class="mt-0.5 size-5 text-primary" />
+                            <div>
+                                <h2 class="font-bold">
+                                    {{ t('admin.branding.schedule_title') }}
+                                </h2>
+                                <p class="text-sm text-muted-foreground">
+                                    {{
+                                        t('admin.branding.schedule_description')
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="addSchedule"
+                        >
+                            <Plus class="size-4" />
+                            {{ t('admin.branding.schedule_add') }}
+                        </Button>
+                    </div>
+
+                    <div v-if="weeklySchedule.length" class="grid gap-3">
+                        <article
+                            v-for="(schedule, index) in weeklySchedule"
+                            :key="index"
+                            class="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_8rem_8rem_auto] md:items-end"
+                        >
+                            <div class="grid gap-2">
+                                <Label :for="`schedule_title_${index}`">{{
+                                    t('admin.branding.schedule_name')
+                                }}</Label>
+                                <Input
+                                    :id="`schedule_title_${index}`"
+                                    v-model="schedule.title"
+                                    :name="`weekly_schedule[${index}][title]`"
+                                    required
+                                />
+                                <InputError
+                                    :message="
+                                        errors[`weekly_schedule.${index}.title`]
+                                    "
+                                />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label :for="`schedule_day_${index}`">{{
+                                    t('admin.branding.schedule_day')
+                                }}</Label>
+                                <select
+                                    :id="`schedule_day_${index}`"
+                                    v-model.number="schedule.day_of_week"
+                                    :name="`weekly_schedule[${index}][day_of_week]`"
+                                    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option
+                                        v-for="(weekday, dayIndex) in weekdays"
+                                        :key="weekday"
+                                        :value="dayIndex"
+                                    >
+                                        {{ t(`weekdays.${weekday}`) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="grid gap-2">
+                                <Label :for="`schedule_start_${index}`">{{
+                                    t('admin.branding.schedule_start')
+                                }}</Label>
+                                <Input
+                                    :id="`schedule_start_${index}`"
+                                    v-model="schedule.start_time"
+                                    :name="`weekly_schedule[${index}][start_time]`"
+                                    type="time"
+                                    required
+                                />
+                            </div>
+                            <div class="grid gap-2">
+                                <Label :for="`schedule_end_${index}`">{{
+                                    t('admin.branding.schedule_end')
+                                }}</Label>
+                                <Input
+                                    :id="`schedule_end_${index}`"
+                                    v-model="schedule.end_time"
+                                    :name="`weekly_schedule[${index}][end_time]`"
+                                    type="time"
+                                    required
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                class="text-destructive"
+                                :aria-label="
+                                    t('admin.branding.schedule_remove')
+                                "
+                                @click="removeSchedule(index)"
+                            >
+                                <Trash2 class="size-4" />
+                            </Button>
+                        </article>
+                    </div>
+                    <p
+                        v-else
+                        class="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground"
+                    >
+                        {{ t('admin.branding.schedule_empty') }}
+                    </p>
+                    <InputError :message="errors.weekly_schedule" />
+                </section>
 
                 <div class="flex items-center gap-4 pt-2">
                     <Button :disabled="processing">{{

@@ -282,8 +282,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('admin.')
         ->middleware('role:admin|superadmin|system')
         ->group(function () {
-            Route::get('/branding', [BrandingController::class, 'edit'])->name('branding.edit');
-            Route::put('/branding', [BrandingController::class, 'update'])->name('branding.update');
+            Route::redirect('/branding', '/dashboard/configuracoes-church');
+            Route::get('/configuracoes-church', [BrandingController::class, 'edit'])->name('branding.edit');
+            Route::put('/configuracoes-church', [BrandingController::class, 'update'])->name('branding.update');
             Route::get('/categorias', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
             Route::get('/destaques', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');

@@ -5,6 +5,7 @@ use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Media;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -110,4 +111,56 @@ test('admin can approve and delete pending media', function () {
 
     expect(Storage::disk('public')->exists('church/'.$church->id.'/media/sample.pdf'))->toBeFalse();
     expect(Media::query()->whereKey($media->id)->exists())->toBeFalse();
+});
+
+test('registered media source cannot be replaced while record data can be edited', function () {
+    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
+    $church->assignMember($admin);
+
+    $originalPath = 'church/'.$church->id.'/media/original.jpg';
+    Storage::disk('public')->put($originalPath, 'original-media');
+
+    $media = Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $admin->id,
+        'title' => 'Original title',
+        'description' => 'Original description',
+        'file_path' => $originalPath,
+        'mimetype' => 'image/jpeg',
+        'size' => 14,
+        'gallery' => true,
+        'status' => MediaStatus::PENDING,
+    ]);
+
+    $this->actingAs($admin)
+        ->withHeader('Accept', 'application/json')
+        ->put('/api/media/'.$media->id, [
+            'file_path' => 'https://example.test/replacement.jpg',
+            'file' => UploadedFile::fake()->create('replacement.jpg', 10, 'image/jpeg'),
+            'mimetype' => 'image/png',
+            'size' => 999,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['file_path', 'file', 'mimetype', 'size']);
+
+    expect($media->refresh())
+        ->file_path->toBe($originalPath)
+        ->mimetype->toBe('image/jpeg')
+        ->size->toBe(14);
+
+    $this->actingAs($admin)->putJson('/api/media/'.$media->id, [
+        'title' => 'Updated title',
+        'description' => 'Updated description',
+        'gallery' => false,
+    ])->assertSuccessful();
+
+    expect($media->refresh())
+        ->title->toBe('Updated title')
+        ->description->toBe('Updated description')
+        ->gallery->toBeFalse()
+        ->file_path->toBe($originalPath)
+        ->mimetype->toBe('image/jpeg')
+        ->size->toBe(14);
+    expect(Storage::disk('public')->exists($originalPath))->toBeTrue();
 });

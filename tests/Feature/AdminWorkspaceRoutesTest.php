@@ -43,7 +43,8 @@ it('allows admin to open all admin workspace routes', function () {
     $admin = createAdminUserWithChurch();
 
     expect(parse_url(route('admin.events.index'), PHP_URL_PATH))->toBe('/dashboard/eventos')
-        ->and(parse_url(route('posts.index'), PHP_URL_PATH))->toBe('/dashboard/posts');
+        ->and(parse_url(route('posts.index'), PHP_URL_PATH))->toBe('/dashboard/posts')
+        ->and(parse_url(route('admin.branding.edit'), PHP_URL_PATH))->toBe('/dashboard/configuracoes-church');
 
     $routes = [
         'admin.branding.edit',

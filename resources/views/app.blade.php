@@ -1,5 +1,23 @@
+@php
+    $branding = data_get($page, 'props.branding', []);
+    $validColor = static fn (mixed $value, string $fallback): string => is_string($value) && preg_match('/^#[A-Fa-f0-9]{6}$/', $value)
+        ? $value
+        : $fallback;
+    $fontFamily = data_get($branding, 'font_family', 'Manrope, ui-sans-serif');
+    $fontFamily = is_string($fontFamily) && preg_match('/^[A-Za-z0-9\s,\'"_-]+$/u', $fontFamily)
+        ? $fontFamily
+        : 'Manrope, ui-sans-serif';
+    $brandingStyle = implode('; ', [
+        '--church-primary: '.$validColor(data_get($branding, 'primary_color'), '#342f87'),
+        '--church-secondary: '.$validColor(data_get($branding, 'secondary_color'), '#5f7d95'),
+        '--church-accent: '.$validColor(data_get($branding, 'accent_color'), '#c88b4a'),
+        '--church-surface: '.$validColor(data_get($branding, 'surface_color'), '#f8fafc'),
+        '--church-font: '.$fontFamily,
+        '--font-sans: '.$fontFamily,
+    ]);
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="{{ $brandingStyle }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

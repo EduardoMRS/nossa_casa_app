@@ -108,6 +108,7 @@ test('public index and show responses use the requested content locale', functio
     $this->withUnencryptedCookie('ncapp_locale', 'pt')
         ->get('/events')
         ->assertSuccessful()
+        ->assertSee('<html lang="pt"', false)
         ->assertInertia(fn (Assert $page) => $page
             ->where('locale', 'pt')
             ->where('events.data.0.title', 'Evento traduzido')

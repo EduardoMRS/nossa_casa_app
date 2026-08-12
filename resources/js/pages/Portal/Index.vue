@@ -13,6 +13,7 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import PublicFooter from '@/components/PublicFooter.vue';
 import { useI18n } from '@/lib/i18n';
 import { login, register } from '@/routes';
 
@@ -147,15 +148,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
     const notes = window.prompt(t('portal.review.reject_reason'));
 
     if (!notes) {
-return;
-}
+        return;
+    }
 
     await axios.post(`/onboarding/churches/${request.id}/reject`, {
         review_notes: notes,
     });
     window.location.reload();
 };
-
 </script>
 
 <template>
@@ -499,6 +499,8 @@ return;
                 </div>
             </section>
         </main>
+
+        <PublicFooter show-locale />
 
         <div
             v-if="communityModalOpen"
