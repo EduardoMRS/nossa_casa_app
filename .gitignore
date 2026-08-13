@@ -41,3 +41,4 @@ AllMigrations.php
 docs/api.json
 public/
 laravel
+public/build/

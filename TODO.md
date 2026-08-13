@@ -104,6 +104,7 @@ Para manter o projeto universal e localizado dinamicamente, o sistema conta com 
 
 
 ### Implementação futura
+- [ ] Mover salvamento das midias em geral para que sejam salvas no storage, creio já estar assim mas verifique, o acesso e visualização de arquivos será apenas via url ecriptadapara maior segurança
 - [ ] Worker que recebe RTSPs para transmissão ao vivo de video/audio
     - a ideia é simples o banco será compartilhado entre o core da aplicação e o/os workers neles serão recebidos os conteudos para transmissão, no core ao um usuário tentar reproduzir a transmissão a mesma vira do worker
     - ao finalizar a transmissão o conteudo deverá ficar gravado

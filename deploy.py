@@ -15,10 +15,14 @@ def run_command(command):
 
 def main():
     print("--- Iniciando o Deploy do Projeto ---")
+    
+    run_command(["git", "pull", "origin", "--no-rebase"])
 
     run_command(["composer", "install", "--no-interaction", "--optimize-autoloader", "--no-dev"])
 
     run_command(["npm", "install", "--force"])
+
+    run_command(["npm", "run", "build"])
 
     print("\n⚡ Tudo instalado! O conteudo será acessado apartir de ./public")
 
