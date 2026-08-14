@@ -104,7 +104,7 @@ class MediaController extends Controller
         $this->ensureOwnerOrModerator($request, $media->uploader_id);
 
         if ($media->file_path) {
-            Storage::disk('public')->delete($media->file_path);
+            Storage::disk($media->disk ?: (string) config('media.disk'))->delete($media->file_path);
         }
 
         $media->delete();

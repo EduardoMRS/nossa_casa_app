@@ -522,6 +522,13 @@
             "pending_jobs": "Tarefas pendentes",
             "failed_jobs": "Tarefas falhas",
             "search": "Filtrar entradas de log",
+            "live_streams": "Transmissões em andamento",
+            "live_streams_description": "Conexões RTSP ativas nos workers de mídia.",
+            "unknown_worker": "worker desconhecido",
+            "recordings": "gravações",
+            "open_stream": "Abrir transmissão",
+            "stop_stream": "Derrubar conexão",
+            "no_live_streams": "Nenhuma transmissão ativa agora.",
             "stats": [
                 "Usuários",
                 "Eventos",

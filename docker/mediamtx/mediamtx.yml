@@ -1,0 +1,63 @@
+logLevel: info
+logDestinations: [stdout]
+
+api: yes
+apiAddress: :9997
+
+authMethod: http
+authHTTPAddress: http://webserver/api/internal/media/auth
+authHTTPExclude:
+  - action: read
+  - action: playback
+  - action: api
+  - action: metrics
+  - action: pprof
+
+rtsp: yes
+rtspAddress: :8554
+
+rtmp: yes
+rtmpAddress: :1935
+
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ['*']
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigins: ['*']
+
+pathDefaults:
+  sourceOnDemand: false
+  record: true
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordSegmentDuration: 15m
+  recordDeleteAfter: 0s
+  runOnOnline: >-
+    curl --fail --silent --show-error --request POST
+    --header "X-Media-Worker-Token: $MEDIA_WORKER_TOKEN"
+    --data-urlencode "path=$MTX_PATH"
+    --data-urlencode "source_type=$MTX_SOURCE_TYPE"
+    --data-urlencode "source_id=$MTX_SOURCE_ID"
+    --data-urlencode "worker_id=$MEDIA_WORKER_ID"
+    http://webserver/api/internal/media/online
+  runOnOffline: >-
+    curl --fail --silent --show-error --request POST
+    --header "X-Media-Worker-Token: $MEDIA_WORKER_TOKEN"
+    --data-urlencode "path=$MTX_PATH"
+    --data-urlencode "source_type=$MTX_SOURCE_TYPE"
+    --data-urlencode "source_id=$MTX_SOURCE_ID"
+    --data-urlencode "worker_id=$MEDIA_WORKER_ID"
+    http://webserver/api/internal/media/offline
+  runOnRecordSegmentComplete: >-
+    curl --fail --silent --show-error --request POST
+    --header "X-Media-Worker-Token: $MEDIA_WORKER_TOKEN"
+    --data-urlencode "path=$MTX_PATH"
+    --data-urlencode "segment_path=$MTX_SEGMENT_PATH"
+    --data-urlencode "segment_duration=$MTX_SEGMENT_DURATION"
+    --data-urlencode "worker_id=$MEDIA_WORKER_ID"
+    http://webserver/api/internal/media/recording-completed
+
+paths: {}

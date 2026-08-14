@@ -131,7 +131,7 @@ if (! function_exists('genUrl')) {
      * @param  string  $filePath  The file path to encrypt and generate a URL for
      * @return string The generated secure URL
      */
-    function genUrl($filePath): ?string
+    function genUrl($filePath, ?string $disk = null): ?string
     {
         if (! is_string($filePath) || $filePath === '') {
             return null;
@@ -141,7 +141,10 @@ if (! function_exists('genUrl')) {
             return $filePath;
         }
 
-        $encryptedPath = Crypt::encryptString($filePath);
+        $encryptedPath = Crypt::encryptString(json_encode([
+            'disk' => $disk ?? config('media.disk'),
+            'path' => $filePath,
+        ], JSON_THROW_ON_ERROR));
 
         return URL::temporarySignedRoute(
             'secure-file',

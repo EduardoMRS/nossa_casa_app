@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('public');
+    Storage::fake('media');
 });
 
 test('file metadata skips unavailable filesystem adapters', function () {
@@ -36,7 +37,7 @@ test('file metadata resolves files from an available local disk', function () {
 });
 
 test('stored files are served only through encrypted temporary signed urls', function () {
-    Storage::disk('public')->put('gallery/private.txt', 'private content');
+    Storage::disk('media')->put('gallery/private.txt', 'private content');
 
     $url = genUrl('gallery/private.txt');
 
@@ -75,7 +76,7 @@ test('leader can upload media from a stored file path string', function () {
         expect($media->description)->toBe('A resource shared with the gallery.');
         expect($media->status)->toBe(MediaStatus::PENDING);
         expect($media->file_path)->toStartWith('church/'.$church->id.'/media/');
-        expect(Storage::disk('public')->exists($media->file_path))->toBeTrue();
+        expect(Storage::disk('media')->exists($media->file_path))->toBeTrue();
     } finally {
         @unlink($sourcePath);
     }
@@ -104,7 +105,7 @@ test('admin can approve and delete pending media', function () {
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 
-    Storage::disk('public')->put('church/'.$church->id.'/media/sample.pdf', 'sample');
+    Storage::disk('media')->put('church/'.$church->id.'/media/sample.pdf', 'sample');
 
     $media = Media::query()->create([
         'church_id' => $church->id,
@@ -124,7 +125,7 @@ test('admin can approve and delete pending media', function () {
 
     $this->actingAs($admin)->deleteJson('/api/media/'.$media->id)->assertNoContent();
 
-    expect(Storage::disk('public')->exists('church/'.$church->id.'/media/sample.pdf'))->toBeFalse();
+    expect(Storage::disk('media')->exists('church/'.$church->id.'/media/sample.pdf'))->toBeFalse();
     expect(Media::query()->whereKey($media->id)->exists())->toBeFalse();
 });
 
@@ -134,7 +135,7 @@ test('registered media source cannot be replaced while record data can be edited
     $church->assignMember($admin);
 
     $originalPath = 'church/'.$church->id.'/media/original.jpg';
-    Storage::disk('public')->put($originalPath, 'original-media');
+    Storage::disk('media')->put($originalPath, 'original-media');
 
     $media = Media::query()->create([
         'church_id' => $church->id,
@@ -177,5 +178,5 @@ test('registered media source cannot be replaced while record data can be edited
         ->file_path->toBe($originalPath)
         ->mimetype->toBe('image/jpeg')
         ->size->toBe(14);
-    expect(Storage::disk('public')->exists($originalPath))->toBeTrue();
+    expect(Storage::disk('media')->exists($originalPath))->toBeTrue();
 });

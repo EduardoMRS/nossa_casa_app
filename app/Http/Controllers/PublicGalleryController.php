@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CategoryType;
+use App\Enums\MediaStatus;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Media;
@@ -10,9 +11,11 @@ use App\Models\Reaction;
 use App\Support\ChurchDomainContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PublicGalleryController extends Controller
 {
@@ -47,6 +50,17 @@ class PublicGalleryController extends Controller
         ]);
     }
 
+    public function download(Media $media): StreamedResponse
+    {
+        $churchId = app(ChurchDomainContext::class)->churchId();
+
+        abort_unless($media->status === MediaStatus::APPROVED, 404);
+        abort_if($churchId && $media->church_id !== $churchId, 404);
+
+        return Storage::disk($media->disk ?: (string) config('media.disk'))
+            ->download($media->file_path, basename($media->file_path));
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -57,6 +71,7 @@ class PublicGalleryController extends Controller
         return [
             'id' => $media->id,
             'url' => $media->url,
+            'download_url' => route('gallery.download', $media),
             'title' => $media->title ?: $this->fallbackTitle($media->file_path),
             'description' => $media->description,
             'mimetype' => $media->mimetype,

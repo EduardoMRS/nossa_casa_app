@@ -8,6 +8,7 @@ import {
     LibraryBig,
     Menu,
     Newspaper,
+    Radio,
     X,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
@@ -46,6 +47,14 @@ const user = computed(() => page.props.auth?.user);
 const { t } = useI18n();
 const branding = computed(
     () => (page.props.branding ?? {}) as Record<string, string>,
+);
+const activeLiveStream = computed(
+    () =>
+        page.props.activeLiveStream as {
+            id: string;
+            name: string;
+            started_at: string | null;
+        } | null,
 );
 const canAccessDashboard = computed(
     () =>
@@ -218,6 +227,24 @@ const navClass = (key: PublicNavKey): string =>
                 </button>
             </div>
         </div>
+
+        <Link
+            v-if="activeLiveStream"
+            :href="`/transmissoes/${activeLiveStream.id}`"
+            class="flex items-center justify-center gap-3 border-t border-white/15 bg-rose-600 px-4 py-2 text-sm font-black text-white transition hover:bg-rose-700"
+        >
+            <span class="relative flex size-3">
+                <span
+                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60"
+                />
+                <span
+                    class="relative inline-flex size-3 rounded-full bg-white"
+                />
+            </span>
+            <Radio class="size-4" />
+            <span class="truncate">Ao vivo: {{ activeLiveStream.name }}</span>
+            <span class="text-xs font-bold underline">Assistir</span>
+        </Link>
 
         <nav
             v-if="mobileOpen"

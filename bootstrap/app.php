@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureMediaWorkerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveChurchDomain;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'ncapp_locale']);
+        $middleware->validateCsrfTokens(except: ['api/internal/media/*']);
 
         $middleware->web(append: [
             SetLocale::class,
@@ -33,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'media.worker' => EnsureMediaWorkerToken::class,
             'role' => UserRole::class,
         ]);
     })

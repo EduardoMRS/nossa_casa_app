@@ -23,6 +23,7 @@ class Media extends Model
         'size',
         'gallery',
         'status',
+        'disk',
     ];
 
     protected $casts = [
@@ -99,6 +100,6 @@ class Media extends Model
 
     public function getUrlAttribute()
     {
-        return genUrl($this->file_path);
+        return genUrl($this->file_path, $this->disk);
     }
 }

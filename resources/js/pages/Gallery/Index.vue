@@ -7,6 +7,7 @@ import {
     Play,
     Send,
     Upload,
+    Download,
     X,
 } from '@lucide/vue';
 import axios from 'axios';
@@ -41,6 +42,7 @@ interface GalleryComment {
 interface MediaItem {
     id: string;
     url: string;
+    download_url: string;
     title: string;
     description: string | null;
     mimetype: string;
@@ -597,6 +599,12 @@ onBeforeUnmount(() => {
                             >
                                 {{ selectedMedia.description }}
                             </p>
+                            <a
+                                :href="selectedMedia.download_url"
+                                class="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white"
+                            >
+                                <Download class="size-4" /> Baixar arquivo
+                            </a>
                         </header>
 
                         <div

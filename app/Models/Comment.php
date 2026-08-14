@@ -14,7 +14,10 @@ class Comment extends Model
         'user_id',
         'commentable_type',
         'commentable_id',
-        'content'
+        'content',
+        'is_pinned',
+        'pinned_by_id',
+        'pinned_at',
     ];
 
     protected $table = 'comments';
@@ -29,6 +32,14 @@ class Comment extends Model
         'updated_at',
         'user'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_pinned' => 'boolean',
+            'pinned_at' => 'datetime',
+        ];
+    }
 
     public function post()
     {

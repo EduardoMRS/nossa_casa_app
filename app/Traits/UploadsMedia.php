@@ -18,10 +18,12 @@ trait UploadsMedia
      */
     protected function handleMediaUpload(UploadedFile|string|null $file, string $directory, ?string $oldPath = null): ?string
     {
+        $disk = Storage::disk((string) config('media.disk'));
+
         // 1. Se for nulo e havia uma imagem antes, apagamos do disco (intenção de exclusão)
         if ($file === null) {
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && $disk->exists($oldPath)) {
+                $disk->delete($oldPath);
             }
 
             return null;
@@ -36,16 +38,16 @@ trait UploadsMedia
 
         // 3. Processamento de UploadedFile ou String (Helper)
         if ($file instanceof UploadedFile) {
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && $disk->exists($oldPath)) {
+                $disk->delete($oldPath);
             }
-            $path = $file->store($directory, 'public');
+            $path = $file->store($directory, (string) config('media.disk'));
         } elseif (is_string($file)) {
             $fileData = getFileMetadata($file);
 
             if ($fileData['exists']) {
-                if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                    Storage::disk('public')->delete($oldPath);
+                if ($oldPath && $disk->exists($oldPath)) {
+                    $disk->delete($oldPath);
                 }
 
                 $resource = $fileData['handler']();
@@ -57,7 +59,7 @@ trait UploadsMedia
                 }
 
                 $path = $directory.'/'.$filename;
-                $stored = Storage::disk('public')->put($path, $resource);
+                $stored = $disk->put($path, $resource);
 
                 if (! $stored) {
                     $path = null;

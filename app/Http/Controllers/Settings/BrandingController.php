@@ -73,7 +73,7 @@ class BrandingController extends Controller
         }
 
         if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store("church/{$church->id}/branding", 'public');
+            $logoPath = $request->file('logo')->store("church/{$church->id}/branding", (string) config('media.disk'));
             $this->deleteStoredLogo($currentBranding['logo_path'] ?? null);
             $validated['logo_path'] = $logoPath;
             $validated['logo_url'] = genUrl($logoPath);
@@ -119,7 +119,7 @@ class BrandingController extends Controller
     private function deleteStoredLogo(mixed $logoPath): void
     {
         if (is_string($logoPath) && $logoPath !== '') {
-            Storage::disk('public')->delete($logoPath);
+            Storage::disk((string) config('media.disk'))->delete($logoPath);
         }
     }
 

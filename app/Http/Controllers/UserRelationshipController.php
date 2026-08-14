@@ -39,7 +39,7 @@ class UserRelationshipController extends Controller
                 'role' => UserRole::MEMBER,
             ]);
             $avatarPath = $request->hasFile('avatar')
-                ? $request->file('avatar')->store("users/{$child->id}/avatar", 'public')
+                ? $request->file('avatar')->store("users/{$child->id}/avatar", (string) config('media.disk'))
                 : null;
             $child->profile()->create([
                 'church_id' => $guardian->profile->church_id,

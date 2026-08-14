@@ -35,6 +35,7 @@ createInertiaApp({
             'Admin/ClassroomLabels',
             'Gallery/Index',
             'Library/Index',
+            'LiveStreams/Show',
         ];
 
         switch (true) {

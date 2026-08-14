@@ -3,10 +3,13 @@
 use App\Enums\CategoryType;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
+use App\Http\Controllers\Admin\LiveStreamControlController;
+use App\Http\Controllers\Admin\StopLiveStreamController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicGalleryController;
+use App\Http\Controllers\PublicLiveStreamController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
@@ -198,16 +201,21 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
 })->name('events.show');
 
 Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
+Route::get('/gallery/{media}/download', [PublicGalleryController::class, 'download'])->name('gallery.download');
+Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
 
 Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
     try {
-        $filePath = Crypt::decryptString($encryptedFile);
+        $payload = json_decode(Crypt::decryptString($encryptedFile), true, flags: JSON_THROW_ON_ERROR);
+        $filePath = $payload['path'] ?? null;
+        $diskName = $payload['disk'] ?? null;
     } catch (Throwable) {
         abort(403, 'Invalid or corrupted file link.');
     }
 
     abort_if(
-        $filePath === ''
+        ! is_string($filePath)
+            || $filePath === ''
             || str_contains($filePath, '..')
             || str_starts_with($filePath, '/')
             || preg_match('/^[A-Za-z]:[\\\\\/]/', $filePath) === 1
@@ -215,8 +223,26 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
         404,
     );
 
-    $disk = Storage::disk('public');
+    abort_unless(in_array($diskName, [config('media.disk'), config('media.archive_disk')], true), 404);
+
+    $disk = Storage::disk($diskName);
     abort_unless($disk->exists($filePath), 404);
+
+    $headers = [
+        'Content-Type' => $disk->mimeType($filePath) ?: 'application/octet-stream',
+        'Content-Disposition' => 'inline; filename="'.basename($filePath).'"',
+        'Cache-Control' => 'private, max-age=3600',
+    ];
+
+    if (config("filesystems.disks.{$diskName}.driver") === 's3') {
+        return redirect()->away($disk->temporaryUrl($filePath, now()->addMinutes(5), [
+            'ResponseContentDisposition' => $headers['Content-Disposition'],
+        ]));
+    }
+
+    if (config("filesystems.disks.{$diskName}.driver") === 'local') {
+        return response()->file($disk->path($filePath), $headers);
+    }
 
     return response()->stream(function () use ($disk, $filePath): void {
         $stream = $disk->readStream($filePath);
@@ -225,11 +251,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
             fpassthru($stream);
             fclose($stream);
         }
-    }, 200, [
-        'Content-Type' => $disk->mimeType($filePath) ?: 'application/octet-stream',
-        'Content-Disposition' => 'inline; filename="'.basename($filePath).'"',
-        'Cache-Control' => 'private, max-age=3600',
-    ]);
+    }, 200, $headers);
 })->middleware('signed')->name('secure-file');
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -290,6 +312,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:member|leader|media|admin|superadmin|system')
         ->name('myPrayers.index');
 
+    Route::get('/dashboard/transmissoes', [LiveStreamControlController::class, 'index'])
+        ->middleware('role:media|admin|superadmin|system')
+        ->name('admin.liveStreams.index');
+
     Route::prefix('dashboard')
         ->name('admin.')
         ->middleware('role:admin|superadmin|system')
@@ -320,6 +346,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/salas-aula/configuracoes', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
             Route::post('/gestao-usuarios/{user}/redefinir-senha', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
             Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:system')->name('logsMetrics.index');
+            Route::post('/logs-metricas/transmissoes/{liveStream}/derrubar', StopLiveStreamController::class)
+                ->middleware('role:system')
+                ->name('logsMetrics.liveStreams.stop');
         });
 
     Route::get('/dashboard/salas-aula/presencas/{presence}/etiquetas', [ClassroomController::class, 'labels'])

@@ -8,12 +8,84 @@ services:
         - GID=${GID:-1000}
     volumes:
       - .:/var/www
+      - mediarecordings:/recordings
     ports:
       - "5173:5173"
+    environment:
+      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
+      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+      MEDIA_RECORDINGS_PATH: /recordings
+      MEDIAMTX_API_URL: http://mediamtx:9997
+      MEDIAMTX_PUBLIC_HLS_URL: ${MEDIAMTX_PUBLIC_HLS_URL:-http://localhost:8888}
+      MEDIAMTX_PUBLIC_RTMP_URL: ${MEDIAMTX_PUBLIC_RTMP_URL:-rtmp://localhost:1935}
     networks:
       - laravel_network
     depends_on:
       - db
+
+  media-worker:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    command: php artisan queue:work --queue=media,default --tries=5 --timeout=600
+    volumes:
+      - .:/var/www
+      - mediarecordings:/recordings
+    environment:
+      MEDIA_NODE_ROLE: worker
+      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
+      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+      MEDIA_RECORDINGS_PATH: /recordings
+      MEDIAMTX_API_URL: http://mediamtx:9997
+    networks:
+      - laravel_network
+    depends_on:
+      - db
+      - mediamtx
+
+  media-scheduler:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www
+      - mediarecordings:/recordings
+    environment:
+      MEDIA_NODE_ROLE: worker
+      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
+      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+      MEDIA_RECORDINGS_PATH: /recordings
+      MEDIAMTX_API_URL: http://mediamtx:9997
+    networks:
+      - laravel_network
+    depends_on:
+      - db
+      - mediamtx
+
+  mediamtx:
+    build:
+      context: .
+      dockerfile: ./docker/mediamtx/Dockerfile
+    ports:
+      - "8554:8554"
+      - "1935:1935"
+      - "8888:8888"
+      - "8889:8889"
+      - "8189:8189/udp"
+    volumes:
+      - mediarecordings:/recordings
+    environment:
+      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
+      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+    networks:
+      - laravel_network
 
   webserver:
     image: nginx:alpine
@@ -39,6 +111,7 @@ services:
 
 volumes:
   dbdata:
+  mediarecordings:
 
 networks:
   laravel_network:

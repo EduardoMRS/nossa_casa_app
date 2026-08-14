@@ -9,6 +9,9 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\FormResponseController;
 use App\Http\Controllers\HighlightController;
+use App\Http\Controllers\Internal\MediaAuthController;
+use App\Http\Controllers\Internal\MediaServerWebhookController;
+use App\Http\Controllers\LiveStreamController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\PostController;
@@ -18,6 +21,17 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRelationshipController;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('internal/media')
+    ->middleware(['media.worker', 'throttle:120,1'])
+    ->group(function () {
+        Route::post('online', [MediaServerWebhookController::class, 'online']);
+        Route::post('offline', [MediaServerWebhookController::class, 'offline']);
+        Route::post('recording-completed', [MediaServerWebhookController::class, 'recordingCompleted']);
+    });
+
+Route::post('internal/media/auth', MediaAuthController::class)
+    ->middleware('throttle:300,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +91,9 @@ Route::middleware('auth')->group(function () {
         Route::post('items/{item_type}/{item}/categorize', [CategoryController::class, 'categorizeItem']);
     });
 
+    Route::put('comments/{comment}/pin', [CommentController::class, 'pin'])
+        ->middleware('role:leader|media|admin|superadmin|system');
+
     // Acesso Estrito de Liderança (Apenas Leader) - Mantendo sua estrutura original
     Route::middleware('role:leader|admin|superadmin|system')->group(function () {
         Route::apiResource('forms', FormController::class);
@@ -92,10 +109,16 @@ Route::middleware('auth')->group(function () {
         Route::apiResource('media', MediaController::class)
             ->parameters(['media' => 'media'])
             ->only(['store', 'update', 'destroy']);
-
         Route::post('post', [PostController::class, 'store']);
         Route::put('post/{post}', [PostController::class, 'update']);
         Route::delete('post/{post}', [PostController::class, 'destroy']);
+    });
+
+    Route::middleware('role:media|admin|superadmin|system')->group(function () {
+        Route::apiResource('live-streams', LiveStreamController::class)
+            ->parameters(['live-streams' => 'liveStream'])
+            ->only(['index', 'store', 'show', 'destroy']);
+        Route::post('live-streams/{liveStream}/rotate-token', [LiveStreamController::class, 'rotateToken']);
     });
 
     // Acesso Exclusivo para Moderação de Mídia e Destaques (Media e Superiores)

@@ -522,6 +522,13 @@
             "pending_jobs": "Pending jobs",
             "failed_jobs": "Failed jobs",
             "search": "Filter log entries",
+            "live_streams": "Live streams",
+            "live_streams_description": "Active RTSP connections on media workers.",
+            "unknown_worker": "unknown worker",
+            "recordings": "recordings",
+            "open_stream": "Open stream",
+            "stop_stream": "Drop connection",
+            "no_live_streams": "There are no active streams.",
             "stats": {
                 "0": "Users",
                 "1": "Events",

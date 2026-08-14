@@ -18,6 +18,7 @@ import {
     Heart,
     School,
     PanelsTopLeft,
+    Radio,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -85,6 +86,10 @@ const canManageWorkspace = computed(() =>
     ['admin', 'superadmin', 'system'].includes(role.value),
 );
 
+const canControlLiveStreams = computed(() =>
+    ['media', 'admin', 'superadmin', 'system'].includes(role.value),
+);
+
 const mainNavItems = computed<NavItem[]>(() => [
     {
         title: t('nav.dashboard'),
@@ -96,6 +101,15 @@ const mainNavItems = computed<NavItem[]>(() => [
         href: myPrayersIndex(),
         icon: Heart,
     },
+    ...(canControlLiveStreams.value
+        ? [
+              {
+                  title: 'Transmissões',
+                  href: '/dashboard/transmissoes',
+                  icon: Radio,
+              },
+          ]
+        : []),
 ]);
 
 const communicationNavItems = computed<NavItem[]>(() => [

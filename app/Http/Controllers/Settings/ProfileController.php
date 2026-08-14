@@ -109,14 +109,14 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $currentAvatar = $request->user()->profile?->avatar_path;
-            $avatarPath = $request->file('avatar')->store("users/{$request->user()->id}/avatar", 'public');
+            $avatarPath = $request->file('avatar')->store("users/{$request->user()->id}/avatar", (string) config('media.disk'));
             $request->user()->profile()->updateOrCreate(
                 ['user_id' => $request->user()->id],
                 ['avatar_path' => $avatarPath],
             );
 
             if ($currentAvatar) {
-                Storage::disk('public')->delete($currentAvatar);
+                Storage::disk((string) config('media.disk'))->delete($currentAvatar);
             }
         }
 

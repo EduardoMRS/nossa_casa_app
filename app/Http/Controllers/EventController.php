@@ -100,7 +100,7 @@ class EventController extends Controller
         $this->ensureChurchAccess($request, $event->church_id);
 
         if ($event->getRawOriginal('cover_path')) {
-            Storage::disk('public')->delete($event->getRawOriginal('cover_path'));
+            Storage::disk((string) config('media.disk'))->delete($event->getRawOriginal('cover_path'));
         }
 
         $event->delete();

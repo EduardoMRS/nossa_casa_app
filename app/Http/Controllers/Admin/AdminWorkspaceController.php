@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\CategoryType;
+use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Church;
@@ -14,6 +15,7 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\Highlight;
 use App\Models\Library;
+use App\Models\LiveStream;
 use App\Models\Media;
 use App\Models\Network;
 use App\Models\Post;
@@ -516,6 +518,21 @@ class AdminWorkspaceController extends Controller
                 'pending' => Schema::hasTable('jobs') ? DB::table('jobs')->count() : 0,
                 'failed' => Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->count() : 0,
             ],
+            'liveStreams' => LiveStream::query()
+                ->where('status', LiveStreamStatus::LIVE)
+                ->withCount('recordings')
+                ->latest('started_at')
+                ->get()
+                ->map(fn (LiveStream $liveStream): array => [
+                    'id' => $liveStream->id,
+                    'name' => $liveStream->name,
+                    'path' => $liveStream->path,
+                    'worker_id' => $liveStream->worker_id,
+                    'source_type' => $liveStream->source_type,
+                    'started_at' => $liveStream->started_at?->toIso8601String(),
+                    'recordings_count' => $liveStream->recordings_count,
+                    'playback_url' => $liveStream->playback_url,
+                ]),
             'system' => [
                 'environment' => app()->environment(),
                 'laravel' => app()->version(),

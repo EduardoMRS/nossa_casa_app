@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link, usePoll } from '@inertiajs/vue3';
 import {
     Activity,
     CircleAlert,
     Cpu,
     Database,
     ListChecks,
+    Radio,
     Server,
+    Square,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
+import { stop } from '@/routes/admin/logsMetrics/liveStreams';
 const props = defineProps<{
     stats: Array<{ label: string; value: number; tone: string }>;
     queue: { pending: number; failed: number };
@@ -20,6 +23,16 @@ const props = defineProps<{
         queue_connection: string;
     };
     logs: string[];
+    liveStreams: Array<{
+        id: string;
+        name: string;
+        path: string;
+        worker_id: string | null;
+        source_type: string | null;
+        started_at: string | null;
+        recordings_count: number;
+        playback_url: string;
+    }>;
 }>();
 const { t } = useI18n();
 const query = ref('');
@@ -30,6 +43,7 @@ const filteredLogs = computed(() =>
         )
         .reverse(),
 );
+usePoll(5000, { only: ['queue', 'liveStreams', 'logs'] });
 </script>
 <template>
     <Head :title="t('admin.logs.title')" />
@@ -96,6 +110,78 @@ const filteredLogs = computed(() =>
                 </p>
                 <p class="text-2xl font-black">{{ stat.value }}</p>
             </article>
+        </section>
+        <section class="overflow-hidden rounded-2xl border bg-white shadow-sm">
+            <header
+                class="flex items-center justify-between gap-4 border-b p-5"
+            >
+                <div>
+                    <h2 class="flex items-center gap-2 text-lg font-black">
+                        <Radio class="size-5 text-rose-600" />
+                        {{ t('admin.logs.live_streams') }}
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                        {{ t('admin.logs.live_streams_description') }}
+                    </p>
+                </div>
+                <span
+                    class="rounded-full bg-rose-100 px-3 py-1 text-sm font-black text-rose-700"
+                >
+                    {{ liveStreams.length }}
+                </span>
+            </header>
+            <div v-if="liveStreams.length" class="divide-y">
+                <article
+                    v-for="liveStream in liveStreams"
+                    :key="liveStream.id"
+                    class="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"
+                >
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="size-2 animate-pulse rounded-full bg-rose-500"
+                            />
+                            <p class="truncate font-black">
+                                {{ liveStream.name }}
+                            </p>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">
+                            {{ liveStream.path }} ·
+                            {{
+                                liveStream.worker_id ??
+                                t('admin.logs.unknown_worker')
+                            }}
+                        </p>
+                        <p class="mt-1 text-xs text-slate-400">
+                            {{ liveStream.recordings_count }}
+                            {{ t('admin.logs.recordings') }}
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a
+                            :href="liveStream.playback_url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="rounded-lg border px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                            {{ t('admin.logs.open_stream') }}
+                        </a>
+                        <Link
+                            :href="stop(liveStream).url"
+                            method="post"
+                            as="button"
+                            preserve-scroll
+                            class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-bold text-white hover:bg-rose-700"
+                        >
+                            <Square class="size-3 fill-current" />
+                            {{ t('admin.logs.stop_stream') }}
+                        </Link>
+                    </div>
+                </article>
+            </div>
+            <p v-else class="p-8 text-center text-sm text-slate-500">
+                {{ t('admin.logs.no_live_streams') }}
+            </p>
         </section>
         <section
             class="overflow-hidden rounded-2xl border bg-slate-950 text-slate-200 shadow-sm"

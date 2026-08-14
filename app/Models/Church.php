@@ -87,6 +87,11 @@ class Church extends Model
         return $this->hasMany(Media::class);
     }
 
+    public function liveStreams()
+    {
+        return $this->hasMany(LiveStream::class);
+    }
+
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');

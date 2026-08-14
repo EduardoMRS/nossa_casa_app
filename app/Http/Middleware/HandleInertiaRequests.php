@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\LiveStreamStatus;
 use App\Models\Classroom;
+use App\Models\LiveStream;
 use App\Models\Setting;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
@@ -112,6 +114,14 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
                 'membershipPending' => $currentChurch && $request->session()->get('church_membership_pending') === $currentChurch->id,
             ],
+            'activeLiveStream' => $currentChurch
+                ? LiveStream::query()
+                    ->where('church_id', $currentChurch->id)
+                    ->where('status', LiveStreamStatus::LIVE)
+                    ->where('active_slot', 1)
+                    ->first(['id', 'name', 'started_at'])
+                    ?->only(['id', 'name', 'started_at'])
+                : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => $branding,
             'permissions' => [
