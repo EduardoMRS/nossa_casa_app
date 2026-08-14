@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\LiveStreamStatus;
 use Database\Factories\LiveStreamFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,7 @@ class LiveStream extends Model
         'token_rotated_at',
         'source_on_demand',
         'record',
+        'is_public',
         'status',
         'worker_id',
         'source_type',
@@ -55,6 +57,7 @@ class LiveStream extends Model
     protected $attributes = [
         'source_on_demand' => false,
         'record' => true,
+        'is_public' => true,
         'status' => LiveStreamStatus::READY->value,
     ];
 
@@ -75,6 +78,7 @@ class LiveStream extends Model
             'source_url' => 'encrypted',
             'source_on_demand' => 'boolean',
             'record' => 'boolean',
+            'is_public' => 'boolean',
             'status' => LiveStreamStatus::class,
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
@@ -100,6 +104,15 @@ class LiveStream extends Model
     public function recordings(): HasMany
     {
         return $this->hasMany(Recording::class);
+    }
+
+    /**
+     * @param  Builder<LiveStream>  $query
+     * @return Builder<LiveStream>
+     */
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query->where('is_public', true);
     }
 
     /** @return MorphMany<Comment, $this> */

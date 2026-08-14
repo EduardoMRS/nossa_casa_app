@@ -18,6 +18,12 @@ class PublicLiveStreamController extends Controller
 
         abort_unless($churchId && $liveStream->church_id === $churchId, 404);
 
+        $user = $request->user();
+        $role = $user?->role;
+        $hasChurchAccess = $role === UserRole::SYSTEM || $user?->profile?->church_id === $churchId;
+
+        abort_unless($liveStream->is_public || $hasChurchAccess, 404);
+
         $comments = $liveStream->comments()
             ->with('user:id,first_name,last_name')
             ->orderByDesc('is_pinned')
@@ -32,10 +38,6 @@ class PublicLiveStreamController extends Controller
                 'user' => $comment->user,
             ]);
 
-        $user = $request->user();
-        $role = $user?->role;
-        $hasChurchAccess = $role === UserRole::SYSTEM || $user?->profile?->church_id === $churchId;
-
         return Inertia::render('LiveStreams/Show', [
             'liveStream' => [
                 'id' => $liveStream->id,
@@ -43,6 +45,7 @@ class PublicLiveStreamController extends Controller
                 'status' => $liveStream->status->value,
                 'embed_url' => $liveStream->embed_url,
                 'started_at' => $liveStream->started_at,
+                'is_public' => $liveStream->is_public,
             ],
             'comments' => $comments,
             'canComment' => $user !== null && $hasChurchAccess,

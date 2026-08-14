@@ -199,3 +199,30 @@ test('media user creates a protected publisher link and rotates its token', func
         'token' => $secondToken,
     ])->assertNoContent();
 });
+
+test('media user can create a private transmission', function () {
+    $this->withoutVite();
+    $user = User::factory()->create(['role' => UserRole::MEDIA]);
+    $church = Church::query()->create([
+        'name' => 'Private Stream Church',
+        'slug' => 'private-stream-church',
+        'status' => 'active',
+    ]);
+    $church->assignMember($user);
+
+    $this->actingAs($user)->postJson('/api/live-streams', [
+        'name' => 'Members service',
+        'mode' => 'publisher',
+        'record' => true,
+        'is_public' => false,
+    ])->assertCreated();
+
+    $liveStream = LiveStream::query()->firstOrFail();
+
+    expect($liveStream->is_public)->toBeFalse();
+
+    $this->get('/dashboard/transmissoes')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('streams.0.is_public', false));
+});

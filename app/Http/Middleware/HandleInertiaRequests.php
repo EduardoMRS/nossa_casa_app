@@ -117,6 +117,7 @@ class HandleInertiaRequests extends Middleware
             'activeLiveStream' => $currentChurch
                 ? LiveStream::query()
                     ->where('church_id', $currentChurch->id)
+                    ->publiclyVisible()
                     ->where('status', LiveStreamStatus::LIVE)
                     ->where('active_slot', 1)
                     ->first(['id', 'name', 'started_at'])

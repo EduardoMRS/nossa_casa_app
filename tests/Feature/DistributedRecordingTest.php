@@ -1,10 +1,11 @@
 <?php
 
 use App\Enums\RecordingStatus;
-use App\Jobs\RelayRecordingToCore;
+use App\Jobs\StoreRecordingInSharedStorage;
 use App\Models\LiveStream;
 use App\Models\Recording;
-use Illuminate\Http\UploadedFile;
+use App\Support\RecordingStoragePath;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +16,9 @@ beforeEach(function () {
     config()->set('media.worker_id', 'remote-node-test');
 });
 
-test('a remote media node queues a completed recording for delivery', function () {
+test('a remote media node queues a completed recording for shared storage', function () {
     Queue::fake();
-    config()->set('media.role', 'relay');
+    config()->set('media.role', 'node');
 
     $recordingsRoot = storage_path('framework/testing/relay-'.Str::lower((string) Str::ulid()));
     mkdir($recordingsRoot, 0777, true);
@@ -27,14 +28,14 @@ test('a remote media node queues a completed recording for delivery', function (
 
     try {
         $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
-            ->postJson('/api/internal/media/relay-recording', [
+            ->postJson('/api/internal/media/recording-segment-completed', [
                 'path' => 'church-service',
                 'segment_path' => $segmentPath,
                 'segment_duration' => '15m0s',
             ])
             ->assertStatus(202);
 
-        Queue::assertPushed(RelayRecordingToCore::class, function (RelayRecordingToCore $job) use ($segmentPath): bool {
+        Queue::assertPushed(StoreRecordingInSharedStorage::class, function (StoreRecordingInSharedStorage $job) use ($segmentPath): bool {
             return realpath($job->segmentPath) === realpath($segmentPath)
                 && $job->path === 'church-service'
                 && $job->workerId === 'remote-node-test';
@@ -50,23 +51,28 @@ test('a remote media node queues a completed recording for delivery', function (
     }
 });
 
-test('the core accepts an authenticated recording and publishes it to the archive', function () {
+test('the core registers an authenticated recording already available in shared storage', function () {
     Storage::fake('recordings');
     config()->set('media.role', 'core');
     config()->set('media.archive_disk', 'recordings');
 
     $liveStream = LiveStream::factory()->create();
     $contents = 'recording-delivered-by-remote-node';
-    $deliveryId = hash('sha256', $liveStream->path."\0".hash('sha256', $contents));
+    $contentHash = hash('sha256', $contents);
+    $deliveryId = hash('sha256', $liveStream->path."\0".$contentHash);
+    $destination = RecordingStoragePath::forDelivery($deliveryId, 'service.mp4');
+    Storage::disk('recordings')->put($destination, $contents);
 
     $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
-        ->post('/api/internal/media/recording-ingest', [
+        ->postJson('/api/internal/media/recording-stored', [
             'path' => $liveStream->path,
             'delivery_id' => $deliveryId,
+            'content_hash' => $contentHash,
             'filename' => 'service.mp4',
+            'mime_type' => 'video/mp4',
+            'size' => strlen($contents),
             'duration' => '15m0s',
             'worker_id' => 'remote-node-1',
-            'file' => UploadedFile::fake()->createWithContent('service.mp4', $contents),
         ])
         ->assertNoContent();
 
@@ -81,27 +87,31 @@ test('the core accepts an authenticated recording and publishes it to the archiv
     Storage::disk('recordings')->assertExists($recording->path);
 
     $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
-        ->post('/api/internal/media/recording-ingest', [
+        ->postJson('/api/internal/media/recording-stored', [
             'path' => $liveStream->path,
             'delivery_id' => $deliveryId,
+            'content_hash' => $contentHash,
             'filename' => 'service.mp4',
+            'mime_type' => 'video/mp4',
+            'size' => strlen($contents),
             'duration' => '15m0s',
             'worker_id' => 'remote-node-1',
-            'file' => UploadedFile::fake()->createWithContent('service.mp4', $contents),
         ])
         ->assertNoContent();
 
     expect(Recording::query()->count())->toBe(1);
 });
 
-test('the relay deletes its local segment only after the core accepts it', function () {
+test('the worker stores the segment directly and deletes its local copy only after core registration', function () {
+    Storage::fake('recordings');
     Http::fake([
-        'https://core.example.test/api/internal/media/recording-ingest' => Http::response(status: 204),
+        'https://core.example.test/api/internal/media/recording-stored' => Http::response(status: 204),
     ]);
+    config()->set('media.archive_disk', 'recordings');
     config()->set('media.core_url', 'https://core.example.test');
     config()->set('media.core_verify_tls', true);
     config()->set('media.core_connect_timeout', 1);
-    config()->set('media.core_upload_timeout', 10);
+    config()->set('media.core_request_timeout', 10);
 
     $recordingsRoot = storage_path('framework/testing/relay-job-'.Str::lower((string) Str::ulid()));
     mkdir($recordingsRoot, 0777, true);
@@ -109,22 +119,75 @@ test('the relay deletes its local segment only after the core accepts it', funct
     $contents = 'segment-ready-for-core';
     file_put_contents($segmentPath, $contents);
     $path = 'church-service';
-    $deliveryId = hash('sha256', $path."\0".hash('sha256', $contents));
+    $contentHash = hash('sha256', $contents);
+    $deliveryId = hash('sha256', $path."\0".$contentHash);
+    $destination = RecordingStoragePath::forDelivery($deliveryId, 'segment.mp4');
 
     try {
-        (new RelayRecordingToCore(
+        (new StoreRecordingInSharedStorage(
             path: $path,
             segmentPath: $segmentPath,
             deliveryId: $deliveryId,
+            contentHash: $contentHash,
             filename: 'segment.mp4',
+            mimeType: 'video/mp4',
+            size: strlen($contents),
             duration: '15m0s',
             workerId: 'remote-node-test',
         ))->handle();
 
         expect(file_exists($segmentPath))->toBeFalse();
+        Storage::disk('recordings')->assertExists($destination, $contents);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://core.example.test/api/internal/media/recording-ingest'
-            && $request->hasHeader('X-Media-Worker-Token', 'test-worker-token'));
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://core.example.test/api/internal/media/recording-stored'
+            && $request->hasHeader('X-Media-Worker-Token', 'test-worker-token')
+            && $request['content_hash'] === $contentHash
+            && ! $request->isMultipart());
+    } finally {
+        if (file_exists($segmentPath)) {
+            unlink($segmentPath);
+        }
+
+        if (is_dir($recordingsRoot)) {
+            rmdir($recordingsRoot);
+        }
+    }
+});
+
+test('the worker keeps its local segment when core registration fails', function () {
+    Storage::fake('recordings');
+    Http::fake([
+        'https://core.example.test/api/internal/media/recording-stored' => Http::response(status: 503),
+    ]);
+    config()->set('media.archive_disk', 'recordings');
+    config()->set('media.core_url', 'https://core.example.test');
+
+    $recordingsRoot = storage_path('framework/testing/relay-retry-'.Str::lower((string) Str::ulid()));
+    mkdir($recordingsRoot, 0777, true);
+    $segmentPath = $recordingsRoot.DIRECTORY_SEPARATOR.'segment.mp4';
+    $contents = 'segment-pending-core-registration';
+    file_put_contents($segmentPath, $contents);
+    $contentHash = hash('sha256', $contents);
+    $deliveryId = hash('sha256', 'church-service'."\0".$contentHash);
+
+    try {
+        expect(fn () => (new StoreRecordingInSharedStorage(
+            path: 'church-service',
+            segmentPath: $segmentPath,
+            deliveryId: $deliveryId,
+            contentHash: $contentHash,
+            filename: 'segment.mp4',
+            mimeType: 'video/mp4',
+            size: strlen($contents),
+            duration: '15m0s',
+            workerId: 'remote-node-test',
+        ))->handle())->toThrow(RequestException::class);
+
+        expect(file_exists($segmentPath))->toBeTrue();
+        Storage::disk('recordings')->assertExists(
+            RecordingStoragePath::forDelivery($deliveryId, 'segment.mp4'),
+            $contents,
+        );
     } finally {
         if (file_exists($segmentPath)) {
             unlink($segmentPath);

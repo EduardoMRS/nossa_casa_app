@@ -67,6 +67,12 @@
         "kicker": "Memórias visuais",
         "title": "Galeria de fotos e vídeos da comunidade",
         "description": "Explore mídia compartilhada pela comunidade e aprovada pela equipe de moderação.",
+        "gallery_view": "Galeria",
+        "transmissions": "Últimas transmissões",
+        "transmissions_title": "Últimas transmissões gravadas",
+        "transmissions_description": "Assista às gravações públicas mais recentes desta igreja.",
+        "transmissions_empty": "Ainda não há transmissões públicas gravadas.",
+        "empty": "Ainda não há itens públicos na galeria.",
         "upload_kicker": "Envio de mídia",
         "upload_title": "Adicionar um novo item à galeria",
         "title_placeholder": "Título da mídia",
@@ -785,6 +791,11 @@
             "kicker": "Comunicação",
             "title": "Últimas atualizações"
         },
+        "latest_recordings": {
+            "kicker": "Assista novamente",
+            "title": "Últimas transmissões",
+            "view_all": "Ver todas"
+        },
         "calendar": {
             "kicker": "Agenda da comunidade",
             "title": "Calendário da igreja",
@@ -1091,6 +1102,7 @@
             "church_count": "{count} congregações",
             "main_domain": "Domínio principal",
             "domain_pending": "Domínio ainda não configurado",
+            "live": "Ao vivo",
             "empty": "Ainda não há comunidades públicas cadastradas."
         },
         "onboarding": {

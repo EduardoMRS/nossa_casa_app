@@ -81,3 +81,34 @@ test('members comment and church moderators pin or remove live comments', functi
     $this->actingAs($leader)->deleteJson("/api/comments/{$comment->id}")->assertNoContent();
     expect(Comment::query()->count())->toBe(0);
 });
+
+test('private transmissions are hidden from guests and available to church members', function () {
+    $this->withoutVite();
+    $church = Church::query()->create([
+        'name' => 'Private Live Church',
+        'slug' => 'private-live-church',
+        'domain' => 'private-live.test',
+        'status' => 'active',
+    ]);
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+    $liveStream = LiveStream::factory()->create([
+        'church_id' => $church->id,
+        'created_by_id' => $member->id,
+        'status' => LiveStreamStatus::LIVE,
+        'is_public' => false,
+    ]);
+
+    $this->get('http://private-live.test/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page->where('activeLiveStream', null));
+    $this->get("http://private-live.test/transmissoes/{$liveStream->id}")
+        ->assertNotFound();
+
+    $this->actingAs($member)
+        ->get("http://private-live.test/transmissoes/{$liveStream->id}")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('liveStream.is_public', false)
+            ->where('canComment', true));
+});

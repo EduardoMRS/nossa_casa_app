@@ -19,7 +19,7 @@ services:
       - media-state:/state
     restart: "no"
 
-  media-relay:
+  media-webhook:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -32,7 +32,7 @@ services:
     environment:
       DB_CONNECTION: sqlite
       DB_DATABASE: /state/database.sqlite
-      MEDIA_NODE_ROLE: relay
+      MEDIA_NODE_ROLE: node
       MEDIA_RECORDINGS_PATH: /recordings
       SKIP_NODE_INSTALL: "true"
     volumes:
@@ -51,14 +51,15 @@ services:
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
-    command: php artisan queue:work --queue=media-relay --tries=12 --timeout=3600
+    command: php artisan queue:work --queue=media-recordings --tries=12 --timeout=3600
     env_file:
       - ${MEDIA_NODE_ENV_FILE:-.env.media-node}
     environment:
       DB_CONNECTION: sqlite
       DB_DATABASE: /state/database.sqlite
-      MEDIA_NODE_ROLE: relay
+      MEDIA_NODE_ROLE: node
       MEDIA_RECORDINGS_PATH: /recordings
+      DB_QUEUE_RETRY_AFTER: 3660
       SKIP_NODE_INSTALL: "true"
     volumes:
       - .:/var/www
@@ -76,7 +77,7 @@ services:
     env_file:
       - ${MEDIA_NODE_ENV_FILE:-.env.media-node}
     environment:
-      MEDIA_RECORDING_WEBHOOK_URL: http://media-relay:8000/api/internal/media/relay-recording
+      MEDIA_RECORDING_WEBHOOK_URL: http://media-webhook:8000/api/internal/media/recording-segment-completed
     ports:
       - "${MEDIA_API_BIND_IP:-127.0.0.1}:9997:9997"
       - "1935:1935"
@@ -87,7 +88,7 @@ services:
     volumes:
       - media-recordings:/recordings
     depends_on:
-      - media-relay
+      - media-webhook
     restart: unless-stopped
 
 volumes:

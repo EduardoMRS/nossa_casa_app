@@ -14,6 +14,21 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { ref } from 'vue';
+import { index as liveStreamControlIndex } from '@/actions/App/Http/Controllers/Admin/LiveStreamControlController';
+import {
+    destroy as destroyLiveStream,
+    rotateToken as rotateLiveStreamToken,
+    store as storeLiveStream,
+} from '@/actions/App/Http/Controllers/LiveStreamController';
+import { update as updateMedia } from '@/actions/App/Http/Controllers/MediaController';
+
+type RecordingItem = {
+    id: string;
+    status: string;
+    uploaded_at: string | null;
+    media_id: string | null;
+    is_public: boolean;
+};
 
 type StreamItem = {
     id: string;
@@ -22,6 +37,7 @@ type StreamItem = {
     active: boolean;
     input_mode: string;
     record: boolean;
+    is_public: boolean;
     started_at: string | null;
     ended_at: string | null;
     recordings_count: number;
@@ -29,6 +45,7 @@ type StreamItem = {
     token_rotated_at: string | null;
     ingest_url: string | null;
     public_url: string;
+    recordings: RecordingItem[];
 };
 
 const props = defineProps<{
@@ -43,6 +60,7 @@ usePoll(5000, { only: ['streams', 'canCreate'] });
 const createOpen = ref(false);
 const name = ref('');
 const record = ref(true);
+const isPublic = ref(true);
 const processing = ref(false);
 const error = ref('');
 const copied = ref('');
@@ -51,7 +69,7 @@ const selectedChurchId = ref(props.church.id);
 const refresh = (): void => router.reload({ only: ['streams', 'canCreate'] });
 
 const switchChurch = (): void => {
-    router.get('/dashboard/transmissoes', {
+    router.get(liveStreamControlIndex.url(), {
         church_id: selectedChurchId.value,
     });
 };
@@ -61,14 +79,16 @@ const createStream = async (): Promise<void> => {
     error.value = '';
 
     try {
-        await axios.post('/api/live-streams', {
+        await axios.post(storeLiveStream.url(), {
             name: name.value,
             mode: 'publisher',
             record: record.value,
+            is_public: isPublic.value,
             church_id: props.church.id,
         });
         createOpen.value = false;
         name.value = '';
+        isPublic.value = true;
         refresh();
     } catch (exception: unknown) {
         const responseErrors = axios.isAxiosError<{
@@ -90,7 +110,7 @@ const stopStream = async (stream: StreamItem): Promise<void> => {
         return;
     }
 
-    await axios.delete(`/api/live-streams/${stream.id}`);
+    await axios.delete(destroyLiveStream.url(stream.id));
     refresh();
 };
 
@@ -106,7 +126,26 @@ const rotateToken = async (stream: StreamItem): Promise<void> => {
     processing.value = true;
 
     try {
-        await axios.post(`/api/live-streams/${stream.id}/rotate-token`);
+        await axios.post(rotateLiveStreamToken.url(stream.id));
+        refresh();
+    } finally {
+        processing.value = false;
+    }
+};
+
+const toggleRecordingVisibility = async (
+    recording: RecordingItem,
+): Promise<void> => {
+    if (!recording.media_id) {
+        return;
+    }
+
+    processing.value = true;
+
+    try {
+        await axios.put(updateMedia.url(recording.media_id), {
+            gallery: !recording.is_public,
+        });
         refresh();
     } finally {
         processing.value = false;
@@ -211,7 +250,8 @@ const formatDate = (value: string | null): string =>
                             </h2>
                             <p class="mt-0.5 text-xs text-slate-500">
                                 {{ stream.status }} ·
-                                {{ stream.recordings_count }} gravação(ões)
+                                {{ stream.recordings_count }} gravação(ões) ·
+                                {{ stream.is_public ? 'Pública' : 'Privada' }}
                             </p>
                         </div>
                     </div>
@@ -221,7 +261,7 @@ const formatDate = (value: string | null): string =>
                             target="_blank"
                             class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-indigo-700"
                         >
-                            <ExternalLink class="size-4" /> Abrir página pública
+                            <ExternalLink class="size-4" /> Abrir página
                         </a>
                         <button
                             v-if="stream.active"
@@ -335,6 +375,20 @@ const formatDate = (value: string | null): string =>
                                 {{ stream.record ? 'Ativada' : 'Desativada' }}
                             </p>
                         </div>
+                        <div class="col-span-2 rounded-xl bg-slate-50 p-4">
+                            <p
+                                class="text-xs font-bold text-slate-400 uppercase"
+                            >
+                                Visibilidade ao vivo
+                            </p>
+                            <p class="mt-2 font-bold">
+                                {{
+                                    stream.is_public
+                                        ? 'Pública — aparece no portal e na igreja'
+                                        : 'Privada — somente membros desta igreja'
+                                }}
+                            </p>
+                        </div>
                         <div
                             class="col-span-2 rounded-xl border border-cyan-100 bg-cyan-50 p-4 text-xs leading-5 text-cyan-950"
                         >
@@ -345,6 +399,49 @@ const formatDate = (value: string | null): string =>
                         </div>
                     </section>
                 </div>
+
+                <section
+                    v-if="stream.recordings.length"
+                    class="border-t bg-slate-50/70 p-5"
+                >
+                    <h3 class="text-sm font-black text-slate-950">
+                        Gravações desta transmissão
+                    </h3>
+                    <div class="mt-3 grid gap-2 md:grid-cols-2">
+                        <div
+                            v-for="recording in stream.recordings"
+                            :key="recording.id"
+                            class="flex items-center justify-between gap-4 rounded-xl border bg-white p-3"
+                        >
+                            <div>
+                                <p class="text-sm font-bold">
+                                    {{
+                                        recording.is_public
+                                            ? 'Gravação pública'
+                                            : 'Gravação privada'
+                                    }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ recording.status }} ·
+                                    {{ formatDate(recording.uploaded_at) }}
+                                </p>
+                            </div>
+                            <button
+                                v-if="recording.media_id"
+                                type="button"
+                                :disabled="processing"
+                                class="rounded-lg border px-3 py-2 text-xs font-bold text-indigo-700 disabled:opacity-50"
+                                @click="toggleRecordingVisibility(recording)"
+                            >
+                                {{
+                                    recording.is_public
+                                        ? 'Tornar privada'
+                                        : 'Publicar gravação'
+                                }}
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </article>
         </section>
 
@@ -400,7 +497,23 @@ const formatDate = (value: string | null): string =>
                             type="checkbox"
                             class="rounded border-slate-300"
                         />
-                        Gravar e publicar nas mídias</label
+                        Gravar transmissão</label
+                    >
+                    <label
+                        class="flex items-start gap-3 rounded-xl border p-4 text-sm"
+                        ><input
+                            v-model="isPublic"
+                            type="checkbox"
+                            class="mt-0.5 rounded border-slate-300"
+                        />
+                        <span
+                            ><strong class="block">Transmissão pública</strong
+                            ><small class="mt-1 block text-slate-500"
+                                >Quando desmarcada, a live não aparece no
+                                portal, na home ou na galeria. A gravação poderá
+                                ser publicada depois.</small
+                            ></span
+                        ></label
                     >
                     <p v-if="error" class="text-sm font-bold text-rose-600">
                         {{ error }}

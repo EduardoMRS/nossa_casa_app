@@ -45,6 +45,7 @@ class LiveStreamController extends Controller
                 ?? ($request->filled('source_url') ? 'pull' : 'publisher'),
             'source_on_demand' => $request->boolean('source_on_demand'),
             'record' => $request->boolean('record', true),
+            'is_public' => $request->boolean('is_public', true),
             'church_id' => $request->validated('church_id'),
         ]);
 

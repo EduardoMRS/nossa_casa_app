@@ -28,7 +28,7 @@ class FinalizeRecording
                     'disk' => $disk,
                     'mimetype' => $recording->mime_type ?: 'video/mp4',
                     'size' => $recording->size ?? 0,
-                    'gallery' => true,
+                    'gallery' => $liveStream->is_public,
                     'status' => MediaStatus::APPROVED,
                 ]);
 

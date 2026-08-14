@@ -36,6 +36,7 @@ class LiveStreamControlController extends Controller
 
         $streams = LiveStream::query()
             ->where('church_id', $church->id)
+            ->with(['recordings' => fn ($query) => $query->with('media:id,gallery')->latest()])
             ->withCount('recordings')
             ->latest()
             ->get()
@@ -64,6 +65,7 @@ class LiveStreamControlController extends Controller
             'active' => $liveStream->active_slot === 1,
             'input_mode' => $liveStream->input_mode,
             'record' => $liveStream->record,
+            'is_public' => $liveStream->is_public,
             'started_at' => $liveStream->started_at,
             'ended_at' => $liveStream->ended_at,
             'recordings_count' => $liveStream->recordings_count,
@@ -73,6 +75,13 @@ class LiveStreamControlController extends Controller
                 ? $ingestBaseUrl.'/'.$liveStream->path.'?token='.rawurlencode($token)
                 : null,
             'public_url' => $this->domainContext->churchUrl($church, '/transmissoes/'.$liveStream->id),
+            'recordings' => $liveStream->recordings->map(fn ($recording): array => [
+                'id' => $recording->id,
+                'status' => $recording->status->value,
+                'uploaded_at' => $recording->uploaded_at,
+                'media_id' => $recording->media_id,
+                'is_public' => (bool) $recording->media?->gallery,
+            ]),
         ];
     }
 }

@@ -8,8 +8,10 @@ use App\Http\Requests\Media\StoreMediaRequest;
 use App\Http\Requests\Media\UpdateMediaRequest;
 use App\Http\Requests\Media\UpdateMediaStatusRequest;
 use App\Models\Media;
+use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -22,12 +24,22 @@ class MediaController extends Controller
 
     public function index()
     {
-        return response()->json(Media::visible()->with('uploader:id,first_name,last_name')->paginate(15));
+        $churchId = app(ChurchDomainContext::class)->churchId();
+
+        return response()->json(Media::query()
+            ->visible()
+            ->where('gallery', true)
+            ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
+            ->with('uploader:id,first_name,last_name')
+            ->paginate(15));
     }
 
     public function show(Media $media)
     {
-        abort_unless($media->status === MediaStatus::APPROVED, 404);
+        $churchId = app(ChurchDomainContext::class)->churchId();
+
+        abort_unless($media->status === MediaStatus::APPROVED && $media->gallery, 404);
+        abort_if($churchId && $media->church_id !== $churchId, 404);
         $media->load(['categories', 'comments.user']);
         $media->categories->each->localize();
 

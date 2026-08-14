@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ChurchStatus;
+use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
@@ -32,6 +33,10 @@ class PortalController extends Controller
         $communities = Community::query()
             ->with(['churches' => fn ($query) => $query
                 ->where('status', ChurchStatus::ACTIVE)
+                ->withExists(['liveStreams as is_live' => fn ($liveStreams) => $liveStreams
+                    ->publiclyVisible()
+                    ->where('status', LiveStreamStatus::LIVE)
+                    ->where('active_slot', 1)])
                 ->orderBy('name')])
             ->withCount(['churches' => fn ($query) => $query->where('status', ChurchStatus::ACTIVE)])
             ->orderBy('name')
@@ -48,6 +53,7 @@ class PortalController extends Controller
                     'slug' => $church->slug,
                     'domain' => $church->domain,
                     'url' => $church->domain ? $this->context->churchUrl($church) : null,
+                    'is_live' => (bool) $church->is_live,
                 ]),
             ]);
 
@@ -165,6 +171,21 @@ class PortalController extends Controller
                     'end_time' => $event->end_time,
                 ];
             });
+        $latestRecordings = Media::query()
+            ->where('church_id', $churchId)
+            ->visible()
+            ->where('gallery', true)
+            ->whereHas('recording')
+            ->latest()
+            ->limit(4)
+            ->get()
+            ->map(fn (Media $media): array => [
+                'id' => $media->id,
+                'title' => $media->title,
+                'url' => $media->url,
+                'mimetype' => $media->mimetype,
+                'created_at' => $media->created_at,
+            ]);
 
         return Inertia::render('Home', [
             'stats' => [
@@ -174,6 +195,7 @@ class PortalController extends Controller
             ],
             'featuredEvents' => $featuredEvents,
             'latestPosts' => $latestPosts,
+            'latestRecordings' => $latestRecordings,
             'calendarEvents' => $calendarEvents,
         ]);
     }

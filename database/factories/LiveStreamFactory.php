@@ -30,6 +30,7 @@ class LiveStreamFactory extends Factory
             'source_url' => 'rtsp://camera.example.test/'.$path,
             'source_on_demand' => false,
             'record' => true,
+            'is_public' => true,
             'status' => LiveStreamStatus::READY,
             'active_slot' => 1,
         ];

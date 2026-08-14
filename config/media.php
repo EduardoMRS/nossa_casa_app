@@ -10,7 +10,7 @@ return [
     'core_url' => env('MEDIA_CORE_URL', env('APP_URL')),
     'core_verify_tls' => filter_var(env('MEDIA_CORE_VERIFY_TLS', true), FILTER_VALIDATE_BOOL),
     'core_connect_timeout' => (float) env('MEDIA_CORE_CONNECT_TIMEOUT', 10),
-    'core_upload_timeout' => (float) env('MEDIA_CORE_UPLOAD_TIMEOUT', 3600),
+    'core_request_timeout' => (float) env('MEDIA_CORE_REQUEST_TIMEOUT', 30),
 
     'mediamtx' => [
         'api_url' => env('MEDIAMTX_API_URL', 'http://127.0.0.1:9997'),

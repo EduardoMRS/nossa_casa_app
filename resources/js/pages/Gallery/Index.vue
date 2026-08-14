@@ -11,11 +11,12 @@ import {
     X,
 } from '@lucide/vue';
 import axios from 'axios';
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { index as galleryIndex } from '@/routes/gallery';
 
 interface Person {
     id: string;
@@ -77,11 +78,19 @@ const props = defineProps<{
     };
     categories: CategoryOption[];
     canInteract: boolean;
+    view: 'gallery' | 'transmissions';
 }>();
 const { locale, t } = useI18n();
 const page = usePage();
 const mediaItems = ref<MediaItem[]>(
     props.media.data.map((item) => ({ ...item })),
+);
+watch(
+    () => props.media.data,
+    (items) => {
+        mediaItems.value = items.map((item) => ({ ...item }));
+        selectedMedia.value = null;
+    },
 );
 const selectedMedia = ref<MediaItem | null>(null);
 const galleryComment = ref('');
@@ -373,7 +382,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head :title="t('gallery.meta_title')" />
+    <Head
+        :title="
+            props.view === 'transmissions'
+                ? t('gallery.transmissions')
+                : t('gallery.meta_title')
+        "
+    />
 
     <div
         class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
@@ -390,14 +405,22 @@ onBeforeUnmount(() => {
             >
                 <div>
                     <h1 class="text-2xl font-black tracking-tight md:text-3xl">
-                        {{ t('gallery.title') }}
+                        {{
+                            props.view === 'transmissions'
+                                ? t('gallery.transmissions_title')
+                                : t('gallery.title')
+                        }}
                     </h1>
                     <p class="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-                        {{ t('gallery.description') }}
+                        {{
+                            props.view === 'transmissions'
+                                ? t('gallery.transmissions_description')
+                                : t('gallery.description')
+                        }}
                     </p>
                 </div>
                 <button
-                    v-if="canUploadMedia"
+                    v-if="canUploadMedia && props.view === 'gallery'"
                     class="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg px-4 py-2.5 text-xs font-bold text-white shadow-sm sm:self-center"
                     :style="{ backgroundColor: 'var(--church-primary)' }"
                     @click="uploadOpen = true"
@@ -405,6 +428,31 @@ onBeforeUnmount(() => {
                     <Upload class="size-4" /> {{ t('gallery.upload') }}
                 </button>
             </section>
+
+            <nav class="mb-6 flex w-fit gap-1 rounded-xl bg-slate-100 p-1">
+                <Link
+                    :href="galleryIndex()"
+                    class="rounded-lg px-4 py-2 text-sm font-bold transition"
+                    :class="
+                        props.view === 'gallery'
+                            ? 'bg-white text-slate-950 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                    "
+                >
+                    {{ t('gallery.gallery_view') }}
+                </Link>
+                <Link
+                    :href="galleryIndex({ query: { view: 'transmissions' } })"
+                    class="rounded-lg px-4 py-2 text-sm font-bold transition"
+                    :class="
+                        props.view === 'transmissions'
+                            ? 'bg-white text-slate-950 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                    "
+                >
+                    {{ t('gallery.transmissions') }}
+                </Link>
+            </nav>
 
             <section
                 class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
@@ -477,6 +525,17 @@ onBeforeUnmount(() => {
                     </span>
                 </button>
             </section>
+
+            <p
+                v-if="!mediaItems.length"
+                class="rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center text-sm text-slate-500"
+            >
+                {{
+                    props.view === 'transmissions'
+                        ? t('gallery.transmissions_empty')
+                        : t('gallery.empty')
+                }}
+            </p>
 
             <section
                 v-if="props.media.links.length > 3"

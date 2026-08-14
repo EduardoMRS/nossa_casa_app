@@ -154,7 +154,7 @@ return [
             'connection_string' => env('AZURE_STORAGE_CONNECTION_STRING'),
             'container' => env('AZURE_STORAGE_CONTAINER'),
             'prefix' => env('AZURE_STORAGE_PREFIX', ''),
-            'temporary_url' => env('AZURE_STORAGE_TEMPORARY_URL'),
+            'temporary_url' => env('AZURE_STORAGE_TEMPORARY_URL') ?: null,
             'is_public_container' => env('AZURE_STORAGE_PUBLIC', false),
             'throw' => true,
             'report' => true,

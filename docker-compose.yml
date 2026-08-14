@@ -17,7 +17,7 @@ services:
       MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
       MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
       MEDIA_RECORDINGS_PATH: /recordings
-      MEDIAMTX_API_URL: http://mediamtx:9997
+      MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-http://mediamtx:9997}
       MEDIAMTX_PUBLIC_HLS_URL: ${MEDIAMTX_PUBLIC_HLS_URL:-http://localhost:8888}
       MEDIAMTX_PUBLIC_RTMP_URL: ${MEDIAMTX_PUBLIC_RTMP_URL:-rtmp://localhost:1935}
       MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
@@ -41,18 +41,20 @@ services:
       args:
         - UID=${UID:-1000}
         - GID=${GID:-1000}
-    command: php artisan queue:work --queue=media,default --tries=5 --timeout=600
+    command: php artisan queue:work --queue=media-recordings,default --tries=12 --timeout=3600
     volumes:
       - .:/var/www
       - mediarecordings:/recordings
     environment:
-      MEDIA_NODE_ROLE: worker
       MEDIA_DISK: ${DOCKER_MEDIA_DISK:-minio}
       MEDIA_ARCHIVE_DISK: ${DOCKER_MEDIA_ARCHIVE_DISK:-minio}
       MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
       MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
       MEDIA_RECORDINGS_PATH: /recordings
-      MEDIAMTX_API_URL: http://mediamtx:9997
+      MEDIA_CORE_URL: http://webserver
+      MEDIA_CORE_VERIFY_TLS: "false"
+      MEDIA_CORE_REQUEST_TIMEOUT: 30
+      DB_QUEUE_RETRY_AFTER: 3660
       MINIO_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       MINIO_BUCKET: ${MINIO_BUCKET:-nossa-casa}
@@ -66,31 +68,10 @@ services:
         condition: service_started
       mediamtx:
         condition: service_started
+      webserver:
+        condition: service_started
       minio-init:
         condition: service_completed_successfully
-
-  media-scheduler:
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
-    command: php artisan schedule:work
-    volumes:
-      - .:/var/www
-      - mediarecordings:/recordings
-    environment:
-      MEDIA_NODE_ROLE: worker
-      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
-      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
-      MEDIA_RECORDINGS_PATH: /recordings
-      MEDIAMTX_API_URL: http://mediamtx:9997
-    networks:
-      - laravel_network
-    depends_on:
-      - db
-      - mediamtx
 
   mediamtx:
     build:
@@ -108,7 +89,7 @@ services:
       MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
       MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
       MEDIA_CORE_URL: http://webserver
-      MEDIA_RECORDING_WEBHOOK_URL: http://webserver/api/internal/media/recording-completed
+      MEDIA_RECORDING_WEBHOOK_URL: http://webserver/api/internal/media/recording-segment-completed
     networks:
       - laravel_network
 

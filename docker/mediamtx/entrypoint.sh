@@ -2,7 +2,7 @@
 set -eu
 
 MEDIA_CORE_URL="${MEDIA_CORE_URL:-http://webserver}"
-MEDIA_RECORDING_WEBHOOK_URL="${MEDIA_RECORDING_WEBHOOK_URL:-http://webserver/api/internal/media/recording-completed}"
+MEDIA_RECORDING_WEBHOOK_URL="${MEDIA_RECORDING_WEBHOOK_URL:-http://webserver/api/internal/media/recording-segment-completed}"
 
 escaped_core_url=$(printf '%s' "$MEDIA_CORE_URL" | sed 's/[&|]/\\&/g')
 escaped_recording_webhook_url=$(printf '%s' "$MEDIA_RECORDING_WEBHOOK_URL" | sed 's/[&|]/\\&/g')

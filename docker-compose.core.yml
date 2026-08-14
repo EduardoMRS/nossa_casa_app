@@ -1,0 +1,14 @@
+services:
+  app:
+    environment:
+      MEDIAMTX_API_URL: ${REMOTE_MEDIAMTX_API_URL:-http://host.docker.internal:9997}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  media-worker:
+    profiles:
+      - local-transmission
+
+  mediamtx:
+    profiles:
+      - local-transmission

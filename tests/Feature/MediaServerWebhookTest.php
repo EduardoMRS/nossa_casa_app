@@ -1,18 +1,19 @@
 <?php
 
-use App\Actions\Media\FinalizeRecording;
 use App\Enums\LiveStreamStatus;
 use App\Enums\RecordingStatus;
 use App\Enums\UserRole;
-use App\Jobs\UploadRecording;
+use App\Jobs\StoreRecordingInSharedStorage;
 use App\Models\Church;
 use App\Models\LiveStream;
 use App\Models\Media;
 use App\Models\Recording;
 use App\Models\User;
+use App\Support\RecordingStoragePath;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config()->set('media.worker_token', 'test-worker-token');
@@ -52,46 +53,30 @@ test('worker hooks update stream lifecycle', function () {
         ->ended_at->not->toBeNull();
 });
 
-test('completed segments are queued once and uploaded to private archive storage', function () {
+test('completed segments are queued for shared archive storage', function () {
     Queue::fake();
-    Storage::fake('recordings');
 
     $recordingsRoot = storage_path('framework/testing/media-'.Str::lower((string) Str::ulid()));
     mkdir($recordingsRoot, 0777, true);
     $segmentPath = $recordingsRoot.DIRECTORY_SEPARATOR.'segment.mp4';
     file_put_contents($segmentPath, 'recording-content');
     config()->set('media.recordings_root', $recordingsRoot);
-    config()->set('media.archive_disk', 'recordings');
-
     $liveStream = LiveStream::factory()->create();
 
     try {
         $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
-            ->postJson('/api/internal/media/recording-completed', [
+            ->postJson('/api/internal/media/recording-segment-completed', [
                 'path' => $liveStream->path,
                 'segment_path' => $segmentPath,
                 'segment_duration' => '15m0s',
             ])
-            ->assertNoContent();
+            ->assertStatus(202);
 
-        $recording = Recording::query()->firstOrFail();
-
-        expect($recording)
-            ->status->toBe(RecordingStatus::WAITING_UPLOAD)
-            ->size->toBe(17);
-
-        Queue::assertPushed(UploadRecording::class, fn (UploadRecording $job): bool => $job->recordingId === $recording->id);
-
-        (new UploadRecording($recording->id))->handle(app(FinalizeRecording::class));
-
-        $recording->refresh();
-
-        expect($recording)
-            ->status->toBe(RecordingStatus::READY)
-            ->disk->toBe('recordings')
-            ->uploaded_at->not->toBeNull()
-            ->and(file_exists($segmentPath))->toBeFalse();
-        Storage::disk('recordings')->assertExists($recording->path);
+        Queue::assertPushed(StoreRecordingInSharedStorage::class, function (StoreRecordingInSharedStorage $job) use ($liveStream, $segmentPath): bool {
+            return $job->path === $liveStream->path
+                && realpath($job->segmentPath) === realpath($segmentPath)
+                && $job->size === 17;
+        });
     } finally {
         if (file_exists($segmentPath)) {
             unlink($segmentPath);
@@ -103,14 +88,10 @@ test('completed segments are queued once and uploaded to private archive storage
     }
 });
 
-test('an uploaded recording is published in the transmissions media category', function () {
+test('a stored recording is published in the transmissions media category', function () {
     Storage::fake('recordings');
-    $recordingsRoot = storage_path('framework/testing/media-'.Str::lower((string) Str::ulid()));
-    mkdir($recordingsRoot, 0777, true);
-    $segmentPath = $recordingsRoot.DIRECTORY_SEPARATOR.'service.mp4';
-    file_put_contents($segmentPath, 'recorded-service');
-    config()->set('media.recordings_root', $recordingsRoot);
     config()->set('media.archive_disk', 'recordings');
+    config()->set('media.role', 'core');
 
     $church = Church::query()->create([
         'name' => 'Archive Church',
@@ -123,36 +104,112 @@ test('an uploaded recording is published in the transmissions media category', f
         'church_id' => $church->id,
         'created_by_id' => $creator->id,
     ]);
-    $recording = Recording::factory()->create([
-        'live_stream_id' => $liveStream->id,
-        'worker_path' => $segmentPath,
-        'worker_path_hash' => hash('sha256', $segmentPath),
-        'filename' => 'service.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 16,
+    $contents = 'recorded-service';
+    $contentHash = hash('sha256', $contents);
+    $deliveryId = hash('sha256', $liveStream->path."\0".$contentHash);
+    $destination = RecordingStoragePath::forDelivery($deliveryId, 'service.mp4');
+    Storage::disk('recordings')->put($destination, $contents);
+
+    $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
+        ->postJson('/api/internal/media/recording-stored', [
+            'path' => $liveStream->path,
+            'delivery_id' => $deliveryId,
+            'content_hash' => $contentHash,
+            'filename' => 'service.mp4',
+            'mime_type' => 'video/mp4',
+            'size' => strlen($contents),
+            'duration' => '15m0s',
+            'worker_id' => 'worker-test',
+        ])
+        ->assertNoContent();
+
+    $recording = Recording::query()->firstOrFail();
+    $media = Media::query()->firstOrFail();
+
+    expect($recording->status)->toBe(RecordingStatus::READY)
+        ->and($media)
+        ->church_id->toBe($church->id)
+        ->disk->toBe('recordings')
+        ->gallery->toBeTrue()
+        ->and($media->categories()->where('slug', 'transmissions')->exists())->toBeTrue()
+        ->and($recording->media_id)->toBe($media->id);
+
+    $this->get(route('gallery.download', $media))
+        ->assertSuccessful()
+        ->assertDownload(basename($media->file_path));
+});
+
+test('a private recording stays hidden until a media manager publishes it', function () {
+    $this->withoutVite();
+    Storage::fake('recordings');
+    config()->set('media.archive_disk', 'recordings');
+    config()->set('media.role', 'core');
+
+    $church = Church::query()->create([
+        'name' => 'Private Archive Church',
+        'slug' => 'private-archive-church',
+        'domain' => 'private-archive.test',
+        'status' => 'active',
     ]);
+    $creator = User::factory()->create(['role' => UserRole::MEDIA]);
+    $church->assignMember($creator);
+    $liveStream = LiveStream::factory()->create([
+        'church_id' => $church->id,
+        'created_by_id' => $creator->id,
+        'is_public' => false,
+    ]);
+    $contents = 'private-recorded-service';
+    $contentHash = hash('sha256', $contents);
+    $deliveryId = hash('sha256', $liveStream->path."\0".$contentHash);
+    $destination = RecordingStoragePath::forDelivery($deliveryId, 'private-service.mp4');
+    Storage::disk('recordings')->put($destination, $contents);
 
-    try {
-        (new UploadRecording($recording->id))->handle(app(FinalizeRecording::class));
+    $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
+        ->postJson('/api/internal/media/recording-stored', [
+            'path' => $liveStream->path,
+            'delivery_id' => $deliveryId,
+            'content_hash' => $contentHash,
+            'filename' => 'private-service.mp4',
+            'mime_type' => 'video/mp4',
+            'size' => strlen($contents),
+            'worker_id' => 'worker-test',
+        ])
+        ->assertNoContent();
 
-        $media = Media::query()->firstOrFail();
-        expect($media)
-            ->church_id->toBe($church->id)
-            ->disk->toBe('recordings')
-            ->gallery->toBeTrue()
-            ->and($media->categories()->where('slug', 'transmissions')->exists())->toBeTrue()
-            ->and($recording->refresh()->media_id)->toBe($media->id);
+    $media = Media::query()->firstOrFail();
 
-        $this->get(route('gallery.download', $media))
-            ->assertSuccessful()
-            ->assertDownload(basename($media->file_path));
-    } finally {
-        if (file_exists($segmentPath)) {
-            unlink($segmentPath);
-        }
+    expect($media->gallery)->toBeFalse();
 
-        if (is_dir($recordingsRoot)) {
-            rmdir($recordingsRoot);
-        }
-    }
+    $this->get('http://private-archive.test/gallery?view=transmissions')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('view', 'transmissions')
+            ->has('media.data', 0));
+    $this->get('http://private-archive.test/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page->has('latestRecordings', 0));
+    $this->get("http://private-archive.test/gallery/{$media->id}/download")
+        ->assertNotFound();
+    $this->getJson('http://private-archive.test/api/media')
+        ->assertSuccessful()
+        ->assertJsonCount(0, 'data');
+    $this->getJson("http://private-archive.test/api/media/{$media->id}")
+        ->assertNotFound();
+
+    $this->actingAs($creator)
+        ->putJson("/api/media/{$media->id}", ['gallery' => true])
+        ->assertSuccessful()
+        ->assertJsonPath('gallery', true);
+
+    $this->get('http://private-archive.test/gallery?view=transmissions')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('media.data.0.id', $media->id));
+    $this->get('http://private-archive.test/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('latestRecordings.0.id', $media->id));
+    $this->getJson("http://private-archive.test/api/media/{$media->id}")
+        ->assertSuccessful()
+        ->assertJsonPath('id', $media->id);
 });

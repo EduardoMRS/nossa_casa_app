@@ -3,18 +3,16 @@
 namespace App\Http\Controllers\Internal;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Media\RelayRecordingRequest;
-use App\Jobs\RelayRecordingToCore;
+use App\Http\Requests\Media\RecordingSegmentRequest;
+use App\Jobs\StoreRecordingInSharedStorage;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-class RecordingRelayController extends Controller
+class RecordingSegmentController extends Controller
 {
-    public function __invoke(RelayRecordingRequest $request): Response
+    public function __invoke(RecordingSegmentRequest $request): Response
     {
-        abort_unless(config('media.role') === 'relay', 404);
-
         $segmentPath = $this->validatedSegmentPath($request->validated('segment_path'));
         $contentHash = hash_file('sha256', $segmentPath);
 
@@ -22,14 +20,17 @@ class RecordingRelayController extends Controller
 
         $deliveryId = hash('sha256', $request->validated('path')."\0".$contentHash);
 
-        RelayRecordingToCore::dispatch(
+        StoreRecordingInSharedStorage::dispatch(
             path: $request->validated('path'),
             segmentPath: $segmentPath,
             deliveryId: $deliveryId,
+            contentHash: $contentHash,
             filename: Str::afterLast(str_replace('\\', '/', $segmentPath), '/'),
+            mimeType: File::mimeType($segmentPath) ?: 'application/octet-stream',
+            size: File::size($segmentPath),
             duration: $request->validated('segment_duration'),
             workerId: $request->validated('worker_id') ?? (string) config('media.worker_id'),
-        )->onQueue('media-relay');
+        )->onQueue('media-recordings');
 
         return response()->noContent(202);
     }

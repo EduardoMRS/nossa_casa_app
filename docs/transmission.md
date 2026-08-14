@@ -1,6 +1,6 @@
 # Uso das transmissões
 
-Este documento explica como criar, publicar, acompanhar, moderar e encerrar uma transmissão no Nossa Casa. Para instalar o MediaMTX e os workers em outra máquina, consulte [Nó de mídia em outra máquina](media-node-deployment.md).
+Este documento explica como criar, publicar, acompanhar, moderar e encerrar uma transmissão no Nossa Casa. Para implantar a infraestrutura, consulte [Servidor principal e storage](media-core-deployment.md) e [Nó de mídia/MediaMTX](media-node-deployment.md).
 
 ## Visão geral
 
@@ -153,7 +153,7 @@ Após o processamento:
 - a mídia entra automaticamente na categoria `Transmissions`;
 - ela fica disponível na galeria para reprodução e download, como as demais mídias.
 
-O processamento não precisa terminar imediatamente após o encerramento. Em uma instalação com nó remoto, o arquivo permanece na máquina de mídia até o servidor principal confirmar o recebimento.
+O processamento não precisa terminar imediatamente após o encerramento. Em uma instalação com nó remoto, o arquivo permanece na máquina de mídia até o storage confirmar a gravação e o servidor principal confirmar o registro.
 
 ## Estados apresentados
 

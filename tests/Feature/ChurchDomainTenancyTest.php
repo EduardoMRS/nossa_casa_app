@@ -1,8 +1,10 @@
 <?php
 
+use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Community;
+use App\Models\LiveStream;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -31,13 +33,26 @@ function createDomainChurch(string $name, string $domain): Church
 }
 
 test('main application domain renders the institutional portal', function () {
-    createDomainChurch('Alpha Church', 'alpha.test');
+    $alpha = createDomainChurch('Alpha Church', 'alpha.test');
+    $beta = createDomainChurch('Beta Church', 'beta.test');
+    LiveStream::factory()->create([
+        'church_id' => $alpha->id,
+        'status' => LiveStreamStatus::LIVE,
+        'is_public' => true,
+    ]);
+    LiveStream::factory()->create([
+        'church_id' => $beta->id,
+        'status' => LiveStreamStatus::LIVE,
+        'is_public' => false,
+    ]);
 
     $this->get('http://platform.test/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Portal/Index')
-            ->where('communities.0.churches.0.domain', 'alpha.test'));
+            ->where('communities.0.churches.0.domain', 'alpha.test')
+            ->where('communities.0.churches.0.is_live', true)
+            ->where('communities.1.churches.0.is_live', false));
 });
 
 test('custom domain renders only content from its church', function () {

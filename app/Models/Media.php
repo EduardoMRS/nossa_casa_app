@@ -6,6 +6,7 @@ use App\Enums\MediaStatus;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Media extends Model
 {
@@ -71,6 +72,12 @@ class Media extends Model
     public function categories()
     {
         return $this->morphToMany(Category::class, 'categorizable');
+    }
+
+    /** @return HasOne<Recording, $this> */
+    public function recording(): HasOne
+    {
+        return $this->hasOne(Recording::class);
     }
 
     public function church()

@@ -9,6 +9,7 @@ import {
     HeartHandshake,
     Mail,
     MapPin,
+    Play,
     Phone,
     Send,
 } from '@lucide/vue';
@@ -41,6 +42,14 @@ type PostCard = {
     slug: string;
     excerpt: string;
     published_at: string | null;
+};
+
+type RecordingCard = {
+    id: string;
+    title: string;
+    url: string;
+    mimetype: string;
+    created_at: string;
 };
 
 type CalendarEvent = {
@@ -88,6 +97,7 @@ const props = defineProps<{
     };
     featuredEvents: EventCard[];
     latestPosts: PostCard[];
+    latestRecordings: RecordingCard[];
     calendarEvents: CalendarEvent[];
 }>();
 
@@ -516,6 +526,66 @@ const submitPrayer = async (): Promise<void> => {
                             </p>
                         </Link>
                     </div>
+                </div>
+            </section>
+
+            <section v-if="props.latestRecordings.length">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p
+                            class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"
+                        >
+                            {{ t('home.latest_recordings.kicker') }}
+                        </p>
+                        <h2 class="text-2xl font-black">
+                            {{ t('home.latest_recordings.title') }}
+                        </h2>
+                    </div>
+                    <Link
+                        :href="
+                            galleryIndex({ query: { view: 'transmissions' } })
+                        "
+                        class="text-xs font-bold text-indigo-600"
+                    >
+                        {{ t('home.latest_recordings.view_all') }}
+                    </Link>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <a
+                        v-for="recording in props.latestRecordings"
+                        :key="recording.id"
+                        :href="recording.url"
+                        target="_blank"
+                        rel="noopener"
+                        class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                        <span
+                            class="relative block aspect-video overflow-hidden bg-slate-950"
+                        >
+                            <video
+                                :src="recording.url"
+                                class="h-full w-full object-cover opacity-80"
+                                preload="metadata"
+                            />
+                            <span
+                                class="absolute inset-0 grid place-items-center"
+                            >
+                                <span
+                                    class="grid size-11 place-items-center rounded-full bg-white/90 text-slate-950 shadow"
+                                >
+                                    <Play class="size-5 fill-current" />
+                                </span>
+                            </span>
+                        </span>
+                        <span class="block p-4">
+                            <strong class="block truncate text-sm">{{
+                                recording.title
+                            }}</strong>
+                            <small class="mt-1 block text-slate-500">{{
+                                formatDate(recording.created_at)
+                            }}</small>
+                        </span>
+                    </a>
                 </div>
             </section>
 

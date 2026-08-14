@@ -22,10 +22,18 @@ class PublicGalleryController extends Controller
     public function index(Request $request): Response
     {
         $churchId = app(ChurchDomainContext::class)->churchId();
+        $view = $request->string('view')->toString() === 'transmissions'
+            ? 'transmissions'
+            : 'gallery';
         $media = Media::query()
             ->visible()
             ->where('gallery', true)
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
+            ->when(
+                $view === 'transmissions',
+                fn (Builder $query): Builder => $query->whereHas('recording'),
+                fn (Builder $query): Builder => $query->whereDoesntHave('recording'),
+            )
             ->with([
                 'uploader:id,first_name,last_name',
                 'categories:id,name,slug',
@@ -36,6 +44,7 @@ class PublicGalleryController extends Controller
             ])
             ->latest()
             ->paginate(24)
+            ->withQueryString()
             ->through(fn (Media $item): array => $this->mediaItem($item));
 
         return Inertia::render('Gallery/Index', [
@@ -47,6 +56,7 @@ class PublicGalleryController extends Controller
                 ->get(['id', 'name', 'slug', 'type'])
                 ->each->localize(),
             'canInteract' => $this->canInteract($request, $churchId),
+            'view' => $view,
         ]);
     }
 
@@ -54,7 +64,7 @@ class PublicGalleryController extends Controller
     {
         $churchId = app(ChurchDomainContext::class)->churchId();
 
-        abort_unless($media->status === MediaStatus::APPROVED, 404);
+        abort_unless($media->status === MediaStatus::APPROVED && $media->gallery, 404);
         abort_if($churchId && $media->church_id !== $churchId, 404);
 
         return Storage::disk($media->disk ?: (string) config('media.disk'))

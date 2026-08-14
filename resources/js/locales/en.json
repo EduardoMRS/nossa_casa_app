@@ -67,6 +67,12 @@
         "kicker": "Visual memories",
         "title": "Community photo and video gallery",
         "description": "Explore media shared by the community and approved by the moderation team.",
+        "gallery_view": "Gallery",
+        "transmissions": "Latest broadcasts",
+        "transmissions_title": "Latest recorded broadcasts",
+        "transmissions_description": "Watch this church's most recent public recordings.",
+        "transmissions_empty": "There are no public recorded broadcasts yet.",
+        "empty": "There are no public gallery items yet.",
         "upload_kicker": "Media upload",
         "upload_title": "Add a new gallery item",
         "title_placeholder": "Media title",
@@ -810,6 +816,11 @@
             "kicker": "Communication",
             "title": "Latest updates"
         },
+        "latest_recordings": {
+            "kicker": "Watch again",
+            "title": "Latest broadcasts",
+            "view_all": "View all"
+        },
         "calendar": {
             "kicker": "Community schedule",
             "title": "Church calendar",
@@ -1116,6 +1127,7 @@
             "church_count": "{count} congregations",
             "main_domain": "Main domain",
             "domain_pending": "Domain not configured yet",
+            "live": "Live",
             "empty": "There are no public communities registered yet."
         },
         "onboarding": {

@@ -19,7 +19,7 @@ class CreateLiveStream
     public function __construct(private MediaMtxClient $mediaMtx) {}
 
     /**
-     * @param  array{name: string, source_url?: string, input_mode?: string, source_on_demand?: bool, record?: bool, church_id?: string|null}  $data
+     * @param  array{name: string, source_url: string, input_mode?: string, source_on_demand?: bool, record?: bool, is_public?: bool, church_id?: string|null}  $data
      */
     public function handle(User $user, array $data): LiveStream
     {
@@ -43,6 +43,7 @@ class CreateLiveStream
                 'token_rotated_at' => $inputMode === 'publisher' ? now() : null,
                 'source_on_demand' => $data['source_on_demand'] ?? false,
                 'record' => $data['record'] ?? true,
+                'is_public' => $data['is_public'] ?? true,
                 'church_id' => $church->getKey(),
                 'created_by_id' => $user->id,
                 'path' => 'stream-'.Str::lower((string) Str::ulid()),

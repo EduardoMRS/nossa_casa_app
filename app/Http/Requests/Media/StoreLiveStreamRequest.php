@@ -40,6 +40,7 @@ class StoreLiveStreamRequest extends FormRequest
             'source_url' => ['nullable', 'required_if:mode,pull', 'string', 'max:2048', 'regex:/\Artsp(s)?:\/\/[^\s]+\z/i'],
             'source_on_demand' => ['sometimes', 'boolean'],
             'record' => ['sometimes', 'boolean'],
+            'is_public' => ['sometimes', 'boolean'],
             'church_id' => [
                 Rule::requiredIf($this->user()?->role === UserRole::SYSTEM),
                 'nullable',

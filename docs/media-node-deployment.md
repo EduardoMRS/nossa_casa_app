@@ -1,186 +1,130 @@
-# Nó de mídia em outra máquina
+# Implantação do nó de mídia (MediaMTX)
 
-Esta configuração separa o recebimento e a gravação das transmissões do servidor principal, mantendo no servidor principal o banco de dados, o painel administrativo, a autorização e o arquivo definitivo das gravações.
+Este guia cobre apenas a máquina que recebe, distribui e grava temporariamente as transmissões. A configuração do app principal e do storage compartilhado está em [Servidor principal e storage](media-core-deployment.md).
 
-## Arquitetura
+## Responsabilidades do nó
 
 ```text
-OBS/câmera ──RTMP/RTSP──> máquina de mídia / MediaMTX ──HLS──> espectadores
+OBS/câmera ──RTMP/RTSP──> MediaMTX ──HLS──> espectadores
                               │
-                              ├── autenticação + online/offline ──HTTPS──> app principal
+                              ├── autenticação e estado ──HTTPS──> app principal
                               │
-                              └── segmento local
-                                     │
-                                  media-relay
-                                     │ fila SQLite
+                              └── segmento temporário em /recordings
+                                      │
+                                 media-webhook
+                                      │ fila SQLite
                                   media-worker
-                                     │ arquivo + checksum + token / HTTPS
-                                     └──────────────────────────> app principal
-                                                                    │
-                                                                    ├── storage definitivo
-                                                                    └── mídia “Transmissions”
+                                      ├── arquivo ──S3──> storage compartilhado
+                                      └── metadados ──HTTPS──> app principal
 ```
 
-Na máquina remota são executados:
+O arquivo de vídeo não passa pelo app principal. O `media-worker` grava diretamente no disco configurado por `MEDIA_ARCHIVE_DISK`; depois, o app principal recebe somente os metadados autenticados e publica o objeto já existente. O segmento local é removido apenas após essas duas confirmações.
 
-- `mediamtx`: recebe, distribui e grava a transmissão;
-- `media-relay`: recebe do MediaMTX apenas a notificação do segmento local;
-- `media-worker`: envia o arquivo ao app principal e tenta novamente em caso de falha;
-- `media-init`: prepara o SQLite da fila e termina.
+Os serviços de `docker-compose.media-node.yml` são:
 
-Não é necessário executar `media-scheduler` na máquina remota. O worker usa a própria fila, com até 12 tentativas e espera progressiva. O arquivo remoto só é apagado depois que o app principal confirma que o armazenou.
+- `mediamtx`: ingestão, HLS e gravação dos segmentos locais;
+- `media-webhook`: recebe o webhook local do MediaMTX e cria o job;
+- `media-worker`: envia o segmento ao storage compartilhado e registra a gravação no app;
+- `media-init`: prepara o SQLite usado pela fila e termina com código `0`.
 
-## Pré-requisitos
+## Pré-requisitos e rede
 
-- Docker Engine com Docker Compose nas duas máquinas;
-- HTTPS válido no app principal;
-- uma rede privada entre as máquinas, preferencialmente Tailscale ou WireGuard;
-- espaço em disco remoto suficiente para reter gravações durante uma indisponibilidade do servidor principal;
-- portas públicas `1935/TCP` para publicação RTMP e `8888/TCP` para HLS, conforme o uso;
-- porta `9997/TCP` acessível somente pelo IP privado/VPN do app principal.
+- Docker Engine e Docker Compose;
+- acesso HTTPS ao app principal;
+- acesso S3 ao mesmo bucket utilizado pelo app principal;
+- espaço local para reter segmentos enquanto o storage ou o app estiver indisponível;
+- `1935/TCP` para RTMP e `8888/TCP` para HLS;
+- `9997/TCP` acessível somente pelo servidor principal, preferencialmente via VPN.
 
-RTSP (`8554/TCP`) e WebRTC (`8889/TCP` e `8189/UDP`) só precisam ser liberados se forem usados. Não exponha a API `9997` diretamente à internet.
+Libere `8554/TCP`, `8889/TCP` e `8189/UDP` apenas se RTSP ou WebRTC forem usados. A API `9997` não deve ficar pública.
 
-## 1. Configurar o servidor principal
+## Configurar o ambiente
 
-Use o mesmo segredo longo nos dois servidores. No `.env` do app principal:
-
-```dotenv
-MEDIA_NODE_ROLE=core
-MEDIA_WORKER_TOKEN=COLE_UM_TOKEN_ALEATORIO_DE_64_CARACTERES
-
-# IP da máquina de mídia dentro da VPN
-MEDIAMTX_API_URL=http://100.64.0.20:9997
-
-# Endereços entregues ao navegador e ao software de transmissão
-MEDIAMTX_PUBLIC_RTMP_URL=rtmp://live.example.com:1935
-MEDIAMTX_PUBLIC_HLS_URL=https://live.example.com
-
-# Pode ser um disco local ou um disco S3 configurado no Laravel
-MEDIA_ARCHIVE_DISK=recordings
-```
-
-Gere o segredo, por exemplo, com `openssl rand -hex 32`. Depois publique a versão atualizada do app, reconstrua a imagem e execute:
+Na máquina de mídia:
 
 ```bash
-docker compose up -d --build
-docker compose exec app php artisan migrate --force
-docker compose exec app php artisan optimize:clear
-```
-
-O proxy que recebe `POST /api/internal/media/recording-ingest` precisa aceitar o tamanho máximo de uma gravação e um tempo longo de upload. O Nginx incluído no projeto está configurado para 5 GB e 1 hora. Se houver outro proxy, load balancer ou CDN na frente do app, ajuste-o também. Para arquivos grandes, não passe esse endpoint pelo proxy da Cloudflare; use DNS sem proxy, uma URL privada pela VPN ou, futuramente, upload direto para storage S3.
-
-## 2. Preparar a máquina de mídia
-
-Clone a mesma revisão do projeto e entre no diretório:
-
-```bash
-git clone SEU_REPOSITORIO nossa-casa-app
+git clone <url-do-repositorio> nossa-casa-app
 cd nossa-casa-app
 cp .env.media-node.example .env.media-node
-```
-
-Gere uma chave independente para o Laravel local e edite `.env.media-node`:
-
-```bash
 printf 'base64:%s\n' "$(openssl rand -base64 32)"
 ```
 
-Exemplo dos valores importantes:
+Edite `.env.media-node`. Os valores entre `<...>` são referências e devem ser substituídos:
 
 ```dotenv
-APP_KEY=base64:CHAVE_GERADA_ACIMA
-MEDIA_WORKER_ID=media-node-manaus-1
-MEDIA_WORKER_TOKEN=O_MESMO_TOKEN_CONFIGURADO_NO_APP_PRINCIPAL
+APP_KEY=base64:<chave-gerada>
+MEDIA_WORKER_ID=<identificador-unico-deste-no>
+MEDIA_WORKER_TOKEN=<mesmo-token-longo-configurado-no-servidor-principal>
 
-MEDIA_CORE_URL=https://app.example.com
+MEDIA_CORE_URL=https://<dominio-do-servidor-principal>
 MEDIA_CORE_VERIFY_TLS=true
+MEDIA_CORE_CONNECT_TIMEOUT=10
+MEDIA_CORE_REQUEST_TIMEOUT=30
 
-# IP desta máquina dentro da VPN. Use 127.0.0.1 apenas quando o app
-# principal estiver na mesma máquina.
-MEDIA_API_BIND_IP=100.64.0.20
+MEDIA_ARCHIVE_DISK=minio
+MINIO_ACCESS_KEY_ID=<usuario-do-minio>
+MINIO_SECRET_ACCESS_KEY=<senha-do-minio>
+MINIO_DEFAULT_REGION=us-east-1
+MINIO_BUCKET=<bucket-compartilhado>
+MINIO_ENDPOINT=http://<ip-da-maquina-de-arquivos>:9000
+MINIO_USE_PATH_STYLE_ENDPOINT=true
+
+MEDIA_API_BIND_IP=<ip-privado-desta-maquina-de-midia>
 ```
 
-`MEDIA_CORE_URL` deve ser alcançável de dentro dos contêineres da máquina de mídia. Ele é usado para autorização, eventos online/offline e entrega das gravações.
+O endpoint do MinIO deve ser alcançável de dentro do contêiner `media-worker`. Não use `127.0.0.1` para um MinIO executado em outra máquina. Em produção, use HTTPS para o endpoint S3 sempre que ele atravessar uma rede não confiável.
 
-## 3. Subir o nó remoto
-
-```bash
-docker compose \
-  --env-file .env.media-node \
-  -f docker-compose.media-node.yml \
-  up -d --build
-```
-
-Confira o estado e os logs:
+## Subir e verificar
 
 ```bash
+docker compose --env-file .env.media-node -f docker-compose.media-node.yml up -d --build
 docker compose --env-file .env.media-node -f docker-compose.media-node.yml ps
-docker compose --env-file .env.media-node -f docker-compose.media-node.yml logs -f mediamtx media-relay media-worker
+docker compose --env-file .env.media-node -f docker-compose.media-node.yml logs -f mediamtx media-webhook media-worker
 ```
 
-É normal `media-init` aparecer como encerrado com código `0`: ele é um serviço de inicialização executado uma única vez.
-
-## 4. Rede e DNS
-
-No firewall da máquina de mídia:
-
-- permita `1935/TCP` para os publicadores autorizados;
-- permita `8888/TCP` para o proxy/DNS de HLS ou para os espectadores;
-- permita `9997/TCP` somente a partir do IP VPN do servidor principal;
-- bloqueie o acesso público direto ao `media-relay`, que não publica porta no host.
-
-Um proxy HTTPS pode encaminhar `https://live.example.com` para `http://127.0.0.1:8888`. O endereço configurado em `MEDIAMTX_PUBLIC_HLS_URL` no app principal deve apontar para esse domínio.
-
-Antes de testar uma transmissão, confirme a partir do servidor principal:
+Valide de dentro do worker os dois destinos necessários:
 
 ```bash
-curl http://100.64.0.20:9997/v3/config/global/get
+docker compose --env-file .env.media-node -f docker-compose.media-node.yml exec media-worker php artisan about
+docker compose --env-file .env.media-node -f docker-compose.media-node.yml exec media-worker php artisan tinker --execute 'dump(Illuminate\Support\Facades\Storage::disk("minio")->exists(".healthcheck"));'
+curl -I https://<dominio-do-servidor-principal>/up
 ```
 
-E confirme, a partir da máquina de mídia, que o app principal responde:
+O retorno `false` para `.healthcheck` é normal; a chamada confirma que bucket, credenciais e endpoint respondem sem lançar exceção.
+
+Do servidor principal, confirme a API privada do MediaMTX:
 
 ```bash
-curl -I https://app.example.com/up
+curl http://<ip-do-no-de-midia>:9997/v3/config/global/get
 ```
 
-## 5. Testar o fluxo completo
+## Teste funcional
 
-1. Entre no painel administrativo do app principal com usuário `media`, `admin` ou superior.
-2. Crie ou abra a transmissão da igreja e copie a URL e o token de publicação.
-3. Inicie a transmissão pelo OBS.
-4. Confirme no painel que ela ficou online e abra a página pública.
-5. Ao completar um segmento, acompanhe `media-worker` nos logs.
-6. Confirme que a gravação apareceu nas mídias, na categoria `Transmissions`, e que reprodução e download funcionam.
+1. Crie uma transmissão no painel principal e copie URL e token de publicação.
+2. No OBS, configure a URL RTMP e deixe a chave vazia, pois o token já faz parte da URL.
+3. Inicie a transmissão e confirme o estado `live` no painel.
+4. Abra a página pública e valide vídeo e comentários.
+5. Para um teste rápido de gravação, reduza temporariamente `MEDIAMTX_RECORD_SEGMENT_DURATION` no servidor principal e crie uma nova transmissão; restaure o valor desejado depois.
+6. Aguarde o fechamento do segmento e acompanhe os logs de `media-webhook` e `media-worker`.
+7. Confirme o objeto no bucket e a nova mídia na categoria `Transmissions`.
+8. Valide reprodução e download pelo app principal.
 
-O envio é idempotente: se a resposta do app principal se perder, o worker pode reenviar o mesmo arquivo sem criar uma segunda gravação. O checksum também impede que um upload corrompido seja aceito.
-
-## Operação e recuperação
-
-Para ver jobs que falharam no nó remoto:
+## Falhas e recuperação
 
 ```bash
 docker compose --env-file .env.media-node -f docker-compose.media-node.yml exec media-worker php artisan queue:failed
-```
-
-Depois de corrigir rede, certificado, token ou espaço em disco, tente novamente:
-
-```bash
 docker compose --env-file .env.media-node -f docker-compose.media-node.yml exec media-worker php artisan queue:retry all
 ```
 
-Monitore o volume `media-recordings`: em uma falha prolongada ele continuará crescendo, justamente para preservar os arquivos. Faça backup do volume `media-state`, pois ele contém a fila SQLite. Para atualizar o nó:
+O job é idempotente: novas tentativas usam o mesmo caminho calculado a partir do checksum. Se o storage aceitar o objeto, mas o app principal estiver indisponível, a tentativa seguinte apenas sobrescreve o mesmo objeto e repete o registro. O arquivo em `/recordings` permanece até o app responder com sucesso.
 
-```bash
-git pull
-docker compose --env-file .env.media-node -f docker-compose.media-node.yml up -d --build
-```
+Monitore e faça backup dos volumes `media-recordings` e `media-state`. O primeiro retém vídeos pendentes; o segundo contém a fila SQLite.
 
 ## Segurança
 
-- use HTTPS válido e mantenha `MEDIA_CORE_VERIFY_TLS=true` em produção;
-- armazene `.env.media-node` somente na máquina remota e nunca o envie ao Git;
-- use uma VPN para a API de controle do MediaMTX;
-- rotacione `MEDIA_WORKER_TOKEN` nos dois servidores se houver suspeita de vazamento;
-- faça backup do arquivo definitivo no servidor principal ou no storage S3;
-- limite no firewall quem pode publicar em `1935`, além do token de transmissão já exigido pelo app.
+- mantenha `.env.media-node` fora do Git;
+- use uma VPN entre servidor principal, nó de mídia e storage;
+- limite `9000/TCP` do MinIO ao app e aos workers autorizados;
+- não exponha o console `9001/TCP` do MinIO à internet;
+- use o mesmo `MEDIA_WORKER_TOKEN` no core e nos nós, com pelo menos 64 caracteres aleatórios;
+- rotacione credenciais do worker e do storage se houver suspeita de vazamento.

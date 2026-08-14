@@ -8,6 +8,7 @@ import {
     Globe2,
     Network,
     Plus,
+    Radio,
     ShieldCheck,
     X,
 } from '@lucide/vue';
@@ -23,6 +24,7 @@ type Church = {
     slug: string;
     domain: string | null;
     url: string | null;
+    is_live: boolean;
 };
 
 type Community = {
@@ -399,9 +401,21 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         ><ChurchIcon
                                             class="size-4 text-indigo-600"
                                         /><span
-                                            ><strong class="block text-sm">{{
-                                                church.name
-                                            }}</strong
+                                            ><span
+                                                class="flex items-center gap-2"
+                                                ><strong
+                                                    class="block text-sm"
+                                                    >{{ church.name }}</strong
+                                                ><span
+                                                    v-if="church.is_live"
+                                                    class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[9px] font-black text-rose-700 uppercase"
+                                                    ><Radio class="size-3" />
+                                                    {{
+                                                        t(
+                                                            'portal.communities.live',
+                                                        )
+                                                    }}</span
+                                                ></span
                                             ><small class="text-slate-400">{{
                                                 church.domain
                                             }}</small></span
