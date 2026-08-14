@@ -35,6 +35,21 @@ test('file metadata resolves files from an available local disk', function () {
         ->and($metadata['name'])->toBe('sample.txt');
 });
 
+test('stored files are served only through encrypted temporary signed urls', function () {
+    Storage::disk('public')->put('gallery/private.txt', 'private content');
+
+    $url = genUrl('gallery/private.txt');
+
+    expect($url)->toContain('signature=')
+        ->and($url)->toContain('expires=');
+
+    $this->get($url)
+        ->assertOk()
+        ->assertHeader('Content-Disposition', 'inline; filename="private.txt"');
+
+    $this->get($url.'&tampered=1')->assertForbidden();
+});
+
 test('leader can upload media from a stored file path string', function () {
     $leader = User::factory()->create(['role' => UserRole::LEADER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);

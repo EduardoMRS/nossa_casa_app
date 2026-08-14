@@ -2,10 +2,13 @@
 
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Models\Classroom;
 use App\Models\Community;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserProfile;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->withoutVite();
@@ -97,6 +100,26 @@ it('blocks members from admin workspace routes', function () {
             ->get(route($routeName))
             ->assertForbidden();
     }
+});
+
+it('shares the kids ministry settings from the authenticated church', function () {
+    $admin = createAdminUserWithChurch();
+
+    Classroom::query()->create([
+        'church_id' => $admin->profile->church_id,
+        'name' => 'Kids',
+        'is_kids' => true,
+    ]);
+    Setting::query()->create([
+        'church_id' => $admin->profile->church_id,
+        'options' => ['classrooms' => ['separate_kids_ministry' => false]],
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.events.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('classrooms.hasKids', true)
+            ->where('separateKidsMinistry', false));
 });
 
 it('restricts operational logs and metrics to system users', function () {

@@ -465,12 +465,18 @@
         "forms": {
             "registered": "Formulários registrados",
             "title": "Formulários",
+            "none": "Nenhum formulário",
+            "content_hint": "Opcional: vincule um formulário de inscrição a este conteúdo.",
             "description": "Construtor visual e links de conteúdo.",
             "new": "Novo formulário",
             "edit": "Editar formulário",
             "create": "Criar formulário",
             "save_changes": "Salvar alterações",
             "card_summary": "{responses} respostas · {links} links",
+            "links": "Vínculos",
+            "responses": "Respostas",
+            "no_description": "Sem descrição",
+            "empty": "Nenhum formulário foi criado para esta igreja.",
             "editor_description": "Adicionar campos e elementos de conteúdo sem editar código.",
             "add_element": "Adicionar elemento",
             "label": "Rótulo",
@@ -1089,6 +1095,15 @@
             "send_request": "Enviar para aprovação",
             "request_sent": "Solicitação enviada com sucesso.",
             "my_requests": "Minhas solicitações"
+        },
+        "domain": {
+            "subdomain": "Subdomínio da plataforma",
+            "external": "Domínio externo",
+            "subdomain_placeholder": "minha-igreja",
+            "external_hint": "Informe o domínio completo, sem protocolo ou caminho.",
+            "required": "Informe um domínio.",
+            "invalid": "Informe um domínio válido, sem espaços ou caminhos.",
+            "main_forbidden": "O domínio principal da plataforma não pode ser usado."
         },
         "review": {
             "title": "Solicitações aguardando sua análise",

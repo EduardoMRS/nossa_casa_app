@@ -16,6 +16,7 @@ type EventResource = {
     end_time: string;
     cover_path?: string | null;
     category_ids?: string[];
+    form_id?: string | null;
 };
 
 type CategoryOption = {
@@ -25,9 +26,16 @@ type CategoryOption = {
     type: string;
 };
 
+type FormOption = {
+    id: string;
+    title: string;
+    description: string | null;
+};
+
 const props = defineProps<{
     event?: EventResource;
     categories: CategoryOption[];
+    forms: FormOption[];
     returnUrl: string;
 }>();
 
@@ -62,6 +70,7 @@ const form = useForm({
     category_ids: props.event?.category_ids
         ? [...props.event.category_ids]
         : [],
+    form_id: props.event?.form_id ?? '',
 });
 
 const slugify = (value: string): string => {
@@ -259,6 +268,31 @@ onBeforeUnmount(() => {
                     label="Categorias do evento"
                     hint="Selecione as categorias disponiveis para a sua igreja"
                 />
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-foreground">
+                        {{ t('admin.forms.title') }}
+                    </label>
+                    <select
+                        v-model="form.form_id"
+                        class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
+                    >
+                        <option value="">{{ t('admin.forms.none') }}</option>
+                        <option
+                            v-for="registrationForm in props.forms"
+                            :key="registrationForm.id"
+                            :value="registrationForm.id"
+                        >
+                            {{ registrationForm.title }}
+                        </option>
+                    </select>
+                    <p class="text-xs text-muted-foreground">
+                        {{ t('admin.forms.content_hint') }}
+                    </p>
+                    <p v-if="form.errors.form_id" class="text-xs text-red-600">
+                        {{ form.errors.form_id }}
+                    </p>
+                </div>
 
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">

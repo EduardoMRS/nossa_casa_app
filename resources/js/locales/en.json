@@ -465,12 +465,18 @@
         "forms": {
             "registered": "Registered forms",
             "title": "Forms",
+            "none": "No form",
+            "content_hint": "Optional: link a registration form to this content.",
             "description": "Visual builder and content links.",
             "new": "New form",
             "edit": "Edit form",
             "create": "Create form",
             "save_changes": "Save changes",
             "card_summary": "{responses} responses · {links} links",
+            "links": "Links",
+            "responses": "Responses",
+            "no_description": "No description",
+            "empty": "No forms have been created for this church.",
             "editor_description": "Add fields and content elements without editing code.",
             "add_element": "Add element",
             "label": "Label",
@@ -1114,6 +1120,15 @@
             "send_request": "Send for approval",
             "request_sent": "Request sent successfully.",
             "my_requests": "My requests"
+        },
+        "domain": {
+            "subdomain": "Platform subdomain",
+            "external": "External domain",
+            "subdomain_placeholder": "my-church",
+            "external_hint": "Enter the full domain without protocol or path.",
+            "required": "Enter a domain.",
+            "invalid": "Enter a valid domain without spaces or paths.",
+            "main_forbidden": "The platform's main domain cannot be used."
         },
         "review": {
             "title": "Requests awaiting your review",

@@ -12,6 +12,7 @@ use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Church;
 use App\Models\Event;
+use App\Models\Form;
 use App\Models\Library;
 use App\Models\Media;
 use App\Models\Post;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -65,12 +67,8 @@ Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file
         ->firstOrFail();
 
     $library->localize();
-    $file = getFileMetadata($library->file_path);
-    if (! file_exists($file['path'])) {
-        abort(404);
-    }
 
-    return response()->file($file['path']);
+    return redirect()->to(genUrl($library->getRawOriginal('file_path')));
 })->name('library.show');
 
 Route::get('/events', function () {
@@ -93,7 +91,7 @@ Route::get('/events', function () {
                         'allow_unsafe_links' => false,
                     ]))))
                     : null,
-                'cover_path' => $event->cover_path,
+                'cover_path' => $event->cover_url,
                 'start_time' => $event->start_time,
                 'end_time' => $event->end_time,
                 'church' => $event->church,
@@ -148,7 +146,7 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
             ]),
             'start_time' => $event->start_time,
             'end_time' => $event->end_time,
-            'cover_path' => $event->cover_path,
+            'cover_path' => $event->cover_url,
             'church' => $event->church,
         ],
         'form' => [
@@ -184,7 +182,7 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
             ]),
             'start_time' => $event->start_time,
             'end_time' => $event->end_time,
-            'cover_path' => $event->cover_path,
+            'cover_path' => $event->cover_url,
             'church' => $event->church,
             'categories' => $event->categories,
         ],
@@ -201,24 +199,38 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
 
 Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
 
-Route::get('/d/{encryptedFile}', function ($encryptedFile) {
+Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
     try {
-        // Decrypt the file path
         $filePath = Crypt::decryptString($encryptedFile);
-        $file = getFileMetadata($filePath);
-
-        // Check if file exists
-        if (! $file['exists']) {
-            abort(404);
-        }
-
-        // Return the file
-        return response()->file($file['path']);
-
-    } catch (Exception $e) {
+    } catch (Throwable) {
         abort(403, 'Invalid or corrupted file link.');
     }
-})->name('secure-file');
+
+    abort_if(
+        $filePath === ''
+            || str_contains($filePath, '..')
+            || str_starts_with($filePath, '/')
+            || preg_match('/^[A-Za-z]:[\\\\\/]/', $filePath) === 1
+            || filter_var($filePath, FILTER_VALIDATE_URL),
+        404,
+    );
+
+    $disk = Storage::disk('public');
+    abort_unless($disk->exists($filePath), 404);
+
+    return response()->stream(function () use ($disk, $filePath): void {
+        $stream = $disk->readStream($filePath);
+
+        if (is_resource($stream)) {
+            fpassthru($stream);
+            fclose($stream);
+        }
+    }, 200, [
+        'Content-Type' => $disk->mimeType($filePath) ?: 'application/octet-stream',
+        'Content-Disposition' => 'inline; filename="'.basename($filePath).'"',
+        'Cache-Control' => 'private, max-age=3600',
+    ]);
+})->middleware('signed')->name('secure-file');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function (Request $request) {
@@ -297,6 +309,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
             Route::put('/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
             Route::get('/formularios', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
+            Route::get('/formularios/criar', [AdminWorkspaceController::class, 'formCreate'])->name('forms.create');
+            Route::get('/formularios/{form}/editar', [AdminWorkspaceController::class, 'formEdit'])->name('forms.edit');
             Route::redirect('/pedidos-intercessao', '/dashboard/minhas-oracoes')->name('prayerRequests.index');
             Route::get('/ministerio-kids', [AdminWorkspaceController::class, 'kidsMinistry'])->name('kidsMinistry.index');
             Route::redirect('/minhas-oracoes', '/minhas-oracoes')->name('myPrayers.index');
@@ -320,6 +334,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/eventos/criar', function () {
         return Inertia::render('Events/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
+            'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
     })->middleware('role:leader|admin|superadmin|system')->name('events.create');
@@ -336,10 +351,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'description' => $resource->description,
                 'start_time' => $resource->start_time,
                 'end_time' => $resource->end_time,
-                'cover_path' => $resource->cover_path,
+                'cover_path' => $resource->cover_url,
                 'category_ids' => $resource->categories()->pluck('categories.id')->all(),
+                'form_id' => $resource->forms()->value('forms.id'),
             ],
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
+            'forms' => Form::query()->where('church_id', $resource->church_id)->orderBy('title')->get(['id', 'title', 'description']),
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
     })->middleware('role:leader|admin|superadmin|system')->name('events.edit');
@@ -383,6 +400,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/posts/create', function () {
         return Inertia::render('Posts/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
+            'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
         ]);
     })->name('posts.create');
     Route::get('/dashboard/posts/{post}/edit', function ($post) {
@@ -392,6 +410,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $props = [
             'available_categories' => $church->categories()->get(['id', 'name'])->each->makeHidden('translations'),
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
+            'forms' => Form::query()->where('church_id', $post->church_id)->orderBy('title')->get(['id', 'title', 'description']),
             'post' => [
                 'id' => $post->id,
                 'title' => $post->title,
@@ -400,6 +419,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'published_at' => $post->published_at,
                 'expires_at' => $post->expires_at,
                 'category_ids' => $post->categories()->pluck('categories.id')->all(),
+                'form_id' => $post->forms()->value('forms.id'),
             ],
         ];
 

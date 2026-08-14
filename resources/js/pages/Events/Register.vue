@@ -23,8 +23,8 @@ interface SchemaField {
     placeholder: string;
     helpText: string;
     options: SchemaOption[];
-    width: 'full' | 'half' | 'third';
-    mobileWidth: 'full' | 'half';
+    width: number;
+    mobileWidth: number;
     size: 'auto' | 'fixed';
     height: number;
     structural: boolean;
@@ -90,6 +90,47 @@ const normalizeOptions = (source: unknown): SchemaOption[] => {
         .filter((item): item is SchemaOption => item !== null);
 };
 
+const normalizeColumnSpan = (value: unknown): number => {
+    if (typeof value === 'number' && value >= 1 && value <= 12) {
+        return value;
+    }
+
+    return (
+        ({ full: 12, half: 6, third: 4 } as Record<string, number>)[
+            String(value)
+        ] ?? 12
+    );
+};
+
+const columnClasses: Record<number, string> = {
+    1: 'col-span-1',
+    2: 'col-span-2',
+    3: 'col-span-3',
+    4: 'col-span-4',
+    5: 'col-span-5',
+    6: 'col-span-6',
+    7: 'col-span-7',
+    8: 'col-span-8',
+    9: 'col-span-9',
+    10: 'col-span-10',
+    11: 'col-span-11',
+    12: 'col-span-12',
+};
+const desktopColumnClasses: Record<number, string> = {
+    1: 'md:col-span-1',
+    2: 'md:col-span-2',
+    3: 'md:col-span-3',
+    4: 'md:col-span-4',
+    5: 'md:col-span-5',
+    6: 'md:col-span-6',
+    7: 'md:col-span-7',
+    8: 'md:col-span-8',
+    9: 'md:col-span-9',
+    10: 'md:col-span-10',
+    11: 'md:col-span-11',
+    12: 'md:col-span-12',
+};
+
 const schemaFields = computed<SchemaField[]>(() => {
     const source = props.form.schema as unknown;
     const rawFields = Array.isArray(source)
@@ -128,10 +169,8 @@ const schemaFields = computed<SchemaField[]>(() => {
                 placeholder: String(record.placeholder ?? ''),
                 helpText: String(record.helpText ?? record.help_text ?? ''),
                 options: normalizeOptions(record.options),
-                width: ['half', 'third'].includes(String(record.width))
-                    ? (String(record.width) as 'half' | 'third')
-                    : 'full',
-                mobileWidth: record.mobile_width === 'half' ? 'half' : 'full',
+                width: normalizeColumnSpan(record.width),
+                mobileWidth: normalizeColumnSpan(record.mobile_width),
                 size: record.size === 'fixed' ? 'fixed' : 'auto',
                 height: Math.max(1, Number(record.height ?? 4)),
                 structural,
@@ -167,18 +206,7 @@ const updateFieldValue = (field: SchemaField, value: unknown): void => {
 };
 
 const fieldWidthClass = (field: SchemaField): string => {
-    const mobileClass =
-        field.mobileWidth === 'half' ? 'col-span-6' : 'col-span-12';
-
-    if (field.width === 'half') {
-        return `${mobileClass} md:col-span-6`;
-    }
-
-    if (field.width === 'third') {
-        return `${mobileClass} md:col-span-4`;
-    }
-
-    return `${mobileClass} md:col-span-12`;
+    return `${columnClasses[field.mobileWidth]} ${desktopColumnClasses[field.width]}`;
 };
 
 const submit = async () => {

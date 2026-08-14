@@ -19,6 +19,7 @@ import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
+import { show as publicPostShow } from '@/routes/posts/public';
 
 type EventCard = {
     id: string;
@@ -169,12 +170,6 @@ const formatDate = (value: string | null): string => {
 
     return formatter.value.format(new Date(value));
 };
-
-const statsRows = computed(() => [
-    { label: t('home.stats.events'), value: props.stats.events },
-    { label: t('home.stats.gallery'), value: props.stats.gallery },
-    { label: t('home.stats.posts'), value: props.stats.posts },
-]);
 
 const dateKey = (date: Date): string =>
     `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -412,25 +407,6 @@ const submitPrayer = async (): Promise<void> => {
                         </span>
                     </div>
                 </Link>
-
-                <div
-                    class="relative z-10 mt-8 grid grid-cols-3 gap-2 border-t border-white/15 pt-6 md:col-span-2 md:gap-4"
-                >
-                    <article
-                        v-for="item in statsRows"
-                        :key="item.label"
-                        class="rounded-2xl border border-white/10 bg-white/8 px-3 py-4 backdrop-blur-sm sm:px-5"
-                    >
-                        <p class="text-2xl font-black sm:text-3xl">
-                            {{ item.value }}
-                        </p>
-                        <p
-                            class="mt-1 text-[9px] font-bold tracking-[0.12em] text-white/60 uppercase sm:text-[10px]"
-                        >
-                            {{ item.label }}
-                        </p>
-                    </article>
-                </div>
             </section>
 
             <section class="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -524,7 +500,7 @@ const submitPrayer = async (): Promise<void> => {
                         <Link
                             v-for="post in props.latestPosts"
                             :key="post.id"
-                            :href="`/posts/${post.slug}`"
+                            :href="publicPostShow({ slug: post.slug })"
                             class="block rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md"
                         >
                             <h3

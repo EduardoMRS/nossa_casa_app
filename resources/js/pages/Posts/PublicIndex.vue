@@ -14,6 +14,10 @@ import { reactive } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import {
+    index as publicPostsIndex,
+    show as publicPostShow,
+} from '@/routes/posts/public';
 
 type PublicPost = {
     id: string;
@@ -61,7 +65,7 @@ const formatDate = (value: string | null): string =>
 
 const applyFilters = (): void => {
     router.get(
-        '/posts',
+        publicPostsIndex.url(),
         Object.fromEntries(
             Object.entries(filterForm).filter(([, value]) => value !== ''),
         ),
@@ -115,7 +119,7 @@ const clearFilters = (): void => {
                         class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                         <Link
-                            :href="`/posts/${post.slug}`"
+                            :href="publicPostShow({ slug: post.slug })"
                             prefetch
                             class="grid md:grid-cols-[15rem_1fr]"
                         >
@@ -351,7 +355,7 @@ const clearFilters = (): void => {
                             <Link
                                 v-for="item in mostViewed"
                                 :key="item.id"
-                                :href="`/posts/${item.slug}`"
+                                :href="publicPostShow({ slug: item.slug })"
                                 prefetch
                                 class="grid grid-cols-[2rem_1fr] gap-3 py-3 first:pt-0 last:pb-0"
                             >

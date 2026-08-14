@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { dashboard } from '@/routes';
 
 type ModuleStat = {
     label: string;
@@ -38,7 +39,7 @@ defineOptions({
         breadcrumbs: [
             {
                 title: 'admin.common.workspace',
-                href: '/dashboard',
+                href: dashboard(),
             },
         ],
     },

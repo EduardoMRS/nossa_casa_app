@@ -209,8 +209,8 @@ const approveRequest = async (request: RegistrationRequest): Promise<void> => {
             t('portal.review.approve_confirm', { name: request.name }),
         )
     ) {
-return;
-}
+        return;
+    }
 
     await axios.post(`/onboarding/churches/${request.id}/approve`);
     window.location.reload();
@@ -220,8 +220,8 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
     const notes = window.prompt(t('portal.review.reject_reason'));
 
     if (!notes) {
-return;
-}
+        return;
+    }
 
     await axios.post(`/onboarding/churches/${request.id}/reject`, {
         review_notes: notes,

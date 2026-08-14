@@ -74,7 +74,7 @@ class LibraryVerseController extends Controller
             'category_ids.*' => ['string'],
         ]);
 
-        $savedPath = $this->handleMediaUpload($request->file('file_path') ?? $validated['file_path'] ?? null, "church/{$library->church_id}/library", $library->file_path);
+        $savedPath = $this->handleMediaUpload($request->file('file_path') ?? $validated['file_path'] ?? null, "church/{$library->church_id}/library", $library->getRawOriginal('file_path'));
 
         $library->update([
             ...$validated,
@@ -156,7 +156,8 @@ class LibraryVerseController extends Controller
             'title' => $library->title,
             'description' => $library->description,
             'type' => $library->type,
-            'file_path' => $library->file_path,
+            'file_path' => $library->getRawOriginal('file_path'),
+            'file_url' => $library->file_url,
             'preview_url' => $library->file_path ? genUrl($library->file_path) : null,
             'category_ids' => $library->categories()->pluck('categories.id')->all(),
         ];

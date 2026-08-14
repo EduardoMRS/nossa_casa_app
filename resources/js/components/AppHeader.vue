@@ -38,6 +38,7 @@ import { getInitials } from '@/composables/useInitials';
 import { useI18n } from '@/lib/i18n';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { ui as apiDocs } from '@/routes/scramble/docs';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -67,12 +68,12 @@ const mainNavItems = computed<NavItem[]>(() => [
 const rightNavItems = computed<NavItem[]>(() => [
     {
         title: t('navigation.repository'),
-        href: 'https://github.com/laravel/vue-starter-kit',
+        href: 'https://github.com/EduardoMRS/nossa_casa_app',
         icon: Folder,
     },
     {
         title: t('navigation.documentation'),
-        href: 'https://laravel.com/docs/starter-kits#vue',
+        href: apiDocs(),
         icon: BookOpen,
     },
 ]);

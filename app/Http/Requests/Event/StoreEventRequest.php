@@ -25,6 +25,7 @@ class StoreEventRequest extends FormRequest
             'start_time' => ['required', 'date'],
             'end_time' => ['required', 'date', 'after_or_equal:start_time'],
             'cover_path' => ['nullable'],
+            'form_id' => ['nullable', 'string', 'exists:forms,id'],
         ];
     }
 }

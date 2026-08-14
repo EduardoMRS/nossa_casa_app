@@ -250,52 +250,22 @@ const getTitle = (post: Post) => {
                 </div>
             </section>
 
-            <section
-                v-if="props.posts.links.length > 3"
-                class="flex flex-col items-center justify-between gap-4 sm:flex-row"
-            >
-                <p class="text-sm text-muted-foreground">
-                    {{
-                        t('posts.index.pagination', {
-                            from: props.posts.from ?? 0,
-                            to: props.posts.to ?? 0,
-                            total: props.posts.total,
-                        })
-                    }}
-                </p>
-
-                <div class="flex flex-wrap gap-2">
-                    <template
-                        v-for="(link, key) in props.posts.links"
-                        :key="key"
-                    >
-                        <span
-                            v-if="link.url === null"
-                            class="rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground"
-                            v-html="link.label"
-                        />
-                        <Link
-                            v-else
-                            :href="link.url"
-                            class="rounded-lg border px-3 py-1.5 text-sm"
-                            :class="
-                                link.active
-                                    ? 'border-transparent text-white'
-                                    : 'border-border bg-card text-muted-foreground'
-                            "
-                            :style="
-                                link.active
-                                    ? {
-                                          backgroundColor: 'var(--primary)',
-                                      }
-                                    : undefined
-                            "
-                        >
-                            <span v-html="link.label" />
-                        </Link>
-                    </template>
-                </div>
-            </section>
+            <nav class="flex flex-wrap gap-2 border-t border-border p-4">
+                <Link
+                    v-for="link in props.posts.links"
+                    :key="link.label"
+                    :href="link.url ?? '#'"
+                    :class="[
+                        'rounded-lg border px-3 py-1.5 text-xs',
+                        link.active
+                            ? 'border-transparent bg-primary text-white'
+                            : 'border-border bg-card text-muted-foreground',
+                        !link.url && 'pointer-events-none opacity-40',
+                    ]"
+                >
+                    <span v-html="link.label" />
+                </Link>
+            </nav>
         </div>
         <CategoryManagerModal
             :open="categoriesOpen"

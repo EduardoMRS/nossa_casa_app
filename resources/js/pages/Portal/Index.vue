@@ -15,7 +15,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import { useI18n } from '@/lib/i18n';
-import { login, register } from '@/routes';
+import { home, login, register } from '@/routes';
 
 type Church = {
     id: string;
@@ -56,6 +56,7 @@ const props = defineProps<{
     userChurchUrl?: string | null;
     reviewableRequests: RegistrationRequest[];
     myRequests: RegistrationRequest[];
+    mainDomain: string;
 }>();
 
 const { t } = useI18n();
@@ -64,6 +65,8 @@ const churchModalOpen = ref(false);
 const processing = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
+const domainMode = ref<'subdomain' | 'external'>('subdomain');
+const domainInput = ref('');
 const communityForm = ref({
     name: '',
     slug: '',
@@ -74,12 +77,46 @@ const churchForm = ref({
     community_id: props.userCommunityId ?? '',
     name: '',
     slug: '',
-    domain: '',
     description: '',
     found_date: '',
     contact_email: '',
     contact_phone: '',
     address: '',
+});
+
+const normalizedDomainInput = computed(() =>
+    domainInput.value
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .split('/')[0]
+        .replace(/\.$/, ''),
+);
+
+const requestedDomain = computed(() =>
+    domainMode.value === 'subdomain'
+        ? `${normalizedDomainInput.value}.${props.mainDomain}`
+        : normalizedDomainInput.value,
+);
+
+const domainError = computed(() => {
+    if (!normalizedDomainInput.value) {
+        return t('portal.domain.required');
+    }
+
+    if (requestedDomain.value === props.mainDomain) {
+        return t('portal.domain.main_forbidden');
+    }
+
+    if (
+        !/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(
+            requestedDomain.value,
+        )
+    ) {
+        return t('portal.domain.invalid');
+    }
+
+    return '';
 });
 
 const availableCommunities = computed(() =>
@@ -116,11 +153,20 @@ const saveCommunity = async (): Promise<void> => {
 };
 
 const requestChurch = async (): Promise<void> => {
+    if (domainError.value) {
+        errorMessage.value = domainError.value;
+
+        return;
+    }
+
     processing.value = true;
     errorMessage.value = '';
 
     try {
-        await axios.post('/onboarding/churches', churchForm.value);
+        await axios.post('/onboarding/churches', {
+            ...churchForm.value,
+            domain: requestedDomain.value,
+        });
         churchModalOpen.value = false;
         successMessage.value = t('portal.onboarding.request_sent');
         window.setTimeout(() => window.location.reload(), 900);
@@ -165,7 +211,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             <div
                 class="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8"
             >
-                <Link href="/" class="flex items-center gap-3">
+                <Link :href="home()" class="flex items-center gap-3">
                     <span
                         class="grid size-11 place-items-center rounded-xl border border-white/25 bg-white/10 text-lg font-black"
                         >NC</span
@@ -303,6 +349,13 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         <Plus class="size-4" />
                         {{ t('portal.onboarding.request_church') }}
                     </button>
+                    <Link
+                        v-else-if="!canOnboard"
+                        :href="login()"
+                        class="inline-flex items-center gap-2 rounded-xl border border-indigo-700 px-4 py-3 text-sm font-black text-indigo-700"
+                    >
+                        {{ t('auth.login') }}
+                    </Link>
                 </div>
                 <div class="mt-8 grid gap-5 lg:grid-cols-2">
                     <article
@@ -606,12 +659,48 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         required
                         class="rounded-xl border-slate-300"
                         :placeholder="t('portal.fields.slug')"
-                    /><input
-                        v-model="churchForm.domain"
-                        required
-                        class="rounded-xl border-slate-300"
-                        :placeholder="t('portal.fields.domain')"
-                    /><input
+                    />
+                    <div class="space-y-2">
+                        <div class="grid gap-2 sm:grid-cols-[11rem_1fr]">
+                            <select
+                                v-model="domainMode"
+                                class="rounded-xl border-slate-300"
+                            >
+                                <option value="subdomain">
+                                    {{ t('portal.domain.subdomain') }}
+                                </option>
+                                <option value="external">
+                                    {{ t('portal.domain.external') }}
+                                </option>
+                            </select>
+                            <input
+                                v-model="domainInput"
+                                required
+                                class="rounded-xl border-slate-300"
+                                :placeholder="
+                                    domainMode === 'subdomain'
+                                        ? t(
+                                              'portal.domain.subdomain_placeholder',
+                                          )
+                                        : t('portal.fields.domain')
+                                "
+                            />
+                        </div>
+                        <p class="text-xs text-slate-500">
+                            {{
+                                domainMode === 'subdomain'
+                                    ? requestedDomain || 'subdominio'
+                                    : t('portal.domain.external_hint')
+                            }}
+                        </p>
+                        <p
+                            v-if="domainError"
+                            class="text-xs font-bold text-rose-600"
+                        >
+                            {{ domainError }}
+                        </p>
+                    </div>
+                    <input
                         v-model="churchForm.found_date"
                         type="date"
                         class="rounded-xl border-slate-300"

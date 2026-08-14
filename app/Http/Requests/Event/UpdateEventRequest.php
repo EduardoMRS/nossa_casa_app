@@ -28,6 +28,7 @@ class UpdateEventRequest extends FormRequest
             'start_time' => ['sometimes', 'required', 'date'],
             'end_time' => ['nullable', 'date', 'after_or_equal:start_time'],
             'cover_path' => ['sometimes', 'nullable'],
+            'form_id' => ['sometimes', 'nullable', 'string', 'exists:forms,id'],
         ];
     }
 }

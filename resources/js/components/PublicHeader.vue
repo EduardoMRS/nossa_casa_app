@@ -27,6 +27,8 @@ import { useI18n } from '@/lib/i18n';
 import { dashboard, home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
+import { index as libraryIndex } from '@/routes/library';
+import { index as publicPostsIndex } from '@/routes/posts/public';
 
 type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library';
 
@@ -82,7 +84,7 @@ const navItems = computed(() => [
     {
         key: 'posts' as const,
         label: t('nav.posts'),
-        href: '/posts',
+        href: publicPostsIndex(),
         icon: Newspaper,
     },
     {
@@ -100,7 +102,7 @@ const navItems = computed(() => [
     {
         key: 'library' as const,
         label: t('nav.library'),
-        href: '/biblioteca',
+        href: libraryIndex(),
         icon: LibraryBig,
     },
 ]);

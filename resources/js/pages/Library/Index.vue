@@ -10,6 +10,7 @@ type Item = {
     description: string | null;
     type: string;
     file_path: string | null;
+    file_url: string | null;
 };
 defineProps<{
     items: {
@@ -68,13 +69,13 @@ const { t } = useI18n();
                         {{ item.description }}
                     </p>
                     <a
-                        v-if="item.file_path"
-                        :href="item.file_path"
+                        v-if="item.file_url"
+                        :href="item.file_url"
                         target="_blank"
                         rel="noopener"
                         class="mt-4 inline-flex items-center gap-2 self-end rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white"
                         ><ExternalLink
-                            v-if="item.file_path.startsWith('http')"
+                            v-if="item.file_url.startsWith('http')"
                             class="size-4"
                         /><Download v-else class="size-4" />{{
                             t('library.open')

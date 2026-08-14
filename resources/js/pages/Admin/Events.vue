@@ -10,6 +10,7 @@ import {
     Users,
 } from '@lucide/vue';
 import { ref } from 'vue';
+import { destroy as destroyEvent } from '@/actions/App/Http/Controllers/EventController';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import { useI18n } from '@/lib/i18n';
@@ -47,7 +48,7 @@ const remove = (event: EventItem): void => {
     if (
         window.confirm(t('admin.events.delete_confirm', { title: event.title }))
     ) {
-        router.delete(`/api/event/${event.id}`);
+        router.delete(destroyEvent.url({ event: event.id }));
     }
 };
 </script>

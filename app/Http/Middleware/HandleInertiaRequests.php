@@ -42,6 +42,7 @@ class HandleInertiaRequests extends Middleware
         $role = $user?->role?->value ?? (string) $user?->role;
         $domainContext = app(ChurchDomainContext::class);
         $currentChurch = $domainContext->church();
+        $classroomChurchId = $currentChurch?->id ?? $user?->profile?->church_id ?? $user?->church?->id;
 
         $branding = [
             'brand_name' => config('app.name'),
@@ -118,11 +119,15 @@ class HandleInertiaRequests extends Middleware
                 'manageBranding' => in_array($role, ['admin', 'superadmin', 'system'], true),
             ],
             'classrooms' => [
-                'hasKids' => $user?->church?->id
-                    ? Classroom::query()->where('church_id', $user->church->id)->where('is_kids', true)->exists()
+                'hasKids' => $classroomChurchId
+                    ? Classroom::query()->where('church_id', $classroomChurchId)->where('is_kids', true)->exists()
                     : false,
-                'separateKidsMinistry' => (bool) ($setting?->options['classrooms']['separate_kids_ministry'] ?? true),
             ],
+            'separateKidsMinistry' => (bool) data_get(
+                Setting::query()->where('church_id', $classroomChurchId)->value('options'),
+                'classrooms.separate_kids_ministry',
+                true,
+            ),
         ];
     }
 }

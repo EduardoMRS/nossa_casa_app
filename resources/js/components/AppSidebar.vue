@@ -33,10 +33,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useI18n } from '@/lib/i18n';
-import { dashboard } from '@/routes';
+import { home } from '@/routes';
 import { edit as brandingEdit } from '@/routes/admin/branding';
 import { index as adminCategoriesIndex } from '@/routes/admin/categories';
 import { index as adminClassroomsIndex } from '@/routes/admin/classrooms';
+import { index as adminEventsIndex } from '@/routes/admin/events';
 import { index as adminFormsIndex } from '@/routes/admin/forms';
 import { index as adminGalleryModerationIndex } from '@/routes/admin/galleryModeration';
 import { index as adminHighlightsIndex } from '@/routes/admin/highlights';
@@ -46,7 +47,9 @@ import { index as adminLogsMetricsIndex } from '@/routes/admin/logsMetrics';
 import { index as adminMultiCongregationIndex } from '@/routes/admin/multiCongregation';
 import { index as adminUserManagementIndex } from '@/routes/admin/userManagement';
 import { index as adminWallModerationIndex } from '@/routes/admin/wallModeration';
+import { index as myPrayersIndex } from '@/routes/myPrayers';
 import { index as postsIndex } from '@/routes/posts';
+import { ui as apiDocs } from '@/routes/scramble/docs';
 import type { NavItem } from '@/types';
 
 const { t } = useI18n();
@@ -57,11 +60,12 @@ const page = usePage<{
             role?: string | { value?: string };
         };
     };
-    classrooms?: {
-        hasKids?: boolean;
-        separateKidsMinistry?: boolean;
-    };
+    separateKidsMinistry?: boolean;
 }>();
+
+const enabledKidsMinistry = computed(() => {
+    return page.props.separateKidsMinistry === true;
+});
 
 const role = computed(() => {
     const rawRole = page.props.auth?.user?.role;
@@ -84,12 +88,12 @@ const canManageWorkspace = computed(() =>
 const mainNavItems = computed<NavItem[]>(() => [
     {
         title: t('nav.dashboard'),
-        href: dashboard(),
+        href: home(),
         icon: LayoutGrid,
     },
     {
         title: t('admin.prayers.title'),
-        href: '/minhas-oracoes',
+        href: myPrayersIndex(),
         icon: Heart,
     },
 ]);
@@ -130,7 +134,7 @@ const communicationNavItems = computed<NavItem[]>(() => [
 const ministriesNavItems = computed<NavItem[]>(() => [
     {
         title: t('nav.events'),
-        href: '/dashboard/eventos',
+        href: adminEventsIndex(),
         icon: CalendarDays,
     },
     {
@@ -138,8 +142,7 @@ const ministriesNavItems = computed<NavItem[]>(() => [
         href: adminFormsIndex(),
         icon: ClipboardList,
     },
-    ...(page.props.classrooms?.hasKids &&
-    page.props.classrooms?.separateKidsMinistry
+    ...(enabledKidsMinistry.value
         ? [
               {
                   title: t('admin.classrooms.kids_title'),
@@ -185,12 +188,12 @@ const administrationNavItems = computed<NavItem[]>(() => [
 const footerNavItems = computed<NavItem[]>(() => [
     {
         title: t('navigation.documentation'),
-        href: 'https://laravel.com/docs',
+        href: apiDocs(),
         icon: BookOpen,
     },
     {
         title: t('navigation.repository'),
-        href: 'https://github.com/laravel/vue-starter-kit',
+        href: 'https://github.com/EduardoMRS/nossa_casa_app',
         icon: FolderGit2,
     },
 ]);
@@ -202,7 +205,7 @@ const footerNavItems = computed<NavItem[]>(() => [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+                        <Link :href="home()">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

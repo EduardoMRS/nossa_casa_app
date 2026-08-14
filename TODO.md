@@ -111,6 +111,7 @@ Para manter o projeto universal e localizado dinamicamente, o sistema conta com 
     - periodicamente o worker rodará um schedule que enviará o coteudo gravado para o core de forma que libere espaço no worker sejá disponibilizado mais rapidamente via o CDN do core
     - core e worker terão a mesma estrutura a difereça será que o worker não recebera acesso direto dos usuários
     - as transmissões em andamento deve aparecer na tela de logs, deve ser possivel derrubar uma conexão por lá
+    **Obs.** em `docs\transmission.md` tem um exemplo de implementação talvez de para seguir porem para isso será necessario termiar a configuração do docker
 - [ ] templates dinamicos, deve ser possivel mudar o templade visual das seguintes telas e components
     - Wellcome
     - Listagem de postagens publicas

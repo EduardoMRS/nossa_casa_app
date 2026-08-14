@@ -2,6 +2,8 @@
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\URL;
+use League\Flysystem\AwsS3V3\PortableVisibilityConverter;
 
 if (! function_exists('getFileMetadata')) {
     /**
@@ -80,7 +82,7 @@ if (! function_exists('getFileMetadata')) {
                 $driver = $diskConfig['driver'] ?? null;
 
                 if ($driver === 's3'
-                    && (! class_exists(League\Flysystem\AwsS3V3\PortableVisibilityConverter::class)
+                    && (! class_exists(PortableVisibilityConverter::class)
                         || blank($diskConfig['bucket'] ?? null))) {
                     continue;
                 }
@@ -129,11 +131,22 @@ if (! function_exists('genUrl')) {
      * @param  string  $filePath  The file path to encrypt and generate a URL for
      * @return string The generated secure URL
      */
-    function genUrl($filePath)
+    function genUrl($filePath): ?string
     {
-        $encryptedPath = Crypt::encryptString($filePath);
-        $url = route('secure-file', ['encryptedFile' => $encryptedPath]);
+        if (! is_string($filePath) || $filePath === '') {
+            return null;
+        }
 
-        return $url;
+        if (filter_var($filePath, FILTER_VALIDATE_URL)) {
+            return $filePath;
+        }
+
+        $encryptedPath = Crypt::encryptString($filePath);
+
+        return URL::temporarySignedRoute(
+            'secure-file',
+            now()->addDay(),
+            ['encryptedFile' => $encryptedPath],
+        );
     }
 }

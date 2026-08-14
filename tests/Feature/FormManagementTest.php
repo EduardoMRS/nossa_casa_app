@@ -19,7 +19,7 @@ test('leader can create and link a form to events and posts from the current chu
         'description' => 'Dados do participante',
         'schema' => ['fields' => [
             ['id' => 'heading-1', 'label' => 'Dados pessoais', 'type' => 'heading'],
-            ['id' => 'name-1', 'name' => 'full_name', 'label' => 'Nome', 'type' => 'text', 'required' => true, 'width' => 'half', 'size' => 'auto'],
+            ['id' => 'name-1', 'name' => 'full_name', 'label' => 'Nome', 'type' => 'text', 'required' => true, 'width' => 6, 'size' => 'auto'],
             ['id' => 'divider-1', 'type' => 'divider'],
         ]],
         'event_ids' => [$event->id],
@@ -31,5 +31,25 @@ test('leader can create and link a form to events and posts from the current chu
     expect($form->events()->whereKey($event->id)->exists())->toBeTrue()
         ->and($form->posts()->whereKey($post->id)->exists())->toBeTrue()
         ->and($form->schema['fields'][0]['type'])->toBe('heading')
-        ->and($form->schema['fields'][1]['width'])->toBe('half');
+        ->and($form->schema['fields'][1]['width'])->toBe(6);
+
+    $newPost = $this->actingAs($leader)->postJson('/api/post', [
+        'title' => 'Novo aviso',
+        'slug' => 'novo-aviso-formulario',
+        'content' => 'Conteudo do aviso',
+        'published_at' => now()->toDateTimeString(),
+        'form_id' => $form->id,
+    ])->assertCreated();
+
+    $newEvent = $this->actingAs($leader)->postJson('/api/event', [
+        'title' => 'Novo encontro',
+        'slug' => 'novo-encontro-formulario',
+        'description' => 'Descricao do encontro',
+        'start_time' => now()->addDays(2)->toDateTimeString(),
+        'end_time' => now()->addDays(2)->addHour()->toDateTimeString(),
+        'form_id' => $form->id,
+    ])->assertCreated();
+
+    expect($form->fresh()->posts()->whereKey($newPost->json('id'))->exists())->toBeTrue()
+        ->and($form->fresh()->events()->whereKey($newEvent->json('id'))->exists())->toBeTrue();
 });

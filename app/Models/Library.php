@@ -19,8 +19,14 @@ class Library extends Model
     ];
 
     protected $appends = [
+        'file_url',
         'translations',
     ];
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return genUrl($this->file_path);
+    }
 
     public function categories()
     {

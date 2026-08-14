@@ -209,22 +209,50 @@ class AdminWorkspaceController extends Controller
             ->with(['categories:id,name', 'events:id,title', 'posts:id,title'])
             ->withCount('responses')
             ->latest()
-            ->get()
-            ->each(function (Form $form): void {
+            ->paginate(15)
+            ->through(function (Form $form): Form {
                 $form->makeHidden('translations');
                 $form->categories->each->makeHidden('translations');
                 $form->events->each->makeHidden('translations');
                 $form->posts->each->makeHidden('translations');
+
+                return $form;
             });
-        $events = Event::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations');
-        $posts = Post::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations');
 
         return Inertia::render('Admin/Forms', [
             'forms' => $forms,
-            'events' => $events,
-            'posts' => $posts,
             'categories' => $this->availableChurchCategories($churchId, CategoryType::FORM->value),
         ]);
+    }
+
+    public function formCreate(Request $request): Response
+    {
+        $churchId = $request->user()?->church?->id;
+
+        return Inertia::render('Admin/Form', $this->formEditorProps($churchId));
+    }
+
+    public function formEdit(Request $request, Form $form): Response
+    {
+        $this->ensureChurchAccess($request, $form->church_id);
+        $form->load(['categories:id,name', 'events:id,title', 'posts:id,title']);
+
+        return Inertia::render('Admin/Form', [
+            ...$this->formEditorProps($form->church_id),
+            'form' => $form->makeHidden('translations'),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formEditorProps(?string $churchId): array
+    {
+        return [
+            'events' => Event::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations'),
+            'posts' => Post::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title'])->each->makeHidden('translations'),
+            'categories' => $this->availableChurchCategories($churchId, CategoryType::FORM->value),
+        ];
     }
 
     public function prayerRequests(): Response

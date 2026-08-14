@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Form;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreFormRequest extends FormRequest
@@ -27,8 +28,8 @@ class StoreFormRequest extends FormRequest
             'schema.fields.*.required' => ['nullable', 'boolean'],
             'schema.fields.*.options' => ['nullable', 'array'],
             'schema.fields.*.options.*' => ['string', 'max:255'],
-            'schema.fields.*.width' => ['nullable', 'in:full,half,third'],
-            'schema.fields.*.mobile_width' => ['nullable', 'in:full,half'],
+            'schema.fields.*.width' => ['nullable', Rule::in([...range(1, 12), 'full', 'half', 'third'])],
+            'schema.fields.*.mobile_width' => ['nullable', Rule::in([...range(1, 12), 'full', 'half', 'third'])],
             'schema.fields.*.size' => ['nullable', 'in:auto,fixed'],
             'schema.fields.*.height' => ['nullable', 'integer', 'min:1', 'max:20'],
             'schema.fields.*.placeholder' => ['nullable', 'string', 'max:255'],

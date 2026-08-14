@@ -53,7 +53,7 @@ class ChurchOnboardingController extends Controller
             'community_id' => ['required', 'string', 'exists:communities,id'],
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
-            'domain' => ['required', 'string', 'max:255', 'not_in:'.$this->context->mainHost(), Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
+            'domain' => ['required', 'string', 'max:255', 'not_in:'.$this->context->mainHost(), 'regex:/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
             'description' => ['nullable', 'string', 'max:5000'],
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'contact_email' => ['nullable', 'email', 'max:255'],

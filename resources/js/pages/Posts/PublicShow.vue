@@ -10,6 +10,10 @@ import type {
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import {
+    index as publicPostsIndex,
+    show as publicPostShow,
+} from '@/routes/posts/public';
 
 type PublicPost = {
     id: string;
@@ -49,7 +53,7 @@ const formatDate = (value: string | null): string =>
         <PublicHeader active="posts" />
         <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <Link
-                href="/posts"
+                :href="publicPostsIndex()"
                 class="mb-5 inline-flex items-center gap-2 text-sm font-bold"
                 :style="{ color: 'var(--church-primary)' }"
             >
@@ -82,7 +86,7 @@ const formatDate = (value: string | null): string =>
                             <Link
                                 v-for="item in relatedPosts"
                                 :key="item.id"
-                                :href="`/posts/${item.slug}`"
+                                :href="publicPostShow({ slug: item.slug })"
                                 prefetch
                                 class="block py-3 first:pt-0 last:pb-0"
                             >
@@ -113,7 +117,7 @@ const formatDate = (value: string | null): string =>
                             <Link
                                 v-for="item in latestPosts"
                                 :key="item.id"
-                                :href="`/posts/${item.slug}`"
+                                :href="publicPostShow({ slug: item.slug })"
                                 prefetch
                                 class="block py-3 first:pt-0 last:pb-0"
                             >

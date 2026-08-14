@@ -8,9 +8,11 @@ use App\Enums\CategoryType;
 use App\Http\Requests\Event\StoreEventRequest;
 use App\Http\Requests\Event\UpdateEventRequest;
 use App\Models\Event;
+use App\Models\Form;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class EventController extends Controller
@@ -44,6 +46,7 @@ class EventController extends Controller
 
         $event = Event::create($data);
         $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $data['church_id']));
+        $this->syncRegistrationForm($event, $request->input('form_id'), $data['church_id']);
 
         if ($request->header('X-Inertia')) {
             Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.event_created')]);
@@ -71,12 +74,15 @@ class EventController extends Controller
 
         if (array_key_exists('cover_path', $validated)) {
             $file = $request->file('cover_path') ?? $request->input('cover_path');
-            $validated['cover_path'] = $this->handleMediaUpload($file, "church/{$event->church_id}/events/covers", $event->cover_path);
+            $validated['cover_path'] = $this->handleMediaUpload($file, "church/{$event->church_id}/events/covers", $event->getRawOriginal('cover_path'));
         }
 
         $event->update($validated);
         if ($request->has('category_ids')) {
             $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $event->church_id));
+        }
+        if ($request->has('form_id')) {
+            $this->syncRegistrationForm($event, $request->input('form_id'), $event->church_id);
         }
 
         if ($request->header('X-Inertia')) {
@@ -93,8 +99,9 @@ class EventController extends Controller
         $event = Event::findOrFail($id);
         $this->ensureChurchAccess($request, $event->church_id);
 
-        // Opcional: deletar o arquivo cover ao excluir o evento
-        // if ($event->cover_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($event->cover_path);
+        if ($event->getRawOriginal('cover_path')) {
+            Storage::disk('public')->delete($event->getRawOriginal('cover_path'));
+        }
 
         $event->delete();
 
@@ -131,5 +138,22 @@ class EventController extends Controller
         ]);
 
         return response()->json(['message' => __('checkin.checkin_success')], 200);
+    }
+
+    private function syncRegistrationForm(Event $event, mixed $formId, string $churchId): void
+    {
+        if ($formId === null || $formId === '') {
+            $event->forms()->detach();
+
+            return;
+        }
+
+        abort_unless(
+            Form::query()->whereKey($formId)->where('church_id', $churchId)->exists(),
+            422,
+            'The selected form must belong to the current church.',
+        );
+
+        $event->forms()->sync([$formId]);
     }
 }

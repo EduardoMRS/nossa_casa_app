@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CategoryType;
+use App\Models\Form;
 use App\Models\Post;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\Request;
@@ -48,6 +49,7 @@ class PostController extends Controller
             'expires_at' => 'nullable|date|after:published_at',
             'author_id' => 'nullable|string|exists:users,id',
             'church_id' => 'nullable|string|exists:churches,id',
+            'form_id' => 'nullable|string|exists:forms,id',
         ]);
 
         $validated['author_id'] = $request->user()->id;
@@ -56,6 +58,7 @@ class PostController extends Controller
 
         $post = Post::create($validated);
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $validated['church_id']));
+        $this->syncRegistrationForm($post, $request->input('form_id'), $validated['church_id']);
 
         if ($request->header('X-Inertia')) {
             Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.post_created')]);
@@ -85,11 +88,15 @@ class PostController extends Controller
             'content' => 'sometimes|required|string',
             'published_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after:published_at',
+            'form_id' => 'sometimes|nullable|string|exists:forms,id',
         ]);
 
         $post->update($validated);
         if ($request->has('category_ids')) {
             $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $post->church_id));
+        }
+        if ($request->has('form_id')) {
+            $this->syncRegistrationForm($post, $request->input('form_id'), $post->church_id);
         }
 
         if ($request->header('X-Inertia')) {
@@ -114,5 +121,22 @@ class PostController extends Controller
         }
 
         return response()->json(null, 204);
+    }
+
+    private function syncRegistrationForm(Post $post, mixed $formId, string $churchId): void
+    {
+        if ($formId === null || $formId === '') {
+            $post->forms()->detach();
+
+            return;
+        }
+
+        abort_unless(
+            Form::query()->whereKey($formId)->where('church_id', $churchId)->exists(),
+            422,
+            'The selected form must belong to the current church.',
+        );
+
+        $post->forms()->sync([$formId]);
     }
 }

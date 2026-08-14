@@ -30,8 +30,14 @@ class Event extends Model
 
     protected $appends = [
         'category',
+        'cover_url',
         'translations',
     ];
+
+    public function getCoverUrlAttribute(): ?string
+    {
+        return genUrl($this->getRawOriginal('cover_path'));
+    }
 
     public function forms()
     {

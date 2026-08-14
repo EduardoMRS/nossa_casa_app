@@ -86,6 +86,7 @@ class PortalController extends Controller
             'userChurchUrl' => $request->user()?->church?->domain
                 ? $this->context->churchUrl($request->user()->church)
                 : null,
+            'mainDomain' => $this->context->mainHost(),
             'reviewableRequests' => $reviewableRequests,
             'myRequests' => $myRequests,
         ]);
@@ -115,7 +116,7 @@ class PortalController extends Controller
                     'title' => $event->title,
                     'slug' => $event->slug,
                     'excerpt' => Str::limit(strip_tags((string) $event->description), 120),
-                    'cover_path' => $event->cover_path,
+                    'cover_path' => $event->cover_url,
                     'start_time' => $event->start_time,
                     'church' => $event->church,
                 ];

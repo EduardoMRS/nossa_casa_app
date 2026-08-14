@@ -18,6 +18,7 @@ import { computed, reactive, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 
 type Person = {
     id: string;
@@ -28,6 +29,7 @@ type Person = {
         phone?: string | null;
         gender?: string | null;
         avatar_path?: string | null;
+        avatar_url?: string | null;
         community_id?: string | null;
         church_id?: string | null;
         medical_notes?: string | null;
@@ -399,7 +401,7 @@ const personFor = (item: Relationship): Person | undefined =>
                 class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
             >
                 <Link
-                    href="/eventos"
+                    :href="eventsIndex()"
                     class="flex items-center justify-between rounded-2xl bg-indigo-700 p-5 font-black text-white shadow-sm md:col-span-2 xl:col-span-3"
                 >
                     <span>{{ t('settings.workspace.browse_events') }}</span>
@@ -408,7 +410,7 @@ const personFor = (item: Relationship): Person | undefined =>
                 <Link
                     v-for="event in workspaceUser.registered_events"
                     :key="event.id"
-                    :href="`/eventos/${event.slug}`"
+                    :href="eventsShow({ event: event.slug })"
                     class="rounded-2xl border bg-white p-5 shadow-sm hover:border-indigo-300"
                     ><CalendarDays class="size-5 text-indigo-600" />
                     <h2 class="mt-3 font-black">{{ event.title }}</h2>
@@ -640,10 +642,12 @@ const personFor = (item: Relationship): Person | undefined =>
                             <div class="flex items-center gap-3">
                                 <img
                                     v-if="
-                                        personFor(relation)?.profile
-                                            ?.avatar_path
+                                        personFor(relation)?.profile?.avatar_url
                                     "
-                                    :src="`/storage/${personFor(relation)?.profile?.avatar_path}`"
+                                    :src="
+                                        personFor(relation)?.profile
+                                            ?.avatar_url || undefined
+                                    "
                                     class="size-11 rounded-full object-cover"
                                 />
                                 <div

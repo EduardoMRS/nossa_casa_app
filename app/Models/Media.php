@@ -99,11 +99,6 @@ class Media extends Model
 
     public function getUrlAttribute()
     {
-        return genUrl($this->path);
-    }
-
-    public function getPathAttribute()
-    {
-        return getFileMetadata($this->file_path)['path'] ?? null;
+        return genUrl($this->file_path);
     }
 }

@@ -22,6 +22,15 @@ class UserProfile extends Model
 
     protected $table = 'user_profiles';
 
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return genUrl($this->avatar_path);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

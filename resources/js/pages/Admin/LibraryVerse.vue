@@ -136,7 +136,11 @@ const saveLibrary = (): void => {
             options,
         );
     } else {
-        router.post('/dashboard/biblioteca-versiculo/library', payload, options);
+        router.post(
+            '/dashboard/biblioteca-versiculo/library',
+            payload,
+            options,
+        );
     }
 };
 const saveVerse = (): void => {
