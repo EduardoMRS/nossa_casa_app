@@ -223,7 +223,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
         404,
     );
 
-    abort_unless(in_array($diskName, [config('media.disk'), config('media.archive_disk')], true), 404);
+    abort_unless(in_array($diskName, config('filesystems.temporary_url_disks', []), true), 404);
 
     $disk = Storage::disk($diskName);
     abort_unless($disk->exists($filePath), 404);

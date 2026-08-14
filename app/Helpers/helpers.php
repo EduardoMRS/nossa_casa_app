@@ -73,8 +73,19 @@ if (! function_exists('getFileMetadata')) {
             };
         } else {
             $disks = config('filesystems.disks', []);
+            $metadataDisks = config('filesystems.metadata_disks', []);
 
-            foreach ($disks as $diskName => $diskConfig) {
+            if (! is_array($disks) || ! is_array($metadataDisks)) {
+                return $metadata;
+            }
+
+            foreach ($metadataDisks as $diskName) {
+                if (! is_string($diskName)) {
+                    continue;
+                }
+
+                $diskConfig = $disks[$diskName] ?? null;
+
                 if (! is_array($diskConfig)) {
                     continue;
                 }
@@ -123,6 +134,22 @@ if (! function_exists('getFileMetadata')) {
     }
 }
 
+if (! function_exists('temporaryStorageUrl')) {
+    function temporaryStorageUrl(string $filePath, DateTimeInterface $expiration, string $disk): string
+    {
+        $encryptedPath = Crypt::encryptString(json_encode([
+            'disk' => $disk,
+            'path' => $filePath,
+        ], JSON_THROW_ON_ERROR));
+
+        return URL::temporarySignedRoute(
+            'secure-file',
+            $expiration,
+            ['encryptedFile' => $encryptedPath],
+        );
+    }
+}
+
 if (! function_exists('genUrl')) {
     /**
      * Helper to generate a secure URL for a file path
@@ -141,15 +168,10 @@ if (! function_exists('genUrl')) {
             return $filePath;
         }
 
-        $encryptedPath = Crypt::encryptString(json_encode([
-            'disk' => $disk ?? config('media.disk'),
-            'path' => $filePath,
-        ], JSON_THROW_ON_ERROR));
-
-        return URL::temporarySignedRoute(
-            'secure-file',
+        return temporaryStorageUrl(
+            $filePath,
             now()->addDay(),
-            ['encryptedFile' => $encryptedPath],
+            $disk ?? (string) config('media.disk'),
         );
     }
 }

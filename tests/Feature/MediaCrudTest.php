@@ -17,6 +17,7 @@ test('file metadata skips unavailable filesystem adapters', function () {
     config()->set('filesystems.disks', [
         'unavailable' => ['driver' => 'unavailable'],
     ]);
+    config()->set('filesystems.metadata_disks', ['unavailable']);
 
     $metadata = getFileMetadata('gallery/missing.jpg');
 
@@ -26,6 +27,7 @@ test('file metadata skips unavailable filesystem adapters', function () {
 });
 
 test('file metadata resolves files from an available local disk', function () {
+    config()->set('filesystems.metadata_disks', ['public']);
     Storage::disk('public')->put('gallery/sample.txt', 'sample');
 
     $metadata = getFileMetadata('gallery/sample.txt');
@@ -34,6 +36,15 @@ test('file metadata resolves files from an available local disk', function () {
         ->and($metadata['origin'])->toBe('local')
         ->and($metadata['size'])->toBe(6)
         ->and($metadata['name'])->toBe('sample.txt');
+});
+
+test('file metadata ignores disks that are not configured for metadata lookup', function () {
+    Storage::disk('public')->put('gallery/not-searchable.txt', 'sample');
+    config()->set('filesystems.metadata_disks', ['media']);
+
+    $metadata = getFileMetadata('gallery/not-searchable.txt');
+
+    expect($metadata['exists'])->toBeFalse();
 });
 
 test('stored files are served only through encrypted temporary signed urls', function () {
