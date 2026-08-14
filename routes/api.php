@@ -11,6 +11,8 @@ use App\Http\Controllers\FormResponseController;
 use App\Http\Controllers\HighlightController;
 use App\Http\Controllers\Internal\MediaAuthController;
 use App\Http\Controllers\Internal\MediaServerWebhookController;
+use App\Http\Controllers\Internal\RecordingIngestController;
+use App\Http\Controllers\Internal\RecordingRelayController;
 use App\Http\Controllers\LiveStreamController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\NetworkController;
@@ -28,6 +30,8 @@ Route::prefix('internal/media')
         Route::post('online', [MediaServerWebhookController::class, 'online']);
         Route::post('offline', [MediaServerWebhookController::class, 'offline']);
         Route::post('recording-completed', [MediaServerWebhookController::class, 'recordingCompleted']);
+        Route::post('relay-recording', RecordingRelayController::class);
+        Route::post('recording-ingest', RecordingIngestController::class);
     });
 
 Route::post('internal/media/auth', MediaAuthController::class)

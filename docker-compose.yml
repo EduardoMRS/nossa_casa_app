@@ -84,6 +84,8 @@ services:
     environment:
       MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
       MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+      MEDIA_CORE_URL: http://webserver
+      MEDIA_RECORDING_WEBHOOK_URL: http://webserver/api/internal/media/recording-completed
     networks:
       - laravel_network
 

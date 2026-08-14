@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Media\FinalizeRecording;
 use App\Enums\LiveStreamStatus;
 use App\Enums\RecordingStatus;
 use App\Enums\UserRole;
@@ -81,7 +82,7 @@ test('completed segments are queued once and uploaded to private archive storage
 
         Queue::assertPushed(UploadRecording::class, fn (UploadRecording $job): bool => $job->recordingId === $recording->id);
 
-        (new UploadRecording($recording->id))->handle();
+        (new UploadRecording($recording->id))->handle(app(FinalizeRecording::class));
 
         $recording->refresh();
 
@@ -132,7 +133,7 @@ test('an uploaded recording is published in the transmissions media category', f
     ]);
 
     try {
-        (new UploadRecording($recording->id))->handle();
+        (new UploadRecording($recording->id))->handle(app(FinalizeRecording::class));
 
         $media = Media::query()->firstOrFail();
         expect($media)

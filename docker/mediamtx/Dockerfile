@@ -5,6 +5,9 @@ FROM alpine:3.22
 RUN apk add --no-cache curl
 
 COPY --from=mediamtx /mediamtx /mediamtx
-COPY ./docker/mediamtx/mediamtx.yml /mediamtx.yml
+COPY ./docker/mediamtx/mediamtx.yml /mediamtx.template.yml
+COPY ./docker/mediamtx/entrypoint.sh /usr/local/bin/mediamtx-entrypoint.sh
 
-ENTRYPOINT ["/mediamtx"]
+RUN chmod +x /usr/local/bin/mediamtx-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/mediamtx-entrypoint.sh"]

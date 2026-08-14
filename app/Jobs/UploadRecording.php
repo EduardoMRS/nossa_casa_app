@@ -2,16 +2,12 @@
 
 namespace App\Jobs;
 
-use App\Enums\CategoryType;
-use App\Enums\MediaStatus;
+use App\Actions\Media\FinalizeRecording;
 use App\Enums\RecordingStatus;
-use App\Models\Category;
-use App\Models\Media;
 use App\Models\Recording;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -30,7 +26,7 @@ class UploadRecording implements ShouldBeUnique, ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(FinalizeRecording $finalizeRecording): void
     {
         $recording = Recording::query()->findOrFail($this->recordingId);
 
@@ -65,44 +61,7 @@ class UploadRecording implements ShouldBeUnique, ShouldQueue
             throw new RuntimeException('Recording segment could not be stored.');
         }
 
-        DB::transaction(function () use ($recording, $disk, $destination): void {
-            $liveStream = $recording->liveStream()->firstOrFail();
-            $media = null;
-
-            if ($liveStream->church_id && $liveStream->created_by_id) {
-                $media = Media::query()->create([
-                    'uploader_id' => $liveStream->created_by_id,
-                    'church_id' => $liveStream->church_id,
-                    'title' => $liveStream->name,
-                    'description' => __('Recording of the live stream from :date.', ['date' => now()->toDateTimeString()]),
-                    'file_path' => $destination,
-                    'disk' => $disk,
-                    'mimetype' => $recording->mime_type ?: 'video/mp4',
-                    'size' => $recording->size ?? 0,
-                    'gallery' => true,
-                    'status' => MediaStatus::APPROVED,
-                ]);
-
-                $category = Category::query()->firstOrCreate([
-                    'church_id' => $liveStream->church_id,
-                    'slug' => 'transmissions',
-                    'type' => CategoryType::MEDIA->value,
-                ], [
-                    'name' => 'Transmissions',
-                ]);
-
-                $media->categories()->syncWithoutDetaching([$category->id]);
-            }
-
-            $recording->update([
-                'media_id' => $media?->id,
-                'disk' => $disk,
-                'path' => $destination,
-                'status' => RecordingStatus::READY,
-                'uploaded_at' => now(),
-                'last_error' => null,
-            ]);
-        });
+        $finalizeRecording->handle($recording, $disk, $destination);
 
         File::delete($recording->worker_path);
     }

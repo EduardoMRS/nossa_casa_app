@@ -8,13 +8,14 @@ RUN apk add --no-cache \
     curl \
     libpng-dev \
     libxml2-dev \
+    sqlite-dev \
     zip \
     unzip \
     git \
     nodejs=~24 \
     npm
 
-RUN docker-php-ext-install pdo_mysql bcmath gd
+RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -26,6 +27,7 @@ RUN deluser node || true && \
 WORKDIR /var/www
 
 COPY --chown=$UID:$GID ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY ./docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /var/run/php && chown -R $UID:$GID /var/run/php

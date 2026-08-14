@@ -5,7 +5,7 @@ api: yes
 apiAddress: :9997
 
 authMethod: http
-authHTTPAddress: http://webserver/api/internal/media/auth
+authHTTPAddress: __MEDIA_CORE_URL__/api/internal/media/auth
 authHTTPExclude:
   - action: read
   - action: playback
@@ -42,7 +42,7 @@ pathDefaults:
     --data-urlencode "source_type=$MTX_SOURCE_TYPE"
     --data-urlencode "source_id=$MTX_SOURCE_ID"
     --data-urlencode "worker_id=$MEDIA_WORKER_ID"
-    http://webserver/api/internal/media/online
+    __MEDIA_CORE_URL__/api/internal/media/online
   runOnOffline: >-
     curl --fail --silent --show-error --request POST
     --header "X-Media-Worker-Token: $MEDIA_WORKER_TOKEN"
@@ -50,7 +50,7 @@ pathDefaults:
     --data-urlencode "source_type=$MTX_SOURCE_TYPE"
     --data-urlencode "source_id=$MTX_SOURCE_ID"
     --data-urlencode "worker_id=$MEDIA_WORKER_ID"
-    http://webserver/api/internal/media/offline
+    __MEDIA_CORE_URL__/api/internal/media/offline
   runOnRecordSegmentComplete: >-
     curl --fail --silent --show-error --request POST
     --header "X-Media-Worker-Token: $MEDIA_WORKER_TOKEN"
@@ -58,6 +58,6 @@ pathDefaults:
     --data-urlencode "segment_path=$MTX_SEGMENT_PATH"
     --data-urlencode "segment_duration=$MTX_SEGMENT_DURATION"
     --data-urlencode "worker_id=$MEDIA_WORKER_ID"
-    http://webserver/api/internal/media/recording-completed
+    __MEDIA_RECORDING_WEBHOOK_URL__
 
 paths: {}

@@ -14,7 +14,7 @@ if [ ! -d vendor ]; then
     php artisan key:generate
 fi
 
-if [ ! -d node_modules ]; then
+if [ "${SKIP_NODE_INSTALL:-false}" != "true" ] && [ ! -d node_modules ]; then
     echo "Instalando dependências do NPM..."
     npm install
 fi
