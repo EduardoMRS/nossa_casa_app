@@ -8,6 +8,10 @@ services:
         - GID=${GID:-1000}
     volumes:
       - .:/var/www
+      - phpvendor:/var/www/vendor
+      - nodemodules:/var/www/node_modules
+      - frameworkcache:/var/www/storage/framework
+      - bootstrapcache:/var/www/bootstrap/cache
       - mediarecordings:/recordings
     ports:
       - "5173:5173"
@@ -28,6 +32,14 @@ services:
       MINIO_ENDPOINT: http://minio:9000
     networks:
       - laravel_network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "php -r '$$socket = @fsockopen(\"127.0.0.1\", 9000); exit(is_resource($$socket) ? 0 : 1);'"
+      interval: 3s
+      timeout: 2s
+      retries: 60
+      start_period: 10s
     depends_on:
       db:
         condition: service_started
@@ -44,6 +56,9 @@ services:
     command: php artisan queue:work --queue=media-recordings,default --tries=12 --timeout=3600
     volumes:
       - .:/var/www
+      - phpvendor:/var/www/vendor
+      - frameworkcache:/var/www/storage/framework
+      - bootstrapcache:/var/www/bootstrap/cache
       - mediarecordings:/recordings
     environment:
       MEDIA_DISK: ${DOCKER_MEDIA_DISK:-minio}
@@ -64,6 +79,8 @@ services:
     networks:
       - laravel_network
     depends_on:
+      app:
+        condition: service_healthy
       db:
         condition: service_started
       mediamtx:
@@ -103,7 +120,8 @@ services:
     networks:
       - laravel_network
     depends_on:
-      - app
+      app:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
@@ -129,6 +147,12 @@ services:
     networks:
       - laravel_network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
 
   minio-init:
     image: minio/mc:RELEASE.2025-08-13T08-35-41Z
@@ -143,11 +167,16 @@ services:
     networks:
       - laravel_network
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     restart: "no"
 
 volumes:
   dbdata:
+  phpvendor:
+  nodemodules:
+  frameworkcache:
+  bootstrapcache:
   mediarecordings:
   miniodata:
 
