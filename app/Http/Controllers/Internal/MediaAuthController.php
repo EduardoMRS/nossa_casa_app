@@ -20,12 +20,26 @@ class MediaAuthController extends Controller
             ->where('input_mode', 'publisher')
             ->where('active_slot', 1)
             ->first();
-        $providedToken = $request->string('token')->toString();
+        $providedToken = $this->providedToken($request);
 
         if (! $liveStream || $providedToken === '' || ! hash_equals((string) $liveStream->publish_token, $providedToken)) {
             return response('Unauthorized', 401);
         }
 
         return response()->noContent();
+    }
+
+    private function providedToken(Request $request): string
+    {
+        $providedToken = $request->string('token')->toString();
+
+        if ($providedToken !== '') {
+            return $providedToken;
+        }
+
+        parse_str(ltrim($request->string('query')->toString(), '?'), $queryParameters);
+        $queryToken = $queryParameters['token'] ?? null;
+
+        return is_string($queryToken) ? $queryToken : '';
     }
 }

@@ -43,6 +43,8 @@ type StreamItem = {
     recordings_count: number;
     token: string | null;
     token_rotated_at: string | null;
+    ingest_server: string | null;
+    stream_key: string | null;
     ingest_url: string | null;
     public_url: string;
     recordings: RecordingItem[];
@@ -283,11 +285,11 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-black text-slate-500 uppercase"
                             >
-                                Link de transmissão para OBS
+                                Servidor do OBS
                             </p>
                             <div class="mt-2 flex gap-2">
                                 <input
-                                    :value="stream.ingest_url ?? ''"
+                                    :value="stream.ingest_server ?? ''"
                                     readonly
                                     class="min-w-0 flex-1 rounded-lg border-slate-300 bg-slate-50 text-sm"
                                 />
@@ -297,13 +299,47 @@ const formatDate = (value: string | null): string =>
                                     title="Copiar link"
                                     @click="
                                         copy(
-                                            stream.ingest_url,
-                                            `ingest-${stream.id}`,
+                                            stream.ingest_server,
+                                            `server-${stream.id}`,
                                         )
                                     "
                                 >
                                     <Check
-                                        v-if="copied === `ingest-${stream.id}`"
+                                        v-if="copied === `server-${stream.id}`"
+                                        class="size-4 text-emerald-600"
+                                    />
+                                    <Clipboard v-else class="size-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p
+                                class="text-xs font-black text-slate-500 uppercase"
+                            >
+                                Chave de transmissão do OBS
+                            </p>
+                            <div class="mt-2 flex gap-2">
+                                <input
+                                    :value="stream.stream_key ?? ''"
+                                    readonly
+                                    class="min-w-0 flex-1 rounded-lg border-slate-300 bg-slate-50 font-mono text-xs"
+                                />
+                                <button
+                                    type="button"
+                                    class="grid size-10 place-items-center rounded-lg border"
+                                    title="Copiar chave de transmissão"
+                                    @click="
+                                        copy(
+                                            stream.stream_key,
+                                            `stream-key-${stream.id}`,
+                                        )
+                                    "
+                                >
+                                    <Check
+                                        v-if="
+                                            copied === `stream-key-${stream.id}`
+                                        "
                                         class="size-4 text-emerald-600"
                                     />
                                     <Clipboard v-else class="size-4" />
@@ -394,8 +430,10 @@ const formatDate = (value: string | null): string =>
                         >
                             <Video class="mr-1 inline size-4" /> No OBS,
                             selecione <strong>Serviço personalizado</strong>,
-                            cole o link completo no campo servidor e deixe a
-                            chave de transmissão vazia.
+                            copie os valores acima para os campos
+                            <strong>Servidor</strong> e
+                            <strong>Chave de transmissão</strong>. Não cole o
+                            link completo no campo servidor.
                         </div>
                     </section>
                 </div>

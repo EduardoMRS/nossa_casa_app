@@ -162,6 +162,8 @@ test('media user creates a protected publisher link and rotates its token', func
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('streams.0.token', $firstToken)
+            ->where('streams.0.ingest_server', 'rtmp://stream.test:1935')
+            ->where('streams.0.stream_key', "{$liveStream->path}?token={$firstToken}")
             ->where('streams.0.ingest_url', "rtmp://stream.test:1935/{$liveStream->path}?token={$firstToken}")
             ->where('streams.0.public_url', fn (string $url): bool => str_contains($url, "/transmissoes/{$liveStream->id}")));
 
@@ -178,6 +180,17 @@ test('media user creates a protected publisher link and rotates its token', func
         'action' => 'publish',
         'path' => $liveStream->path,
         'token' => $firstToken,
+    ])->assertNoContent();
+    $this->withHeader('Host', 'webserver')->postJson('/api/internal/media/auth', [
+        'action' => 'publish',
+        'path' => $liveStream->path,
+        'token' => $firstToken,
+    ])->assertNoContent();
+    $this->withoutHeader('Host');
+    $this->postJson('/api/internal/media/auth', [
+        'action' => 'publish',
+        'path' => $liveStream->path,
+        'query' => 'token='.rawurlencode($firstToken),
     ])->assertNoContent();
 
     $response = $this->actingAs($user)

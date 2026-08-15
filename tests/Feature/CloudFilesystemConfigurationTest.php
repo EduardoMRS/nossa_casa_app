@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\S3TemporaryUrlGenerator;
 use App\Traits\UploadsMedia;
 use AzureOss\Storage\BlobLaravel\AzureStorageBlobAdapter;
 use Illuminate\Filesystem\AwsS3V3Adapter;
@@ -116,4 +117,22 @@ test('Azure Blob Storage provides temporary URLs', function (): void {
     );
 
     expect($url)->toContain('sig=');
+});
+
+test('S3 URLs are signed directly for the browser endpoint', function (): void {
+    config()->set('filesystems.disks.minio.key', 'test-access-key');
+    config()->set('filesystems.disks.minio.secret', 'test-secret-key');
+    config()->set('filesystems.disks.minio.bucket', 'test-bucket');
+    config()->set('filesystems.disks.minio.endpoint', 'http://minio:9000');
+    config()->set('filesystems.disks.minio.temporary_url', 'http://127.0.0.1:9000');
+
+    $url = app(S3TemporaryUrlGenerator::class)->generate(
+        'minio',
+        'recordings/service.mp4',
+        now()->addMinutes(5),
+    );
+
+    expect($url)
+        ->toStartWith('http://127.0.0.1:9000/test-bucket/recordings/service.mp4?')
+        ->toContain('X-Amz-Signature=');
 });

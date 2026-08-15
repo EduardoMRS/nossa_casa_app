@@ -177,7 +177,7 @@ class PortalController extends Controller
             ->where('gallery', true)
             ->whereHas('recording')
             ->latest()
-            ->limit(4)
+            ->limit(8)
             ->get()
             ->map(fn (Media $media): array => [
                 'id' => $media->id,

@@ -12,6 +12,7 @@ import {
     Play,
     Phone,
     Send,
+    X,
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
@@ -146,15 +147,30 @@ const visibleMonth = ref(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1),
 );
 const selectedDateKey = ref('');
+const selectedRecording = ref<RecordingCard | null>(null);
+const featuredRecordings = computed(() => props.latestRecordings.slice(0, 4));
 let restoreDarkMode = false;
+
+const closeRecording = (): void => {
+    selectedRecording.value = null;
+};
+
+const handleEscape = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') {
+        closeRecording();
+    }
+};
 
 onMounted(() => {
     restoreDarkMode = document.documentElement.classList.contains('dark');
     document.documentElement.classList.remove('dark');
     document.documentElement.style.colorScheme = 'light';
+    window.addEventListener('keydown', handleEscape);
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscape);
+
     if (restoreDarkMode) {
         document.documentElement.classList.add('dark');
     }
@@ -551,13 +567,12 @@ const submitPrayer = async (): Promise<void> => {
                     </Link>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <a
-                        v-for="recording in props.latestRecordings"
+                    <button
+                        v-for="recording in featuredRecordings"
                         :key="recording.id"
-                        :href="recording.url"
-                        target="_blank"
-                        rel="noopener"
-                        class="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        type="button"
+                        class="group overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        @click="selectedRecording = recording"
                     >
                         <span
                             class="relative block aspect-video overflow-hidden bg-slate-950"
@@ -585,7 +600,7 @@ const submitPrayer = async (): Promise<void> => {
                                 formatDate(recording.created_at)
                             }}</small>
                         </span>
-                    </a>
+                    </button>
                 </div>
             </section>
 
@@ -915,6 +930,111 @@ const submitPrayer = async (): Promise<void> => {
                 </article>
             </section>
         </main>
+
+        <Teleport to="body">
+            <div
+                v-if="selectedRecording"
+                class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
+                role="dialog"
+                aria-modal="true"
+                :aria-label="selectedRecording.title"
+                @click.self="closeRecording"
+            >
+                <div
+                    class="grid max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-[minmax(0,1fr)_20rem]"
+                >
+                    <section class="min-w-0 bg-slate-950">
+                        <div
+                            class="flex items-center justify-between gap-4 p-4 text-white"
+                        >
+                            <div class="min-w-0">
+                                <p class="truncate font-bold">
+                                    {{ selectedRecording.title }}
+                                </p>
+                                <p class="mt-0.5 text-xs text-slate-400">
+                                    {{
+                                        formatDate(
+                                            selectedRecording.created_at,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                class="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 transition hover:bg-white/20"
+                                :aria-label="t('home.latest_recordings.close')"
+                                @click="closeRecording"
+                            >
+                                <X class="size-5" />
+                            </button>
+                        </div>
+                        <video
+                            :key="selectedRecording.id"
+                            :src="selectedRecording.url"
+                            class="aspect-video max-h-[72vh] w-full bg-black object-contain"
+                            controls
+                            autoplay
+                            playsinline
+                            preload="metadata"
+                        />
+                    </section>
+
+                    <aside
+                        class="max-h-[38vh] overflow-y-auto border-t border-slate-200 bg-slate-50 p-4 lg:max-h-[92vh] lg:border-t-0 lg:border-l"
+                    >
+                        <div class="mb-3">
+                            <p
+                                class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"
+                            >
+                                {{
+                                    t(
+                                        'home.latest_recordings.playlist_kicker',
+                                    )
+                                }}
+                            </p>
+                            <h3 class="text-lg font-black">
+                                {{
+                                    t('home.latest_recordings.playlist_title')
+                                }}
+                            </h3>
+                        </div>
+                        <div class="space-y-2">
+                            <button
+                                v-for="recording in props.latestRecordings"
+                                :key="recording.id"
+                                type="button"
+                                class="flex w-full gap-3 rounded-xl border p-2 text-left transition"
+                                :class="
+                                    recording.id === selectedRecording.id
+                                        ? 'border-indigo-300 bg-indigo-50'
+                                        : 'border-slate-200 bg-white hover:border-indigo-200'
+                                "
+                                @click="selectedRecording = recording"
+                            >
+                                <span
+                                    class="grid aspect-video w-24 shrink-0 place-items-center rounded-lg bg-slate-900 text-white"
+                                >
+                                    <Play class="size-5 fill-current" />
+                                </span>
+                                <span class="min-w-0 self-center">
+                                    <strong
+                                        class="line-clamp-2 text-sm leading-tight"
+                                    >
+                                        {{ recording.title }}
+                                    </strong>
+                                    <small
+                                        class="mt-1 block text-xs text-slate-500"
+                                    >
+                                        {{ formatDate(recording.created_at) }}
+                                    </small>
+                                </span>
+                            </button>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        </Teleport>
+
         <PublicFooter show-locale />
     </div>
 </template>

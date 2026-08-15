@@ -4,18 +4,18 @@ namespace App\Http\Responses;
 
 use App\Enums\UserRole;
 use App\Support\ChurchDomainContext;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
 {
     public function __construct(private readonly ChurchDomainContext $context) {}
 
-    public function toResponse($request): JsonResponse|RedirectResponse
+    public function toResponse($request): Response
     {
         $user = $request->user();
         $domainChurch = $this->context->church();
@@ -40,6 +40,7 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
             return $this->response(
                 $request,
                 $this->context->churchUrl($userChurch, 'auth/handoff?token='.urlencode($token)),
+                external: true,
             );
         }
 
@@ -47,10 +48,14 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
     }
 
     /** @param array<string, mixed> $extra */
-    private function response($request, string $url, array $extra = []): JsonResponse|RedirectResponse
+    private function response($request, string $url, array $extra = [], bool $external = false): Response
     {
         if ($request->wantsJson()) {
             return response()->json(['two_factor' => false, 'redirect' => $url, ...$extra]);
+        }
+
+        if ($external) {
+            return Inertia::location($url);
         }
 
         return redirect()->to($url);

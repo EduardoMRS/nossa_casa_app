@@ -819,7 +819,10 @@
         "latest_recordings": {
             "kicker": "Watch again",
             "title": "Latest broadcasts",
-            "view_all": "View all"
+            "view_all": "View all",
+            "close": "Close player",
+            "playlist_kicker": "Keep watching",
+            "playlist_title": "Recent broadcasts"
         },
         "calendar": {
             "kicker": "Community schedule",

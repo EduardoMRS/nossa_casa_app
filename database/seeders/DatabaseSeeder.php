@@ -84,5 +84,6 @@ class DatabaseSeeder extends Seeder
 
         // 4. Executa outros seeders
         $this->call(StarterKitSeeder::class);
+        $this->call(RelationTesterSeeder::class);
     }
 }

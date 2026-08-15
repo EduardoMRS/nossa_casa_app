@@ -21,6 +21,10 @@ class ResolveChurchDomain
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if ($request->is('api/internal/media/*')) {
+            return $next($request);
+        }
+
         $this->context->resolve($request);
         $church = $this->context->church();
         $user = $request->user();

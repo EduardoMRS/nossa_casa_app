@@ -124,20 +124,38 @@ test('login in an unrelated church allows public access and asks for membership 
         ->and($user->fresh()->role)->toBe(UserRole::MEMBER);
 });
 
+test('login on the user church domain persists through the dashboard request', function () {
+    $church = createDomainChurch('Alpha Church', 'alpha.test');
+    $user = User::factory()->create(['role' => UserRole::ADMIN]);
+    $church->assignMember($user);
+
+    $this->post('http://alpha.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect('/dashboard');
+
+    $this->get('http://alpha.test/dashboard')->assertSuccessful();
+    $this->assertAuthenticatedAs($user);
+});
+
 test('login on the main domain redirects through a single use church handoff', function () {
     $church = createDomainChurch('Alpha Church', 'alpha.test');
     $user = User::factory()->create();
     $church->assignMember($user);
 
-    $response = $this->post('http://platform.test/login', [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
+    $response = $this
+        ->withHeader('X-Inertia', 'true')
+        ->post('http://platform.test/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
-    $location = $response->headers->get('Location');
+    $response->assertConflict();
+    $location = $response->headers->get('X-Inertia-Location');
     expect($location)->toStartWith('https://alpha.test/auth/handoff?token=');
 
     Auth::guard('web')->logout();
+    $this->withoutHeader('X-Inertia');
     $this->get($location)->assertRedirect('/dashboard');
     $this->assertAuthenticatedAs($user);
     $this->get($location)->assertForbidden();

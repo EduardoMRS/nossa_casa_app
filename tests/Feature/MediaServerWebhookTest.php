@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\LiveStreamStatus;
+use App\Enums\MediaStatus;
 use App\Enums\RecordingStatus;
 use App\Enums\UserRole;
 use App\Jobs\StoreRecordingInSharedStorage;
@@ -212,4 +213,61 @@ test('a private recording stays hidden until a media manager publishes it', func
     $this->getJson("http://private-archive.test/api/media/{$media->id}")
         ->assertSuccessful()
         ->assertJsonPath('id', $media->id);
+});
+
+test('church home exposes the eight newest public recordings in descending order', function () {
+    $this->withoutVite();
+
+    $church = Church::query()->create([
+        'name' => 'Recent Recordings Church',
+        'slug' => 'recent-recordings',
+        'domain' => 'recent-recordings.test',
+        'status' => 'active',
+    ]);
+    $creator = User::factory()->create(['role' => UserRole::MEDIA]);
+    $church->assignMember($creator);
+    $liveStream = LiveStream::factory()->create([
+        'church_id' => $church->id,
+        'created_by_id' => $creator->id,
+    ]);
+    $recordingIds = collect();
+
+    foreach (range(1, 10) as $position) {
+        $createdAt = now()->subMinutes(10 - $position);
+        $media = Media::query()->create([
+            'uploader_id' => $creator->id,
+            'church_id' => $church->id,
+            'title' => "Transmission {$position}",
+            'file_path' => "recordings/transmission-{$position}.mp4",
+            'disk' => 'recordings',
+            'mimetype' => 'video/mp4',
+            'size' => 1024,
+            'gallery' => true,
+            'status' => MediaStatus::APPROVED,
+        ]);
+        $media->timestamps = false;
+        $media->forceFill([
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ])->save();
+        $media->timestamps = true;
+
+        Recording::factory()->create([
+            'live_stream_id' => $liveStream->id,
+            'media_id' => $media->id,
+            'disk' => 'recordings',
+            'path' => $media->file_path,
+            'status' => RecordingStatus::READY,
+            'uploaded_at' => $createdAt,
+        ]);
+        $recordingIds->prepend($media->id);
+    }
+
+    $this->get('http://recent-recordings.test/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('latestRecordings', 8)
+            ->where('latestRecordings.0.id', $recordingIds[0])
+            ->where('latestRecordings.7.id', $recordingIds[7])
+            ->where('latestRecordings.0.url', fn (string $url): bool => str_contains($url, '/d/')));
 });

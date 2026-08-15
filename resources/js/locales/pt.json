@@ -794,7 +794,10 @@
         "latest_recordings": {
             "kicker": "Assista novamente",
             "title": "Últimas transmissões",
-            "view_all": "Ver todas"
+            "view_all": "Ver todas",
+            "close": "Fechar reproduÃ§Ã£o",
+            "playlist_kicker": "Continue assistindo",
+            "playlist_title": "TransmissÃµes recentes"
         },
         "calendar": {
             "kicker": "Agenda da comunidade",

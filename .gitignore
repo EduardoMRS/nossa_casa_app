@@ -11,6 +11,7 @@ public/fonts-manifest.dev.json
 storage/*.key
 storage/pail
 .env
+docker/mediamtx/.env
 /.env.media-node
 Homestead.yaml
 Homestead.json

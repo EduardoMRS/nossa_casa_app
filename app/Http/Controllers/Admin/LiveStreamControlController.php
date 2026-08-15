@@ -57,6 +57,9 @@ class LiveStreamControlController extends Controller
     {
         $token = $liveStream->input_mode === 'publisher' ? (string) $liveStream->publish_token : null;
         $ingestBaseUrl = rtrim((string) config('media.mediamtx.public_rtmp_url'), '/');
+        $streamKey = $token
+            ? $liveStream->path.'?token='.rawurlencode($token)
+            : null;
 
         return [
             'id' => $liveStream->id,
@@ -71,9 +74,9 @@ class LiveStreamControlController extends Controller
             'recordings_count' => $liveStream->recordings_count,
             'token' => $token,
             'token_rotated_at' => $liveStream->token_rotated_at,
-            'ingest_url' => $token
-                ? $ingestBaseUrl.'/'.$liveStream->path.'?token='.rawurlencode($token)
-                : null,
+            'ingest_server' => $token ? $ingestBaseUrl : null,
+            'stream_key' => $streamKey,
+            'ingest_url' => $streamKey ? $ingestBaseUrl.'/'.$streamKey : null,
             'public_url' => $this->domainContext->churchUrl($church, '/transmissoes/'.$liveStream->id),
             'recordings' => $liveStream->recordings->map(fn ($recording): array => [
                 'id' => $recording->id,

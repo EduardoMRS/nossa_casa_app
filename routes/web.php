@@ -20,6 +20,7 @@ use App\Models\Library;
 use App\Models\Media;
 use App\Models\Post;
 use App\Support\ChurchDomainContext;
+use App\Support\S3TemporaryUrlGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
@@ -204,7 +205,7 @@ Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery
 Route::get('/gallery/{media}/download', [PublicGalleryController::class, 'download'])->name('gallery.download');
 Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
 
-Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
+Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrlGenerator $temporaryUrlGenerator) {
     try {
         $payload = json_decode(Crypt::decryptString($encryptedFile), true, flags: JSON_THROW_ON_ERROR);
         $filePath = $payload['path'] ?? null;
@@ -235,7 +236,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile) {
     ];
 
     if (config("filesystems.disks.{$diskName}.driver") === 's3') {
-        return redirect()->away($disk->temporaryUrl($filePath, now()->addMinutes(5), [
+        return redirect()->away($temporaryUrlGenerator->generate($diskName, $filePath, now()->addMinutes(5), [
             'ResponseContentDisposition' => $headers['Content-Disposition'],
         ]));
     }

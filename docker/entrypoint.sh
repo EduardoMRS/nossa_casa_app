@@ -9,6 +9,22 @@ if [ ! -f .env ]; then
     created_project_env=true
 fi
 
+while IFS= read -r env_line || [ -n "$env_line" ]; do
+    case "$env_line" in
+        ''|'#'*) continue ;;
+    esac
+
+    env_key=${env_line%%=*}
+
+    case "$env_key" in
+        *[!A-Za-z0-9_]*) continue ;;
+    esac
+
+    if ! grep -q "^${env_key}=" .env; then
+        printf '%s\n' "$env_line" >> .env
+    fi
+done < .env.example
+
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
 chown -R www-data:www-data storage/framework bootstrap/cache
 
