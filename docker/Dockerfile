@@ -1,4 +1,4 @@
-FROM php:8.5-fpm-alpine
+FROM php:8.5.5-fpm-alpine3.22
 
 ARG USER=laravel
 ARG UID=1000
@@ -12,13 +12,13 @@ RUN apk add --no-cache \
     zip \
     unzip \
     git \
-    nodejs=~24 \
+    nodejs=~22 \
     npm
 
 RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd
 
 # Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.8.12 /usr/bin/composer /usr/bin/composer
 
 RUN deluser node || true && \
     addgroup -g $GID $USER && \
@@ -26,6 +26,7 @@ RUN deluser node || true && \
 
 WORKDIR /var/www
 
+COPY .env.example /usr/local/share/nossa-casa.env.example
 COPY --chown=$UID:$GID ./docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY ./docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh

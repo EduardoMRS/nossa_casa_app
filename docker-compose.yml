@@ -124,7 +124,7 @@ services:
       - laravel_network
 
   webserver:
-    image: nginx:alpine
+    image: nginx:1.29.8-alpine
     ports:
       - "80:80"
     volumes:
@@ -137,7 +137,7 @@ services:
         condition: service_healthy
 
   db:
-    image: mysql:8.0
+    image: mysql:8.0.45
     environment:
       MYSQL_DATABASE: ${DOCKER_DB_DATABASE:-laravel}
       MYSQL_ROOT_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}

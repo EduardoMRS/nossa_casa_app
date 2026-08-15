@@ -2,28 +2,41 @@
 set -e
 
 created_project_env=false
+env_template=".env.example"
+
+if [ ! -f "$env_template" ] && [ -f /usr/local/share/nossa-casa.env.example ]; then
+    env_template=/usr/local/share/nossa-casa.env.example
+fi
 
 if [ ! -f .env ]; then
-    echo "Copiando .env.example para .env..."
-    cp .env.example .env
+    if [ ! -f "$env_template" ]; then
+        echo "Erro: .env não encontrado e .env.example não está disponível." >&2
+        echo "Crie o arquivo .env a partir do .env.example antes de iniciar o container." >&2
+        exit 1
+    fi
+
+    echo "Copiando $env_template para .env..."
+    cp "$env_template" .env
     created_project_env=true
 fi
 
-while IFS= read -r env_line || [ -n "$env_line" ]; do
-    case "$env_line" in
-        ''|'#'*) continue ;;
-    esac
+if [ -f "$env_template" ]; then
+    while IFS= read -r env_line || [ -n "$env_line" ]; do
+        case "$env_line" in
+            ''|'#'*) continue ;;
+        esac
 
-    env_key=${env_line%%=*}
+        env_key=${env_line%%=*}
 
-    case "$env_key" in
-        *[!A-Za-z0-9_]*) continue ;;
-    esac
+        case "$env_key" in
+            *[!A-Za-z0-9_]*) continue ;;
+        esac
 
-    if ! grep -q "^${env_key}=" .env; then
-        printf '%s\n' "$env_line" >> .env
-    fi
-done < .env.example
+        if ! grep -q "^${env_key}=" .env; then
+            printf '%s\n' "$env_line" >> .env
+        fi
+    done < "$env_template"
+fi
 
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
 chown -R www-data:www-data storage/framework bootstrap/cache
