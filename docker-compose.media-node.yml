@@ -45,6 +45,8 @@ services:
       - bootstrapcache:/var/www/bootstrap/cache
       - media-recordings:/recordings
       - media-state:/state
+    expose:
+      - "8000"
     depends_on:
       media-init:
         condition: service_completed_successfully
@@ -87,13 +89,14 @@ services:
       - ${MEDIA_NODE_ENV_FILE:-.env.media-node}
     environment:
       MEDIA_RECORDING_WEBHOOK_URL: http://media-webhook:8000/api/internal/media/recording-segment-completed
+    expose:
+      - "9997"
+      - "1935"
+      - "8554"
+      - "8889"
+      - "8189/udp"
     ports:
-      - "${MEDIA_API_BIND_IP:-127.0.0.1}:9997:9997"
-      - "1935:1935"
-      - "8888:8888"
-      - "8554:8554"
-      - "8889:8889"
-      - "8189:8189/udp"
+      - "${MEDIAMTX_HLS_PORT:-8888}:8888"
     volumes:
       - media-recordings:/recordings
     depends_on:
