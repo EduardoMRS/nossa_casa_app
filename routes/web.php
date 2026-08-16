@@ -346,7 +346,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/salas-aula', [AdminWorkspaceController::class, 'classrooms'])->name('classrooms.index');
             Route::put('/salas-aula/configuracoes', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
             Route::post('/gestao-usuarios/{user}/redefinir-senha', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
-            Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:system')->name('logsMetrics.index');
+            Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:superadmin|system')->name('logsMetrics.index');
+            Route::get('/logs-metricas/backup/exportar', [AdminWorkspaceController::class, 'exportBackup'])
+                ->middleware('role:superadmin|system')
+                ->name('logsMetrics.backup.export');
+            Route::post('/logs-metricas/backup/importar', [AdminWorkspaceController::class, 'importBackup'])
+                ->middleware('role:superadmin|system')
+                ->name('logsMetrics.backup.import');
             Route::post('/logs-metricas/transmissoes/{liveStream}/derrubar', StopLiveStreamController::class)
                 ->middleware('role:system')
                 ->name('logsMetrics.liveStreams.stop');

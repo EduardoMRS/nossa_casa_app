@@ -122,10 +122,12 @@ it('shares the kids ministry settings from the authenticated church', function (
             ->where('separateKidsMinistry', false));
 });
 
-it('restricts operational logs and metrics to system users', function () {
+it('restricts operational logs and metrics to superadmin and system users', function () {
     $admin = createAdminUserWithChurch();
+    $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
     $system = User::factory()->create(['role' => UserRole::SYSTEM]);
 
     $this->actingAs($admin)->get(route('admin.logsMetrics.index'))->assertForbidden();
+    $this->actingAs($superadmin)->get(route('admin.logsMetrics.index'))->assertSuccessful();
     $this->actingAs($system)->get(route('admin.logsMetrics.index'))->assertSuccessful();
 });

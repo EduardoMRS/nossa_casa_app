@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'ncapp_locale']);
         $middleware->validateCsrfTokens(except: ['api/internal/media/*']);
+        $middleware->preventRequestsDuringMaintenance([
+            'dashboard/logs-metricas*',
+        ]);
 
         $middleware->web(append: [
             SetLocale::class,

@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { Head, Link, usePoll } from '@inertiajs/vue3';
+import { Head, Link, router, usePoll } from '@inertiajs/vue3';
 import {
     Activity,
+    Archive,
     CircleAlert,
     Cpu,
     Database,
+    Download,
+    LoaderCircle,
     ListChecks,
     Radio,
     Server,
+    ShieldCheck,
     Square,
+    Upload,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
+import {
+    exportMethod as exportBackupRoute,
+    importMethod as importBackupRoute,
+} from '@/routes/admin/logsMetrics/backup';
 import { stop } from '@/routes/admin/logsMetrics/liveStreams';
 const props = defineProps<{
     stats: Array<{ label: string; value: number; tone: string }>;
@@ -33,9 +42,14 @@ const props = defineProps<{
         recordings_count: number;
         playback_url: string;
     }>;
+    maintenance: boolean;
 }>();
 const { t } = useI18n();
 const query = ref('');
+const operation = ref<'export' | 'import' | null>(null);
+const selectedBackup = ref<File | null>(null);
+const backupInput = ref<HTMLInputElement | null>(null);
+const errors = ref<Record<string, string>>({});
 const filteredLogs = computed(() =>
     props.logs
         .filter((line) =>
@@ -43,7 +57,105 @@ const filteredLogs = computed(() =>
         )
         .reverse(),
 );
-usePoll(5000, { only: ['queue', 'liveStreams', 'logs'] });
+const { start: startPolling, stop: stopPolling } = usePoll(
+    5000,
+    { only: ['queue', 'liveStreams', 'logs'] },
+    { autoStart: true },
+);
+
+const chooseBackup = (event: Event): void => {
+    selectedBackup.value =
+        (event.target as HTMLInputElement).files?.[0] ?? null;
+    errors.value = {};
+};
+
+const exportBackup = async (): Promise<void> => {
+    if (operation.value) {
+        return;
+    }
+
+    operation.value = 'export';
+    errors.value = {};
+    stopPolling();
+
+    try {
+        const response = await fetch(exportBackupRoute.url(), {
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/zip, application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) {
+            const body = await response.json().catch(() => null);
+
+            throw new Error(body?.message ?? t('admin.logs.backup.error'));
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `nossa-casa-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+        link.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        errors.value = {
+            backup:
+                error instanceof Error
+                    ? error.message
+                    : t('admin.logs.backup.error'),
+        };
+    } finally {
+        operation.value = null;
+        startPolling();
+    }
+};
+
+const importBackup = (): void => {
+    if (operation.value || !selectedBackup.value) {
+        errors.value = { backup: t('admin.logs.backup.choose_file') };
+
+        return;
+    }
+
+    if (!window.confirm(t('admin.logs.backup.import_confirm'))) {
+        return;
+    }
+
+    operation.value = 'import';
+    errors.value = {};
+    stopPolling();
+
+    router.post(
+        importBackupRoute.url(),
+        { backup: selectedBackup.value },
+        {
+            forceFormData: true,
+            preserveScroll: true,
+            onError: (value: Record<string, string | string[]>) => {
+                errors.value = Object.fromEntries(
+                    Object.entries(value).map(([key, message]) => [
+                        key,
+                        Array.isArray(message) ? message[0] : message,
+                    ]),
+                );
+            },
+            onSuccess: () => {
+                selectedBackup.value = null;
+
+                if (backupInput.value) {
+                    backupInput.value.value = '';
+                }
+            },
+            onFinish: () => {
+                operation.value = null;
+                startPolling();
+            },
+        },
+    );
+};
 </script>
 <template>
     <Head :title="t('admin.logs.title')" />
@@ -110,6 +222,103 @@ usePoll(5000, { only: ['queue', 'liveStreams', 'logs'] });
                 </p>
                 <p class="text-2xl font-black">{{ stat.value }}</p>
             </article>
+        </section>
+        <section
+            class="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-sm"
+        >
+            <header
+                class="flex items-start gap-3 border-b border-amber-200 p-5"
+            >
+                <ShieldCheck class="mt-0.5 size-5 shrink-0 text-amber-700" />
+                <div>
+                    <h2 class="font-black text-amber-950">
+                        {{ t('admin.logs.backup.title') }}
+                    </h2>
+                    <p class="mt-1 text-sm text-amber-900">
+                        {{ t('admin.logs.backup.description') }}
+                    </p>
+                </div>
+            </header>
+            <div class="grid gap-4 p-5 lg:grid-cols-2">
+                <article
+                    class="rounded-xl border border-amber-200 bg-white p-4"
+                >
+                    <div class="flex items-center gap-3">
+                        <Download class="size-5 text-indigo-600" />
+                        <div>
+                            <h3 class="font-black text-slate-900">
+                                {{ t('admin.logs.backup.export_title') }}
+                            </h3>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ t('admin.logs.backup.export_description') }}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        :disabled="operation !== null"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-black text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        @click="exportBackup"
+                    >
+                        <LoaderCircle
+                            v-if="operation === 'export'"
+                            class="size-4 animate-spin"
+                        />
+                        <Archive v-else class="size-4" />
+                        {{
+                            operation === 'export'
+                                ? t('admin.logs.backup.processing')
+                                : t('admin.logs.backup.export_action')
+                        }}
+                    </button>
+                </article>
+                <article
+                    class="rounded-xl border border-amber-200 bg-white p-4"
+                >
+                    <div class="flex items-center gap-3">
+                        <Upload class="size-5 text-emerald-600" />
+                        <div>
+                            <h3 class="font-black text-slate-900">
+                                {{ t('admin.logs.backup.import_title') }}
+                            </h3>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ t('admin.logs.backup.import_description') }}
+                            </p>
+                        </div>
+                    </div>
+                    <input
+                        ref="backupInput"
+                        type="file"
+                        accept=".zip,application/zip"
+                        class="mt-4 block w-full rounded-lg border border-slate-300 p-2 text-sm"
+                        :disabled="operation !== null"
+                        @change="chooseBackup"
+                    />
+                    <button
+                        type="button"
+                        :disabled="operation !== null || !selectedBackup"
+                        class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        @click="importBackup"
+                    >
+                        <LoaderCircle
+                            v-if="operation === 'import'"
+                            class="size-4 animate-spin"
+                        />
+                        <Upload v-else class="size-4" />
+                        {{
+                            operation === 'import'
+                                ? t('admin.logs.backup.processing')
+                                : t('admin.logs.backup.import_action')
+                        }}
+                    </button>
+                </article>
+            </div>
+            <p
+                v-if="errors.backup"
+                class="border-t border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700"
+            >
+                {{ errors.backup }}
+            </p>
         </section>
         <section class="overflow-hidden rounded-2xl border bg-white shadow-sm">
             <header

@@ -535,6 +535,20 @@
             "open_stream": "Abrir transmissão",
             "stop_stream": "Derrubar conexão",
             "no_live_streams": "Nenhuma transmissão ativa agora.",
+            "backup": {
+                "title": "Backups para migração",
+                "description": "O sistema entrará em manutenção e bloqueará os demais usuários durante a exportação ou importação.",
+                "export_title": "Exportar backup",
+                "export_description": "Baixa o banco de dados e os discos de mídia configurados em um único arquivo ZIP.",
+                "export_action": "Exportar banco e mídias",
+                "import_title": "Importar backup",
+                "import_description": "Use um ZIP gerado por esta tela. Mídias existentes com conflito nunca são sobrescritas.",
+                "import_action": "Importar banco e mídias",
+                "import_confirm": "A importação substituirá os dados atuais do banco. Deseja continuar?",
+                "choose_file": "Escolha primeiro um backup ZIP.",
+                "processing": "Modo de manutenção ativo...",
+                "error": "Não foi possível concluir a operação de backup."
+            },
             "stats": [
                 "Usuários",
                 "Eventos",

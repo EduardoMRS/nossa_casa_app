@@ -23,6 +23,7 @@ use App\Models\PrayerRequest;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Vercicle;
+use App\Services\SystemBackupService;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Throwable;
 
 class AdminWorkspaceController extends Controller
 {
@@ -498,7 +502,7 @@ class AdminWorkspaceController extends Controller
 
     public function logsMetrics(): Response
     {
-        abort_unless(request()->user()?->role === UserRole::SYSTEM, 403);
+        $this->ensureBackupAccess(request());
 
         $logPath = storage_path('logs/laravel.log');
         $logLines = File::exists($logPath)
@@ -540,7 +544,66 @@ class AdminWorkspaceController extends Controller
                 'queue_connection' => config('queue.default'),
             ],
             'logs' => $logLines,
+            'maintenance' => app()->isDownForMaintenance(),
         ]);
+    }
+
+    public function exportBackup(SystemBackupService $backup): BinaryFileResponse|JsonResponse
+    {
+        $this->ensureBackupAccess(request());
+        $wasInMaintenance = app()->isDownForMaintenance();
+
+        if (! $wasInMaintenance) {
+            app()->maintenanceMode()->activate(['status' => 503]);
+        }
+
+        try {
+            $path = $backup->export();
+
+            return response()
+                ->download($path, 'nossa-casa-backup-'.now()->format('Y-m-d-His').'.zip', ['Content-Type' => 'application/zip'])
+                ->deleteFileAfterSend(true);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json(['message' => __('backup.operation_failed')], 422);
+        } finally {
+            if (! $wasInMaintenance) {
+                app()->maintenanceMode()->deactivate();
+            }
+        }
+    }
+
+    public function importBackup(Request $request, SystemBackupService $backup): RedirectResponse
+    {
+        $this->ensureBackupAccess($request);
+        $validated = $request->validate([
+            'backup' => ['required', 'file', 'max:5242880'],
+        ]);
+        $wasInMaintenance = app()->isDownForMaintenance();
+
+        if (! $wasInMaintenance) {
+            app()->maintenanceMode()->activate(['status' => 503]);
+        }
+
+        try {
+            $backup->import($validated['backup']);
+
+            return back()->with('backup_success', __('backup.imported'));
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['backup' => __('backup.operation_failed')]);
+        } finally {
+            if (! $wasInMaintenance) {
+                app()->maintenanceMode()->deactivate();
+            }
+        }
+    }
+
+    private function ensureBackupAccess(Request $request): void
+    {
+        abort_unless(in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
     }
 
     private function ensureManagedUser(Request $request, User $user): void
