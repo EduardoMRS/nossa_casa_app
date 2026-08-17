@@ -59,11 +59,11 @@ class RelationTesterSeeder extends Seeder
 
         $this->church = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-central'],
-            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10', 'domain' => urlBase('central')]
+            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10', 'domain' => domainBase('central')]
         );
         $this->campus = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-norte'],
-            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20', 'domain' => urlBase('norte')],
+            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20', 'domain' => domainBase('norte')],
         );
 
         Network::query()->updateOrCreate(

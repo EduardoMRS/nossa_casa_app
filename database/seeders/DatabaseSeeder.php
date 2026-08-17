@@ -61,7 +61,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Nossa Casa Teste',
                 'found_date' => '2026-07-16',
-                'domain' => urlBase('nossa'),
+                'domain' => domainBase('nossa'),
             ]
         );
 
