@@ -51,6 +51,7 @@ class RelationTesterSeeder extends Seeder
 
     private function seedOrganization(): void
     {
+
         $community = Community::query()->updateOrCreate(
             ['slug' => 'comunidade-nossa-casa-teste'],
             ['name' => 'Comunidade Nossa Casa', 'description' => 'Ambiente de demonstração completo.', 'found_date' => '2018-03-10'],
@@ -58,11 +59,11 @@ class RelationTesterSeeder extends Seeder
 
         $this->church = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-central'],
-            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10', 'domain' => 'central.localhost']
+            ['name' => 'Nossa Casa Central', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2018-03-10', 'domain' => urlBase('central')]
         );
         $this->campus = Church::query()->updateOrCreate(
             ['slug' => 'nossa-casa-norte'],
-            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20', 'domain' => 'norte.localhost'],
+            ['name' => 'Nossa Casa Norte', 'community_id' => $community->id, 'status' => 'active', 'found_date' => '2022-08-20', 'domain' => urlBase('norte')],
         );
 
         Network::query()->updateOrCreate(

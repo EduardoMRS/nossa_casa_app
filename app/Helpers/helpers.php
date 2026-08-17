@@ -175,3 +175,19 @@ if (! function_exists('genUrl')) {
         );
     }
 }
+
+if (!function_exists('urlBase')) {
+    /**
+     * Helper to generate a secure URL for a file path
+     * TODO: reduce the size of the encrypted string to make it more user-friendly
+     *
+     * @param  string  $filePath  The file path to encrypt and generate a URL for
+     * @return string The generated secure URL
+     */
+    function urlBase($subdomain = null, $path = ''): ?string
+    {
+        $base = config('app.url');
+        $isHttps = str_starts_with($base, 'https://');
+        return ($isHttps ? 'https://' : 'http://') . ($subdomain? $subdomain . '.' : '') . parse_url($base, PHP_URL_HOST) . $path;
+    }
+}
