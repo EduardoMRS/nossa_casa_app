@@ -91,12 +91,12 @@ services:
       MEDIA_RECORDING_WEBHOOK_URL: http://media-webhook:8000/api/internal/media/recording-segment-completed
     expose:
       - "9997"
-      - "1935"
       - "8554"
       - "8889"
       - "8189/udp"
     ports:
-      - "${MEDIAMTX_HLS_PORT:-8888}:8888"
+      - "${MEDIAMTX_HLS_PORT:-8888}:8888"      
+      - "${MEDIAMTX_RTMP_PORT:-1935}:1935"
     volumes:
       - media-recordings:/recordings
     depends_on:
