@@ -25,6 +25,30 @@ Usuário de mídia cria a transmissão no painel
                   Galeria / categoria Transmissions
 ```
 
+## Portas e firewall
+
+Para publicar pelo OBS e assistir pelo navegador, use as seguintes portas:
+
+| Porta | Protocolo | Exposição | Uso |
+|---|---|---|---|
+| `80/TCP` | HTTP | Pública | Acesso HTTP ao app e redirecionamento para HTTPS. |
+| `443/TCP` | HTTPS | Pública | App e HLS por HTTPS. Recomendada como entrada do proxy reverso. |
+| `1935/TCP` | RTMP | Pública | Entrada da transmissão enviada pelo OBS. |
+| `8888/TCP` | HLS/HTTP | Pública somente sem proxy HTTPS | Player HLS direto. Com proxy reverso em `443`, não precisa ser aberta na internet. |
+| `9997/TCP` | API HTTP do MediaMTX | Privada | Controle de paths pelo servidor principal. Libere somente para o IP do core ou pela VPN. Nunca encaminhe publicamente no roteador. |
+
+Com a configuração recomendada, o roteador publica `80/TCP`, `443/TCP` e `1935/TCP`. O proxy reverso recebe HLS em `443/TCP` e encaminha internamente para `8888/TCP`. A porta `9997/TCP` fica restrita à rede privada/VPN entre o core e o nó de mídia.
+
+As portas abaixo são opcionais e não precisam ser abertas para o fluxo atual com OBS por RTMP e reprodução por HLS:
+
+| Porta | Protocolo | Quando usar |
+|---|---|---|
+| `8554/TCP` | RTSP | Publicação ou leitura por RTSP. |
+| `8889/TCP` | WebRTC/WHEP | Sinalização WebRTC. |
+| `8189/UDP` | WebRTC/ICE | Transporte de mídia WebRTC. |
+
+Se o app estiver em HTTPS, não entregue HLS por `http://...:8888`, pois o navegador pode bloquear o conteúdo misto. Use um domínio HTTPS no `MEDIAMTX_PUBLIC_HLS_URL` e encaminhe esse domínio para a porta interna `8888`.
+
 ## Permissões
 
 | Ação | Quem pode realizar |

@@ -70,6 +70,9 @@ MINIO_ENDPOINT=http://<ip-da-maquina-de-arquivos>:9000
 MINIO_USE_PATH_STYLE_ENDPOINT=true
 
 MEDIA_API_BIND_IP=<ip-privado-desta-maquina-de-midia>
+MEDIAMTX_API_PORT=9997
+MEDIAMTX_HLS_PORT=8888
+MEDIAMTX_RTMP_PORT=1935
 ```
 
 O endpoint do MinIO deve ser alcançável de dentro do contêiner `media-worker`. Não use `127.0.0.1` para um MinIO executado em outra máquina. Em produção, use HTTPS para o endpoint S3 sempre que ele atravessar uma rede não confiável.

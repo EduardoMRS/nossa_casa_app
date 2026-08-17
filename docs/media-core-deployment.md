@@ -79,7 +79,7 @@ docker compose stop mediamtx media-worker
 Configure no `.env` do core:
 
 ```dotenv
-MEDIAMTX_API_URL=http://<ip-do-no-de-midia>:9997
+REMOTE_MEDIAMTX_API_URL=http://<ip-do-no-de-midia>:9997
 MEDIAMTX_PUBLIC_RTMP_URL=rtmp://<dominio-publico-de-transmissao>:1935
 MEDIAMTX_PUBLIC_HLS_URL=https://<dominio-publico-de-transmissao>
 ```
