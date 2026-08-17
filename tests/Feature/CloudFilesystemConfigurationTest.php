@@ -124,7 +124,7 @@ test('S3 URLs are signed directly for the browser endpoint', function (): void {
     config()->set('filesystems.disks.minio.secret', 'test-secret-key');
     config()->set('filesystems.disks.minio.bucket', 'test-bucket');
     config()->set('filesystems.disks.minio.endpoint', 'http://minio:9000');
-    config()->set('filesystems.disks.minio.temporary_url', 'http://127.0.0.1:9000');
+    config()->set('filesystems.disks.minio.temporary_url', 'https://nossa.test');
 
     $url = app(S3TemporaryUrlGenerator::class)->generate(
         'minio',
@@ -133,6 +133,6 @@ test('S3 URLs are signed directly for the browser endpoint', function (): void {
     );
 
     expect($url)
-        ->toStartWith('http://127.0.0.1:9000/test-bucket/recordings/service.mp4?')
+        ->toStartWith('https://nossa.test/test-bucket/recordings/service.mp4?')
         ->toContain('X-Amz-Signature=');
 });

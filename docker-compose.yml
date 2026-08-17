@@ -102,17 +102,51 @@ services:
       minio-init:
         condition: service_completed_successfully
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www
+      - phpvendor:/var/www/vendor
+      - frameworkcache:/var/www/storage/framework
+      - bootstrapcache:/var/www/bootstrap/cache
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DOCKER_DB_DATABASE:-laravel}
+      DB_USERNAME: ${DOCKER_DB_USERNAME:-root}
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}
+      MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}
+      MEDIA_WORKER_TOKEN: ${MEDIA_WORKER_TOKEN:-local-media-worker-token}
+      MEDIA_RECORDINGS_PATH: /recordings
+      MEDIAMTX_API_URL: ${MEDIAMTX_API_URL:-http://mediamtx:9997}
+      SKIP_NODE_INSTALL: "true"
+    networks:
+      - laravel_network
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_started
+    restart: unless-stopped
+
   mediamtx:
     build:
       context: .
       dockerfile: ./docker/mediamtx/Dockerfile
     expose:
       - "8554"
+      - "8888"
       - "8889"
       - "8189/udp"
     ports:
       - "${MEDIA_API_BIND_IP:-127.0.0.1}:${MEDIAMTX_API_PORT:-9997}:9997"
-      - "${MEDIAMTX_HLS_PORT:-8888}:8888"
       - "${MEDIAMTX_RTMP_PORT:-1935}:1935"
     volumes:
       - mediarecordings:/recordings
@@ -124,6 +158,13 @@ services:
       MEDIA_RECORDING_WEBHOOK_URL: http://webserver/api/internal/media/recording-segment-completed
     networks:
       - laravel_network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9997/v3/config/global/get"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
 
   webserver:
     image: nginx:1.29.8-alpine
