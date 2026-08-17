@@ -112,6 +112,7 @@ services:
       - "8189/udp"
       - "9997"
     ports:
+      - "${MEDIA_API_BIND_IP:-127.0.0.1}:${MEDIAMTX_API_PORT:-9997}:9997"
       - "${MEDIAMTX_HLS_PORT:-8888}:8888"
       - "${MEDIAMTX_RTMP_PORT:-1935}:1935"
     volumes:
