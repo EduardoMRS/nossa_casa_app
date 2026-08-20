@@ -60,4 +60,5 @@ pathDefaults:
     --data-urlencode "worker_id=$MEDIA_WORKER_ID"
     __MEDIA_RECORDING_WEBHOOK_URL__
 
-paths: {}
+paths:
+  all_others:

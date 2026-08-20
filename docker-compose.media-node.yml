@@ -100,8 +100,15 @@ services:
       - "${MEDIAMTX_RTMP_PORT:-1935}:1935"
     volumes:
       - media-recordings:/recordings
+      - ./docker/mediamtx:/config
     depends_on:
       - media-webhook
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9997/v3/config/global/get"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     restart: unless-stopped
 
 volumes:
