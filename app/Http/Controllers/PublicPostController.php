@@ -165,7 +165,8 @@ class PublicPostController extends Controller
         $user = $request->user();
         $role = $user?->role?->value ?? (string) $user?->role;
         $canPreview = $user !== null
-            && in_array($role, ['leader', 'media', 'admin', 'superadmin', 'system'], true);
+            && ($role === 'system' || $user->profile?->church_id === $churchId)
+            && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true);
 
         return Post::query()
             ->when(
@@ -216,9 +217,6 @@ class PublicPostController extends Controller
 
     private function canInteract(Request $request, ?string $churchId): bool
     {
-        $user = $request->user();
-        $role = $user?->role?->value ?? (string) $user?->role;
-
-        return $role === 'system' || ($user !== null && $user->profile?->church_id === $churchId);
+        return $request->user() !== null && $churchId !== null;
     }
 }

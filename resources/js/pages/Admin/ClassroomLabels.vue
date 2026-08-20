@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { Printer } from '@lucide/vue';
+import { useI18n } from '@/lib/i18n';
 
 defineProps<{
     label: {
@@ -15,11 +16,13 @@ defineProps<{
     };
 }>();
 
+const { t } = useI18n();
+
 const printLabels = (): void => window.print();
 </script>
 
 <template>
-    <Head title="Etiquetas de check-in" />
+    <Head :title="t('admin.classrooms.labels_title')" />
     <main
         class="min-h-screen bg-slate-100 p-6 text-slate-950 print:bg-white print:p-0"
     >
@@ -27,16 +30,19 @@ const printLabels = (): void => window.print();
             class="mx-auto mb-6 flex max-w-5xl items-center justify-between print:hidden"
         >
             <div>
-                <h1 class="text-2xl font-black">Etiquetas do check-in</h1>
+                <h1 class="text-2xl font-black">
+                    {{ t('admin.classrooms.labels_title') }}
+                </h1>
                 <p class="text-sm text-slate-500">
-                    Imprima as duas etiquetas antes de fechar esta página.
+                    {{ t('admin.classrooms.labels_description') }}
                 </p>
             </div>
             <button
                 class="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white"
                 @click="printLabels"
             >
-                <Printer class="size-4" /> Imprimir etiquetas
+                <Printer class="size-4" />
+                {{ t('admin.classrooms.print_labels') }}
             </button>
         </div>
 
@@ -48,7 +54,7 @@ const printLabels = (): void => window.print();
             >
                 <header class="border-b-2 border-slate-900 pb-3">
                     <p class="text-xs font-black tracking-[0.2em] uppercase">
-                        Etiqueta da criança
+                        {{ t('admin.classrooms.child_label') }}
                     </p>
                     <h2 class="mt-2 text-2xl font-black">
                         {{ label.child_name }}
@@ -56,24 +62,45 @@ const printLabels = (): void => window.print();
                 </header>
                 <dl class="grid gap-3 py-5 text-sm">
                     <div>
-                        <dt class="font-black uppercase">Idade</dt>
-                        <dd>{{ label.child_age ?? '—' }} anos</dd>
+                        <dt class="font-black uppercase">
+                            {{ t('admin.classrooms.age') }}
+                        </dt>
+                        <dd>
+                            {{ label.child_age ?? '—' }}
+                            {{ t('admin.classrooms.years') }}
+                        </dd>
                     </div>
                     <div>
-                        <dt class="font-black uppercase">Sala</dt>
+                        <dt class="font-black uppercase">
+                            {{ t('admin.classrooms.room') }}
+                        </dt>
                         <dd>{{ label.classroom_name }}</dd>
                     </div>
                     <div>
-                        <dt class="font-black uppercase">Quem deixou</dt>
-                        <dd>{{ label.dropoff_name || 'Não informado' }}</dd>
+                        <dt class="font-black uppercase">
+                            {{ t('admin.classrooms.dropoff_person') }}
+                        </dt>
+                        <dd>
+                            {{
+                                label.dropoff_name ||
+                                t('admin.classrooms.not_provided')
+                            }}
+                        </dd>
                     </div>
                     <div>
-                        <dt class="font-black uppercase">Contato</dt>
-                        <dd>{{ label.dropoff_phone || 'Não informado' }}</dd>
+                        <dt class="font-black uppercase">
+                            {{ t('admin.classrooms.contact') }}
+                        </dt>
+                        <dd>
+                            {{
+                                label.dropoff_phone ||
+                                t('admin.classrooms.not_provided')
+                            }}
+                        </dd>
                     </div>
                 </dl>
                 <p class="border-t pt-3 text-center text-xs font-bold">
-                    Nossa Casa · Check-in seguro
+                    {{ t('admin.classrooms.secure_checkin') }}
                 </p>
             </article>
 
@@ -85,19 +112,20 @@ const printLabels = (): void => window.print();
                         <p
                             class="text-xs font-black tracking-[0.2em] uppercase"
                         >
-                            Etiqueta do responsável
+                            {{ t('admin.classrooms.guardian_label') }}
                         </p>
                         <h2 class="mt-3 text-xl font-black">
                             {{ label.child_name }}
                         </h2>
                         <p class="mt-1 text-sm">
-                            {{ label.child_age ?? '—' }} anos ·
+                            {{ label.child_age ?? '—' }}
+                            {{ t('admin.classrooms.years') }} ·
                             {{ label.classroom_name }}
                         </p>
                     </div>
                     <div>
                         <p class="text-xs font-black uppercase">
-                            PIN de retirada
+                            {{ t('admin.classrooms.pickup_pin') }}
                         </p>
                         <p
                             class="font-mono text-4xl font-black tracking-[0.22em]"
@@ -109,11 +137,11 @@ const printLabels = (): void => window.print();
                 <div class="flex flex-col items-center justify-center">
                     <img
                         :src="label.qr_data_url"
-                        alt="QR Code para retirada"
+                        :alt="t('admin.classrooms.pickup_qr_alt')"
                         class="size-44"
                     />
                     <p class="mt-1 text-center text-[10px] font-bold">
-                        Apresente no checkout
+                        {{ t('admin.classrooms.present_at_checkout') }}
                     </p>
                 </div>
             </article>

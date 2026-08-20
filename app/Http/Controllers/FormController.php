@@ -19,7 +19,7 @@ class FormController extends Controller
     {
         $churchId = $request->user()->church?->id;
 
-        abort_unless($churchId, 422, 'A church membership is required to list forms.');
+        abort_unless($churchId, 422, __('church.membership_form_list_required'));
 
         return response()->json(Form::query()
             ->where('church_id', $churchId)

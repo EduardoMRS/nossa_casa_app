@@ -7,6 +7,7 @@ use App\Enums\UserRelationships;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -100,6 +101,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->belongsToMany(Event::class, 'event_users')->withPivot('status');
     }
 
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     public function scopeFamily($query)
     {
         return $query->whereHas(UserRelationship::class, function ($q) {
@@ -148,7 +154,7 @@ class User extends Authenticatable implements PasskeyUser
 
     public function isAdmin(): bool
     {
-        return $this->hasRole([UserRole::ADMIN, UserRole::SUPERADMIN]);
+        return $this->hasRole([UserRole::CHURCH_LEADER, UserRole::SUPERADMIN]);
     }
 
     public function isModerator(): bool

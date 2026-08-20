@@ -97,7 +97,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $this->ensureCanManage($request, $user);
-        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403, 'Protected users cannot be deleted.');
+        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403, __('user.protected_delete'));
         $user->delete();
 
         return response()->json(null, 204);
@@ -108,7 +108,7 @@ class UserController extends Controller
         $actor = $request->user();
         $actorRole = $actor?->role?->value ?? (string) $actor?->role;
 
-        if ($actorRole === UserRole::ADMIN->value) {
+        if ($actorRole === UserRole::CHURCH_LEADER->value) {
             abort_unless($user->church?->id === $actor?->church?->id, 403);
             abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403);
         }
@@ -122,6 +122,6 @@ class UserController extends Controller
     {
         $actorRole = $request->user()?->role?->value ?? (string) $request->user()?->role;
         abort_if($role === UserRole::SYSTEM->value && $actorRole !== UserRole::SYSTEM->value, 403);
-        abort_if($role === UserRole::SUPERADMIN->value && $actorRole === UserRole::ADMIN->value, 403);
+        abort_if($role === UserRole::SUPERADMIN->value && $actorRole === UserRole::CHURCH_LEADER->value, 403);
     }
 }

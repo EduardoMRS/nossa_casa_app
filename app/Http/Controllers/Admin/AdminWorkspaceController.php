@@ -24,6 +24,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Models\Vercicle;
 use App\Services\SystemBackupService;
+use App\Support\ChurchTerminology;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,8 @@ use Throwable;
 class AdminWorkspaceController extends Controller
 {
     use ManagesChurchCategories;
+
+    public function __construct(private ChurchTerminology $terminology) {}
 
     public function highlights(): Response
     {
@@ -111,18 +114,18 @@ class AdminWorkspaceController extends Controller
             ->values();
 
         return Inertia::render('Admin/MediaModeration', [
-            'title' => 'Moderar Galeria',
-            'subtitle' => 'Comunicacao e conteudo',
-            'description' => 'Acompanhe o fluxo de aprovacao, edite midias e gerencie publicacoes da comunidade.',
+            'title' => __('admin.media.title'),
+            'subtitle' => __('admin.media.subtitle'),
+            'description' => __('admin.media.description'),
             'stats' => [
-                ['label' => 'Midias enviadas', 'value' => Media::query()->where('church_id', $churchId)->count()],
-                ['label' => 'Pendentes', 'value' => Media::query()->where('church_id', $churchId)->pending()->count()],
-                ['label' => 'Aprovadas', 'value' => Media::query()->where('church_id', $churchId)->visible()->count()],
-                ['label' => 'Rejeitadas', 'value' => Media::query()->where('church_id', $churchId)->rejected()->count()],
+                ['label' => __('admin.media.stats.0'), 'value' => Media::query()->where('church_id', $churchId)->count()],
+                ['label' => __('admin.media.stats.1'), 'value' => Media::query()->where('church_id', $churchId)->pending()->count()],
+                ['label' => __('admin.media.stats.2'), 'value' => Media::query()->where('church_id', $churchId)->visible()->count()],
+                ['label' => __('admin.media.stats.3'), 'value' => Media::query()->where('church_id', $churchId)->rejected()->count()],
             ],
             'actions' => [
-                ['label' => 'Abrir galeria publica', 'href' => route('gallery.index')],
-                ['label' => 'Ir para dashboard', 'href' => route('dashboard')],
+                ['label' => __('admin.media.actions.0'), 'href' => route('gallery.index')],
+                ['label' => __('admin.media.actions.1'), 'href' => route('dashboard')],
             ],
             'media' => $media,
             'categories' => $this->availableChurchCategories($churchId, CategoryType::MEDIA->value),
@@ -134,16 +137,16 @@ class AdminWorkspaceController extends Controller
         $churchId = request()->user()?->church?->id;
 
         return Inertia::render('Admin/Categories', [
-            'title' => 'Categorias por igreja',
-            'subtitle' => 'Administracao e configuracao',
-            'description' => 'Crie e edite as categorias usadas por eventos, postagens, midias, formularios, biblioteca e salas.',
+            'title' => __('admin.categories.title'),
+            'subtitle' => __('admin.categories.subtitle'),
+            'description' => __('admin.categories.description'),
             'types' => [
-                ['value' => CategoryType::POST->value, 'label' => 'Postagens'],
-                ['value' => CategoryType::EVENT->value, 'label' => 'Eventos'],
-                ['value' => CategoryType::MEDIA->value, 'label' => 'Midias'],
-                ['value' => CategoryType::FORM->value, 'label' => 'Formularios'],
-                ['value' => CategoryType::LIBRARY->value, 'label' => 'Biblioteca'],
-                ['value' => CategoryType::CLASSROOM->value, 'label' => 'Salas'],
+                ['value' => CategoryType::POST->value, 'label' => __('admin.categories.types.posts')],
+                ['value' => CategoryType::EVENT->value, 'label' => __('admin.categories.types.events')],
+                ['value' => CategoryType::MEDIA->value, 'label' => __('admin.categories.types.media')],
+                ['value' => CategoryType::FORM->value, 'label' => __('admin.categories.types.forms')],
+                ['value' => CategoryType::LIBRARY->value, 'label' => __('admin.categories.types.library')],
+                ['value' => CategoryType::CLASSROOM->value, 'label' => __('admin.categories.types.classrooms')],
             ],
             'categories' => $this->availableChurchCategories($churchId, CategoryType::POST->value)
                 ->merge($this->availableChurchCategories($churchId, CategoryType::EVENT->value))
@@ -167,7 +170,7 @@ class AdminWorkspaceController extends Controller
                 'id' => $comment->id,
                 'content' => $comment->content,
                 'commentable_type' => Str::lower(class_basename($comment->commentable_type)),
-                'commentable_title' => $comment->commentable?->title ?? $comment->commentable?->file_path ?? __('Media'),
+                'commentable_title' => $comment->commentable?->title ?? $comment->commentable?->file_path ?? __('common.media'),
                 'created_at' => $comment->created_at,
                 'user' => $comment->user,
             ]);
@@ -175,9 +178,9 @@ class AdminWorkspaceController extends Controller
         return Inertia::render('Admin/WallModeration', [
             'comments' => $comments,
             'stats' => [
-                ['label' => 'Comentários totais', 'value' => Comment::query()->count()],
-                ['label' => 'Posts com comentários', 'value' => Post::has('comments')->count()],
-                ['label' => 'Eventos comentados', 'value' => Comment::query()->where('commentable_type', Event::class)->distinct('commentable_id')->count('commentable_id')],
+                ['label' => __('admin.wall.stats.0'), 'value' => Comment::query()->count()],
+                ['label' => __('admin.wall.stats.1'), 'value' => Post::has('comments')->count()],
+                ['label' => __('admin.wall.stats.2'), 'value' => Comment::query()->where('commentable_type', Event::class)->distinct('commentable_id')->count('commentable_id')],
             ],
         ]);
     }
@@ -188,17 +191,17 @@ class AdminWorkspaceController extends Controller
 
         return $this->module(
             translationNamespace: 'admin.modules.library',
-            title: 'Biblioteca e Versiculo',
-            subtitle: 'Comunicacao e conteudo',
-            description: 'Controle materiais devocionais, acervo digital e versiculos em destaque.',
+            title: __('admin.modules.library.title'),
+            subtitle: __('admin.modules.library.subtitle'),
+            description: __('admin.modules.library.description'),
             stats: [
-                ['label' => 'Materiais na biblioteca', 'value' => Library::query()->count()],
-                ['label' => 'Versiculos cadastrados', 'value' => Vercicle::query()->count()],
-                ['label' => 'Categorias de conteudo', 'value' => Form::query()->count()],
+                ['label' => __('admin.modules.library.stats.0'), 'value' => Library::query()->count()],
+                ['label' => __('admin.modules.library.stats.1'), 'value' => Vercicle::query()->count()],
+                ['label' => __('admin.modules.library.stats.2'), 'value' => Form::query()->count()],
             ],
             actions: [
-                ['label' => 'Abrir home publica', 'href' => route('home')],
-                ['label' => 'Revisar destaques', 'href' => route('admin.highlights.index')],
+                ['label' => __('admin.modules.library.actions.0'), 'href' => route('home')],
+                ['label' => __('admin.modules.library.actions.1'), 'href' => route('admin.highlights.index')],
             ],
             items: $items->map(fn (Library $library) => [
                 'label' => $library->title,
@@ -270,17 +273,17 @@ class AdminWorkspaceController extends Controller
 
         return $this->module(
             translationNamespace: 'admin.modules.prayer_requests',
-            title: 'Pedidos de Intercessao',
-            subtitle: 'Ministerios e membros',
-            description: 'Central para visualizar pedidos recebidos e organizar acompanhamento pastoral.',
+            title: __('admin.modules.prayer_requests.title'),
+            subtitle: __('admin.modules.prayer_requests.subtitle'),
+            description: __('admin.modules.prayer_requests.description'),
             stats: [
-                ['label' => 'Pedidos recebidos', 'value' => $hasPrayerTable ? PrayerRequest::query()->count() : 0],
-                ['label' => 'Pedidos anonimos', 'value' => $hasPrayerTable ? PrayerRequest::query()->whereNull('user_id')->count() : 0],
-                ['label' => 'Pedidos identificados', 'value' => $hasPrayerTable ? PrayerRequest::query()->whereNotNull('user_id')->count() : 0],
+                ['label' => __('admin.modules.prayer_requests.stats.0'), 'value' => $hasPrayerTable ? PrayerRequest::query()->count() : 0],
+                ['label' => __('admin.modules.prayer_requests.stats.1'), 'value' => $hasPrayerTable ? PrayerRequest::query()->whereNull('user_id')->count() : 0],
+                ['label' => __('admin.modules.prayer_requests.stats.2'), 'value' => $hasPrayerTable ? PrayerRequest::query()->whereNotNull('user_id')->count() : 0],
             ],
             actions: [
-                ['label' => 'Abrir minhas oracoes', 'href' => route('admin.myPrayers.index')],
-                ['label' => 'Ir para dashboard', 'href' => route('dashboard')],
+                ['label' => __('admin.modules.prayer_requests.actions.0'), 'href' => route('admin.myPrayers.index')],
+                ['label' => __('admin.modules.prayer_requests.actions.1'), 'href' => route('dashboard')],
             ],
             items: $requests->map(fn (PrayerRequest $request) => [
                 'label' => $request->created_at?->format('d/m/Y H:i') ?? '--',
@@ -299,7 +302,7 @@ class AdminWorkspaceController extends Controller
         $hasPrayerTable = Schema::hasTable('prayer_requests');
         $role = $request->user()->role?->value ?? (string) $request->user()->role;
         $churchId = $request->user()->church?->id;
-        $canSeeAnonymous = in_array($role, ['admin', 'superadmin', 'system'], true);
+        $canSeeAnonymous = in_array($role, ['church_leader', 'superadmin', 'system'], true);
         $myRequests = $hasPrayerTable
             ? PrayerRequest::query()
                 ->where('church_id', $churchId)
@@ -327,8 +330,8 @@ class AdminWorkspaceController extends Controller
         return Inertia::render('Admin/MyPrayers', [
             'requests' => $myRequests,
             'stats' => [
-                ['label' => 'Pedidos enviados', 'value' => $hasPrayerTable ? PrayerRequest::query()->where('user_id', $request->user()->id)->count() : 0],
-                ['label' => 'Pedidos da igreja', 'value' => $hasPrayerTable ? PrayerRequest::query()->where('church_id', $churchId)->count() : 0],
+                ['label' => __('admin.prayers.stats.0'), 'value' => $hasPrayerTable ? PrayerRequest::query()->where('user_id', $request->user()->id)->count() : 0],
+                ['label' => __('admin.prayers.stats.1'), 'value' => $hasPrayerTable ? PrayerRequest::query()->where('church_id', $churchId)->count() : 0],
             ],
         ]);
     }
@@ -339,24 +342,32 @@ class AdminWorkspaceController extends Controller
         $role = $actor?->role?->value ?? (string) $actor?->role;
         $churchId = $actor?->church?->id;
         $users = User::query()
-            ->when($role === 'admin', fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->where('church_id', $churchId)))
+            ->when($role === 'church_leader', fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->where('church_id', $churchId)))
             ->with(['profile', 'church' => fn ($query) => $query->select(['churches.id', 'churches.name'])])
             ->latest()
             ->paginate(20);
         $users->getCollection()->each(fn (User $user) => $user->church?->makeHidden('translations'));
         $churches = Church::query()->orderBy('name')->get(['id', 'name'])->each->makeHidden('translations');
+        $setting = $churchId ? Setting::query()->where('church_id', $churchId)->first() : null;
+        $savedTerminology = is_array($setting?->options['terminology'] ?? null)
+            ? $setting->options['terminology']
+            : [];
+        $resolvedTerminology = $this->terminology->resolved($savedTerminology);
 
         return Inertia::render('Admin/UserManagement', [
             'users' => $users,
             'churches' => $churches,
             'roles' => collect(UserRole::cases())
                 ->reject(fn (UserRole $availableRole) => $role !== 'system' && $availableRole === UserRole::SYSTEM)
-                ->map(fn (UserRole $availableRole) => ['value' => $availableRole->value, 'label' => ucfirst($availableRole->value)])
+                ->map(fn (UserRole $availableRole) => [
+                    'value' => $availableRole->value,
+                    'label' => $resolvedTerminology['roles'][$availableRole->value]['label'],
+                ])
                 ->values(),
             'stats' => [
-                ['label' => 'Usuários totais', 'value' => User::query()->count()],
-                ['label' => 'Administradores', 'value' => User::query()->whereIn('role', ['admin', 'superadmin', 'system'])->count()],
-                ['label' => 'Membros', 'value' => User::query()->where('role', 'member')->count()],
+                ['label' => __('admin.users.stats.0'), 'value' => User::query()->count()],
+                ['label' => __('admin.users.stats.1'), 'value' => User::query()->whereIn('role', ['church_leader', 'superadmin', 'system'])->count()],
+                ['label' => __('admin.users.stats.2'), 'value' => User::query()->where('role', 'member')->count()],
             ],
         ]);
     }
@@ -415,9 +426,9 @@ class AdminWorkspaceController extends Controller
             'registrationRequests' => $registrationRequests,
             'canManageCommunities' => $isSystem,
             'stats' => [
-                ['label' => 'Igrejas', 'value' => (clone $churchQuery)->count()],
-                ['label' => 'Comunidades', 'value' => (clone $communityQuery)->count()],
-                ['label' => 'Vínculos matriz/filial', 'value' => (clone $networkQuery)->count()],
+                ['label' => __('admin.multicongregation.stats.0'), 'value' => (clone $churchQuery)->count()],
+                ['label' => __('admin.multicongregation.stats.1'), 'value' => (clone $communityQuery)->count()],
+                ['label' => __('admin.multicongregation.stats.2'), 'value' => (clone $networkQuery)->count()],
             ],
         ]);
     }
@@ -610,7 +621,7 @@ class AdminWorkspaceController extends Controller
     {
         $role = $request->user()?->role?->value ?? (string) $request->user()?->role;
 
-        if ($role === 'admin') {
+        if ($role === 'church_leader') {
             abort_unless($user->church?->id === $request->user()?->church?->id, 403);
         }
     }

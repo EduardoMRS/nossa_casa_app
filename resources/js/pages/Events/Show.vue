@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
     index as eventsIndex,
@@ -37,6 +38,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('events_show');
 
 const formatter = computed(
     () =>
@@ -65,7 +67,10 @@ const coverStyle = computed(() => {
 <template>
     <Head :title="event.title" />
 
-    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
+    <div
+        class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :data-public-template="publicTemplate"
+    >
         <PublicHeader active="events" />
 
         <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">

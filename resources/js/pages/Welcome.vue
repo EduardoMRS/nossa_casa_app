@@ -9,11 +9,13 @@ import {
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { dashboard, login, register } from '@/routes';
 
 const { t } = useI18n();
 const page = usePage();
+const publicTemplate = usePublicTemplate('home');
 const branding = computed(
     () => page.props.branding as Record<string, string | undefined>,
 );
@@ -43,7 +45,9 @@ const featureCards = computed(() => [
 <template>
     <Head :title="t('welcome.meta_title')" />
     <div
-        class="public-welcome-light min-h-screen bg-white text-slate-950"
+        class="public-template public-welcome-light min-h-screen bg-white text-slate-950"
+        :class="`public-template--${publicTemplate}`"
+        data-public-template="home"
         :style="{
             fontFamily: branding.font_family || 'Manrope, ui-sans-serif',
             backgroundColor: branding.surface_color || '#f8fafc',

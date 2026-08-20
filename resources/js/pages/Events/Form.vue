@@ -265,8 +265,8 @@ onBeforeUnmount(() => {
                 <CategorySelector
                     v-model="form.category_ids"
                     :categories="categories"
-                    label="Categorias do evento"
-                    hint="Selecione as categorias disponiveis para a sua igreja"
+                    :label="t('events.form.category_title')"
+                    :hint="t('events.form.category_hint')"
                 />
 
                 <div class="space-y-2">
@@ -346,7 +346,9 @@ onBeforeUnmount(() => {
                             class="rounded-lg border border-input bg-background px-3 py-2 text-xs font-semibold text-foreground"
                             @change="onCoverTypeChange"
                         >
-                            <option value="url">URL</option>
+                            <option value="url">
+                                {{ t('admin.common.url') }}
+                            </option>
                             <option value="file">
                                 {{ t('gallery.file') }}
                             </option>

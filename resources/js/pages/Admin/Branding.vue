@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { Clock3, Globe2, ImageUp, MapPinned, Plus, Trash2 } from '@lucide/vue';
+import {
+    Clock3,
+    Globe2,
+    ImageUp,
+    Languages,
+    LayoutTemplate,
+    MapPinned,
+    Plus,
+    Trash2,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
@@ -29,6 +38,8 @@ type BrandingData = {
     contact_phone: string;
     contact_whatsapp: string;
     address: string;
+    latitude: number | null;
+    longitude: number | null;
     map_embed: string;
     weekly_schedule: WeeklySchedule[];
 };
@@ -40,8 +51,40 @@ type WeeklySchedule = {
     end_time: string;
 };
 
+type TemplateSection =
+    | 'home'
+    | 'posts_index'
+    | 'posts_show'
+    | 'events_index'
+    | 'events_show'
+    | 'form'
+    | 'library'
+    | 'gallery';
+
+type TerminologySelections = {
+    units: Record<'headquarters' | 'branch', string>;
+    roles: Record<string, string>;
+};
+
+type TerminologyOptions = {
+    units: Record<
+        'headquarters' | 'branch',
+        Array<{ value: string; singular: string; plural: string }>
+    >;
+    roles: Record<
+        string,
+        {
+            technical_label: string;
+            options: Array<{ value: string; label: string }>;
+        }
+    >;
+};
+
 const props = defineProps<{
     branding: BrandingData;
+    templates: Record<TemplateSection, 'classic' | 'editorial' | 'minimal'>;
+    terminology: TerminologySelections;
+    terminologyOptions: TerminologyOptions;
 }>();
 const colors = ref({
     primary_color: props.branding.primary_color,
@@ -110,6 +153,17 @@ const weekdays = [
     'friday',
     'saturday',
 ];
+const templateSections: TemplateSection[] = [
+    'home',
+    'posts_index',
+    'posts_show',
+    'events_index',
+    'events_show',
+    'form',
+    'library',
+    'gallery',
+];
+const templateVariants = ['classic', 'editorial', 'minimal'] as const;
 </script>
 
 <template>
@@ -292,6 +346,98 @@ const weekdays = [
                     </div>
                 </section>
 
+                <section class="grid gap-4 border-t border-border pt-6">
+                    <div class="flex items-start gap-3">
+                        <Languages class="mt-0.5 size-5 text-primary" />
+                        <div>
+                            <h2 class="font-bold">
+                                {{ t('admin.branding.terminology_title') }}
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{
+                                    t('admin.branding.terminology_description')
+                                }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <label class="grid gap-2 text-sm font-bold">
+                            {{ t('admin.branding.headquarters_term') }}
+                            <select
+                                name="terminology[units][headquarters]"
+                                :value="props.terminology.units.headquarters"
+                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option
+                                    v-for="option in props.terminologyOptions
+                                        .units.headquarters"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.singular }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="
+                                    errors['terminology.units.headquarters']
+                                "
+                            />
+                        </label>
+                        <label class="grid gap-2 text-sm font-bold">
+                            {{ t('admin.branding.branch_term') }}
+                            <select
+                                name="terminology[units][branch]"
+                                :value="props.terminology.units.branch"
+                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option
+                                    v-for="option in props.terminologyOptions
+                                        .units.branch"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.singular }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="errors['terminology.units.branch']"
+                            />
+                        </label>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <label
+                            v-for="(definition, role) in props
+                                .terminologyOptions.roles"
+                            :key="role"
+                            class="grid gap-2 text-sm font-bold"
+                        >
+                            {{ definition.technical_label }}
+                            <select
+                                :name="`terminology[roles][${role}]`"
+                                :value="props.terminology.roles[role]"
+                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option
+                                    v-for="option in definition.options"
+                                    :key="option.value"
+                                    :value="option.value"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                            <InputError
+                                :message="errors[`terminology.roles.${role}`]"
+                            />
+                        </label>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        {{ t('admin.branding.terminology_hint') }}
+                    </p>
+                    <InputError :message="errors.terminology" />
+                </section>
+
                 <div class="grid gap-4 md:grid-cols-3">
                     <div class="grid gap-2">
                         <Label for="primary_color">{{
@@ -376,7 +522,9 @@ const weekdays = [
 
                 <div class="grid gap-4 md:grid-cols-3">
                     <div class="grid gap-2">
-                        <Label for="contact_email">Email</Label>
+                        <Label for="contact_email">{{
+                            t('admin.branding.email')
+                        }}</Label>
                         <Input
                             id="contact_email"
                             name="contact_email"
@@ -396,7 +544,9 @@ const weekdays = [
                         <InputError :message="errors.contact_phone" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="contact_whatsapp">WhatsApp</Label>
+                        <Label for="contact_whatsapp">{{
+                            t('admin.branding.whatsapp')
+                        }}</Label>
                         <Input
                             id="contact_whatsapp"
                             name="contact_whatsapp"
@@ -453,6 +603,84 @@ const weekdays = [
                             <InputError :message="errors.map_embed" />
                         </div>
                     </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="latitude">{{
+                                t('admin.branding.latitude')
+                            }}</Label>
+                            <Input
+                                id="latitude"
+                                name="latitude"
+                                type="number"
+                                step="0.0000001"
+                                min="-90"
+                                max="90"
+                                :default-value="props.branding.latitude ?? ''"
+                            />
+                            <InputError :message="errors.latitude" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="longitude">{{
+                                t('admin.branding.longitude')
+                            }}</Label>
+                            <Input
+                                id="longitude"
+                                name="longitude"
+                                type="number"
+                                step="0.0000001"
+                                min="-180"
+                                max="180"
+                                :default-value="props.branding.longitude ?? ''"
+                            />
+                            <InputError :message="errors.longitude" />
+                        </div>
+                    </div>
+                    <p class="text-xs text-muted-foreground">
+                        {{ t('admin.branding.coordinates_hint') }}
+                    </p>
+                </section>
+
+                <section class="grid gap-4 border-t border-border pt-6">
+                    <div class="flex items-start gap-3">
+                        <LayoutTemplate class="mt-0.5 size-5 text-primary" />
+                        <div>
+                            <h2 class="font-bold">
+                                {{ t('admin.branding.templates_title') }}
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{ t('admin.branding.templates_description') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <label
+                            v-for="section in templateSections"
+                            :key="section"
+                            class="grid gap-2 text-xs font-bold text-foreground"
+                        >
+                            {{
+                                t(`admin.branding.template_sections.${section}`)
+                            }}
+                            <select
+                                :name="`templates[${section}]`"
+                                :value="props.templates[section]"
+                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option
+                                    v-for="variant in templateVariants"
+                                    :key="variant"
+                                    :value="variant"
+                                >
+                                    {{
+                                        t(
+                                            `admin.branding.template_variants.${variant}`,
+                                        )
+                                    }}
+                                </option>
+                            </select>
+                        </label>
+                    </div>
+                    <InputError :message="errors.templates" />
                 </section>
 
                 <section class="grid gap-4 border-t border-border pt-6">

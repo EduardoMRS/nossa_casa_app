@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Post;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class PostPolicy
 {
@@ -26,17 +25,19 @@ class PostPolicy
 
     public function comment(User $user, Post $post): bool
     {
-        if($user) {
+        if ($user) {
             return true;
         }
+
         return false;
     }
 
     public function react(User $user, Post $post): bool
     {
-        if($user) {
+        if ($user) {
             return true;
         }
+
         return false;
     }
 
@@ -45,9 +46,10 @@ class PostPolicy
      */
     public function create(User $user): bool
     {
-        if($user->hasRole(['admin', 'superadmin', 'system', 'leader', 'media'])) {
+        if ($user->hasRole(['church_leader', 'superadmin', 'system', 'leader', 'media'])) {
             return true;
         }
+
         return false;
     }
 
@@ -56,9 +58,10 @@ class PostPolicy
      */
     public function update(User $user, Post $post): bool
     {
-        if($post->isAuthor($user) || $user->hasRole(['admin', 'superadmin', 'system', 'leader', 'media'])) {
+        if ($post->isAuthor($user) || $user->hasRole(['church_leader', 'superadmin', 'system', 'leader', 'media'])) {
             return true;
         }
+
         return false;
     }
 
@@ -67,9 +70,10 @@ class PostPolicy
      */
     public function delete(User $user, Post $post): bool
     {
-        if($post->isAuthor($user) || $user->hasRole(['admin', 'superadmin', 'system', 'leader', 'media'])) {
+        if ($post->isAuthor($user) || $user->hasRole(['church_leader', 'superadmin', 'system', 'leader', 'media'])) {
             return true;
         }
+
         return false;
     }
 
@@ -78,9 +82,10 @@ class PostPolicy
      */
     public function restore(User $user, Post $post): bool
     {
-        if($post->isAuthor($user) || $user->hasRole(['admin', 'superadmin', 'system', 'leader', 'media'])) {
+        if ($post->isAuthor($user) || $user->hasRole(['church_leader', 'superadmin', 'system', 'leader', 'media'])) {
             return true;
         }
+
         return false;
     }
 
@@ -89,9 +94,10 @@ class PostPolicy
      */
     public function forceDelete(User $user, Post $post): bool
     {
-        if($post->isAuthor($user) || $user->hasRole(['admin', 'superadmin', 'system'])) {
+        if ($post->isAuthor($user) || $user->hasRole(['church_leader', 'superadmin', 'system'])) {
             return true;
         }
+
         return false;
     }
 }

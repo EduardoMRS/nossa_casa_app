@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Bell, LogOut, Settings } from '@lucide/vue';
+import {
+    ArrowRightLeft,
+    Bell,
+    CircleAlert,
+    House,
+    LayoutDashboard,
+    LogOut,
+    Settings,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenuGroup,
@@ -10,7 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
 import { useI18n } from '@/lib/i18n';
-import { logout } from '@/routes';
+import { dashboard, home, logout } from '@/routes';
+import { switchMethod } from '@/routes/church/membership';
 import { edit } from '@/routes/profile';
 import type { User } from '@/types';
 
@@ -37,6 +46,39 @@ const page = usePage<{
     };
 }>();
 const notifications = computed(() => page.props.auth?.notifications ?? []);
+const churchContext = computed(
+    () =>
+        page.props.churchContext as
+            | {
+                  isForeignChurch?: boolean;
+                  church?: { name: string } | null;
+                  userChurch?: { name: string } | null;
+              }
+            | undefined,
+);
+const isForeignChurch = computed(
+    () => churchContext.value?.isForeignChurch === true,
+);
+const canAccessDashboard = computed(
+    () =>
+        (page.props.permissions as { accessDashboard?: boolean } | undefined)
+            ?.accessDashboard === true,
+);
+const isDashboard = computed(() => page.url.startsWith('/dashboard'));
+
+const transferMembership = (): void => {
+    if (
+        !window.confirm(
+            t('membership.confirm', {
+                church: churchContext.value?.church?.name ?? '',
+            }),
+        )
+    ) {
+        return;
+    }
+
+    router.post(switchMethod(), { confirmed: true });
+};
 </script>
 
 <template>
@@ -46,6 +88,33 @@ const notifications = computed(() => page.props.auth?.notifications ?? []);
         </div>
     </DropdownMenuLabel>
     <DropdownMenuSeparator />
+    <div
+        v-if="isForeignChurch"
+        class="mx-1 mb-1 rounded-lg border border-sky-200 bg-sky-50 p-2.5 text-xs text-sky-950"
+    >
+        <p class="flex items-center gap-2 font-black">
+            <CircleAlert class="size-4 text-sky-600" />
+            {{ t('membership.visiting_title') }}
+        </p>
+        <p class="mt-1 leading-5 text-sky-800">
+            {{
+                t('membership.visiting_description', {
+                    church: churchContext?.church?.name ?? '',
+                    current: churchContext?.userChurch?.name ?? '',
+                })
+            }}
+        </p>
+    </div>
+    <DropdownMenuGroup v-if="isForeignChurch">
+        <DropdownMenuItem
+            class="cursor-pointer text-sky-700 focus:text-sky-800"
+            @select.prevent="transferMembership"
+        >
+            <ArrowRightLeft class="mr-2 size-4" />
+            {{ t('membership.transfer') }}
+        </DropdownMenuItem>
+    </DropdownMenuGroup>
+    <DropdownMenuSeparator v-if="isForeignChurch" />
     <template v-if="notifications.length">
         <DropdownMenuLabel
             class="flex items-center gap-2 text-xs font-black uppercase"
@@ -59,11 +128,16 @@ const notifications = computed(() => page.props.auth?.notifications ?? []);
                 class="rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-950"
             >
                 {{
-                    t('notifications.child_released', {
-                        child: notification.child_name,
-                        person: notification.pickup_name,
-                        classroom: notification.classroom_name,
-                    })
+                    t(
+                        notification.type === 'child_checked_in'
+                            ? 'notifications.child_checked_in'
+                            : 'notifications.child_released',
+                        {
+                            child: notification.child_name,
+                            person: notification.pickup_name,
+                            classroom: notification.classroom_name,
+                        },
+                    )
                 }}
                 <span
                     v-if="notification.pickup_phone"
@@ -75,7 +149,21 @@ const notifications = computed(() => page.props.auth?.notifications ?? []);
         <DropdownMenuSeparator />
     </template>
     <DropdownMenuGroup>
-        <DropdownMenuItem :as-child="true">
+        <DropdownMenuItem
+            v-if="isDashboard || canAccessDashboard"
+            :as-child="true"
+        >
+            <Link
+                class="block w-full cursor-pointer"
+                :href="isDashboard ? home() : dashboard()"
+                prefetch
+            >
+                <House v-if="isDashboard" class="mr-2 size-4" />
+                <LayoutDashboard v-else class="mr-2 size-4" />
+                {{ isDashboard ? t('nav.home') : t('nav.dashboard') }}
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="!isForeignChurch" :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 {{ t('settings.title') }}

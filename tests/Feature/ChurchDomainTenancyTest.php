@@ -87,7 +87,7 @@ test('custom domain renders only content from its church', function () {
     $this->get('http://alpha.test/publicacoes/beta-update')->assertNotFound();
 });
 
-test('existing session is ended when opening another church domain', function () {
+test('existing session remains authenticated with public access on another church domain', function () {
     $alpha = createDomainChurch('Alpha Church', 'alpha.test');
     $beta = createDomainChurch('Beta Church', 'beta.test');
     $user = User::factory()->create();
@@ -95,15 +95,18 @@ test('existing session is ended when opening another church domain', function ()
 
     $this->actingAs($user)
         ->get('http://beta.test/')
-        ->assertRedirect();
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('churchContext.isForeignChurch', true)
+            ->where('permissions.accessDashboard', false));
 
-    $this->assertGuest();
+    $this->assertAuthenticatedAs($user);
 });
 
-test('login in an unrelated church allows public access and asks for membership switch', function () {
+test('login in an unrelated church allows public access and optional membership transfer', function () {
     $alpha = createDomainChurch('Alpha Church', 'alpha.test');
     $beta = createDomainChurch('Beta Church', 'beta.test');
-    $user = User::factory()->create(['role' => UserRole::ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $alpha->assignMember($user);
 
     $this->post('http://beta.test/login', [
@@ -112,21 +115,21 @@ test('login in an unrelated church allows public access and asks for membership 
     ])->assertRedirect();
 
     $this->assertAuthenticatedAs($user);
-    $this->assertEquals($beta->id, session('church_membership_pending'));
+    $this->assertNull(session('church_membership_pending'));
 
     $this->get('http://beta.test/')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('churchContext.membershipPending', true));
+            ->where('churchContext.isForeignChurch', true));
 
-    $this->post('http://beta.test/church-membership/switch')->assertRedirect();
+    $this->post('http://beta.test/church-membership/switch', ['confirmed' => true])->assertRedirect();
     expect($user->fresh()->profile->church_id)->toBe($beta->id)
         ->and($user->fresh()->role)->toBe(UserRole::MEMBER);
 });
 
 test('login on the user church domain persists through the dashboard request', function () {
     $church = createDomainChurch('Alpha Church', 'alpha.test');
-    $user = User::factory()->create(['role' => UserRole::ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($user);
 
     $this->post('http://alpha.test/login', [

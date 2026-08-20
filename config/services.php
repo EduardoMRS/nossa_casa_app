@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    'webpush' => [
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'subject' => env('VAPID_SUBJECT', env('APP_URL')),
+    ],
+
     'ia' => [
         'openai' => [
             'token' => env('OPENAI_TOKEN'),
@@ -68,8 +73,8 @@ return [
                 'openai/gpt-oss-120b:free',
                 'openai/gpt-oss-20b:free',
                 'x-ai/grok-4-fast:free',
-                'deepseek/deepseek-chat'
-            ]
+                'deepseek/deepseek-chat',
+            ],
         ],
         'gemini' => [
             'token' => env('GEMINI_TOKEN'),
@@ -77,7 +82,7 @@ return [
             'list_models' => 'https://generativelanguage.googleapis.com/v1beta/openai/models',
             'models' => [
                 'gemini-2.5-flash-lite',
-                'gemini-3-flash-preview'
+                'gemini-3-flash-preview',
             ],
         ],
     ],

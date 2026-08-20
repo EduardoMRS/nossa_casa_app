@@ -30,7 +30,7 @@ function createAdminUserWithChurch(): User
     ]);
 
     $user = User::factory()->create([
-        'role' => UserRole::ADMIN,
+        'role' => UserRole::CHURCH_LEADER,
     ]);
 
     UserProfile::query()->create([
@@ -110,8 +110,9 @@ it('shares the kids ministry settings from the authenticated church', function (
         'name' => 'Kids',
         'is_kids' => true,
     ]);
-    Setting::query()->create([
+    Setting::query()->updateOrCreate([
         'church_id' => $admin->profile->church_id,
+    ], [
         'options' => ['classrooms' => ['separate_kids_ministry' => false]],
     ]);
 

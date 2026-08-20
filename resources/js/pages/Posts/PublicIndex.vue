@@ -13,6 +13,7 @@ import {
 import { reactive } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
     index as publicPostsIndex,
@@ -55,6 +56,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('posts_index');
 const filterForm = reactive<Filters>({ ...props.filters });
 const formatDate = (value: string | null): string =>
     value
@@ -88,7 +90,8 @@ const clearFilters = (): void => {
 <template>
     <Head :title="t('posts.public.title')" />
     <div
-        class="flex min-h-screen flex-col text-slate-950"
+        class="public-template-page flex min-h-screen flex-col text-slate-950"
+        :data-public-template="publicTemplate"
         :style="{
             backgroundColor: 'var(--church-surface, #f8fafc)',
             fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',

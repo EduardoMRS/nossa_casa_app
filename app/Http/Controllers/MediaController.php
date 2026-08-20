@@ -56,7 +56,7 @@ class MediaController extends Controller
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
 
         if (! $fileInput) {
-            return response()->json(['error' => 'No file provided.'], 422);
+            return response()->json(['error' => __('media.no_file_provided')], 422);
         }
 
         $fileData = getFileMetadata($fileInput);
@@ -134,7 +134,7 @@ class MediaController extends Controller
     {
         $churchId = $request->user()->church?->id;
 
-        abort_unless($churchId, 422, 'A church membership is required to moderate media.');
+        abort_unless($churchId, 422, __('church.membership_media_moderate_required'));
 
         return response()->json(Media::pending()
             ->where('church_id', $churchId)

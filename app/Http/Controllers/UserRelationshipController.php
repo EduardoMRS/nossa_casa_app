@@ -18,7 +18,7 @@ class UserRelationshipController extends Controller
     public function storeChild(Request $request): JsonResponse
     {
         $guardian = $request->user()->load('profile');
-        abort_unless($guardian->profile?->church_id, 422, 'Select a church before adding a child.');
+        abort_unless($guardian->profile?->church_id, 422, __('user.select_church_before_child'));
 
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:120'],
@@ -71,7 +71,7 @@ class UserRelationshipController extends Controller
         $user = User::findOrFail($userId);
         $this->ensureOwnerOrModerator($request, $user->id);
         $churchId = $user->church?->id;
-        abort_unless($churchId, 422, 'The selected user must belong to a church.');
+        abort_unless($churchId, 422, __('user.selected_user_church_required'));
         $this->ensureChurchAccess($request, $churchId);
 
         $validated = $request->validate([
@@ -80,8 +80,8 @@ class UserRelationshipController extends Controller
         ]);
         $relatedUser = User::query()->findOrFail($validated['related_user_id']);
 
-        abort_if($user->id === $relatedUser->id, 422, 'A user cannot be related to themselves.');
-        abort_unless($relatedUser->church?->id === $churchId, 422, 'Both users must belong to the same church.');
+        abort_if($user->id === $relatedUser->id, 422, __('user.relationship_self_forbidden'));
+        abort_unless($relatedUser->church?->id === $churchId, 422, __('user.relationship_same_church_required'));
 
         $relationship = UserRelationship::updateOrCreate(
             [

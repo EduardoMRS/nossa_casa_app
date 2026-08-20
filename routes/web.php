@@ -8,9 +8,12 @@ use App\Http\Controllers\Admin\StopLiveStreamController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\PortalCommunityController;
 use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicLiveStreamController;
 use App\Http\Controllers\PublicPostController;
+use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\PwaController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Church;
@@ -51,10 +54,15 @@ if (! function_exists('categoriesForChurchAndType')) {
 }
 
 Route::get('/', [PortalController::class, 'index'])->name('home');
+Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
 
 Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
 
 Route::middleware('auth')->group(function () {
+    Route::post('/api/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::delete('/api/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::post('/onboarding/communities', [ChurchOnboardingController::class, 'storeCommunity'])->name('onboarding.communities.store');
     Route::post('/onboarding/churches', [ChurchOnboardingController::class, 'storeChurchRequest'])->name('onboarding.churches.store');
     Route::post('/onboarding/churches/{registrationRequest}/approve', [ChurchOnboardingController::class, 'approve'])->name('onboarding.churches.approve');
@@ -282,7 +290,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('posts.index')],
                 ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
             ],
-            'admin', 'superadmin', 'system' => [
+            'church_leader', 'superadmin', 'system' => [
                 ['title_key' => 'dashboard.module.platform_governance.title', 'description_key' => 'dashboard.module.platform_governance.description', 'href' => route('dashboard')],
                 ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('admin.highlights.index')],
                 ['title_key' => 'dashboard.module.monitor_events.title', 'description_key' => 'dashboard.module.monitor_events.description', 'href' => route('admin.events.index')],
@@ -301,25 +309,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Dashboard', [
             'role' => $role,
             'kpis' => [
-                'events' => Event::query()->count(),
-                'gallery' => Media::query()->count(),
-                'posts' => Post::query()->count(),
+                'events' => Event::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
+                'gallery' => Media::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
+                'posts' => Post::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
             ],
             'modules' => $modules,
         ]);
     })->name('dashboard');
 
     Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])
-        ->middleware('role:member|leader|media|admin|superadmin|system')
+        ->middleware('role:member|leader|media|church_leader|superadmin|system')
         ->name('myPrayers.index');
 
     Route::get('/dashboard/transmissoes', [LiveStreamControlController::class, 'index'])
-        ->middleware('role:media|admin|superadmin|system')
+        ->middleware('role:media|church_leader|superadmin|system')
         ->name('admin.liveStreams.index');
 
     Route::prefix('dashboard')
         ->name('admin.')
-        ->middleware('role:admin|superadmin|system')
+        ->middleware('role:church_leader|superadmin|system')
         ->group(function () {
             Route::redirect('/branding', '/dashboard/configuracoes-church');
             Route::get('/configuracoes-church', [BrandingController::class, 'edit'])->name('branding.edit');
@@ -359,7 +367,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
     Route::get('/dashboard/salas-aula/presencas/{presence}/etiquetas', [ClassroomController::class, 'labels'])
-        ->middleware('role:leader|admin|superadmin|system')
+        ->middleware('role:leader|church_leader|superadmin|system')
         ->name('admin.classrooms.labels');
 
     // // Churches (Igrejas)
@@ -373,7 +381,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
-    })->middleware('role:leader|admin|superadmin|system')->name('events.create');
+    })->middleware('role:leader|church_leader|superadmin|system')->name('events.create');
 
     Route::get('/dashboard/eventos/{event}/editar', function (string $event) {
         $resource = Event::query()->findOrFail($event);
@@ -395,7 +403,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'forms' => Form::query()->where('church_id', $resource->church_id)->orderBy('title')->get(['id', 'title', 'description']),
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
-    })->middleware('role:leader|admin|superadmin|system')->name('events.edit');
+    })->middleware('role:leader|church_leader|superadmin|system')->name('events.edit');
 
     Route::get('/dashboard/posts', function () {
         $churchId = request()->user()?->church?->id;

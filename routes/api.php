@@ -67,7 +67,7 @@ Route::post('prayer-requests', [PrayerRequestController::class, 'store'])
 Route::middleware('auth')->group(function () {
 
     // Acesso Geral (Membro e superiores)
-    Route::middleware('role:member|leader|media|admin|superadmin|system')->group(function () {
+    Route::middleware('role:member|leader|media|church_leader|superadmin|system')->group(function () {
         Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy']);
         Route::post('reactions', [ReactionController::class, 'store']);
         Route::delete('reactions/{reaction}', [ReactionController::class, 'destroy']);
@@ -82,7 +82,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Acesso de Liderança (Líder ou superior)
-    Route::middleware('role:leader|admin|superadmin|system')->group(function () {
+    Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
         // Relacionamentos Pessoais
         Route::post('users/{user}/family-relationship', [UserRelationshipController::class, 'store']);
 
@@ -95,10 +95,10 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::put('comments/{comment}/pin', [CommentController::class, 'pin'])
-        ->middleware('role:leader|media|admin|superadmin|system');
+        ->middleware('role:leader|media|church_leader|superadmin|system');
 
     // Acesso Estrito de Liderança (Apenas Leader) - Mantendo sua estrutura original
-    Route::middleware('role:leader|admin|superadmin|system')->group(function () {
+    Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
         Route::apiResource('forms', FormController::class);
         Route::apiResource('classrooms', ClassroomController::class);
         Route::post('event', [EventController::class, 'store']);
@@ -107,7 +107,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Acesso de Mídia / Comunicação
-    Route::middleware('role:media|leader|admin|superadmin|system')->group(function () {
+    Route::middleware('role:media|leader|church_leader|superadmin|system')->group(function () {
         Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
         Route::apiResource('media', MediaController::class)
             ->parameters(['media' => 'media'])
@@ -117,7 +117,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('post/{post}', [PostController::class, 'destroy']);
     });
 
-    Route::middleware('role:media|admin|superadmin|system')->group(function () {
+    Route::middleware('role:media|church_leader|superadmin|system')->group(function () {
         Route::apiResource('live-streams', LiveStreamController::class)
             ->parameters(['live-streams' => 'liveStream'])
             ->only(['index', 'store', 'show', 'destroy']);
@@ -125,14 +125,14 @@ Route::middleware('auth')->group(function () {
     });
 
     // Acesso Exclusivo para Moderação de Mídia e Destaques (Media e Superiores)
-    Route::middleware('role:media|admin|superadmin|system')->group(function () {
+    Route::middleware('role:media|church_leader|superadmin|system')->group(function () {
         Route::get('admin/media/pending', [MediaController::class, 'pending']);
         Route::put('admin/media/{media}/status', [MediaController::class, 'updateStatus']);
         Route::put('church/{church}/highlights', [HighlightController::class, 'updateChurchHighlights']);
     });
 
     // Acesso Administrativo Global
-    Route::middleware('role:admin|superadmin|system')->group(function () {
+    Route::middleware('role:church_leader|superadmin|system')->group(function () {
         Route::apiResource('church', ChurchController::class)->except(['index', 'show']);
         Route::apiResource('community', CommunityController::class)->except(['index', 'show']);
         Route::apiResource('user', UserController::class);

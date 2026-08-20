@@ -8,7 +8,7 @@ enum UserRole: string
     case MEMBER = 'member';
     case LEADER = 'leader';
     case MEDIA = 'media';
-    case ADMIN = 'admin';
+    case CHURCH_LEADER = 'church_leader';
     case SUPERADMIN = 'superadmin';
     case SYSTEM = 'system';
 }

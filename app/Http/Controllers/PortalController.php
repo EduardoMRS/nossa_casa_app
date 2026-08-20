@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Churches\BuildChurchRoadmap;
 use App\Enums\ChurchStatus;
 use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
@@ -12,6 +13,7 @@ use App\Models\Highlight;
 use App\Models\Media;
 use App\Models\Post;
 use App\Support\ChurchDomainContext;
+use App\Support\GeoDistance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -19,7 +21,11 @@ use Inertia\Response;
 
 class PortalController extends Controller
 {
-    public function __construct(private readonly ChurchDomainContext $context) {}
+    public function __construct(
+        private readonly ChurchDomainContext $context,
+        private readonly GeoDistance $geoDistance,
+        private readonly BuildChurchRoadmap $buildChurchRoadmap,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -30,9 +36,16 @@ class PortalController extends Controller
 
     private function platformHome(Request $request): Response
     {
+        $location = $request->validate([
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+        ]);
+        $latitude = isset($location['latitude']) ? (float) $location['latitude'] : null;
+        $longitude = isset($location['longitude']) ? (float) $location['longitude'] : null;
         $communities = Community::query()
             ->with(['churches' => fn ($query) => $query
                 ->where('status', ChurchStatus::ACTIVE)
+                ->with(['address', 'settings'])
                 ->withExists(['liveStreams as is_live' => fn ($liveStreams) => $liveStreams
                     ->publiclyVisible()
                     ->where('status', LiveStreamStatus::LIVE)
@@ -41,21 +54,44 @@ class PortalController extends Controller
             ->withCount(['churches' => fn ($query) => $query->where('status', ChurchStatus::ACTIVE)])
             ->orderBy('name')
             ->get()
-            ->map(fn (Community $community) => [
-                'id' => $community->id,
-                'name' => $community->name,
-                'slug' => $community->slug,
-                'description' => $community->description,
-                'churches_count' => $community->churches_count,
-                'churches' => $community->churches->map(fn ($church) => [
-                    'id' => $church->id,
-                    'name' => $church->name,
-                    'slug' => $church->slug,
-                    'domain' => $church->domain,
-                    'url' => $church->domain ? $this->context->churchUrl($church) : null,
-                    'is_live' => (bool) $church->is_live,
-                ]),
-            ]);
+            ->map(function (Community $community) use ($latitude, $longitude): array {
+                $churches = $community->churches->map(function ($church) use ($latitude, $longitude): array {
+                    $address = $church->address->first();
+                    $branding = $church->settings?->options['branding'] ?? [];
+                    $churchLatitude = $address?->latitude ?? data_get($branding, 'latitude');
+                    $churchLongitude = $address?->longitude ?? data_get($branding, 'longitude');
+                    $distance = $latitude !== null && $longitude !== null && is_numeric($churchLatitude) && is_numeric($churchLongitude)
+                        ? $this->geoDistance->between($latitude, $longitude, (float) $churchLatitude, (float) $churchLongitude)
+                        : null;
+
+                    return [
+                        'id' => $church->id,
+                        'name' => $church->name,
+                        'slug' => $church->slug,
+                        'domain' => $church->domain,
+                        'url' => $church->domain ? $this->context->churchUrl($church) : null,
+                        'is_live' => (bool) $church->is_live,
+                        'distance_km' => $distance,
+                    ];
+                })->sortBy(fn (array $church): float => $church['distance_km'] ?? INF)->values();
+
+                return [
+                    'id' => $community->id,
+                    'name' => $community->name,
+                    'slug' => $community->slug,
+                    'url' => route('communities.show', $community),
+                    'description' => $community->description,
+                    'churches_count' => $community->churches_count,
+                    'distance_km' => $churches->pluck('distance_km')->filter(fn ($distance) => $distance !== null)->min(),
+                    'churches' => $churches,
+                ];
+            });
+        $communities = $communities
+            ->sort(fn (array $first, array $second): int => $this->compareByDistanceAndName($first, $second))
+            ->values();
+        $nearbyCommunities = $latitude !== null && $longitude !== null
+            ? $communities->whereNotNull('distance_km')->sortBy('distance_km')->take(4)->values()
+            : collect();
 
         $reviewableRequests = collect();
         $myRequests = collect();
@@ -69,7 +105,7 @@ class PortalController extends Controller
                 ->when($user->role !== UserRole::SYSTEM, function ($query) use ($user, $communityId, $ownedCommunityIds): void {
                     $allowedCommunityIds = $ownedCommunityIds;
 
-                    if ($communityId && in_array($user->role, [UserRole::ADMIN, UserRole::SUPERADMIN], true)) {
+                    if ($communityId && in_array($user->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)) {
                         $allowedCommunityIds = $allowedCommunityIds->push($communityId);
                     }
 
@@ -87,6 +123,8 @@ class PortalController extends Controller
 
         return Inertia::render('Portal/Index', [
             'communities' => $communities,
+            'nearbyCommunities' => $nearbyCommunities,
+            'locationApplied' => $latitude !== null && $longitude !== null,
             'canOnboard' => (bool) $request->user(),
             'userCommunityId' => $request->user()?->profile?->community_id,
             'userChurchUrl' => $request->user()?->church?->domain
@@ -100,14 +138,23 @@ class PortalController extends Controller
 
     private function churchHome(): Response
     {
-        $churchId = $this->context->churchId();
+        $church = $this->context->church();
+        abort_unless($church, 404);
+        $churchId = $church->id;
+        $user = request()->user();
+        $role = $user?->role?->value ?? (string) $user?->role;
+        $canPreviewPosts = $user !== null
+            && ($role === 'system' || $user->profile?->church_id === $churchId)
+            && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true);
         $eventHighlightOrder = Highlight::query()
+            ->where('church_id', $churchId)
             ->where('highlightable_type', Event::class)
             ->orderBy('order')
             ->pluck('highlightable_id')
             ->flip();
         $featuredEvents = Event::query()
             ->where('church_id', $churchId)
+            ->where('start_time', '>=', now()->startOfDay())
             ->with('church:id,name,slug,domain')
             ->orderBy('start_time')
             ->limit(30)
@@ -128,13 +175,18 @@ class PortalController extends Controller
                 ];
             });
         $postHighlightOrder = Highlight::query()
+            ->where('church_id', $churchId)
             ->where('highlightable_type', Post::class)
             ->orderBy('order')
             ->pluck('highlightable_id')
             ->flip();
         $latestPosts = Post::query()
             ->where('church_id', $churchId)
-            ->visible()
+            ->when(
+                $canPreviewPosts,
+                fn ($query) => $query->visible(),
+                fn ($query) => $query->published(),
+            )
             ->latest('published_at')
             ->latest('created_at')
             ->limit(30)
@@ -189,14 +241,42 @@ class PortalController extends Controller
 
         return Inertia::render('Home', [
             'stats' => [
-                'events' => Event::query()->where('church_id', $churchId)->count(),
+                'events' => Event::query()->where('church_id', $churchId)->where('start_time', '>=', now()->startOfDay())->count(),
                 'gallery' => Media::query()->where('church_id', $churchId)->visible()->count(),
-                'posts' => Post::query()->where('church_id', $churchId)->count(),
+                'posts' => Post::query()
+                    ->where('church_id', $churchId)
+                    ->when(
+                        $canPreviewPosts,
+                        fn ($query) => $query->visible(),
+                        fn ($query) => $query->published(),
+                    )
+                    ->count(),
             ],
             'featuredEvents' => $featuredEvents,
             'latestPosts' => $latestPosts,
             'latestRecordings' => $latestRecordings,
             'calendarEvents' => $calendarEvents,
+            'roadmap' => $this->buildChurchRoadmap->handle($church, $canPreviewPosts),
+            'communityUrl' => $church->community
+                ? rtrim((string) config('app.url'), '/').'/communities/'.$church->community->slug
+                : rtrim((string) config('app.url'), '/'),
         ]);
+    }
+
+    /**
+     * @param  array{name: string, distance_km: float|null}  $first
+     * @param  array{name: string, distance_km: float|null}  $second
+     */
+    private function compareByDistanceAndName(array $first, array $second): int
+    {
+        if (($first['distance_km'] === null) !== ($second['distance_km'] === null)) {
+            return $first['distance_km'] === null ? 1 : -1;
+        }
+
+        if ($first['distance_km'] !== null && $first['distance_km'] !== $second['distance_km']) {
+            return $first['distance_km'] <=> $second['distance_km'];
+        }
+
+        return strnatcasecmp($first['name'], $second['name']);
     }
 }

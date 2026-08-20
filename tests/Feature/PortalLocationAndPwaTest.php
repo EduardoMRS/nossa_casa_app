@@ -1,0 +1,103 @@
+<?php
+
+use App\Models\Church;
+use App\Models\Community;
+use App\Models\PushSubscription;
+use App\Models\Setting;
+use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    config(['app.url' => 'http://platform.test']);
+    $this->withoutVite();
+});
+
+test('portal highlights communities nearest to the visitor coordinates', function () {
+    $nearCommunity = Community::factory()->create(['name' => 'Near Community']);
+    $farCommunity = Community::factory()->create(['name' => 'Far Community']);
+    $nearChurch = Church::factory()->create([
+        'name' => 'Near Church',
+        'domain' => 'near.test',
+        'community_id' => $nearCommunity->id,
+    ]);
+    $farChurch = Church::factory()->create([
+        'name' => 'Far Church',
+        'domain' => 'far.test',
+        'community_id' => $farCommunity->id,
+    ]);
+    $nearChurch->address()->create([
+        'country' => 'Brasil',
+        'state' => 'AM',
+        'city' => 'Manaus',
+        'street' => 'Centro',
+        'zipcode' => '69000-000',
+        'latitude' => -3.1190,
+        'longitude' => -60.0217,
+    ]);
+    $farChurch->address()->create([
+        'country' => 'Brasil',
+        'state' => 'SP',
+        'city' => 'Sao Paulo',
+        'street' => 'Centro',
+        'zipcode' => '01000-000',
+        'latitude' => -23.5505,
+        'longitude' => -46.6333,
+    ]);
+
+    $this->get('http://platform.test/?latitude=-3.1189&longitude=-60.0215')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->where('locationApplied', true)
+            ->where('nearbyCommunities.0.id', $nearCommunity->id)
+            ->where('nearbyCommunities.0.churches.0.id', $nearChurch->id));
+});
+
+test('manifest and service worker are generated dynamically for the church domain', function () {
+    $community = Community::factory()->create();
+    $church = Church::factory()->create([
+        'name' => 'PWA Church',
+        'domain' => 'pwa.test',
+        'community_id' => $community->id,
+    ]);
+    Setting::query()->where('church_id', $church->id)->firstOrFail()->update([
+        'options' => [
+            'branding' => [
+                'brand_name' => 'PWA Church App',
+                'primary_color' => '#123456',
+                'surface_color' => '#f0f0f0',
+            ],
+        ],
+    ]);
+
+    $this->get('http://pwa.test/manifest.webmanifest')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('name', 'PWA Church App')
+        ->assertJsonPath('theme_color', '#123456');
+
+    $this->get('http://pwa.test/sw.js')
+        ->assertOk()
+        ->assertHeader('Service-Worker-Allowed', '/')
+        ->assertSee('nossa-casa', escape: false);
+
+    $this->artisan('service-worker:update')->assertSuccessful();
+});
+
+test('authenticated users can persist a browser push subscription', function () {
+    $user = User::factory()->create();
+    $endpoint = 'https://push.example.test/subscriptions/abc';
+
+    $this->actingAs($user)->postJson('http://platform.test/api/push-subscriptions', [
+        'endpoint' => $endpoint,
+        'keys' => [
+            'p256dh' => str_repeat('a', 65),
+            'auth' => str_repeat('b', 24),
+        ],
+        'content_encoding' => 'aes128gcm',
+    ])->assertCreated();
+
+    $subscription = PushSubscription::query()->firstOrFail();
+    expect($subscription->user_id)->toBe($user->id)
+        ->and($subscription->endpoint_hash)->toBe(hash('sha256', $endpoint));
+});

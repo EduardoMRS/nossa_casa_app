@@ -46,7 +46,7 @@ class LibraryVerseController extends Controller
         ]);
 
         $churchId = $request->user()->church?->id;
-        abort_unless($churchId !== null, 422, 'A church membership is required to manage the library.');
+        abort_unless($churchId !== null, 422, __('church.membership_library_manage_required'));
 
         $savedPath = $this->handleMediaUpload($request->file('file_path') ?? $validated['file_path'] ?? null, "church/{$churchId}/library");
 
@@ -107,13 +107,13 @@ class LibraryVerseController extends Controller
         ]);
 
         $churchId = $request->user()->church?->id;
-        abort_unless($churchId !== null, 422, 'A church membership is required to manage the verse of the day.');
+        abort_unless($churchId !== null, 422, __('church.membership_daily_verse_manage_required'));
 
         $library = Library::query()->firstOrCreate(
             ['church_id' => $churchId, 'type' => 'Versiculo do Dia'],
             [
-                'title' => 'Versículo do Dia',
-                'description' => 'Registro do versiculo devocional usado na home.',
+                'title' => __('library.daily_verse_title'),
+                'description' => __('library.daily_verse_description'),
                 'file_path' => null,
             ],
         );

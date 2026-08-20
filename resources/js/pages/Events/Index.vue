@@ -4,6 +4,7 @@ import { CalendarDays, ChevronRight, Clock3 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { show as showEvent } from '@/routes/events';
 
@@ -35,6 +36,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('events_index');
 const activeTab = ref<'future' | 'ongoing' | 'past'>('future');
 
 const filteredEvents = computed(() => {
@@ -67,7 +69,8 @@ const formatDate = (date: string): string =>
 <template>
     <Head :title="t('events.index.meta_title')" />
     <div
-        class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :data-public-template="publicTemplate"
         :style="{
             backgroundColor: 'var(--church-surface, #f8fafc)',
             fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',

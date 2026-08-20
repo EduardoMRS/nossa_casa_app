@@ -112,7 +112,7 @@ Para manter o projeto universal e localizado dinamicamente, o sistema conta com 
     - core e worker terão a mesma estrutura a difereça será que o worker não recebera acesso direto dos usuários
     - as transmissões em andamento deve aparecer na tela de logs, deve ser possivel derrubar uma conexão por lá
     **Obs.** em `docs\transmission.md` tem um exemplo de implementação talvez de para seguir porem para isso será necessario termiar a configuração do docker
-- [ ] templates dinamicos, deve ser possivel mudar o templade visual das seguintes telas e components
+- [x] templates dinamicos, deve ser possivel mudar o templade visual das seguintes telas e components
     - Wellcome
     - Listagem de postagens publicas
     - Visualização de postagem publica
@@ -120,4 +120,4 @@ Para manter o projeto universal e localizado dinamicamente, o sistema conta com 
     - Visualiza de evento publico
     - Visualização de formulario
     - Bliblioteca
-    - galeria 
+    - galeria

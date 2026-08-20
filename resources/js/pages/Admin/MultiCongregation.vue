@@ -13,6 +13,7 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { ref } from 'vue';
+import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 
 type Community = {
@@ -60,6 +61,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { unitLabel } = useTerminology();
 const churches = ref([...props.churches]);
 const communities = ref([...props.communities]);
 const tab = ref<'churches' | 'communities' | 'networks' | 'requests'>(
@@ -263,7 +265,11 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     @click="openChurchEditor()"
                 >
                     <Plus class="size-4" />
-                    {{ t('admin.multicongregation.new_church') }}
+                    {{
+                        t('admin.multicongregation.new_unit', {
+                            unit: unitLabel('branch'),
+                        })
+                    }}
                 </button>
             </div>
         </header>
@@ -326,7 +332,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 @click="tab = 'churches'"
             >
                 <Building2 class="size-4" />
-                {{ t('admin.multicongregation.churches') }}
+                {{ unitLabel('branch', 'plural') }}
             </button>
             <button
                 v-if="props.canManageCommunities"
@@ -403,7 +409,11 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 v-if="!churches.length"
                 class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
             >
-                {{ t('admin.multicongregation.empty_churches') }}
+                {{
+                    t('admin.multicongregation.empty_units', {
+                        units: unitLabel('branch', 'plural').toLowerCase(),
+                    })
+                }}
             </p>
         </section>
 
@@ -548,8 +558,12 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 <h2 class="text-xl font-black">
                     {{
                         editingChurch
-                            ? t('admin.multicongregation.edit_church')
-                            : t('admin.multicongregation.new_church')
+                            ? t('admin.multicongregation.edit_unit', {
+                                  unit: unitLabel('branch'),
+                              })
+                            : t('admin.multicongregation.new_unit', {
+                                  unit: unitLabel('branch'),
+                              })
                     }}
                 </h2>
                 <input

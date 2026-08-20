@@ -15,6 +15,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { index as galleryIndex } from '@/routes/gallery';
 
@@ -81,6 +82,7 @@ const props = defineProps<{
     view: 'gallery' | 'transmissions';
 }>();
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('gallery');
 const page = usePage();
 const mediaItems = ref<MediaItem[]>(
     props.media.data.map((item) => ({ ...item })),
@@ -127,7 +129,9 @@ const canUploadMedia = computed(() => {
 
     return (
         props.canInteract &&
-        ['leader', 'media', 'admin', 'superadmin', 'system'].includes(role)
+        ['leader', 'media', 'church_leader', 'superadmin', 'system'].includes(
+            role,
+        )
     );
 });
 const groupedMediaReactions = computed(() => {
@@ -391,7 +395,8 @@ onBeforeUnmount(() => {
     />
 
     <div
-        class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :data-public-template="publicTemplate"
         :style="{
             backgroundColor: 'var(--church-surface, #f8fafc)',
             fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',
@@ -870,7 +875,9 @@ onBeforeUnmount(() => {
                             class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
                             @change="handleUploadTypeChange"
                         >
-                            <option value="url">URL</option>
+                            <option value="url">
+                                {{ t('admin.common.url') }}
+                            </option>
                             <option value="file">
                                 {{ t('gallery.file') }}
                             </option>

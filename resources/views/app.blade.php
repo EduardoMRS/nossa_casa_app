@@ -51,8 +51,12 @@
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="manifest" href="{{ route('pwa.manifest') }}">
+        <meta name="theme-color" content="{{ $validColor(data_get($branding, 'primary_color'), '#342f87') }}">
 
-        @fonts
+        @unless(app()->environment('testing'))
+            @fonts
+        @endunless
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>

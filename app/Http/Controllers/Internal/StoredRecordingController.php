@@ -29,7 +29,7 @@ class StoredRecordingController extends Controller
                 hash('sha256', $path."\0".$contentHash),
             ),
             422,
-            'The stored recording checksum is invalid.',
+            __('media.stored_recording_checksum_invalid'),
         );
 
         $liveStream = LiveStream::query()->where('path', $path)->firstOrFail();
@@ -41,7 +41,7 @@ class StoredRecordingController extends Controller
             Storage::disk($disk)->exists($destination)
                 && Storage::disk($disk)->size($destination) === $request->integer('size'),
             422,
-            'The recording is not available in shared storage.',
+            __('media.shared_recording_unavailable'),
         );
 
         $recording = Recording::query()->firstOrCreate(

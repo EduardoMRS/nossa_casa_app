@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Traits\HasTranslations;
+use Database\Factories\CommunityFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 class Community extends Model
 {
-    use HasRelationships, HasTranslations, HasUlids;
+    /** @use HasFactory<CommunityFactory> */
+    use HasFactory, HasRelationships, HasTranslations, HasUlids;
 
     protected $table = 'communities';
 

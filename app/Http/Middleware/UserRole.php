@@ -15,7 +15,7 @@ class UserRole
 
         if (! $user) {
             return $request->expectsJson()
-                ? response()->json(['message' => 'Unauthenticated.'], 401)
+                ? response()->json(['message' => __('common.errors.unauthenticated')], 401)
                 : redirect()->route('login');
         }
 
@@ -26,7 +26,7 @@ class UserRole
 
         if (! $this->hasRole($userRole, $allowedRoles)) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Forbidden.'], 403);
+                return response()->json(['message' => __('common.errors.forbidden')], 403);
             }
 
             if ($redirectTo) {
@@ -48,8 +48,8 @@ class UserRole
             return true;
         }
 
-        if ($userRole === UserRoleEnum::ADMIN) {
-            return in_array(UserRoleEnum::ADMIN, $allowedRoles, true)
+        if ($userRole === UserRoleEnum::CHURCH_LEADER) {
+            return in_array(UserRoleEnum::CHURCH_LEADER, $allowedRoles, true)
                 || in_array(UserRoleEnum::LEADER, $allowedRoles, true)
                 || in_array(UserRoleEnum::MEDIA, $allowedRoles, true);
         }

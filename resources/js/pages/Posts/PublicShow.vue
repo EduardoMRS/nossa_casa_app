@@ -9,6 +9,7 @@ import type {
 } from '@/components/PostArticle.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
     index as publicPostsIndex,
@@ -33,6 +34,7 @@ defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('posts_show');
 const formatDate = (value: string | null): string =>
     value
         ? new Intl.DateTimeFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
@@ -44,7 +46,8 @@ const formatDate = (value: string | null): string =>
 <template>
     <Head :title="post.title" />
     <div
-        class="flex min-h-screen flex-col text-slate-950"
+        class="public-template-page flex min-h-screen flex-col text-slate-950"
+        :data-public-template="publicTemplate"
         :style="{
             backgroundColor: 'var(--church-surface, #f8fafc)',
             fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',

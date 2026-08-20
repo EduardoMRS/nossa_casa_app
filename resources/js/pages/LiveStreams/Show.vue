@@ -5,6 +5,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { useI18n } from '@/lib/i18n';
 
 type Person = {
     id: string;
@@ -32,6 +33,8 @@ const props = defineProps<{
     canComment: boolean;
     canModerate: boolean;
 }>();
+
+const { locale, t } = useI18n();
 
 usePoll(3000, { only: ['comments', 'liveStream'] });
 
@@ -64,7 +67,7 @@ const submitComment = async (): Promise<void> => {
         content.value = '';
         router.reload({ only: ['comments'] });
     } catch {
-        error.value = 'Não foi possível enviar o comentário.';
+        error.value = t('live_stream.comment_error');
     } finally {
         processing.value = false;
     }
@@ -78,7 +81,7 @@ const togglePin = async (comment: CommentItem): Promise<void> => {
 };
 
 const removeComment = async (comment: CommentItem): Promise<void> => {
-    if (!window.confirm('Remover este comentário?')) {
+    if (!window.confirm(t('live_stream.remove_confirm'))) {
         return;
     }
 
@@ -87,7 +90,7 @@ const removeComment = async (comment: CommentItem): Promise<void> => {
 };
 
 const formatDate = (value: string): string =>
-    new Intl.DateTimeFormat('pt-BR', {
+    new Intl.DateTimeFormat(locale.value, {
         dateStyle: 'short',
         timeStyle: 'short',
     }).format(new Date(value));
@@ -107,7 +110,7 @@ const formatDate = (value: string): string =>
                     href="/"
                     class="mb-4 inline-flex items-center gap-2 text-sm font-bold text-slate-300 hover:text-white"
                 >
-                    <ArrowLeft class="size-4" /> Voltar
+                    <ArrowLeft class="size-4" /> {{ t('actions.back') }}
                 </Link>
 
                 <div
@@ -126,13 +129,8 @@ const formatDate = (value: string): string =>
                         v-else
                         class="grid h-full place-items-center p-8 text-center text-slate-300"
                     >
-                        <span v-if="isEnded"
-                            >Esta transmissão foi encerrada.</span
-                        >
-                        <span v-else>
-                            A transmissão está se conectando. Esta página será
-                            atualizada automaticamente.
-                        </span>
+                        <span v-if="isEnded">{{ t('live_stream.ended') }}</span>
+                        <span v-else>{{ t('live_stream.connecting') }}</span>
                     </div>
                 </div>
 
@@ -141,7 +139,7 @@ const formatDate = (value: string): string =>
                         <p
                             class="text-xs font-black tracking-[0.18em] text-rose-400 uppercase"
                         >
-                            Transmissão ao vivo
+                            {{ t('live_stream.kicker') }}
                         </p>
                         <h1 class="mt-1 text-2xl font-black sm:text-3xl">
                             {{ liveStream.name }}
@@ -150,7 +148,7 @@ const formatDate = (value: string): string =>
                     <span
                         v-if="isLive"
                         class="rounded-full bg-rose-600 px-3 py-1.5 text-xs font-black uppercase"
-                        >Ao vivo</span
+                        >{{ t('live_stream.live') }}</span
                     >
                 </div>
             </section>
@@ -161,7 +159,8 @@ const formatDate = (value: string): string =>
                 <header
                     class="flex items-center gap-2 border-b border-slate-200 p-4 font-black"
                 >
-                    <MessageCircle class="size-5" /> Comentários
+                    <MessageCircle class="size-5" />
+                    {{ t('live_stream.comments') }}
                 </header>
 
                 <div class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
@@ -200,8 +199,8 @@ const formatDate = (value: string): string =>
                                     class="rounded p-1 hover:bg-slate-200 hover:text-amber-700"
                                     :title="
                                         comment.is_pinned
-                                            ? 'Remover destaque'
-                                            : 'Destacar'
+                                            ? t('live_stream.unpin')
+                                            : t('live_stream.pin')
                                     "
                                     @click="togglePin(comment)"
                                 >
@@ -210,7 +209,7 @@ const formatDate = (value: string): string =>
                                 <button
                                     type="button"
                                     class="rounded p-1 hover:bg-rose-100 hover:text-rose-700"
-                                    title="Remover comentário"
+                                    :title="t('live_stream.remove_comment')"
                                     @click="removeComment(comment)"
                                 >
                                     <Trash2 class="size-3.5" />
@@ -223,7 +222,7 @@ const formatDate = (value: string): string =>
                         v-if="!comments.length"
                         class="py-10 text-center text-sm text-slate-400"
                     >
-                        Seja a primeira pessoa a comentar.
+                        {{ t('live_stream.first_comment') }}
                     </p>
                 </div>
 
@@ -237,7 +236,7 @@ const formatDate = (value: string): string =>
                             v-model="content"
                             maxlength="5000"
                             class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
-                            placeholder="Escreva um comentário"
+                            :placeholder="t('live_stream.comment_placeholder')"
                         />
                         <button
                             :disabled="processing || !content.trim()"
@@ -250,7 +249,7 @@ const formatDate = (value: string): string =>
                         v-else
                         :href="loginUrl"
                         class="block rounded-xl bg-indigo-600 px-4 py-3 text-center text-sm font-black text-white"
-                        >Entre para comentar</Link
+                        >{{ t('live_stream.login_to_comment') }}</Link
                     >
                     <p
                         v-if="error"

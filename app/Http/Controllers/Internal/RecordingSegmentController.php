@@ -16,7 +16,7 @@ class RecordingSegmentController extends Controller
         $segmentPath = $this->validatedSegmentPath($request->validated('segment_path'));
         $contentHash = hash_file('sha256', $segmentPath);
 
-        abort_unless(is_string($contentHash), 422, 'The recording segment could not be hashed.');
+        abort_unless(is_string($contentHash), 422, __('media.segment_hash_failed'));
 
         $deliveryId = hash('sha256', $request->validated('path')."\0".$contentHash);
 
@@ -46,7 +46,7 @@ class RecordingSegmentController extends Controller
                 && Str::startsWith($resolvedSegmentPath, $recordingsRoot.DIRECTORY_SEPARATOR)
                 && File::isFile($resolvedSegmentPath),
             422,
-            'The recording segment is outside the configured media node storage.',
+            __('media.segment_outside_storage'),
         );
 
         return $resolvedSegmentPath;

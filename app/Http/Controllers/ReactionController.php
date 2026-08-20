@@ -32,7 +32,7 @@ class ReactionController extends Controller
         $churchId = $reactionable instanceof Comment
             ? $this->commentChurchId($reactionable)
             : $reactionable->church_id;
-        $this->ensureChurchAccess($request, $churchId);
+        $this->ensurePublicChurchResource($churchId);
 
         $reaction = Reaction::query()->updateOrCreate(
             [

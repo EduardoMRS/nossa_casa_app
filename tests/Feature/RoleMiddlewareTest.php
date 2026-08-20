@@ -8,10 +8,10 @@ beforeEach(function () {
     Route::middleware('role:leader')->get('/role-probe', fn () => response()->json(['ok' => true]));
 });
 
-test('an administrator inherits leader permissions', function () {
-    $administrator = User::factory()->create(['role' => UserRole::ADMIN]);
+test('a church leader inherits team leader permissions', function () {
+    $churchLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
 
-    $this->actingAs($administrator)
+    $this->actingAs($churchLeader)
         ->getJson('/role-probe')
         ->assertSuccessful()
         ->assertJson(['ok' => true]);

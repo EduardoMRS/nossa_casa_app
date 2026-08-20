@@ -112,7 +112,7 @@ test('member cannot upload media', function () {
 });
 
 test('admin can approve and delete pending media', function () {
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 
@@ -141,7 +141,7 @@ test('admin can approve and delete pending media', function () {
 });
 
 test('registered media source cannot be replaced while record data can be edited', function () {
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 

@@ -103,7 +103,7 @@ test('content controllers sync categories for their church and type', function (
     $media = Media::query()->findOrFail($mediaResponse->json('id'));
     expect($media->categories()->pluck('categories.id')->all())->toBe([$mediaCategory->id]);
 
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $librarySource = storage_path('app/testing-library.pdf');

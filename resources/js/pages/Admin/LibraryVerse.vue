@@ -356,7 +356,9 @@ onBeforeUnmount(revokePreview);
                                 <option value="file">
                                     {{ t('gallery.file') }}
                                 </option>
-                                <option value="url">URL</option>
+                                <option value="url">
+                                    {{ t('admin.common.url') }}
+                                </option>
                             </select></label
                         ><input
                             v-if="inputType === 'file'"

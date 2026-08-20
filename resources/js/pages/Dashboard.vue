@@ -5,6 +5,7 @@ import { usePage } from '@inertiajs/vue3';
 import { Moon, Sun } from '@lucide/vue';
 import { computed } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
+import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 
@@ -25,6 +26,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { roleLabel: terminologyRoleLabel } = useTerminology();
 const page = usePage<{
     branding?: {
         brand_name?: string;
@@ -44,10 +46,7 @@ const paletteStyle = computed(() => ({
 }));
 
 const roleLabel = computed(() => {
-    const key = `dashboard.roles.${props.role}`;
-    const translated = t(key);
-
-    return translated === key ? props.role : translated;
+    return terminologyRoleLabel(props.role);
 });
 
 defineOptions({
@@ -78,8 +77,8 @@ defineOptions({
                 class="absolute top-4 right-4 grid size-10 place-items-center rounded-full border border-white/25 bg-black/15 text-white backdrop-blur-sm transition hover:bg-black/25"
                 :aria-label="
                     resolvedAppearance === 'dark'
-                        ? 'Ativar modo claro'
-                        : 'Ativar modo escuro'
+                        ? t('dashboard.activate_light')
+                        : t('dashboard.activate_dark')
                 "
                 @click="
                     updateAppearance(

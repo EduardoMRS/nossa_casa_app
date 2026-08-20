@@ -88,6 +88,11 @@ return [
 
     'locales' => explode(',', env('APP_LOCALES', 'en,pt')),
 
+    'system_user' => [
+        'email' => env('APP_USER_SYSTEM_EMAIL', 'system@nossacasa.test'),
+        'password' => env('APP_USER_SYSTEM_PASSWORD', 'password'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

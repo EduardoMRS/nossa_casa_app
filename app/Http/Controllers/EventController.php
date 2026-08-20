@@ -37,7 +37,7 @@ class EventController extends Controller
 
         $data['church_id'] = $user->church->id ?? null;
         $data['author_id'] = $user->id;
-        abort_unless($data['church_id'], 422, 'A church membership is required to create events.');
+        abort_unless($data['church_id'], 422, __('church.membership_event_create_required'));
 
         if (array_key_exists('cover_path', $data)) {
             $file = $request->file('cover_path') ?? $request->input('cover_path');
@@ -118,12 +118,12 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($id);
         $user = $request->user();
-        $this->ensureChurchAccess($request, $event->church_id);
+        $this->ensurePublicChurchResource($event->church_id);
 
         abort_unless(
             $event->users()->whereKey($user->id)->exists(),
             422,
-            'Event registration is required before check-in.'
+            __('checkin.event_registration_required'),
         );
 
         // Check if the user has already checked in
@@ -151,7 +151,7 @@ class EventController extends Controller
         abort_unless(
             Form::query()->whereKey($formId)->where('church_id', $churchId)->exists(),
             422,
-            'The selected form must belong to the current church.',
+            __('church.selected_form_must_match'),
         );
 
         $event->forms()->sync([$formId]);

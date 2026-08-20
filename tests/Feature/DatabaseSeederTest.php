@@ -1,28 +1,43 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\AiModel;
 use App\Models\Church;
 use App\Models\Community;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(RefreshDatabase::class);
-
-test('database seeder creates the configured or default system user', function () {
-    putenv('APP_USER_SYSTEM_EMAIL');
-    putenv('APP_USER_SYSTEM_PASSWORD');
-    $expectedEmail = env('APP_USER_SYSTEM_EMAIL') ?: 'system@nossacasa.test';
+test('database seeder includes development data outside production', function () {
+    config()->set('app.system_user.email', 'system@nossacasa.test');
+    config()->set('app.system_user.password', 'password');
 
     $this->seed(DatabaseSeeder::class);
 
-    $superadmin = User::query()->where('email', $expectedEmail)->first();
+    $systemUser = User::query()->where('email', 'system@nossacasa.test')->firstOrFail();
 
-    expect($superadmin)->not->toBeNull();
-    expect($superadmin?->role)->toBe(UserRole::SYSTEM);
-    expect($superadmin?->first_name)->toBe('System');
-    expect($superadmin?->last_name)->toBe('Nossa Casa');
+    expect($systemUser->role)->toBe(UserRole::SYSTEM)
+        ->and($systemUser->first_name)->toBe('System')
+        ->and($systemUser->last_name)->toBe('Nossa Casa')
+        ->and(Church::query()->where('slug', 'nossa-casa-teste')->exists())->toBeTrue()
+        ->and(Community::query()->where('slug', 'nossa-comunidade-teste')->exists())->toBeTrue()
+        ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue();
+});
 
-    expect(Church::query()->where('slug', 'nossa-casa-teste')->exists())->toBeTrue();
-    expect(Community::query()->where('slug', 'nossa-comunidade-teste')->exists())->toBeTrue();
+test('database seeder excludes development data in production', function () {
+    $originalEnvironment = app()->environment();
+    app()->detectEnvironment(fn (): string => 'production');
+
+    try {
+        $this->artisan('db:seed', [
+            '--class' => DatabaseSeeder::class,
+            '--force' => true,
+        ])->assertSuccessful();
+    } finally {
+        app()->detectEnvironment(fn (): string => $originalEnvironment);
+    }
+
+    expect(User::query()->exists())->toBeFalse()
+        ->and(Church::query()->exists())->toBeFalse()
+        ->and(Community::query()->exists())->toBeFalse()
+        ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue();
 });

@@ -21,12 +21,7 @@ class ChurchRegistrationRequestFactory extends Factory
     {
         return [
             'requester_id' => User::factory(),
-            'community_id' => fn () => Community::query()->inRandomOrder()->value('id')
-                ?? Community::query()->create([
-                    'name' => fake()->company().' Community',
-                    'slug' => fake()->unique()->slug(),
-                    'description' => fake()->paragraph(),
-                ])->id,
+            'community_id' => Community::factory(),
             'name' => fake()->company().' Church',
             'slug' => fake()->unique()->slug(),
             'domain' => fake()->unique()->domainName(),

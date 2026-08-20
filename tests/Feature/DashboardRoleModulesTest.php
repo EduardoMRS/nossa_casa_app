@@ -78,8 +78,8 @@ it('shows media modules on dashboard', function () {
         );
 });
 
-it('shows admin workspace modules on dashboard', function () {
-    $admin = createDashboardUser('admin');
+it('shows church leader workspace modules on dashboard', function () {
+    $admin = createDashboardUser('church_leader');
 
     $this->actingAs($admin)
         ->get(route('dashboard'))

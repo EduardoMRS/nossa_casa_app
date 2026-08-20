@@ -23,7 +23,7 @@ it('provides translated backup messages for each supported locale', function () 
 
 it('allows only users above admin to access the backup screen during maintenance', function () {
     $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
 
     app()->maintenanceMode()->activate(['status' => 503]);
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Churches\TransferChurchMembership;
 use App\Enums\ChurchStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
@@ -18,7 +19,10 @@ use Illuminate\Validation\Rule;
 
 class ChurchOnboardingController extends Controller
 {
-    public function __construct(private readonly ChurchDomainContext $context) {}
+    public function __construct(
+        private readonly ChurchDomainContext $context,
+        private readonly TransferChurchMembership $transferChurchMembership,
+    ) {}
 
     public function storeCommunity(Request $request): JsonResponse
     {
@@ -88,7 +92,7 @@ class ChurchOnboardingController extends Controller
             );
 
             if ($registrationRequest->requester->role !== UserRole::SYSTEM) {
-                $registrationRequest->requester->update(['role' => UserRole::ADMIN]);
+                $registrationRequest->requester->update(['role' => UserRole::CHURCH_LEADER]);
             }
 
             $registrationRequest->update([
@@ -136,19 +140,11 @@ class ChurchOnboardingController extends Controller
 
     public function switchMembership(Request $request): RedirectResponse
     {
+        $request->validate(['confirmed' => ['required', 'accepted']]);
         $church = $this->context->church();
-        abort_unless($church && $request->session()->get('church_membership_pending') === $church->id, 403);
-        DB::transaction(function () use ($request, $church): void {
-            $request->user()->profile()->updateOrCreate(
-                ['user_id' => $request->user()->id],
-                ['community_id' => $church->community_id, 'church_id' => $church->id],
-            );
+        abort_unless($church && $request->user()->profile?->church_id !== $church->id, 403);
 
-            if ($request->user()->role !== UserRole::SYSTEM) {
-                $request->user()->update(['role' => UserRole::MEMBER]);
-            }
-        });
-        $request->session()->forget('church_membership_pending');
+        $this->transferChurchMembership->handle($request->user(), $church);
 
         return redirect()->route('home');
     }
@@ -178,6 +174,6 @@ class ChurchOnboardingController extends Controller
         $sameCommunity = $request->user()->profile?->community_id === $registrationRequest->community_id
             || $request->user()->church?->community_id === $registrationRequest->community_id;
         $ownsCommunity = $registrationRequest->community()->where('owner_id', $request->user()->id)->exists();
-        abort_unless($ownsCommunity || ($sameCommunity && in_array($request->user()->role, [UserRole::ADMIN, UserRole::SUPERADMIN], true)), 403);
+        abort_unless($ownsCommunity || ($sameCommunity && in_array($request->user()->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)), 403);
     }
 }

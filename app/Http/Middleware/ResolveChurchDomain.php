@@ -7,7 +7,6 @@ use App\Support\ChurchDomainContext;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class ResolveChurchDomain
@@ -29,6 +28,14 @@ class ResolveChurchDomain
         $church = $this->context->church();
         $user = $request->user();
 
+        if ($user && $user->role !== UserRole::SYSTEM && $this->isDashboardRequest($request)) {
+            abort_unless(
+                $church && $user->profile?->church_id === $church->id,
+                403,
+                __('auth.church_membership_required'),
+            );
+        }
+
         if (! $church || ! $user || $user->role === UserRole::SYSTEM) {
             return $next($request);
         }
@@ -36,27 +43,22 @@ class ResolveChurchDomain
         $userChurchId = $user->profile?->church_id;
 
         if ($userChurchId === $church->id) {
-            $request->session()->forget('church_membership_pending');
-
             return $next($request);
         }
 
-        if ($request->session()->get('church_membership_pending') === $church->id) {
-            if ($this->isProtectedRoute($request)) {
-                return redirect()->route('home');
-            }
-
+        if ($this->isPublicChurchRoute($request)) {
             return $next($request);
         }
 
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return $this->loggedOutResponse($request);
+        return $this->restrictedResponse($request);
     }
 
-    private function isProtectedRoute(Request $request): bool
+    private function isDashboardRequest(Request $request): bool
+    {
+        return $request->is('dashboard', 'dashboard/*');
+    }
+
+    private function isPublicChurchRoute(Request $request): bool
     {
         $route = $request->route();
 
@@ -64,21 +66,57 @@ class ResolveChurchDomain
             return false;
         }
 
-        if (in_array($route->getName(), ['church.membership.switch', 'church.membership.decline', 'logout'], true)) {
-            return false;
+        $routeName = $route->getName();
+        $publicRouteNames = [
+            'home',
+            'communities.show',
+            'events.index',
+            'events.show',
+            'events.register',
+            'posts.public.index',
+            'posts.public.show',
+            'gallery.index',
+            'gallery.download',
+            'library.index',
+            'library.show',
+            'live-streams.show',
+            'secure-file',
+            'pwa.manifest',
+            'pwa.service-worker',
+            'push-subscriptions.store',
+            'push-subscriptions.destroy',
+            'church.membership.switch',
+            'church.membership.decline',
+            'logout',
+        ];
+
+        if (in_array($routeName, $publicRouteNames, true)) {
+            return true;
         }
 
-        return in_array('auth', $route->gatherMiddleware(), true);
+        return in_array($route->getActionName(), [
+            'App\\Http\\Controllers\\CommentController@store',
+            'App\\Http\\Controllers\\CommentController@update',
+            'App\\Http\\Controllers\\CommentController@destroy',
+            'App\\Http\\Controllers\\ReactionController@store',
+            'App\\Http\\Controllers\\ReactionController@destroy',
+            'App\\Http\\Controllers\\EventController@checkin',
+            'App\\Http\\Controllers\\FormResponseController@store',
+            'App\\Http\\Controllers\\PrayerRequestController@store',
+            'App\\Http\\Controllers\\ClassroomController@index',
+            'App\\Http\\Controllers\\ClassroomController@checkIn',
+            'App\\Http\\Controllers\\ClassroomController@checkOut',
+        ], true);
     }
 
-    private function loggedOutResponse(Request $request): Response|RedirectResponse
+    private function restrictedResponse(Request $request): Response|RedirectResponse
     {
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => __('auth.church_domain_session_ended'),
-            ], 401);
+                'message' => __('auth.church_membership_required'),
+            ], 403);
         }
 
-        return redirect()->route('login')->with('status', __('auth.church_domain_session_ended'));
+        return redirect()->route('home');
     }
 }

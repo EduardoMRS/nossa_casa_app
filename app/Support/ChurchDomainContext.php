@@ -12,10 +12,13 @@ class ChurchDomainContext
 
     private bool $mainDomain = false;
 
-    public function resolve(Request $request): void
+    private bool $resolved = false;
+
+    public function resolve(Request $request, bool $failWhenUnknown = true): void
     {
         $host = self::normalizeDomain($request->getHost());
         $this->mainDomain = $host === $this->mainHost();
+        $this->resolved = true;
 
         if ($this->mainDomain) {
             $this->church = null;
@@ -23,11 +26,12 @@ class ChurchDomainContext
             return;
         }
 
-        $this->church = Church::query()
+        $query = Church::query()
             ->with('community:id,name,slug')
             ->where('domain', $host)
-            ->where('status', ChurchStatus::ACTIVE)
-            ->firstOrFail();
+            ->where('status', ChurchStatus::ACTIVE);
+
+        $this->church = $failWhenUnknown ? $query->firstOrFail() : $query->first();
     }
 
     public function church(): ?Church
@@ -43,6 +47,11 @@ class ChurchDomainContext
     public function isMainDomain(): bool
     {
         return $this->mainDomain;
+    }
+
+    public function isResolved(): bool
+    {
+        return $this->resolved;
     }
 
     public function mainHost(): string

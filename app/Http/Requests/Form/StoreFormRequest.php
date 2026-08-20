@@ -52,7 +52,7 @@ class StoreFormRequest extends FormRequest
                 }
 
                 if (blank($field['name'] ?? null) || blank($field['label'] ?? null)) {
-                    $validator->errors()->add("schema.fields.{$index}", 'Campos de entrada precisam de identificador e rótulo.');
+                    $validator->errors()->add("schema.fields.{$index}", __('form.field_identity_required'));
                 }
             }
         }];

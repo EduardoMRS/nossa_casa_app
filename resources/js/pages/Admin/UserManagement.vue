@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 type UserItem = {
     id: string;
@@ -27,6 +28,7 @@ const props = defineProps<{
 }>();
 const users = ref([...props.users.data]);
 const { t } = useI18n();
+const { roleLabel } = useTerminology();
 const editing = ref<UserItem | null>(null);
 const open = ref(false);
 const query = ref('');
@@ -182,11 +184,7 @@ async function save(): Promise<void> {
                         <p class="text-sm text-slate-500">{{ user.email }}</p>
                         <span
                             class="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase"
-                            >{{
-                                t(
-                                    `dashboard.roles.${typeof user.role === 'string' ? user.role : user.role.value}`,
-                                )
-                            }}</span
+                            >{{ roleLabel(roleValue(user)) }}</span
                         >
                     </div>
                 </div>
@@ -267,7 +265,7 @@ async function save(): Promise<void> {
                             :key="role.value"
                             :value="role.value"
                         >
-                            {{ t(`dashboard.roles.${role.value}`) }}
+                            {{ role.label || roleLabel(role.value) }}
                         </option></select
                     ><select
                         v-model="form.church_id"

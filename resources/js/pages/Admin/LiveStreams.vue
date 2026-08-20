@@ -21,6 +21,7 @@ import {
     store as storeLiveStream,
 } from '@/actions/App/Http/Controllers/LiveStreamController';
 import { update as updateMedia } from '@/actions/App/Http/Controllers/MediaController';
+import { useI18n } from '@/lib/i18n';
 
 type RecordingItem = {
     id: string;
@@ -56,6 +57,8 @@ const props = defineProps<{
     streams: StreamItem[];
     canCreate: boolean;
 }>();
+
+const { locale, t } = useI18n();
 
 usePoll(5000, { only: ['streams', 'canCreate'] });
 
@@ -101,14 +104,18 @@ const createStream = async (): Promise<void> => {
         error.value =
             responseErrors?.church?.[0] ||
             responseErrors?.name?.[0] ||
-            'Não foi possível criar a transmissão.';
+            t('admin.live_streams.create_error');
     } finally {
         processing.value = false;
     }
 };
 
 const stopStream = async (stream: StreamItem): Promise<void> => {
-    if (!window.confirm(`Encerrar a transmissão “${stream.name}”?`)) {
+    if (
+        !window.confirm(
+            t('admin.live_streams.stop_confirm', { name: stream.name }),
+        )
+    ) {
         return;
     }
 
@@ -117,11 +124,7 @@ const stopStream = async (stream: StreamItem): Promise<void> => {
 };
 
 const rotateToken = async (stream: StreamItem): Promise<void> => {
-    if (
-        !window.confirm(
-            'Renovar o token desconectará a transmissão atual. Continuar?',
-        )
-    ) {
+    if (!window.confirm(t('admin.live_streams.rotate_confirm'))) {
         return;
     }
 
@@ -170,7 +173,7 @@ const copy = async (value: string | null, key: string): Promise<void> => {
 
 const formatDate = (value: string | null): string =>
     value
-        ? new Intl.DateTimeFormat('pt-BR', {
+        ? new Intl.DateTimeFormat(locale.value, {
               dateStyle: 'short',
               timeStyle: 'short',
           }).format(new Date(value))
@@ -178,7 +181,7 @@ const formatDate = (value: string | null): string =>
 </script>
 
 <template>
-    <Head title="Controle de transmissões" />
+    <Head :title="t('admin.live_streams.title')" />
 
     <main class="space-y-6 p-4 md:p-8">
         <header
@@ -191,11 +194,10 @@ const formatDate = (value: string | null): string =>
                     {{ church.name }}
                 </p>
                 <h1 class="mt-2 text-3xl font-black">
-                    Controle de transmissões
+                    {{ t('admin.live_streams.title') }}
                 </h1>
                 <p class="mt-2 max-w-2xl text-sm text-indigo-100">
-                    Crie a transmissão, copie o endereço para o OBS e acompanhe
-                    o estado da conexão.
+                    {{ t('admin.live_streams.description') }}
                 </p>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row">
@@ -203,7 +205,7 @@ const formatDate = (value: string | null): string =>
                     v-if="churches.length > 1"
                     v-model="selectedChurchId"
                     class="rounded-xl border-white/30 bg-indigo-950 px-3 py-2 text-sm text-white"
-                    aria-label="Selecionar igreja"
+                    :aria-label="t('admin.live_streams.select_church')"
                     @change="switchChurch"
                 >
                     <option
@@ -221,7 +223,7 @@ const formatDate = (value: string | null): string =>
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-indigo-950"
                     @click="createOpen = true"
                 >
-                    <Plus class="size-4" /> Nova transmissão
+                    <Plus class="size-4" /> {{ t('admin.live_streams.new') }}
                 </button>
             </div>
         </header>
@@ -251,9 +253,25 @@ const formatDate = (value: string | null): string =>
                                 {{ stream.name }}
                             </h2>
                             <p class="mt-0.5 text-xs text-slate-500">
-                                {{ stream.status }} ·
-                                {{ stream.recordings_count }} gravação(ões) ·
-                                {{ stream.is_public ? 'Pública' : 'Privada' }}
+                                {{
+                                    t(
+                                        `admin.live_streams.status.${stream.status}`,
+                                    )
+                                }}
+                                ·
+                                {{
+                                    t('admin.live_streams.recordings_count', {
+                                        count: stream.recordings_count,
+                                    })
+                                }}
+                                ·
+                                {{
+                                    t(
+                                        stream.is_public
+                                            ? 'admin.live_streams.public'
+                                            : 'admin.live_streams.private',
+                                    )
+                                }}
                             </p>
                         </div>
                     </div>
@@ -263,7 +281,8 @@ const formatDate = (value: string | null): string =>
                             target="_blank"
                             class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold text-indigo-700"
                         >
-                            <ExternalLink class="size-4" /> Abrir página
+                            <ExternalLink class="size-4" />
+                            {{ t('admin.live_streams.open_page') }}
                         </a>
                         <button
                             v-if="stream.active"
@@ -271,7 +290,8 @@ const formatDate = (value: string | null): string =>
                             class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white"
                             @click="stopStream(stream)"
                         >
-                            <Square class="size-3.5 fill-current" /> Encerrar
+                            <Square class="size-3.5 fill-current" />
+                            {{ t('admin.live_streams.stop') }}
                         </button>
                     </div>
                 </header>
@@ -285,7 +305,7 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-black text-slate-500 uppercase"
                             >
-                                Servidor do OBS
+                                {{ t('admin.live_streams.obs_server') }}
                             </p>
                             <div class="mt-2 flex gap-2">
                                 <input
@@ -296,7 +316,7 @@ const formatDate = (value: string | null): string =>
                                 <button
                                     type="button"
                                     class="grid size-10 place-items-center rounded-lg border"
-                                    title="Copiar link"
+                                    :title="t('admin.live_streams.copy_link')"
                                     @click="
                                         copy(
                                             stream.ingest_server,
@@ -317,7 +337,7 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-black text-slate-500 uppercase"
                             >
-                                Chave de transmissão do OBS
+                                {{ t('admin.live_streams.obs_stream_key') }}
                             </p>
                             <div class="mt-2 flex gap-2">
                                 <input
@@ -328,7 +348,9 @@ const formatDate = (value: string | null): string =>
                                 <button
                                     type="button"
                                     class="grid size-10 place-items-center rounded-lg border"
-                                    title="Copiar chave de transmissão"
+                                    :title="
+                                        t('admin.live_streams.copy_stream_key')
+                                    "
                                     @click="
                                         copy(
                                             stream.stream_key,
@@ -351,7 +373,7 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-black text-slate-500 uppercase"
                             >
-                                Token
+                                {{ t('admin.live_streams.token') }}
                             </p>
                             <div class="mt-2 flex gap-2">
                                 <input
@@ -362,7 +384,7 @@ const formatDate = (value: string | null): string =>
                                 <button
                                     type="button"
                                     class="grid size-10 place-items-center rounded-lg border"
-                                    title="Copiar token"
+                                    :title="t('admin.live_streams.copy_token')"
                                     @click="
                                         copy(stream.token, `token-${stream.id}`)
                                     "
@@ -380,11 +402,12 @@ const formatDate = (value: string | null): string =>
                                     class="inline-flex items-center gap-2 rounded-lg border px-3 text-xs font-bold text-amber-700 disabled:opacity-50"
                                     @click="rotateToken(stream)"
                                 >
-                                    <RefreshCw class="size-4" /> Renovar
+                                    <RefreshCw class="size-4" />
+                                    {{ t('admin.live_streams.rotate') }}
                                 </button>
                             </div>
                             <p class="mt-2 text-[11px] text-slate-400">
-                                Última renovação:
+                                {{ t('admin.live_streams.last_rotation') }}
                                 {{ formatDate(stream.token_rotated_at) }}
                             </p>
                         </div>
@@ -395,7 +418,7 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-bold text-slate-400 uppercase"
                             >
-                                Início
+                                {{ t('admin.live_streams.started_at') }}
                             </p>
                             <p class="mt-2 font-bold">
                                 {{ formatDate(stream.started_at) }}
@@ -405,35 +428,39 @@ const formatDate = (value: string | null): string =>
                             <p
                                 class="text-xs font-bold text-slate-400 uppercase"
                             >
-                                Gravação
+                                {{ t('admin.live_streams.recording') }}
                             </p>
                             <p class="mt-2 font-bold">
-                                {{ stream.record ? 'Ativada' : 'Desativada' }}
+                                {{
+                                    t(
+                                        stream.record
+                                            ? 'admin.live_streams.enabled'
+                                            : 'admin.live_streams.disabled',
+                                    )
+                                }}
                             </p>
                         </div>
                         <div class="col-span-2 rounded-xl bg-slate-50 p-4">
                             <p
                                 class="text-xs font-bold text-slate-400 uppercase"
                             >
-                                Visibilidade ao vivo
+                                {{ t('admin.live_streams.visibility') }}
                             </p>
                             <p class="mt-2 font-bold">
                                 {{
-                                    stream.is_public
-                                        ? 'Pública — aparece no portal e na igreja'
-                                        : 'Privada — somente membros desta igreja'
+                                    t(
+                                        stream.is_public
+                                            ? 'admin.live_streams.public_visibility'
+                                            : 'admin.live_streams.private_visibility',
+                                    )
                                 }}
                             </p>
                         </div>
                         <div
                             class="col-span-2 rounded-xl border border-cyan-100 bg-cyan-50 p-4 text-xs leading-5 text-cyan-950"
                         >
-                            <Video class="mr-1 inline size-4" /> No OBS,
-                            selecione <strong>Serviço personalizado</strong>,
-                            copie os valores acima para os campos
-                            <strong>Servidor</strong> e
-                            <strong>Chave de transmissão</strong>. Não cole o
-                            link completo no campo servidor.
+                            <Video class="mr-1 inline size-4" />
+                            {{ t('admin.live_streams.obs_hint') }}
                         </div>
                     </section>
                 </div>
@@ -443,7 +470,7 @@ const formatDate = (value: string | null): string =>
                     class="border-t bg-slate-50/70 p-5"
                 >
                     <h3 class="text-sm font-black text-slate-950">
-                        Gravações desta transmissão
+                        {{ t('admin.live_streams.recordings_title') }}
                     </h3>
                     <div class="mt-3 grid gap-2 md:grid-cols-2">
                         <div
@@ -454,9 +481,11 @@ const formatDate = (value: string | null): string =>
                             <div>
                                 <p class="text-sm font-bold">
                                     {{
-                                        recording.is_public
-                                            ? 'Gravação pública'
-                                            : 'Gravação privada'
+                                        t(
+                                            recording.is_public
+                                                ? 'admin.live_streams.recording_public'
+                                                : 'admin.live_streams.recording_private',
+                                        )
                                     }}
                                 </p>
                                 <p class="text-xs text-slate-500">
@@ -472,9 +501,11 @@ const formatDate = (value: string | null): string =>
                                 @click="toggleRecordingVisibility(recording)"
                             >
                                 {{
-                                    recording.is_public
-                                        ? 'Tornar privada'
-                                        : 'Publicar gravação'
+                                    t(
+                                        recording.is_public
+                                            ? 'admin.live_streams.make_private'
+                                            : 'admin.live_streams.publish_recording',
+                                    )
                                 }}
                             </button>
                         </div>
@@ -489,7 +520,9 @@ const formatDate = (value: string | null): string =>
         >
             <div>
                 <Radio class="mx-auto size-10 text-slate-300" />
-                <p class="mt-3 font-bold">Nenhuma transmissão cadastrada.</p>
+                <p class="mt-3 font-bold">
+                    {{ t('admin.live_streams.empty') }}
+                </p>
             </div>
         </section>
 
@@ -505,10 +538,10 @@ const formatDate = (value: string | null): string =>
                 <header class="flex items-center justify-between border-b p-5">
                     <div>
                         <p class="text-xs font-black text-indigo-600 uppercase">
-                            Nova transmissão
+                            {{ t('admin.live_streams.create_kicker') }}
                         </p>
                         <h2 class="mt-1 text-xl font-black">
-                            Gerar link e token
+                            {{ t('admin.live_streams.create_title') }}
                         </h2>
                     </div>
                     <button
@@ -521,12 +554,15 @@ const formatDate = (value: string | null): string =>
                 </header>
                 <div class="space-y-4 p-5">
                     <label class="block text-sm font-bold"
-                        >Nome<input
+                        >{{ t('admin.live_streams.name')
+                        }}<input
                             v-model="name"
                             required
                             maxlength="255"
                             class="mt-1 w-full rounded-lg border-slate-300"
-                            placeholder="Culto de domingo"
+                            :placeholder="
+                                t('admin.live_streams.name_placeholder')
+                            "
                     /></label>
                     <label
                         class="flex items-center gap-3 rounded-xl border p-4 text-sm font-bold"
@@ -535,7 +571,7 @@ const formatDate = (value: string | null): string =>
                             type="checkbox"
                             class="rounded border-slate-300"
                         />
-                        Gravar transmissão</label
+                        {{ t('admin.live_streams.record_stream') }}</label
                     >
                     <label
                         class="flex items-start gap-3 rounded-xl border p-4 text-sm"
@@ -545,12 +581,12 @@ const formatDate = (value: string | null): string =>
                             class="mt-0.5 rounded border-slate-300"
                         />
                         <span
-                            ><strong class="block">Transmissão pública</strong
-                            ><small class="mt-1 block text-slate-500"
-                                >Quando desmarcada, a live não aparece no
-                                portal, na home ou na galeria. A gravação poderá
-                                ser publicada depois.</small
-                            ></span
+                            ><strong class="block">{{
+                                t('admin.live_streams.public_stream')
+                            }}</strong
+                            ><small class="mt-1 block text-slate-500">{{
+                                t('admin.live_streams.public_stream_hint')
+                            }}</small></span
                         ></label
                     >
                     <p v-if="error" class="text-sm font-bold text-rose-600">
@@ -563,13 +599,17 @@ const formatDate = (value: string | null): string =>
                         class="rounded-lg border px-4 py-2 text-sm font-bold"
                         @click="createOpen = false"
                     >
-                        Cancelar
+                        {{ t('actions.cancel') }}
                     </button>
                     <button
                         :disabled="processing || !name.trim()"
                         class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                     >
-                        {{ processing ? 'Criando…' : 'Criar transmissão' }}
+                        {{
+                            processing
+                                ? t('admin.live_streams.creating')
+                                : t('admin.live_streams.create')
+                        }}
                     </button>
                 </footer>
             </form>

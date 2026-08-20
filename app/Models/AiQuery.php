@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use Database\Factories\AiQueryFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiQuery extends Model
 {
+    /** @use HasFactory<AiQueryFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -22,7 +24,7 @@ class AiQuery extends Model
         'church_id',
         'type',
         'started_at_filter',
-        'finished_at_filter'
+        'finished_at_filter',
     ];
 
     protected $attributes = [
@@ -128,7 +130,7 @@ class AiQuery extends Model
      */
     public function isSuccessful(): bool
     {
-        return $this->status === 'completed' && !empty($this->response);
+        return $this->status === 'completed' && ! empty($this->response);
     }
 
     /**
@@ -144,21 +146,21 @@ class AiQuery extends Model
      */
     public function getFormattedResponseTime(): string
     {
-        if (!$this->response_time_ms) {
+        if (! $this->response_time_ms) {
             return 'N/A';
         }
 
         if ($this->response_time_ms < 1000) {
-            return $this->response_time_ms . 'ms';
+            return $this->response_time_ms.'ms';
         }
 
-        return round($this->response_time_ms / 1000, 2) . 's';
+        return round($this->response_time_ms / 1000, 2).'s';
     }
 
     /**
      * Método estático para criar uma nova query
      */
-    public static function createFromAiProvider(array $request, array $response, int $responseTimeMs = null, int $churchId = null, string $type = null): self
+    public static function createFromAiProvider(array $request, array $response, ?int $responseTimeMs = null, ?int $churchId = null, ?string $type = null): self
     {
         return self::create([
             'provider' => $response['provider'] ?? 'unknown',
@@ -181,10 +183,10 @@ class AiQuery extends Model
     /**
      * Método para obter estatísticas de uso
      */
-    public static function getUsageStats(int $days = 30, int $churchId = null): array
+    public static function getUsageStats(int $days = 30, ?int $churchId = null): array
     {
         $baseQuery = self::recent($days);
-        
+
         if ($churchId) {
             $baseQuery = $baseQuery->byChurch($churchId);
         }

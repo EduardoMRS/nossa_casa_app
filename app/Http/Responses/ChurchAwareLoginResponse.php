@@ -22,11 +22,7 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
         $userChurch = $user?->church;
 
         if ($domainChurch && $user && $user->role !== UserRole::SYSTEM && $userChurch?->id !== $domainChurch->id) {
-            $request->session()->put('church_membership_pending', $domainChurch->id);
-
-            return $this->response($request, route('home', absolute: false), [
-                'membership_confirmation' => true,
-            ]);
+            return $this->response($request, route('home', absolute: false));
         }
 
         if ($this->context->isMainDomain() && $userChurch?->domain) {

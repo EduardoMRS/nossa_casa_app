@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Support\ChurchDomainContext;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\ExceptionResponse;
+use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +31,35 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureTemporaryStorageUrls();
+        $this->configureExceptionPages();
+    }
+
+    protected function configureExceptionPages(): void
+    {
+        Inertia::handleExceptionsUsing(function (ExceptionResponse $response): ?ExceptionResponse {
+            $status = $response->statusCode();
+
+            if (
+                $response->request->is('api/*')
+                || $response->request->expectsJson()
+                || (app()->environment('local') && (bool) config('app.debug'))
+                || $status < 400
+                || $status > 599
+            ) {
+                return null;
+            }
+
+            $domainContext = $this->app->make(ChurchDomainContext::class);
+
+            if (! $domainContext->isResolved()) {
+                $domainContext->resolve($response->request, failWhenUnknown: false);
+            }
+
+            return $response
+                ->render('ErrorPage', ['status' => $status])
+                ->usingMiddleware(HandleInertiaRequests::class)
+                ->withSharedData();
+        });
     }
 
     /**

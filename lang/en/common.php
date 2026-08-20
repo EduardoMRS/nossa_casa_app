@@ -16,8 +16,10 @@ return [
     'show' => 'Show',
     'view_more' => 'View More',
     'more_details' => 'More Details',
+    'media' => 'Media',
     'errors' => [
         'not_found' => 'Not Found',
+        'unauthenticated' => 'Unauthenticated.',
         'unauthorized' => 'Unauthorized',
         'forbidden' => 'Forbidden',
         'many_requests' => 'Too Many Requests',
@@ -39,5 +41,8 @@ return [
         'media_moderated' => 'Media moderation updated.',
         'classrooms_updated' => 'Classroom settings updated.',
         'church_settings_updated' => 'Church settings updated successfully.',
+        'profile_updated' => 'Profile updated.',
+        'password_updated' => 'Password updated.',
+        'form_response_saved' => 'Form response saved successfully.',
     ],
 ];

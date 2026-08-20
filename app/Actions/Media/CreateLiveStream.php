@@ -29,7 +29,7 @@ class CreateLiveStream
 
         if (! $church) {
             throw ValidationException::withMessages([
-                'church' => __('A church membership is required to create a live stream.'),
+                'church' => __('church.membership_live_stream_create_required'),
             ]);
         }
 
@@ -53,7 +53,7 @@ class CreateLiveStream
             ]));
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages([
-                'church' => __('This church already has an active live stream.'),
+                'church' => __('livestream.active_exists'),
             ]);
         }
 

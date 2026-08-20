@@ -32,4 +32,9 @@ class Library extends Model
     {
         return $this->morphToMany(Category::class, 'categorizable');
     }
+
+    public function church()
+    {
+        return $this->belongsTo(Church::class);
+    }
 }

@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import { store as storeResponse } from '@/actions/App/Http/Controllers/FormResponseController';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { login } from '@/routes';
 import { show as showEvent } from '@/routes/events';
@@ -57,6 +58,7 @@ const props = defineProps<{
 const page = usePage();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 const { locale, t } = useI18n();
+const publicTemplate = usePublicTemplate('form');
 const processing = ref(false);
 const flashMessage = ref('');
 const errors = ref<Record<string, string>>({});
@@ -259,7 +261,10 @@ const formatDate = (value: string): string => {
 <template>
     <Head :title="`${t('events.register.title')} - ${event.title}`" />
 
-    <div class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
+    <div
+        class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :data-public-template="publicTemplate"
+    >
         <PublicHeader active="events" />
 
         <main class="mx-auto max-w-5xl px-5 py-8 md:px-8 md:py-10">

@@ -134,7 +134,7 @@ class PostController extends Controller
         abort_unless(
             Form::query()->whereKey($formId)->where('church_id', $churchId)->exists(),
             422,
-            'The selected form must belong to the current church.',
+            __('church.selected_form_must_match'),
         );
 
         $post->forms()->sync([$formId]);

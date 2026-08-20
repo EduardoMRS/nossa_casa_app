@@ -2,13 +2,18 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import { useI18n } from '@/lib/i18n';
 
 const page = usePage<{
     name?: string;
     branding?: { brand_name?: string };
 }>();
+const { t } = useI18n();
 const appName = computed(
-    () => page.props.branding?.brand_name || page.props.name || 'Nossa Casa',
+    () =>
+        page.props.branding?.brand_name ||
+        page.props.name ||
+        t('portal.brand_name'),
 );
 </script>
 

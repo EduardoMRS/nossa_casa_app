@@ -3,8 +3,8 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
     CalendarDays,
+    CircleAlert,
     Image,
-    LayoutDashboard,
     LibraryBig,
     Menu,
     Newspaper,
@@ -12,7 +12,6 @@ import {
     X,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
-import ChurchMembershipPrompt from '@/components/ChurchMembershipPrompt.vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import { applyBranding } from '@/lib/branding';
 import { useI18n } from '@/lib/i18n';
-import { dashboard, home, login } from '@/routes';
+import { home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 import { index as libraryIndex } from '@/routes/library';
@@ -37,7 +36,7 @@ const props = withDefaults(
     defineProps<{ active?: PublicNavKey; showLocale?: boolean }>(),
     {
         active: 'home',
-        showLocale: true,
+        showLocale: false,
     },
 );
 const page = usePage();
@@ -56,18 +55,14 @@ const activeLiveStream = computed(
             started_at: string | null;
         } | null,
 );
-const canAccessDashboard = computed(
-    () =>
-        isAuthenticated.value &&
-        Boolean(
-            (
-                page.props.permissions as
-                    { accessDashboard?: boolean } | undefined
-            )?.accessDashboard,
-        ),
+const isForeignChurch = computed(() =>
+    Boolean(
+        (page.props.churchContext as { isForeignChurch?: boolean })
+            ?.isForeignChurch,
+    ),
 );
 const brandInitials = computed(() =>
-    (branding.value.brand_name || 'Nossa Casa')
+    (branding.value.brand_name || t('portal.brand_name'))
         .split(/\s+/)
         .filter(Boolean)
         .slice(0, 2)
@@ -137,14 +132,14 @@ const navClass = (key: PublicNavKey): string =>
                     <img
                         v-if="branding.logo_url"
                         :src="branding.logo_url"
-                        :alt="branding.brand_name || 'Nossa Casa'"
+                        :alt="branding.brand_name || t('portal.brand_name')"
                         class="h-full w-full bg-white object-contain p-1"
                     />
                     <template v-else>{{ brandInitials }}</template>
                 </span>
                 <span class="hidden sm:block">
                     <strong class="block text-base leading-tight">{{
-                        branding.brand_name || 'Nossa Casa'
+                        branding.brand_name || t('portal.brand_name')
                     }}</strong>
                     <small
                         class="block font-mono text-[9px] font-bold tracking-[0.2em] text-indigo-200 uppercase"
@@ -170,26 +165,25 @@ const navClass = (key: PublicNavKey): string =>
 
             <div class="flex items-center gap-2">
                 <LocaleSwitcher v-if="showLocale" />
-                <Link
-                    v-if="canAccessDashboard"
-                    :href="dashboard()"
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 text-xs font-bold text-white transition hover:bg-white hover:text-indigo-950"
-                >
-                    <LayoutDashboard class="size-4" />
-                    <span class="hidden lg:inline">{{
-                        t('nav.dashboard')
-                    }}</span>
-                </Link>
                 <DropdownMenu v-if="isAuthenticated && user">
                     <DropdownMenuTrigger :as-child="true">
                         <Button
                             variant="ghost"
                             class="h-10 gap-2 rounded-full border border-indigo-700 px-1.5 pr-3 text-white hover:bg-indigo-950 hover:text-white"
                         >
-                            <span
-                                class="hidden max-w-36 truncate text-xs font-semibold lg:block"
-                                >{{ user.name }}</span
-                            >
+                            <span class="hidden items-center gap-1.5 lg:flex">
+                                <span
+                                    class="max-w-36 truncate text-xs font-semibold"
+                                    >{{ user.name }}</span
+                                >
+                                <CircleAlert
+                                    v-if="isForeignChurch"
+                                    class="size-4 shrink-0 text-sky-300"
+                                    :aria-label="
+                                        t('membership.foreign_indicator')
+                                    "
+                                />
+                            </span>
                             <Avatar class="size-8 ring-2 ring-amber-400/70">
                                 <AvatarImage
                                     v-if="user.avatar"
@@ -242,8 +236,12 @@ const navClass = (key: PublicNavKey): string =>
                 />
             </span>
             <Radio class="size-4" />
-            <span class="truncate">Ao vivo: {{ activeLiveStream.name }}</span>
-            <span class="text-xs font-bold underline">Assistir</span>
+            <span class="truncate">{{
+                t('nav.live_now', { name: activeLiveStream.name })
+            }}</span>
+            <span class="text-xs font-bold underline">{{
+                t('nav.watch')
+            }}</span>
         </Link>
 
         <nav
@@ -261,6 +259,5 @@ const navClass = (key: PublicNavKey): string =>
                 <component :is="item.icon" class="size-4" /> {{ item.label }}
             </Link>
         </nav>
-        <ChurchMembershipPrompt />
     </header>
 </template>

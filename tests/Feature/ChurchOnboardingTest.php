@@ -63,12 +63,12 @@ test('community member can request a church and community owner can approve it',
     expect($registrationRequest->fresh()->status)->toBe('approved')
         ->and($registrationRequest->fresh()->approvedChurch)->not->toBeNull()
         ->and($requester->fresh()->profile->church_id)->toBe($registrationRequest->fresh()->approved_church_id)
-        ->and($requester->fresh()->role)->toBe(UserRole::ADMIN);
+        ->and($requester->fresh()->role)->toBe(UserRole::CHURCH_LEADER);
 });
 
 test('unrelated user cannot approve a church request', function () {
     $owner = User::factory()->create();
-    $outsider = User::factory()->create(['role' => UserRole::ADMIN]);
+    $outsider = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $community = Community::query()->create([
         'owner_id' => $owner->id,
         'name' => 'Protected Community',

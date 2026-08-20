@@ -43,7 +43,6 @@ class RelationTesterSeeder extends Seeder
     {
         $this->seedOrganization();
         $this->seedUsers();
-        $this->call(StarterKitSeeder::class);
         $this->seedContentAndInteractions();
         $this->seedMinistries();
         $this->seedSupportingModules();
@@ -85,7 +84,7 @@ class RelationTesterSeeder extends Seeder
             'guest' => UserRole::GUEST,
             'system' => UserRole::SYSTEM,
             'superadmin' => UserRole::SUPERADMIN,
-            'admin' => UserRole::ADMIN,
+            'church_leader' => UserRole::CHURCH_LEADER,
             'leader' => UserRole::LEADER,
             'media' => UserRole::MEDIA,
             'member' => UserRole::MEMBER,
@@ -93,19 +92,20 @@ class RelationTesterSeeder extends Seeder
         ];
 
         foreach ($roles as $key => $role) {
+            $isSystemUser = $role === UserRole::SYSTEM;
             $this->users[$key] = User::query()->updateOrCreate(
-                ['email' => "{$key}@nossacasa.test"],
-                ['first_name' => ucfirst($key), 'last_name' => 'Teste', 'password' => Hash::make('password'), 'birth_date' => $key === 'child' ? now()->subYears(8)->toDateString() : now()->subYears(28)->toDateString(), 'role' => $role->value],
+                ['email' => $isSystemUser ? config('app.system_user.email') : "{$key}@nossacasa.test"],
+                ['first_name' => ucfirst($key), 'last_name' => $isSystemUser ? 'Nossa Casa' : 'Teste', 'password' => Hash::make('password'), 'birth_date' => $key === 'child' ? now()->subYears(8)->toDateString() : now()->subYears(28)->toDateString(), 'role' => $role->value],
             );
             $this->users[$key]->profile()->updateOrCreate(
                 ['user_id' => $this->users[$key]->id],
-                ['church_id' => $this->church->id, 'community_id' => $this->church->community_id, 'phone' => '+55 11 99999-'.str_pad((string) array_search($key, array_keys($roles), true), 4, '0', STR_PAD_LEFT), 'location_lang' => 'pt-BR', 'gender' => in_array($key, ['admin', 'child'], true) ? 'female' : 'male'],
+                ['church_id' => $this->church->id, 'community_id' => $this->church->community_id, 'phone' => '+55 11 99999-'.str_pad((string) array_search($key, array_keys($roles), true), 4, '0', STR_PAD_LEFT), 'location_lang' => 'pt-BR', 'gender' => in_array($key, ['church_leader', 'child'], true) ? 'female' : 'male'],
             );
         }
 
         foreach ([['parent', 'child', UserRelationships::PARENT], ['child', 'parent', UserRelationships::CHILD], ['member', 'leader', UserRelationships::FRIEND]] as [$user, $relatedUser, $type]) {
-            $source = $user === 'parent' ? $this->users['admin'] : $this->users[$user];
-            $target = $relatedUser === 'parent' ? $this->users['admin'] : $this->users[$relatedUser];
+            $source = $user === 'parent' ? $this->users['church_leader'] : $this->users[$user];
+            $target = $relatedUser === 'parent' ? $this->users['church_leader'] : $this->users[$relatedUser];
             UserRelationship::query()->updateOrCreate(['user_id' => $source->id, 'related_user_id' => $target->id, 'relationship_type' => $type->value]);
         }
     }
@@ -178,7 +178,7 @@ class RelationTesterSeeder extends Seeder
         $women->categories()->syncWithoutDetaching($this->categoryIds(CategoryType::CLASSROOM));
         $kids->members()->syncWithoutDetaching([$this->users['child']->id]);
         $adults->members()->syncWithoutDetaching([$this->users['member']->id]);
-        $women->members()->syncWithoutDetaching([$this->users['admin']->id]);
+        $women->members()->syncWithoutDetaching([$this->users['church_leader']->id]);
         $adults->posts()->syncWithoutDetaching([$post->id]);
         ClassroomPresence::query()->updateOrCreate(['classroom_id' => $kids->id, 'user_id' => $this->users['child']->id, 'check_out' => null], ['check_in' => now(), 'checkout_pin' => Hash::make('123456'), 'pin_generated_at' => now()]);
         ClassroomPresence::query()->updateOrCreate(['classroom_id' => $adults->id, 'user_id' => $this->users['member']->id], ['check_in' => now()->subHour(), 'check_out' => now()]);
@@ -192,7 +192,7 @@ class RelationTesterSeeder extends Seeder
         $library = Library::query()->updateOrCreate(['church_id' => $this->church->id, 'title' => 'Evangelho de João'], ['description' => 'Leitura guiada para a comunidade.', 'type' => 'book', 'file_path' => 'seeders/evangelho-joao.pdf']);
         $library->categories()->syncWithoutDetaching($this->categoryIds(CategoryType::LIBRARY));
         Vercicle::query()->updateOrCreate(['library_id' => $library->id, 'book' => 'João', 'chapter' => '3', 'verse' => '16'], ['content' => 'Porque Deus amou o mundo de tal maneira...', 'version' => 'NAA']);
-        AiQuery::query()->updateOrCreate(['church_id' => $this->church->id, 'provider' => 'openai', 'model' => 'gpt-4.1-mini', 'input' => 'Traduzir o título da postagem de boas-vindas.'], ['response' => 'Welcome to our community', 'usage' => ['prompt_tokens' => 12, 'completion_tokens' => 8, 'total_tokens' => 20], 'status' => 'completed', 'type' => 'translation']);
+        AiQuery::query()->updateOrCreate(['church_id' => $this->church->id, 'provider' => 'openrouter', 'model' => 'inclusionai/ling-3.0-flash:free', 'input' => 'Traduzir o título da postagem de boas-vindas.'], ['response' => 'Welcome to our community', 'usage' => ['prompt_tokens' => 12, 'completion_tokens' => 8, 'total_tokens' => 20], 'status' => 'completed', 'type' => 'translation']);
     }
 
     /** @return array<int, string> */

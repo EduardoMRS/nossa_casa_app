@@ -3,13 +3,19 @@
 namespace App\Models;
 
 use App\Enums\ChurchStatus;
+use App\Observers\ChurchObserver;
 use App\Traits\HasTranslations;
+use Database\Factories\ChurchFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[ObservedBy(ChurchObserver::class)]
 class Church extends Model
 {
-    use HasTranslations, HasUlids;
+    /** @use HasFactory<ChurchFactory> */
+    use HasFactory, HasTranslations, HasUlids;
 
     protected $table = 'churches';
 

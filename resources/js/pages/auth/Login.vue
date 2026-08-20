@@ -39,13 +39,6 @@ const { t } = useI18n();
         {{ status }}
     </div>
 
-    <div
-        v-if="church"
-        class="mb-4 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-center text-sm text-indigo-900"
-    >
-        {{ t('auth.login.church_context', { church: church.name }) }}
-    </div>
-
     <PasskeyVerify />
 
     <Form

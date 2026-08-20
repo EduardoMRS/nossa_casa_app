@@ -25,7 +25,7 @@ function createLibraryVerseAdmin(): User
     ]);
 
     $admin = User::factory()->create([
-        'role' => UserRole::ADMIN,
+        'role' => UserRole::CHURCH_LEADER,
     ]);
 
     UserProfile::query()->create([

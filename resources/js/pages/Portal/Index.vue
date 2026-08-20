@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     ArrowRight,
     Building2,
     Check,
     Church as ChurchIcon,
     Globe2,
+    LocateFixed,
+    MapPin,
     Network,
     Plus,
     Radio,
@@ -13,7 +15,8 @@ import {
     X,
 } from '@lucide/vue';
 import axios from 'axios';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import PortalHeader from '@/components/PortalHeader.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import { useI18n } from '@/lib/i18n';
 import { home, login, register } from '@/routes';
@@ -25,15 +28,18 @@ type Church = {
     domain: string | null;
     url: string | null;
     is_live: boolean;
+    distance_km?: number | null;
 };
 
 type Community = {
     id: string;
     name: string;
     slug: string;
+    url: string;
     description: string;
     churches_count: number;
     churches: Church[];
+    distance_km?: number | null;
 };
 
 type RegistrationRequest = {
@@ -53,6 +59,8 @@ type RegistrationRequest = {
 
 const props = defineProps<{
     communities: Community[];
+    nearbyCommunities: Community[];
+    locationApplied: boolean;
     canOnboard: boolean;
     userCommunityId?: string | null;
     userChurchUrl?: string | null;
@@ -67,6 +75,7 @@ const churchModalOpen = ref(false);
 const processing = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
+const locating = ref(false);
 const domainMode = ref<'subdomain' | 'external'>('subdomain');
 const domainInput = ref('');
 const communityForm = ref({
@@ -126,6 +135,77 @@ const availableCommunities = computed(() =>
         (community) => community.id === props.userCommunityId,
     ),
 );
+
+const requestNearbyCommunities = (
+    latitude: number,
+    longitude: number,
+): void => {
+    router.get(
+        home(),
+        { latitude, longitude },
+        {
+            only: ['nearbyCommunities', 'locationApplied'],
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            onFinish: () => (locating.value = false),
+        },
+    );
+};
+
+onMounted(() => {
+    if (props.locationApplied || !('geolocation' in navigator)) {
+        return;
+    }
+
+    const storedLocation = window.localStorage.getItem('ncapp_portal_location');
+
+    if (storedLocation) {
+        try {
+            const parsed = JSON.parse(storedLocation) as {
+                latitude: number;
+                longitude: number;
+            };
+
+            if (
+                Number.isFinite(parsed.latitude) &&
+                Number.isFinite(parsed.longitude)
+            ) {
+                requestNearbyCommunities(parsed.latitude, parsed.longitude);
+
+                return;
+            }
+        } catch {
+            window.localStorage.removeItem('ncapp_portal_location');
+        }
+
+        window.localStorage.removeItem('ncapp_portal_location');
+    }
+
+    if (window.sessionStorage.getItem('ncapp_location_requested')) {
+        return;
+    }
+
+    locating.value = true;
+    window.sessionStorage.setItem('ncapp_location_requested', '1');
+    navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+            const location = {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+            };
+            window.localStorage.setItem(
+                'ncapp_portal_location',
+                JSON.stringify(location),
+            );
+            requestNearbyCommunities(location.latitude, location.longitude);
+        },
+        () => {
+            locating.value = false;
+        },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 3600000 },
+    );
+});
 
 const requestError = (error: unknown): string => {
     if (axios.isAxiosError(error)) {
@@ -209,47 +289,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 <template>
     <Head :title="t('portal.meta_title')" />
     <div class="min-h-screen bg-[#f7f8fc] text-slate-950">
-        <header class="border-b border-indigo-900/60 bg-[#312e81] text-white">
-            <div
-                class="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 lg:px-8"
-            >
-                <Link :href="home()" class="flex items-center gap-3">
-                    <span
-                        class="grid size-11 place-items-center rounded-xl border border-white/25 bg-white/10 text-lg font-black"
-                        >NC</span
-                    >
-                    <span>
-                        <strong class="block text-base leading-none"
-                            >Nossa Casa</strong
-                        >
-                        <small
-                            class="font-mono text-[9px] tracking-[0.22em] text-indigo-200 uppercase"
-                            >{{ t('portal.network_label') }}</small
-                        >
-                    </span>
-                </Link>
-                <div class="flex items-center gap-2">
-                    <a
-                        v-if="userChurchUrl"
-                        :href="userChurchUrl"
-                        class="rounded-xl bg-white px-4 py-2.5 text-xs font-black text-indigo-950"
-                        >{{ t('portal.open_my_church') }}</a
-                    >
-                    <template v-else-if="!canOnboard">
-                        <Link
-                            :href="login()"
-                            class="rounded-xl px-4 py-2.5 text-xs font-bold text-indigo-100"
-                            >{{ t('nav.login') }}</Link
-                        >
-                        <Link
-                            :href="register()"
-                            class="rounded-xl bg-white px-4 py-2.5 text-xs font-black text-indigo-950"
-                            >{{ t('portal.create_account') }}</Link
-                        >
-                    </template>
-                </div>
-            </div>
-        </header>
+        <PortalHeader :user-church-url="userChurchUrl" />
 
         <main>
             <section
@@ -324,6 +364,86 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </section>
 
             <section
+                v-if="locating || nearbyCommunities.length"
+                class="border-b border-indigo-100 bg-indigo-50/70"
+            >
+                <div class="mx-auto max-w-7xl px-5 py-10 lg:px-8">
+                    <div class="flex items-center gap-3">
+                        <span
+                            class="grid size-11 place-items-center rounded-2xl bg-indigo-700 text-white"
+                        >
+                            <LocateFixed class="size-5" />
+                        </span>
+                        <div>
+                            <p
+                                class="font-mono text-[10px] font-black tracking-[0.18em] text-indigo-600 uppercase"
+                            >
+                                {{ t('portal.nearby.kicker') }}
+                            </p>
+                            <h2 class="text-2xl font-black text-indigo-950">
+                                {{
+                                    locating
+                                        ? t('portal.nearby.locating')
+                                        : t('portal.nearby.title')
+                                }}
+                            </h2>
+                        </div>
+                    </div>
+                    <div
+                        v-if="nearbyCommunities.length"
+                        class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+                    >
+                        <article
+                            v-for="community in nearbyCommunities"
+                            :key="community.id"
+                            class="rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm"
+                        >
+                            <div class="flex items-start justify-between gap-3">
+                                <Link
+                                    :href="community.url"
+                                    class="font-black text-indigo-950 hover:text-indigo-700"
+                                >
+                                    {{ community.name }}
+                                </Link>
+                                <span
+                                    v-if="community.distance_km != null"
+                                    class="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black text-sky-700"
+                                >
+                                    <MapPin class="size-3" />
+                                    {{ community.distance_km }} km
+                                </span>
+                            </div>
+                            <div class="mt-4 space-y-2">
+                                <a
+                                    v-for="church in community.churches.slice(
+                                        0,
+                                        3,
+                                    )"
+                                    :key="church.id"
+                                    :href="church.url ?? undefined"
+                                    class="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-indigo-100"
+                                    :class="{
+                                        'pointer-events-none opacity-60':
+                                            !church.url,
+                                    }"
+                                >
+                                    <span class="truncate">{{
+                                        church.name
+                                    }}</span>
+                                    <span
+                                        v-if="church.distance_km != null"
+                                        class="ml-2 text-slate-400"
+                                    >
+                                        {{ church.distance_km }} km
+                                    </span>
+                                </a>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section
                 id="communities"
                 class="mx-auto max-w-7xl px-5 py-16 lg:px-8"
             >
@@ -356,7 +476,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         :href="login()"
                         class="inline-flex items-center gap-2 rounded-xl border border-indigo-700 px-4 py-3 text-sm font-black text-indigo-700"
                     >
-                        {{ t('auth.login') }}
+                        {{ t('nav.login') }}
                     </Link>
                 </div>
                 <div class="mt-8 grid gap-5 lg:grid-cols-2">
@@ -376,7 +496,12 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     }}</span
                                 >
                                 <h3 class="mt-3 text-xl font-black">
-                                    {{ community.name }}
+                                    <Link
+                                        :href="community.url"
+                                        class="hover:text-indigo-700"
+                                    >
+                                        {{ community.name }}
+                                    </Link>
                                 </h3>
                                 <p
                                     class="mt-2 text-sm leading-6 text-slate-500"
@@ -443,6 +568,13 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     >
                                 </div>
                             </template>
+                            <Link
+                                :href="community.url"
+                                class="mt-3 inline-flex items-center gap-2 text-xs font-black text-indigo-700"
+                            >
+                                {{ t('portal.communities.view') }}
+                                <ArrowRight class="size-4" />
+                            </Link>
                         </div>
                     </article>
                     <p

@@ -24,7 +24,7 @@ test('church branding stores location embed and grouped weekly schedules for the
         'domain' => 'weekly.test',
         'status' => 'active',
     ]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
     $event = Event::query()->create([
         'church_id' => $church->id,
@@ -100,7 +100,7 @@ test('branding rejects unsafe map embeds', function () {
         'domain' => 'safe-church.test',
         'status' => 'active',
     ]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $this->actingAs($admin)
@@ -119,7 +119,7 @@ test('church settings keep the current domain when the domain input is omitted',
         'domain' => 'current-domain.test',
         'status' => 'active',
     ]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $this->actingAs($admin)
@@ -137,7 +137,7 @@ test('church settings derive a church domain when none has been configured', fun
         'slug' => 'generated-domain-church',
         'status' => 'active',
     ]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $this->actingAs($admin)

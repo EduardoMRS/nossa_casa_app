@@ -26,10 +26,12 @@ use App\Models\Translation;
 use App\Models\User;
 use App\Models\UserRelationship;
 use App\Models\Vercicle;
+use Database\Seeders\InitialAiModelSeeder;
 use Database\Seeders\RelationTesterSeeder;
 use Illuminate\Support\Facades\Hash;
 
 test('relation tester seeder creates a complete and repeatable demonstration graph', function () {
+    $this->seed(InitialAiModelSeeder::class);
     $this->seed(RelationTesterSeeder::class);
     $this->seed(RelationTesterSeeder::class);
 
@@ -45,9 +47,9 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
         ->and($church->members()->count())->toBe(8)
         ->and(User::query()->whereIn('email', [
             'guest@nossacasa.test',
-            'system@nossacasa.test',
+            config('app.system_user.email'),
             'superadmin@nossacasa.test',
-            'admin@nossacasa.test',
+            'church_leader@nossacasa.test',
             'leader@nossacasa.test',
             'media@nossacasa.test',
             'member@nossacasa.test',
@@ -77,7 +79,7 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
         ->and(UserRelationship::query()->count())->toBe(3)
         ->and(Setting::query()->where('church_id', $church->id)->exists())->toBeTrue()
         ->and(Category::query()->where('church_id', $church->id)->where('type', 'form')->exists())->toBeTrue()
-        ->and(AiModel::query()->where('model_id', 'gpt-4.1-mini')->exists())->toBeTrue()
+        ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue()
         ->and(AiQuery::query()->where('church_id', $church->id)->exists())->toBeTrue();
 });
 

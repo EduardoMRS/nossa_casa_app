@@ -301,7 +301,8 @@ const personFor = (item: Relationship): Person | undefined =>
                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                     ><label
                         class="text-xs font-bold text-slate-600 sm:col-span-2"
-                        >E-mail<input
+                        >{{ t('auth.common.email')
+                        }}<input
                             v-model="profile.email"
                             required
                             type="email"

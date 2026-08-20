@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Churches\TransferChurchMembership;
 use App\Enums\UserRelationships;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
@@ -22,6 +23,8 @@ use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    public function __construct(private readonly TransferChurchMembership $transferChurchMembership) {}
+
     /**
      * Show the user's profile settings page.
      */
@@ -82,9 +85,6 @@ class ProfileController extends Controller
             ? Church::query()->findOrFail($validated['church_id'])
             : null;
 
-        if ($selectedChurch !== null) {
-            abort_unless($selectedChurch->community_id === ($validated['community_id'] ?? null), 422, 'The selected church does not belong to the selected community.');
-        }
         $nameParts = preg_split('/\s+/', trim($validated['name']), 2) ?: [];
         $request->user()->first_name = $nameParts[0] ?? '';
         $request->user()->last_name = $nameParts[1] ?? '';
@@ -98,7 +98,14 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
-        $profileUpdates = array_intersect_key($validated, array_flip(['phone', 'gender', 'community_id', 'church_id']));
+        $profileUpdates = array_intersect_key($validated, array_flip(['phone', 'gender']));
+
+        if ($selectedChurch !== null && $request->user()->profile?->church_id !== $selectedChurch->id) {
+            $this->transferChurchMembership->handle($request->user(), $selectedChurch);
+        } else {
+            $profileUpdates['community_id'] = $validated['community_id'] ?? null;
+            $profileUpdates['church_id'] = $validated['church_id'] ?? null;
+        }
 
         if ($profileUpdates !== []) {
             $request->user()->profile()->updateOrCreate(
@@ -120,7 +127,7 @@ class ProfileController extends Controller
             }
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.profile_updated')]);
 
         return to_route('profile.edit');
     }
@@ -131,7 +138,7 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
-        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403, 'Protected users cannot be deleted.');
+        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403, __('user.protected_delete'));
 
         Auth::logout();
 

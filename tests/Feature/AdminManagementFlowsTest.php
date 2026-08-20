@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->withoutVite();
 });
 
-function managementUser(UserRole $role = UserRole::ADMIN): User
+function managementUser(UserRole $role = UserRole::CHURCH_LEADER): User
 {
     $church = Church::query()->create([
         'name' => fake()->company(),
@@ -84,7 +84,7 @@ it('scopes multicongregation management to the administrators community', functi
     ]);
     $church = Church::query()->create(['name' => 'Local church', 'slug' => 'local-church', 'community_id' => $community->id]);
     Church::query()->create(['name' => 'Other church', 'slug' => 'other-church', 'community_id' => $otherCommunity->id]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $this->actingAs($admin)
@@ -104,7 +104,7 @@ it('prevents administrators from managing churches outside their community', fun
     $otherCommunity = Community::query()->create(['name' => 'Restricted', 'slug' => 'restricted', 'description' => 'Restricted community']);
     $church = Church::query()->create(['name' => 'Managed church', 'slug' => 'managed-church', 'community_id' => $community->id]);
     $restrictedChurch = Church::query()->create(['name' => 'Restricted church', 'slug' => 'restricted-church', 'community_id' => $otherCommunity->id]);
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($admin);
 
     $this->actingAs($admin)

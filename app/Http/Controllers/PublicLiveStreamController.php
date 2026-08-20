@@ -48,11 +48,11 @@ class PublicLiveStreamController extends Controller
                 'is_public' => $liveStream->is_public,
             ],
             'comments' => $comments,
-            'canComment' => $user !== null && $hasChurchAccess,
+            'canComment' => $user !== null,
             'canModerate' => $hasChurchAccess && in_array($role, [
                 UserRole::LEADER,
                 UserRole::MEDIA,
-                UserRole::ADMIN,
+                UserRole::CHURCH_LEADER,
                 UserRole::SUPERADMIN,
                 UserRole::SYSTEM,
             ], true),

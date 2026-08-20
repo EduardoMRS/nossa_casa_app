@@ -2,15 +2,15 @@
 import { AlertCircle } from '@lucide/vue';
 import { computed } from 'vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useI18n } from '@/lib/i18n';
 
 type Props = {
     errors: string[];
     title?: string;
 };
 
-const props = withDefaults(defineProps<Props>(), {
-    title: 'Something went wrong.',
-});
+const props = defineProps<Props>();
+const { t } = useI18n();
 
 const uniqueErrors = computed(() => Array.from(new Set(props.errors)));
 </script>
@@ -18,7 +18,7 @@ const uniqueErrors = computed(() => Array.from(new Set(props.errors)));
 <template>
     <Alert variant="destructive">
         <AlertCircle class="size-4" />
-        <AlertTitle>{{ title }}</AlertTitle>
+        <AlertTitle>{{ title ?? t('a11y.generic_error') }}</AlertTitle>
         <AlertDescription>
             <ul class="list-inside list-disc text-sm">
                 <li v-for="(error, index) in uniqueErrors" :key="index">

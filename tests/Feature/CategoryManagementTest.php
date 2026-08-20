@@ -7,7 +7,7 @@ use App\Models\Church;
 use App\Models\User;
 
 test('admin can manage categories for the current church', function () {
-    $admin = User::factory()->create(['role' => UserRole::ADMIN]);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 

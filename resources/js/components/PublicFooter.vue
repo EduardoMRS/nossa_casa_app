@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import PwaActions from '@/components/PwaActions.vue';
+import { useI18n } from '@/lib/i18n';
 
 withDefaults(defineProps<{ showLocale?: boolean }>(), {
-    showLocale: false,
+    showLocale: true,
 });
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -14,7 +18,8 @@ withDefaults(defineProps<{ showLocale?: boolean }>(), {
             class="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 px-4 sm:px-6"
         >
             <LocaleSwitcher v-if="showLocale" />
-            <p>© 2026 Projeto Nossa Casa · Open Source (MIT)</p>
+            <PwaActions />
+            <p>{{ t('footer.copyright') }}</p>
         </div>
     </footer>
 </template>

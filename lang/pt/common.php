@@ -16,8 +16,10 @@ return [
     'show' => 'Mostrar',
     'view_more' => 'Ver Mais',
     'more_details' => 'Mais Detalhes',
+    'media' => 'Mídia',
     'errors' => [
         'not_found' => 'Não encontrado',
+        'unauthenticated' => 'Não autenticado.',
         'unauthorized' => 'Não autorizado',
         'forbidden' => 'Proibido',
         'many_requests' => 'Muitas solicitações',
@@ -38,6 +40,9 @@ return [
         'media_deleted' => 'Mídia excluída com sucesso.',
         'media_moderated' => 'Moderação de mídia atualizada.',
         'classrooms_updated' => 'Configurações de sala de aula atualizadas.',
-        'church_settings_updated' => 'Configurações da church atualizadas com sucesso.',
+        'church_settings_updated' => 'Configurações da igreja atualizadas com sucesso.',
+        'profile_updated' => 'Perfil atualizado.',
+        'password_updated' => 'Senha atualizada.',
+        'form_response_saved' => 'Resposta do formulário salva com sucesso.',
     ],
 ];

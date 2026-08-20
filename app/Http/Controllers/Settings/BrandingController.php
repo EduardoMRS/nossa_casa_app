@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
 use App\Models\Setting;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchTerminology;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class BrandingController extends Controller
 {
+    public function __construct(private ChurchTerminology $terminology) {}
+
     public function edit(Request $request): Response
     {
         $church = $request->user()?->church;
@@ -25,6 +28,8 @@ class BrandingController extends Controller
 
         $setting = Setting::query()->where('church_id', $church->id)->first();
         $branding = $setting?->options['branding'] ?? [];
+        $templates = $setting?->options['templates'] ?? [];
+        $savedTerminology = $setting?->options['terminology'] ?? [];
         $currentHost = ChurchDomainContext::normalizeDomain($request->getHost());
         $defaultDomain = $church->domain ?: (
             $currentHost === app(ChurchDomainContext::class)->mainHost()
@@ -34,6 +39,12 @@ class BrandingController extends Controller
         if (is_array($branding) && ! empty($branding['logo_path'])) {
             $branding['logo_url'] = genUrl($branding['logo_path']);
         }
+        $address = $church->address()->first();
+
+        if ($address) {
+            $branding['latitude'] ??= $address->latitude;
+            $branding['longitude'] ??= $address->longitude;
+        }
 
         return Inertia::render('Admin/Branding', [
             'branding' => array_merge(
@@ -41,6 +52,9 @@ class BrandingController extends Controller
                 is_array($branding) ? $branding : [],
                 ['domain' => $defaultDomain],
             ),
+            'templates' => array_merge($this->defaultTemplates(), is_array($templates) ? $templates : []),
+            'terminology' => $this->terminology->selections(is_array($savedTerminology) ? $savedTerminology : []),
+            'terminologyOptions' => $this->terminology->options(),
         ]);
     }
 
@@ -49,6 +63,8 @@ class BrandingController extends Controller
         $church = $request->user()->church;
         $validated = $request->validated();
         $domain = Arr::pull($validated, 'domain');
+        $templates = Arr::pull($validated, 'templates', []);
+        $terminology = Arr::pull($validated, 'terminology', []);
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
         Arr::forget($validated, 'logo');
         $validated['map_embed'] = $this->sanitizeMapEmbed($validated['map_embed'] ?? null);
@@ -80,6 +96,13 @@ class BrandingController extends Controller
         }
 
         $options['branding'] = array_merge($currentBranding, $validated);
+        $options['templates'] = array_merge($this->defaultTemplates(), $templates);
+        $options['terminology'] = $this->terminology->selections($terminology);
+
+        $church->address()->first()?->update([
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+        ]);
 
         $church->update(['domain' => $domain]);
         $setting->update(['options' => $options]);
@@ -111,8 +134,25 @@ class BrandingController extends Controller
             'contact_phone' => '',
             'contact_whatsapp' => '',
             'address' => '',
+            'latitude' => null,
+            'longitude' => null,
             'map_embed' => '',
             'weekly_schedule' => [],
+        ];
+    }
+
+    /** @return array<string, string> */
+    private function defaultTemplates(): array
+    {
+        return [
+            'home' => 'classic',
+            'posts_index' => 'classic',
+            'posts_show' => 'classic',
+            'events_index' => 'classic',
+            'events_show' => 'classic',
+            'form' => 'classic',
+            'library' => 'classic',
+            'gallery' => 'classic',
         ];
     }
 
@@ -145,7 +185,7 @@ class BrandingController extends Controller
 
         if ($scheme !== 'https' || ! $isAllowedHost) {
             throw ValidationException::withMessages([
-                'map_embed' => __('Use a secure Google Maps or OpenStreetMap embed.'),
+                'map_embed' => __('church.map_embed_secure_required'),
             ]);
         }
 

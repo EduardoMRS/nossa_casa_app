@@ -24,8 +24,8 @@ const selectedLocale = computed({
             v-model="selectedLocale"
             class="rounded bg-transparent pr-4 text-xs font-semibold text-[#21364b] outline-none"
         >
-            <option value="pt">PT</option>
-            <option value="en">EN</option>
+            <option value="pt">{{ t('locale.pt_short') }}</option>
+            <option value="en">{{ t('locale.en_short') }}</option>
         </select>
     </label>
 </template>

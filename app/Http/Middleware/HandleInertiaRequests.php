@@ -7,11 +7,14 @@ use App\Models\Classroom;
 use App\Models\LiveStream;
 use App\Models\Setting;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchTerminology;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(private ChurchTerminology $terminology) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -44,6 +47,13 @@ class HandleInertiaRequests extends Middleware
         $role = $user?->role?->value ?? (string) $user?->role;
         $domainContext = app(ChurchDomainContext::class);
         $currentChurch = $domainContext->church();
+        $isForeignChurch = $currentChurch !== null
+            && $user !== null
+            && $user->role?->value !== 'system'
+            && $user->profile?->church_id !== $currentChurch->id;
+        $isOwnChurch = $currentChurch !== null
+            && $user !== null
+            && $user->profile?->church_id === $currentChurch->id;
         $classroomChurchId = $currentChurch?->id ?? $user?->profile?->church_id ?? $user?->church?->id;
 
         $branding = [
@@ -63,6 +73,8 @@ class HandleInertiaRequests extends Middleware
             'contact_phone' => '',
             'contact_whatsapp' => '',
             'address' => '',
+            'latitude' => null,
+            'longitude' => null,
             'map_embed' => '',
             'weekly_schedule' => [],
         ];
@@ -86,6 +98,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'portalUrl' => rtrim((string) config('app.url'), '/'),
             'locale' => app()->getLocale(),
             'auth' => [
                 'user' => $user,
@@ -112,7 +125,12 @@ class HandleInertiaRequests extends Middleware
                     'domain' => $currentChurch->domain,
                     'community' => $currentChurch->community,
                 ] : null,
-                'membershipPending' => $currentChurch && $request->session()->get('church_membership_pending') === $currentChurch->id,
+                'userChurch' => $user?->church ? [
+                    'id' => $user->church->id,
+                    'name' => $user->church->name,
+                    'domain' => $user->church->domain,
+                ] : null,
+                'isForeignChurch' => $isForeignChurch,
             ],
             'activeLiveStream' => $currentChurch
                 ? LiveStream::query()
@@ -125,9 +143,29 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => $branding,
+            'publicTemplates' => array_merge([
+                'home' => 'classic',
+                'posts_index' => 'classic',
+                'posts_show' => 'classic',
+                'events_index' => 'classic',
+                'events_show' => 'classic',
+                'form' => 'classic',
+                'library' => 'classic',
+                'gallery' => 'classic',
+            ], is_array($setting?->options['templates'] ?? null) ? $setting->options['templates'] : []),
+            'terminology' => $this->terminology->resolved(
+                is_array($setting?->options['terminology'] ?? null)
+                    ? $setting->options['terminology']
+                    : [],
+            ),
+            'pwa' => [
+                'publicKey' => config('services.webpush.public_key'),
+            ],
             'permissions' => [
-                'accessDashboard' => in_array($role, ['leader', 'media', 'admin', 'superadmin', 'system'], true),
-                'manageBranding' => in_array($role, ['admin', 'superadmin', 'system'], true),
+                'accessDashboard' => ($role === 'system' || $isOwnChurch)
+                    && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true),
+                'manageBranding' => ($role === 'system' || $isOwnChurch)
+                    && in_array($role, ['church_leader', 'superadmin', 'system'], true),
             ],
             'classrooms' => [
                 'hasKids' => $classroomChurchId

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRelationships;
+use App\Enums\UserRole;
 use App\Http\Requests\Classroom\CheckInClassroomRequest;
 use App\Http\Requests\Classroom\CheckOutClassroomRequest;
 use App\Http\Requests\Classroom\StoreClassroomRequest;
@@ -10,7 +11,9 @@ use App\Http\Requests\Classroom\UpdateClassroomRequest;
 use App\Models\Classroom;
 use App\Models\ClassroomPresence;
 use App\Models\User;
+use App\Notifications\ChildCheckedInNotification;
 use App\Notifications\ChildReleasedNotification;
+use App\Support\ChurchDomainContext;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -27,12 +30,15 @@ class ClassroomController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $churchId = $request->user()->church?->id;
-        abort_unless($churchId, 422, 'A church membership is required to list classrooms.');
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()->church?->id;
+        abort_unless($churchId, 422, __('church.membership_classroom_list_required'));
+        $isForeignChurch = $request->user()->profile?->church_id !== $churchId;
 
         return response()->json(Classroom::query()
             ->where('church_id', $churchId)
-            ->with(['teacher:id,first_name,last_name', 'members:id,first_name,last_name'])
+            ->when($isForeignChurch, fn ($query) => $query->where('is_kids', true))
+            ->with(['teacher:id,first_name,last_name'])
+            ->when(! $isForeignChurch, fn ($query) => $query->with('members:id,first_name,last_name'))
             ->withCount(['members', 'presences as active_presences_count' => fn ($query) => $query->whereNull('check_out')])
             ->latest()
             ->paginate(15)
@@ -42,7 +48,7 @@ class ClassroomController extends Controller
     public function store(StoreClassroomRequest $request): JsonResponse
     {
         $church = $request->user()->church;
-        abort_unless($church?->exists, 422, 'A church membership is required to create classrooms.');
+        abort_unless($church?->exists, 422, __('church.membership_classroom_create_required'));
 
         $classroom = $church->classrooms()->create($request->safe()->only([
             'name', 'description', 'min_age', 'max_age', 'gender_restriction', 'is_kids', 'max_members', 'teacher_id',
@@ -89,10 +95,13 @@ class ClassroomController extends Controller
 
     public function checkIn(CheckInClassroomRequest $request, Classroom $classroom): JsonResponse
     {
-        $this->ensureChurchAccess($request, $classroom->church_id);
         $student = User::query()->with('profile')->findOrFail($request->validated('user_id'));
-        $this->ensureEligibleStudent($classroom, $student);
-        $handoff = $this->validatedHandoff($request, $student, $classroom->is_kids);
+        $isVisitingGuardian = $this->isVisitingGuardian($request, $classroom, $student);
+        $this->ensureClassroomAttendanceAccess($request, $classroom, $isVisitingGuardian);
+        $this->ensureEligibleStudent($classroom, $student, requireMembership: ! $isVisitingGuardian);
+        $handoff = $isVisitingGuardian
+            ? $this->authenticatedGuardianHandoff($request, 'dropoff')
+            : $this->validatedHandoff($request, $student, $classroom->is_kids);
 
         $alreadyCheckedIn = $classroom->presences()
             ->where('user_id', $student->id)
@@ -100,7 +109,7 @@ class ClassroomController extends Controller
             ->exists();
 
         if (! $alreadyCheckedIn && $classroom->max_members !== null && $classroom->presences()->whereNull('check_out')->count() >= $classroom->max_members) {
-            throw ValidationException::withMessages(['user_id' => 'A sala já atingiu o limite de alunos presentes.']);
+            throw ValidationException::withMessages(['user_id' => __('classroom.capacity_reached')]);
         }
 
         $presence = $classroom->presences()->firstOrCreate(
@@ -118,6 +127,10 @@ class ClassroomController extends Controller
             ]);
         }
 
+        if ($classroom->is_kids && $presence->wasRecentlyCreated) {
+            $this->notifyGuardiansAboutCheckIn($student, $classroom, $presence->check_in->toIso8601String());
+        }
+
         return response()->json([
             'message' => __('checkin.checkin_success'),
             'presence' => $presence->fresh(),
@@ -128,21 +141,24 @@ class ClassroomController extends Controller
 
     public function checkOut(CheckOutClassroomRequest $request, Classroom $classroom): JsonResponse
     {
-        $this->ensureChurchAccess($request, $classroom->church_id);
+        $student = User::query()->with('profile')->findOrFail($request->validated('user_id'));
+        $isVisitingGuardian = $this->isVisitingGuardian($request, $classroom, $student);
+        $this->ensureClassroomAttendanceAccess($request, $classroom, $isVisitingGuardian);
         $presence = $classroom->presences()
             ->where('user_id', $request->validated('user_id'))
             ->whereNull('check_out')
             ->latest('check_in')
             ->firstOrFail();
-        $student = User::query()->findOrFail($request->validated('user_id'));
-        $handoff = $this->validatedHandoff($request, $student, $classroom->is_kids, 'pickup');
+        $handoff = $isVisitingGuardian
+            ? $this->authenticatedGuardianHandoff($request, 'pickup')
+            : $this->validatedHandoff($request, $student, $classroom->is_kids, 'pickup');
 
         if ($classroom->is_kids && ! $presence->checkout_pin) {
-            throw ValidationException::withMessages(['pin' => 'A checkout PIN is required for Kids classrooms.']);
+            throw ValidationException::withMessages(['pin' => __('classroom.checkout_pin_required')]);
         }
 
         if ($classroom->is_kids && ! Hash::check((string) $request->validated('pin'), $presence->checkout_pin)) {
-            throw ValidationException::withMessages(['pin' => 'O PIN de retirada informado não confere.']);
+            throw ValidationException::withMessages(['pin' => __('classroom.checkout_pin_invalid')]);
         }
 
         $checkedOutAt = now();
@@ -193,21 +209,54 @@ class ClassroomController extends Controller
         $classroom->members()->sync($eligibleMemberIds);
     }
 
-    private function ensureEligibleStudent(Classroom $classroom, User $student): void
+    private function ensureEligibleStudent(Classroom $classroom, User $student, bool $requireMembership = true): void
     {
-        if (! $classroom->members()->whereKey($student->id)->exists()) {
-            throw ValidationException::withMessages(['user_id' => 'O aluno não pertence a esta sala.']);
+        if ($requireMembership && ! $classroom->members()->whereKey($student->id)->exists()) {
+            throw ValidationException::withMessages(['user_id' => __('classroom.student_membership_required')]);
         }
 
         $age = $student->birth_date?->age;
         if (($classroom->min_age !== null && ($age === null || $age < $classroom->min_age))
             || ($classroom->max_age !== null && ($age === null || $age > $classroom->max_age))) {
-            throw ValidationException::withMessages(['user_id' => 'A idade do aluno não é compatível com esta sala.']);
+            throw ValidationException::withMessages(['user_id' => __('classroom.student_age_mismatch')]);
         }
 
         if ($classroom->gender_restriction && $student->profile?->gender !== $classroom->gender_restriction) {
-            throw ValidationException::withMessages(['user_id' => 'O gênero do aluno não é compatível com esta sala.']);
+            throw ValidationException::withMessages(['user_id' => __('classroom.student_gender_mismatch')]);
         }
+    }
+
+    private function isVisitingGuardian(Request $request, Classroom $classroom, User $student): bool
+    {
+        return $classroom->is_kids
+            && $request->user()->profile?->church_id !== $classroom->church_id
+            && $this->guardiansFor($student)->contains('id', $request->user()->id);
+    }
+
+    private function ensureClassroomAttendanceAccess(Request $request, Classroom $classroom, bool $isVisitingGuardian): void
+    {
+        if ($isVisitingGuardian) {
+            return;
+        }
+
+        $this->ensureChurchAccess($request, $classroom->church_id);
+        abort_unless(in_array($request->user()->role, [
+            UserRole::LEADER,
+            UserRole::MEDIA,
+            UserRole::CHURCH_LEADER,
+            UserRole::SUPERADMIN,
+            UserRole::SYSTEM,
+        ], true), 403);
+    }
+
+    /** @return array<string, string|null> */
+    private function authenticatedGuardianHandoff(Request $request, string $prefix): array
+    {
+        return [
+            "{$prefix}_user_id" => $request->user()->id,
+            "{$prefix}_name" => $request->user()->name,
+            "{$prefix}_phone" => $request->user()->profile?->phone,
+        ];
     }
 
     /**
@@ -226,7 +275,7 @@ class ClassroomController extends Controller
         if ($guardianId) {
             $guardian = $this->guardiansFor($student)->firstWhere('id', $guardianId);
             if (! $guardian) {
-                throw ValidationException::withMessages(['guardian_user_id' => 'O responsavel selecionado nao possui vinculo com esta crianca.']);
+                throw ValidationException::withMessages(['guardian_user_id' => __('classroom.guardian_relationship_required')]);
             }
 
             return [
@@ -238,7 +287,7 @@ class ClassroomController extends Controller
 
         if ($name === '' || $phone === '') {
             throw ValidationException::withMessages([
-                'handoff_name' => 'Informe o nome e o telefone de quem esta acompanhando a crianca.',
+                'handoff_name' => __('classroom.handoff_contact_required'),
             ]);
         }
 
@@ -276,13 +325,24 @@ class ClassroomController extends Controller
         $pickupPhone = $handoff['pickup_phone'] ?? null;
 
         $this->guardiansFor($student)->each(function (User $guardian) use ($student, $classroom, $pickupName, $pickupPhone, $checkedOutAt): void {
-            $guardian->notify(new ChildReleasedNotification(
+            $guardian->notify((new ChildReleasedNotification(
                 childName: $student->name,
                 classroomName: $classroom->name,
                 pickupName: $pickupName,
                 pickupPhone: $pickupPhone,
                 checkedOutAt: $checkedOutAt,
-            ));
+            ))->afterCommit());
+        });
+    }
+
+    private function notifyGuardiansAboutCheckIn(User $student, Classroom $classroom, string $checkedInAt): void
+    {
+        $this->guardiansFor($student)->each(function (User $guardian) use ($student, $classroom, $checkedInAt): void {
+            $guardian->notify((new ChildCheckedInNotification(
+                childName: $student->name,
+                classroomName: $classroom->name,
+                checkedInAt: $checkedInAt,
+            ))->afterCommit());
         });
     }
 }

@@ -22,7 +22,7 @@ class StoreLiveStreamRequest extends FormRequest
 
         return $user !== null && in_array($user->role, [
             UserRole::MEDIA,
-            UserRole::ADMIN,
+            UserRole::CHURCH_LEADER,
             UserRole::SUPERADMIN,
         ], true) && $user->church()->exists();
     }

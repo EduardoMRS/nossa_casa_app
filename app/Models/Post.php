@@ -105,7 +105,7 @@ class Post extends Model
         $user = auth()->user();
         $role = $user?->role?->value ?? (string) $user?->role;
 
-        if ($user && in_array($role, ['leader', 'media', 'admin', 'superadmin', 'system'], true)) {
+        if ($user && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true)) {
             if ($role === 'system') {
                 return $query;
             }

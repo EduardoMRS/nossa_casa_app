@@ -31,7 +31,7 @@ class CommentController extends Controller
         ]);
 
         $commentable = $this->findCommentable($validated['commentable_type'], $validated['commentable_id']);
-        $this->ensureChurchAccess($request, $this->commentableChurchId($commentable));
+        $this->ensurePublicChurchResource($this->commentableChurchId($commentable));
 
         $comment = Comment::create([
             ...$validated,
@@ -44,8 +44,9 @@ class CommentController extends Controller
 
     public function update(Request $request, Comment $comment)
     {
-        $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
-        $this->ensureOwnerOrModerator($request, $comment->user_id);
+        $churchId = $this->commentableChurchId($comment);
+        $this->ensurePublicChurchResource($churchId);
+        $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->update($request->validate(['content' => ['required', 'string', 'max:5000']]));
 
         return response()->json($comment);
@@ -53,8 +54,9 @@ class CommentController extends Controller
 
     public function destroy(Request $request, Comment $comment)
     {
-        $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
-        $this->ensureOwnerOrModerator($request, $comment->user_id);
+        $churchId = $this->commentableChurchId($comment);
+        $this->ensurePublicChurchResource($churchId);
+        $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->delete();
 
         return response()->noContent();
@@ -63,7 +65,7 @@ class CommentController extends Controller
     public function pin(Request $request, Comment $comment): JsonResponse
     {
         $role = $request->user()->role;
-        abort_unless(in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::ADMIN, UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
+        abort_unless(in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
 
         $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
         $validated = $request->validate(['is_pinned' => ['required', 'boolean']]);

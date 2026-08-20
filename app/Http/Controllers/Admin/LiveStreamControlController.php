@@ -27,7 +27,7 @@ class LiveStreamControlController extends Controller
         $church ??= $request->user()?->church;
         $church ??= $isSystem ? Church::query()->orderBy('name')->first() : null;
 
-        abort_unless($church instanceof Church, 422, 'A church context is required.');
+        abort_unless($church instanceof Church, 422, __('church.context_required'));
         abort_unless(
             $isSystem
                 || $request->user()?->profile?->church_id === $church->id,

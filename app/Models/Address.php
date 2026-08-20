@@ -20,9 +20,19 @@ class Address extends Model
         'number',
         'complement',
         'zipcode',
+        'latitude',
+        'longitude',
     ];
 
     protected $table = 'addresses';
+
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'float',
+            'longitude' => 'float',
+        ];
+    }
 
     public function addressable()
     {

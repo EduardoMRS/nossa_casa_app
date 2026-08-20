@@ -374,7 +374,9 @@ onBeforeUnmount(revokePreview);
                                 class="mt-3 grid grid-cols-2 gap-2 text-[11px] text-amber-950"
                             >
                                 <div>
-                                    <dt class="font-bold">MIME</dt>
+                                    <dt class="font-bold">
+                                        {{ t('admin.common.mimetype') }}
+                                    </dt>
                                     <dd>{{ selected.mimetype || '—' }}</dd>
                                 </div>
                                 <div>
@@ -395,7 +397,9 @@ onBeforeUnmount(revokePreview);
                                     <option value="file">
                                         {{ t('gallery.file') }}
                                     </option>
-                                    <option value="url">URL</option>
+                                    <option value="url">
+                                        {{ t('admin.common.url') }}
+                                    </option>
                                 </select></label
                             ><label class="block text-xs font-bold"
                                 >{{ t('admin.media.file_url')

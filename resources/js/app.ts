@@ -7,6 +7,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { installI18n } from '@/lib/i18n';
+import { initializePwa } from '@/lib/pwa';
 
 if (import.meta.env.PROD) {
     const noop = (): void => {};
@@ -65,3 +66,5 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
+
+initializePwa();

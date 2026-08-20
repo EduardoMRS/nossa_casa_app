@@ -152,7 +152,9 @@ const remove = (category: CategoryItem): void => {
                             <th class="px-5 py-3">
                                 {{ t('admin.common.name') }}
                             </th>
-                            <th class="px-5 py-3">Slug</th>
+                            <th class="px-5 py-3">
+                                {{ t('admin.common.slug') }}
+                            </th>
                             <th class="px-5 py-3">
                                 {{ t('admin.common.type') }}
                             </th>
@@ -250,7 +252,8 @@ const remove = (category: CategoryItem): void => {
                     {{ errors.name }}
                 </p>
                 <label class="block text-xs font-bold text-foreground"
-                    >Slug<input
+                    >{{ t('admin.common.slug')
+                    }}<input
                         v-model="form.slug"
                         required
                         class="mt-1 w-full rounded-lg border-input bg-background text-foreground" /></label

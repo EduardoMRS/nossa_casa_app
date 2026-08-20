@@ -37,7 +37,7 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $churchId = $request->user()?->church?->id;
-        abort_unless($churchId !== null, 422, 'A church membership is required to manage categories.');
+        abort_unless($churchId !== null, 422, __('church.membership_category_manage_required'));
 
         $category = Category::create([
             'church_id' => $churchId,
@@ -97,7 +97,7 @@ class CategoryController extends Controller
         ]);
 
         $category = Category::query()->findOrFail($validated['category_id']);
-        abort_unless($category->church_id, 422, 'A church category is required.');
+        abort_unless($category->church_id, 422, __('category.church_required'));
         $this->ensureChurchAccess($request, $category->church_id);
         $modelClass = match ($item_type) {
             'post' => Post::class,
@@ -119,7 +119,7 @@ class CategoryController extends Controller
             'form' => CategoryType::FORM,
         };
 
-        abort_unless($category->type === $requiredCategoryType, 422, 'Category type does not match the item type.');
+        abort_unless($category->type === $requiredCategoryType, 422, __('category.type_mismatch'));
         // Sincroniza a categoria sem remover as anteriores usando o relacionamento polimórfico
         $model->categories()->syncWithoutDetaching([$validated['category_id']]);
 

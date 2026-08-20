@@ -123,9 +123,6 @@ class PublicGalleryController extends Controller
 
     private function canInteract(Request $request, ?string $churchId): bool
     {
-        $user = $request->user();
-        $role = $user?->role?->value ?? (string) $user?->role;
-
-        return $role === 'system' || ($churchId !== null && $user?->profile?->church_id === $churchId);
+        return $request->user() !== null && $churchId !== null;
     }
 }

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Church;
+use App\Models\Event;
 use App\Models\Highlight;
+use App\Models\Media;
+use App\Models\Post;
 use Illuminate\Http\Request;
 
 class HighlightController extends Controller
@@ -24,14 +27,14 @@ class HighlightController extends Controller
         Highlight::where('church_id', $church->id)->delete();
 
         $highlights = collect($validated['highlights'])->map(function ($item) use ($church) {
-            $highlightableClass = match($item['type']) {
-                'post' => \App\Models\Post::class,
-                'event' => \App\Models\Event::class,
-                'media' => \App\Models\Media::class,
+            $highlightableClass = match ($item['type']) {
+                'post' => Post::class,
+                'event' => Event::class,
+                'media' => Media::class,
             };
 
             $highlightable = $highlightableClass::query()->findOrFail($item['id']);
-            abort_unless($highlightable->church_id === $church->id, 422, 'Highlights must belong to the selected church.');
+            abort_unless($highlightable->church_id === $church->id, 422, __('church.highlights_must_match'));
 
             return Highlight::create([
                 'highlightable_id' => $item['id'],

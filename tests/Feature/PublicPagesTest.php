@@ -11,6 +11,7 @@ use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('guests can visit public home page', function () {
@@ -152,7 +153,8 @@ test('public posts support blog filters and related content', function () {
             ->where('posts.data.0.views_count', 42)
             ->where('filters.category', $category->id)
             ->where('filters.sort', 'popular')
-            ->where('categories.0.id', $category->id)
+            ->where('categories', fn (Collection $categories): bool => $categories
+                ->contains(fn (array $item): bool => $item['id'] === $category->id))
             ->where('mostViewed.0.id', $featuredPost->id));
 
     $this->get('http://blog.test/posts/'.$featuredPost->slug)

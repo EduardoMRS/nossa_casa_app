@@ -13,7 +13,7 @@ class FormResponseController extends Controller
 {
     public function store(Request $request, Form $form): JsonResponse
     {
-        $this->ensureChurchAccess($request, $form->church_id);
+        $this->ensurePublicChurchResource($form->church_id);
 
         $validated = $request->validate([
             'answers' => ['required', 'array'],
@@ -43,7 +43,7 @@ class FormResponseController extends Controller
             $value = $answers[$key] ?? null;
 
             if ($value === null || $value === '' || (is_array($value) && count($value) === 0)) {
-                $errors["answers.{$key}"] = "The field {$key} is required.";
+                $errors["answers.{$key}"] = __('form.field_required', ['field' => $key]);
             }
         });
 
@@ -76,7 +76,7 @@ class FormResponseController extends Controller
         }
 
         return response()->json([
-            'message' => 'Form response saved successfully.',
+            'message' => __('common.notifications.form_response_saved'),
             'data' => $response,
         ], $response->wasRecentlyCreated ? 201 : 200);
     }

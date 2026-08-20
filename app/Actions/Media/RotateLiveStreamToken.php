@@ -14,8 +14,8 @@ class RotateLiveStreamToken
 
     public function handle(LiveStream $liveStream): string
     {
-        abort_unless($liveStream->input_mode === 'publisher', 422, 'Only publisher streams have a token.');
-        abort_unless($liveStream->active_slot === 1, 422, 'Only an active stream can rotate its token.');
+        abort_unless($liveStream->input_mode === 'publisher', 422, __('livestream.publisher_token_only'));
+        abort_unless($liveStream->active_slot === 1, 422, __('livestream.active_token_only'));
 
         $token = Str::random(64);
         $this->mediaMtx->removePath($liveStream);

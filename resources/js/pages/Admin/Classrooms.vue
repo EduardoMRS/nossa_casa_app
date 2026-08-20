@@ -457,14 +457,17 @@ function updateSeparation(value: boolean): void {
                     </select></label
                 >
                 <label class="text-xs font-bold text-slate-500"
-                    >Kids<select
+                    >{{ t('admin.classrooms.kids')
+                    }}<select
                         v-model="filterKids"
                         class="mt-1 w-full rounded-lg border-slate-300"
                     >
                         <option value="all">
                             {{ t('admin.classrooms.all_rooms') }}
                         </option>
-                        <option value="kids">Kids</option>
+                        <option value="kids">
+                            {{ t('admin.classrooms.kids') }}
+                        </option>
                         <option value="regular">
                             {{ t('admin.classrooms.regular_rooms') }}
                         </option>

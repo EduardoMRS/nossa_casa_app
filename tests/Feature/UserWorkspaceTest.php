@@ -100,6 +100,28 @@ test('member can update user and profile fields including avatar', function () {
     Storage::disk('media')->assertExists($user->profile->avatar_path);
 });
 
+test('profile church selection requires its matching community', function () {
+    $user = User::factory()->create();
+    $community = Community::factory()->create();
+    $otherCommunity = Community::factory()->create();
+    $church = Church::factory()->create(['community_id' => $community->id]);
+
+    $this->actingAs($user)->patch(route('profile.update'), [
+        'name' => $user->name,
+        'email' => $user->email,
+        'church_id' => $church->id,
+    ])->assertSessionHasErrors('church_id');
+
+    $this->patch(route('profile.update'), [
+        'name' => $user->name,
+        'email' => $user->email,
+        'community_id' => $otherCommunity->id,
+        'church_id' => $church->id,
+    ])->assertSessionHasErrors('church_id');
+
+    expect($user->fresh()->profile?->church_id)->toBeNull();
+});
+
 test('guardian can register a child with care notes', function () {
     $community = Community::query()->create([
         'name' => 'Family Community',

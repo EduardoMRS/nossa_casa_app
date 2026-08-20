@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import { BookOpen, Download, ExternalLink } from '@lucide/vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 type Item = {
     id: string;
@@ -19,10 +20,12 @@ defineProps<{
     };
 }>();
 const { t } = useI18n();
+const publicTemplate = usePublicTemplate('library');
 </script>
 <template>
     <div
-        class="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
+        :data-public-template="publicTemplate"
         :style="{
             backgroundColor: 'var(--church-surface, #f8fafc)',
             fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',

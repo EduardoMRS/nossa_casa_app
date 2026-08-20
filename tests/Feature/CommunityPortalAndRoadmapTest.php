@@ -1,0 +1,142 @@
+<?php
+
+use App\Enums\ChurchStatus;
+use App\Models\Church;
+use App\Models\Community;
+use App\Models\Event;
+use App\Models\Library;
+use App\Models\Network;
+use App\Models\Post;
+use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    $this->withoutVite();
+});
+
+test('community pages prioritize local churches and expose the organizational tree', function () {
+    $community = Community::factory()->create([
+        'name' => 'Regional Community',
+        'slug' => 'regional-community',
+    ]);
+    $headquarters = Church::factory()->for($community)->create([
+        'name' => 'Central Temple',
+        'domain' => 'central-tree.test',
+    ]);
+    $nearbyBranch = Church::factory()->for($community)->create([
+        'name' => 'Nearby Congregation',
+        'domain' => 'nearby-tree.test',
+    ]);
+    $farBranch = Church::factory()->for($community)->create([
+        'name' => 'Far Congregation',
+        'domain' => 'far-tree.test',
+    ]);
+    Church::factory()->for($community)->create([
+        'name' => 'Inactive Unit',
+        'status' => ChurchStatus::INACTIVE,
+    ]);
+
+    $headquarters->address()->create(['city' => 'Manaus', 'state' => 'AM', 'street' => 'Central Avenue', 'zipcode' => '69000-000', 'latitude' => -3.1190, 'longitude' => -60.0217]);
+    $nearbyBranch->address()->create(['city' => 'Manaus', 'state' => 'AM', 'street' => 'Nearby Avenue', 'zipcode' => '69000-001', 'latitude' => -3.1200, 'longitude' => -60.0200]);
+    $farBranch->address()->create(['city' => 'Boa Vista', 'state' => 'RR', 'street' => 'Far Avenue', 'zipcode' => '69300-000', 'latitude' => 2.8235, 'longitude' => -60.6758]);
+
+    Network::query()->create([
+        'community_id' => $community->id,
+        'parent_church_id' => $headquarters->id,
+        'child_church_id' => $nearbyBranch->id,
+    ]);
+    Network::query()->create([
+        'community_id' => $community->id,
+        'parent_church_id' => $headquarters->id,
+        'child_church_id' => $farBranch->id,
+    ]);
+
+    $member = User::factory()->create();
+    $nearbyBranch->assignMember($member);
+    Event::query()->create([
+        'church_id' => $nearbyBranch->id,
+        'author_id' => $member->id,
+        'title' => 'Local Gathering',
+        'slug' => 'local-gathering',
+        'start_time' => now()->addWeek(),
+        'end_time' => now()->addWeek()->addHours(2),
+    ]);
+
+    $this->get('/communities/regional-community?latitude=-3.1200&longitude=-60.0200')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/CommunityShow')
+            ->where('community.name', 'Regional Community')
+            ->where('stats.churches', 3)
+            ->where('stats.members', 1)
+            ->where('stats.upcoming_events', 1)
+            ->has('churches', 3)
+            ->where('churches.0.id', $nearbyBranch->id)
+            ->where('churches.0.distance_km', fn (float $distance): bool => $distance < 1)
+            ->where('tree.0.id', $headquarters->id)
+            ->has('tree.0.children', 2)
+            ->where('locationApplied', true));
+
+    $this->get('http://nearby-tree.test/communities/regional-community')
+        ->assertRedirect(rtrim((string) config('app.url'), '/').'/communities/regional-community');
+});
+
+test('portal community cards link to their public detail page', function () {
+    Community::factory()->create([
+        'name' => 'Linked Community',
+        'slug' => 'linked-community',
+    ]);
+
+    $this->get('/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->where('communities.0.url', route('communities.show', 'linked-community')));
+});
+
+test('church home exposes a dynamic roadmap with events posts library and community shortcut', function () {
+    $community = Community::factory()->create(['slug' => 'roadmap-community']);
+    $church = Church::factory()->for($community)->create([
+        'name' => 'Roadmap Church',
+        'domain' => 'roadmap.test',
+    ]);
+    $author = User::factory()->create();
+    $church->assignMember($author);
+    $event = Event::query()->create([
+        'church_id' => $church->id,
+        'author_id' => $author->id,
+        'title' => 'Next Community Event',
+        'slug' => 'next-community-event',
+        'description' => 'An event in the community roadmap.',
+        'start_time' => now()->addDay(),
+        'end_time' => now()->addDay()->addHours(2),
+    ]);
+    $post = Post::query()->create([
+        'church_id' => $church->id,
+        'author_id' => $author->id,
+        'title' => 'Recent Community Message',
+        'slug' => 'recent-community-message',
+        'content' => 'A recent message for the roadmap.',
+        'published_at' => now()->subHour(),
+    ]);
+    $library = Library::query()->create([
+        'church_id' => $church->id,
+        'title' => 'Community Study Guide',
+        'description' => 'A library resource for the roadmap.',
+        'type' => 'book',
+        'file_path' => 'church/'.$church->id.'/library/study-guide.pdf',
+    ]);
+
+    $this->get('http://roadmap.test/')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Home')
+            ->has('roadmap', 3)
+            ->where('roadmap.0.id', 'event-'.$event->id)
+            ->where('roadmap.0.type', 'event')
+            ->where('roadmap.1.id', 'post-'.$post->id)
+            ->where('roadmap.1.type', 'post')
+            ->where('roadmap.2.id', 'library-'.$library->id)
+            ->where('roadmap.2.type', 'library')
+            ->where('communityUrl', rtrim((string) config('app.url'), '/').'/communities/roadmap-community'));
+});

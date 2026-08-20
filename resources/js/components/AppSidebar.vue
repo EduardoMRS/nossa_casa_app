@@ -83,11 +83,11 @@ const role = computed(() => {
 });
 
 const canManageWorkspace = computed(() =>
-    ['admin', 'superadmin', 'system'].includes(role.value),
+    ['church_leader', 'superadmin', 'system'].includes(role.value),
 );
 
 const canControlLiveStreams = computed(() =>
-    ['media', 'admin', 'superadmin', 'system'].includes(role.value),
+    ['media', 'church_leader', 'superadmin', 'system'].includes(role.value),
 );
 
 const mainNavItems = computed<NavItem[]>(() => [

@@ -8,7 +8,44 @@
         "breadcrumb": "Breadcrumb",
         "loading": "Loading",
         "show_password": "Show password",
-        "hide_password": "Hide password"
+        "hide_password": "Hide password",
+        "generic_error": "Something went wrong."
+    },
+    "errors": {
+        "status": {
+            "401": {
+                "title": "Authentication required",
+                "description": "Sign in with an authorized account to continue."
+            },
+            "403": {
+                "title": "Access denied",
+                "description": "You do not have permission to access this area in the current church."
+            },
+            "404": {
+                "title": "Page not found",
+                "description": "The address may have changed, or the requested content is no longer available."
+            },
+            "500": {
+                "title": "Unexpected server error",
+                "description": "We could not complete this request. Please try again shortly."
+            },
+            "503": {
+                "title": "Service temporarily unavailable",
+                "description": "This service is undergoing maintenance. Please try again shortly."
+            },
+            "505": {
+                "title": "HTTP version not supported",
+                "description": "Your browser used a protocol version that this service cannot process."
+            },
+            "generic": {
+                "title": "Request error {status}",
+                "description": "This request could not be completed. Return to the previous page or go to the home page."
+            }
+        },
+        "actions": {
+            "home": "Go to home page",
+            "back": "Go back"
+        }
     },
     "welcome": {
         "meta_title": "Welcome",
@@ -23,11 +60,20 @@
         "deploy": "Deploy now"
     },
     "locale": {
-        "switcher": "Language"
+        "switcher": "Language",
+        "pt_short": "PT",
+        "en_short": "EN"
     },
     "notifications": {
         "title": "Notices",
+        "child_checked_in": "{child} checked in to classroom {classroom}.",
         "child_released": "{child} left classroom {classroom} with {person}."
+    },
+    "pwa": {
+        "install": "Install app",
+        "notifications": "Enable notifications",
+        "ios_title": "Install on iPhone or iPad",
+        "ios_instructions": "Open the browser share menu and choose Add to Home Screen."
     },
     "nav": {
         "posts": "Posts",
@@ -38,8 +84,10 @@
         "back": "Back",
         "dashboard": "Dashboard",
         "login": "Sign in",
+        "watch": "Watch",
         "menu": "Open menu",
-        "faith_community": "Faith community"
+        "faith_community": "Faith community",
+        "live_now": "Live now: {name}"
     },
     "navigation": {
         "menu": "Navigation menu",
@@ -290,7 +338,10 @@
             "placeholder": "e.g., MacBook Pro, iPhone",
             "name_hint": "A name helps you identify this passkey later.",
             "registering": "Registering...",
-            "register": "Register passkey"
+            "register": "Register passkey",
+            "authenticating": "Authenticating...",
+            "verify": "Sign in with a passkey",
+            "email_separator": "Or continue with email"
         },
         "two_factor": {
             "title": "Two-factor authentication",
@@ -300,6 +351,9 @@
             "continue_setup": "Continue setup",
             "enable": "Enable 2FA",
             "disable": "Disable 2FA",
+            "qr_error": "Failed to fetch the QR code.",
+            "setup_key_error": "Failed to fetch the setup key.",
+            "recovery_codes_error": "Failed to fetch recovery codes.",
             "recovery_codes": "2FA recovery codes",
             "recovery_description": "Recovery codes let you regain access if you lose your 2FA device. Store them in a secure password manager.",
             "hide_codes": "Hide recovery codes",
@@ -329,6 +383,7 @@
             "slug": "Slug",
             "status": "Status",
             "mimetype": "MIME type",
+            "url": "URL",
             "file_reference": "PDF / Link",
             "items": "{count} items",
             "saving": "Saving...",
@@ -358,14 +413,41 @@
             "domain_description": "Define the address members will use to access this church.",
             "domain": "Domain",
             "domain_hint": "Enter only the domain, without protocol or paths. The current domain is used when this field is left empty.",
+            "terminology_title": "Community terminology",
+            "terminology_description": "Choose how organizational units and access levels are presented without changing their permissions.",
+            "headquarters_term": "Name used for the headquarters",
+            "branch_term": "Name used for branches",
+            "terminology_hint": "These are display names. Technical access rules remain unchanged.",
             "primary_color": "Primary color",
             "secondary_color": "Secondary color",
             "accent_color": "Accent color",
             "surface_color": "Surface color",
             "phone": "Phone",
+            "email": "Email",
+            "whatsapp": "WhatsApp",
             "location_title": "Location and address",
             "location_description": "Tell visitors how to reach the church and optionally embed a secure map.",
             "address": "Full address",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "coordinates_hint": "Coordinates allow the main portal to highlight nearby communities. Use the church entrance location.",
+            "templates_title": "Public page templates",
+            "templates_description": "Choose the visual composition used by each public experience without changing its content.",
+            "template_sections": {
+                "home": "Church home",
+                "posts_index": "Post listing",
+                "posts_show": "Post reading",
+                "events_index": "Event listing",
+                "events_show": "Event details",
+                "form": "Registration forms",
+                "library": "Library",
+                "gallery": "Gallery"
+            },
+            "template_variants": {
+                "classic": "Classic",
+                "editorial": "Editorial",
+                "minimal": "Minimal"
+            },
             "map_embed": "Embedded map",
             "map_embed_placeholder": "Paste a Google Maps/OpenStreetMap URL or iframe",
             "map_embed_hint": "HTTPS embeds from Google Maps and OpenStreetMap are accepted.",
@@ -410,6 +492,7 @@
             "guardians": "Guardians and family",
             "title": "Classrooms",
             "kids_title": "Kids Ministry",
+            "kids": "Kids",
             "description": "Manage age groups, gender eligibility, students, and attendance.",
             "new": "New classroom",
             "edit": "Edit classroom",
@@ -461,6 +544,19 @@
             "not_checked_in": "Not checked in",
             "no_students": "No students linked to this classroom.",
             "manage_students": "Add or remove students",
+            "labels_title": "Check-in labels",
+            "labels_description": "Print both labels before closing this page.",
+            "print_labels": "Print labels",
+            "child_label": "Child label",
+            "guardian_label": "Guardian label",
+            "room": "Classroom",
+            "dropoff_person": "Dropped off by",
+            "contact": "Contact",
+            "not_provided": "Not provided",
+            "secure_checkin": "Nossa Casa · Secure check-in",
+            "pickup_pin": "Pickup PIN",
+            "pickup_qr_alt": "Pickup QR code",
+            "present_at_checkout": "Present at checkout",
             "gender": {
                 "none": "No restriction",
                 "all": "all genders",
@@ -470,6 +566,7 @@
         },
         "forms": {
             "registered": "Registered forms",
+            "category_hint": "Select categories from the current church",
             "title": "Forms",
             "none": "No form",
             "content_hint": "Optional: link a registration form to this content.",
@@ -558,6 +655,58 @@
                 "5": "Forms"
             }
         },
+        "live_streams": {
+            "title": "Live stream control",
+            "description": "Create a stream, copy its OBS credentials, and monitor the connection status.",
+            "select_church": "Select church",
+            "new": "New stream",
+            "create_error": "The live stream could not be created.",
+            "stop_confirm": "Stop the live stream “{name}”?",
+            "rotate_confirm": "Rotating the token will disconnect the current stream. Continue?",
+            "recordings_count": "{count} recording(s)",
+            "public": "Public",
+            "private": "Private",
+            "open_page": "Open page",
+            "stop": "Stop",
+            "obs_server": "OBS server",
+            "copy_link": "Copy link",
+            "obs_stream_key": "OBS stream key",
+            "copy_stream_key": "Copy stream key",
+            "token": "Token",
+            "copy_token": "Copy token",
+            "rotate": "Rotate",
+            "last_rotation": "Last rotation:",
+            "started_at": "Started at",
+            "recording": "Recording",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "visibility": "Live visibility",
+            "public_visibility": "Public — shown in the portal and church pages",
+            "private_visibility": "Private — only members of this church",
+            "obs_hint": "In OBS, select Custom Service and copy the server and stream key shown above. Do not paste the full URL into the server field.",
+            "recordings_title": "Recordings from this stream",
+            "recording_public": "Public recording",
+            "recording_private": "Private recording",
+            "make_private": "Make private",
+            "publish_recording": "Publish recording",
+            "empty": "No live streams have been registered.",
+            "create_kicker": "New stream",
+            "create_title": "Generate link and token",
+            "name": "Name",
+            "name_placeholder": "Sunday service",
+            "record_stream": "Record stream",
+            "public_stream": "Public stream",
+            "public_stream_hint": "When disabled, the live stream is not shown in the portal, home page, or gallery. Its recording can be published later.",
+            "creating": "Creating…",
+            "create": "Create stream",
+            "status": {
+                "ready": "Ready",
+                "live": "Live",
+                "offline": "Offline",
+                "stopped": "Stopped",
+                "failed": "Failed"
+            }
+        },
         "prayers": {
             "title": "Prayer requests",
             "community_title": "Intercession requests",
@@ -600,12 +749,15 @@
             "description": "Headquarters, branches, and communities in a unified view.",
             "new_church": "New church",
             "edit_church": "Edit church",
+            "new_unit": "New {unit}",
+            "edit_unit": "Edit {unit}",
             "new_community": "New community",
             "edit_community": "Edit community",
             "communities": "Communities",
             "community_description": "Community description",
             "church_count": "{count} congregations",
             "empty_churches": "No congregations are registered in this community.",
+            "empty_units": "No {units} are registered in this community.",
             "delete_church_confirm": "Delete the congregation \"{name}\"?",
             "delete_community_confirm": "Delete the community \"{name}\"? Linked congregations will no longer have a community.",
             "save_error": "The change could not be saved.",
@@ -805,6 +957,21 @@
         "open": "Open material",
         "empty": "No materials are available yet."
     },
+    "live_stream": {
+        "ended": "This live stream has ended.",
+        "connecting": "The live stream is connecting. This page will update automatically.",
+        "kicker": "Live stream",
+        "live": "Live",
+        "comments": "Comments",
+        "comment_error": "The comment could not be submitted.",
+        "remove_confirm": "Remove this comment?",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "remove_comment": "Remove comment",
+        "first_comment": "Be the first person to comment.",
+        "comment_placeholder": "Write a comment",
+        "login_to_comment": "Sign in to comment"
+    },
     "home": {
         "meta_title": "Home",
         "hero": {
@@ -829,6 +996,27 @@
         "latest_posts": {
             "kicker": "Communication",
             "title": "Latest updates"
+        },
+        "roadmap": {
+            "kicker": "Your next steps",
+            "title": "Community roadmap",
+            "description": "Follow upcoming events, recent messages, and library resources in one living sequence.",
+            "empty": "New events, posts, and library resources will appear here as they are published.",
+            "types": {
+                "event": "Upcoming event",
+                "post": "Recent post",
+                "library": "Library resource"
+            },
+            "shortcuts_kicker": "Quick access",
+            "shortcuts_title": "Where do you want to go?",
+            "shortcuts": {
+                "events": "Events",
+                "posts": "Posts",
+                "library": "Library",
+                "community": "Community network",
+                "login": "Sign in",
+                "register": "Create account"
+            }
         },
         "latest_recordings": {
             "kicker": "Watch again",
@@ -939,7 +1127,9 @@
             "cover_hint": "Recommended: landscape image, at least 1280x720.",
             "description_hint": "Use Markdown or WYSIWYG mode to format the event content.",
             "save": "Publish event",
-            "update": "Update event"
+            "update": "Update event",
+            "category_title": "Event categories",
+            "category_hint": "Select categories available for your church"
         }
     },
     "posts": {
@@ -1016,7 +1206,9 @@
             "expires_at": "Expires at",
             "content_hint": "Use rich text or Markdown mode for better formatting.",
             "save": "Publish post",
-            "update": "Update post"
+            "update": "Update post",
+            "category_title": "Post categories",
+            "category_hint": "Select categories from this church"
         }
     },
     "dashboard": {
@@ -1027,11 +1219,13 @@
         "modules": "Modules",
         "recommended_actions": "Recommended actions",
         "open_module": "Open module",
+        "activate_light": "Activate light mode",
+        "activate_dark": "Activate dark mode",
         "roles": {
             "member": "Member",
             "leader": "Leader",
             "media": "Media",
-            "admin": "Administrator",
+            "church_leader": "Church leader",
             "superadmin": "Super Admin",
             "system": "System"
         },
@@ -1119,10 +1313,17 @@
         "title": "You are not a member of this congregation yet",
         "description": "Your access was authenticated, but your profile belongs to another church. Would you like to switch your membership to {church}?",
         "switch": "Switch congregation",
-        "leave": "Not now"
+        "leave": "Not now",
+        "foreign_indicator": "You are visiting another congregation",
+        "visiting_title": "Visiting another congregation",
+        "visiting_description": "You belong to {current} and are viewing {church}. Public interactions remain available.",
+        "transfer": "Transfer to this congregation",
+        "confirm": "Do you really want to transfer your membership to {church}? Local leadership and media roles will be changed to member."
     },
     "portal": {
         "meta_title": "Nossa Casa — faith communities",
+        "brand_initials": "NC",
+        "brand_name": "Nossa Casa",
         "network_label": "Community network",
         "open_my_church": "Open my church",
         "create_account": "Create account",
@@ -1145,7 +1346,33 @@
             "main_domain": "Main domain",
             "domain_pending": "Domain not configured yet",
             "live": "Live",
+            "view": "View community details and network",
             "empty": "There are no public communities registered yet."
+        },
+        "community": {
+            "meta_title": "{name} community",
+            "badge": "Community profile",
+            "founded": "Founded on {date}",
+            "stats": {
+                "churches": "Active organizational units",
+                "members": "Connected members",
+                "upcoming_events": "Upcoming events"
+            },
+            "churches_kicker": "Local presence",
+            "churches_title": "Churches and congregations",
+            "churches_description": "Explore every active unit connected to this community.",
+            "local_priority": "Units with known coordinates are ordered by distance from your location.",
+            "members_count": "{count} members",
+            "events_count": "{count} upcoming events",
+            "open_church": "Open {name}",
+            "tree_kicker": "Organizational network",
+            "tree_title": "Headquarters and branch tree",
+            "tree_description": "See how headquarters, branches, campuses, and congregations are connected."
+        },
+        "nearby": {
+            "kicker": "Near you",
+            "title": "Local communities and churches",
+            "locating": "Finding communities near you..."
         },
         "onboarding": {
             "register_community": "Register community",
@@ -1192,6 +1419,9 @@
         "errors": {
             "generic": "The operation could not be completed."
         }
+    },
+    "footer": {
+        "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
     },
     "editor": {
         "label": "Rich content editor"

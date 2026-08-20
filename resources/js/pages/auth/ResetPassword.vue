@@ -38,7 +38,7 @@ const { t } = useI18n();
     >
         <div class="grid gap-6">
             <div class="grid gap-2">
-                <Label for="email">Email</Label>
+                <Label for="email">{{ t('auth.common.email') }}</Label>
                 <Input
                     id="email"
                     type="email"

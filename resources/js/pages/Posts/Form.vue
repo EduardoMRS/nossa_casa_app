@@ -186,8 +186,8 @@ const submit = () => {
                 <CategorySelector
                     v-model="form.category_ids"
                     :categories="categories"
-                    label="Categorias da postagem"
-                    hint="Selecione as categorias desta igreja"
+                    :label="t('posts.form.category_title')"
+                    :hint="t('posts.form.category_hint')"
                 />
 
                 <div class="space-y-2">

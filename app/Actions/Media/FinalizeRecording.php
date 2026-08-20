@@ -23,7 +23,7 @@ class FinalizeRecording
                     'uploader_id' => $liveStream->created_by_id,
                     'church_id' => $liveStream->church_id,
                     'title' => $liveStream->name,
-                    'description' => __('Recording of the live stream from :date.', ['date' => now()->toDateTimeString()]),
+                    'description' => __('media.recording_description', ['date' => now()->toDateTimeString()]),
                     'file_path' => $destination,
                     'disk' => $disk,
                     'mimetype' => $recording->mime_type ?: 'video/mp4',

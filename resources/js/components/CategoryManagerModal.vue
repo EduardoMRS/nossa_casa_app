@@ -142,7 +142,9 @@ const remove = (category: ManagedCategory): void => {
                                 <th class="px-4 py-3">
                                     {{ t('admin.common.name') }}
                                 </th>
-                                <th class="px-4 py-3">Slug</th>
+                                <th class="px-4 py-3">
+                                    {{ t('admin.common.slug') }}
+                                </th>
                                 <th class="px-4 py-3 text-right">
                                     {{ t('posts.index.actions') }}
                                 </th>
@@ -218,7 +220,8 @@ const remove = (category: ManagedCategory): void => {
                         {{ errors.name }}
                     </p>
                     <label class="block text-xs font-bold text-slate-600"
-                        >Slug<input
+                        >{{ t('admin.common.slug')
+                        }}<input
                             v-model="form.slug"
                             required
                             class="mt-1 w-full rounded-lg border-slate-200 bg-white text-sm"
