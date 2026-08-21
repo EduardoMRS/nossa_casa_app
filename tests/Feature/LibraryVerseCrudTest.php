@@ -4,9 +4,13 @@ use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Community;
 use App\Models\Library;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserProfile;
+use Illuminate\Http\Client\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 function createLibraryVerseAdmin(): User
@@ -40,16 +44,37 @@ function createLibraryVerseAdmin(): User
 it('supports library verse create update delete flows for admins', function () {
     $admin = createLibraryVerseAdmin();
     Storage::fake('public');
+    Cache::clear();
+    Http::fake(function (Request $request) {
+        $url = rawurldecode($request->url());
+
+        return match (true) {
+            str_ends_with($url, '/pt-BR-blt/books') => Http::response([
+                ['name' => 'filipenses', 'type' => 'dir'],
+            ]),
+            str_ends_with($url, '/pt-BR-blt/books/filipenses/chapters') => Http::response([
+                ['name' => '4.json', 'type' => 'file'],
+            ]),
+            str_ends_with($url, '/pt-BR-blt/books/filipenses/chapters/4.json') => Http::response([
+                'data' => [
+                    ['book' => 'Filipenses', 'chapter' => '4', 'verse' => '13', 'text' => 'Tudo posso naquele que me fortalece.'],
+                ],
+            ]),
+            default => Http::response([], 404),
+        };
+    });
 
     $this->actingAs($admin)
         ->put(route('admin.libraryVerse.verse.update'), [
-            'book' => 'Filipenses',
+            'book' => 'filipenses',
             'chapter' => 4,
             'verse' => 13,
-            'content' => 'Tudo posso naquele que me fortalece.',
-            'version' => 'Almeida Revista e Corrigida',
+            'version' => 'pt-BR-blt',
         ])
         ->assertRedirect();
+
+    expect(data_get(Setting::query()->value('options'), 'bible.daily_verse.content'))
+        ->toBe('Tudo posso naquele que me fortalece.');
 
     $this->actingAs($admin)
         ->post(route('admin.libraryVerse.library.store'), [

@@ -127,6 +127,7 @@ it('restricts operational logs and metrics to superadmin and system users', func
     $admin = createAdminUserWithChurch();
     $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
     $system = User::factory()->create(['role' => UserRole::SYSTEM]);
+    $admin->church->assignMember($superadmin);
 
     $this->actingAs($admin)->get(route('admin.logsMetrics.index'))->assertForbidden();
     $this->actingAs($superadmin)->get(route('admin.logsMetrics.index'))->assertSuccessful();

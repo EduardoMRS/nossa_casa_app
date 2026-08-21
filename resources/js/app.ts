@@ -1,13 +1,19 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import { configureEcho } from '@laravel/echo-vue';
 import axios from 'axios';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import ReaderLayout from '@/layouts/ReaderLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { installI18n } from '@/lib/i18n';
 import { initializePwa } from '@/lib/pwa';
+
+configureEcho({
+    broadcaster: 'reverb',
+});
 
 if (import.meta.env.PROD) {
     const noop = (): void => {};
@@ -28,6 +34,8 @@ createInertiaApp({
             'Home',
             'Welcome',
             'Portal/Index',
+            'Portal/CommunityShow',
+            'ErrorPage',
             'Events/Index',
             'Events/Show',
             'Events/Register',
@@ -44,6 +52,8 @@ createInertiaApp({
                 return null;
             case name === 'settings/Workspace':
                 return null;
+            case name === 'Library/Bible':
+                return ReaderLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

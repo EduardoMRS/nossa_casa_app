@@ -203,6 +203,6 @@ const formatDate = (date: string): string =>
                 /></Link>
             </nav>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

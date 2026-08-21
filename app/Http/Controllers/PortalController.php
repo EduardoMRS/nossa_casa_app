@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Churches\BuildChurchRoadmap;
 use App\Enums\ChurchStatus;
 use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
+use App\Models\Church;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
 use App\Models\Event;
 use App\Models\Highlight;
 use App\Models\Media;
 use App\Models\Post;
+use App\Services\Bible\BibleAccessResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\GeoDistance;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class PortalController extends Controller
     public function __construct(
         private readonly ChurchDomainContext $context,
         private readonly GeoDistance $geoDistance,
-        private readonly BuildChurchRoadmap $buildChurchRoadmap,
+        private readonly BibleAccessResolver $bibleAccess,
     ) {}
 
     public function index(Request $request): Response
@@ -256,11 +257,20 @@ class PortalController extends Controller
             'latestPosts' => $latestPosts,
             'latestRecordings' => $latestRecordings,
             'calendarEvents' => $calendarEvents,
-            'roadmap' => $this->buildChurchRoadmap->handle($church, $canPreviewPosts),
-            'communityUrl' => $church->community
-                ? rtrim((string) config('app.url'), '/').'/communities/'.$church->community->slug
-                : rtrim((string) config('app.url'), '/'),
+            'dailyVerse' => $this->dailyVerse($church),
         ]);
+    }
+
+    /** @return array<string, mixed>|null */
+    private function dailyVerse(Church $church): ?array
+    {
+        $verse = data_get($church->settings?->options, 'bible.daily_verse');
+
+        if (! is_array($verse) || ! in_array($verse['version'] ?? null, $this->bibleAccess->forChurch($church)['versions'], true)) {
+            return null;
+        }
+
+        return $verse;
     }
 
     /**

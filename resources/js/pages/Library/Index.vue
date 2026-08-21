@@ -7,17 +7,24 @@ import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 type Item = {
     id: string;
+    kind: 'resource';
     title: string;
     description: string | null;
     type: string;
-    file_path: string | null;
     file_url: string | null;
+    href: string | null;
 };
 defineProps<{
     items: {
         data: Item[];
         links: Array<{ url: string | null; label: string; active: boolean }>;
     };
+    bible: {
+        title: string;
+        description: string;
+        href: string;
+        versions_count: number;
+    } | null;
 }>();
 const { t } = useI18n();
 const publicTemplate = usePublicTemplate('library');
@@ -53,6 +60,40 @@ const publicTemplate = usePublicTemplate('library');
             </header>
             <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <article
+                    v-if="bible"
+                    class="flex flex-col rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-950 to-indigo-800 p-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                    <div
+                        class="flex aspect-[3/2] w-full flex-col justify-between rounded-xl border border-white/20 bg-white/10 p-4"
+                    >
+                        <BookOpen class="size-8" />
+                        <p class="text-xs font-bold text-indigo-100">
+                            {{
+                                t('library.bible.versions_available', {
+                                    count: bible.versions_count,
+                                })
+                            }}
+                        </p>
+                    </div>
+                    <p
+                        class="mt-4 text-[10px] font-bold text-amber-300 uppercase"
+                    >
+                        {{ t('library.bible.type') }}
+                    </p>
+                    <h2 class="mt-1 text-lg font-black">
+                        {{ bible.title }}
+                    </h2>
+                    <p class="mt-2 flex-1 text-sm leading-6 text-indigo-100">
+                        {{ bible.description }}
+                    </p>
+                    <Link
+                        :href="bible.href"
+                        class="mt-4 inline-flex items-center gap-2 self-end rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950"
+                    >
+                        <BookOpen class="size-4" />{{ t('library.bible.read') }}
+                    </Link>
+                </article>
+                <article
                     v-for="item in items.data"
                     :key="item.id"
                     class="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
@@ -87,7 +128,7 @@ const publicTemplate = usePublicTemplate('library');
                 </article>
             </section>
             <p
-                v-if="!items.data.length"
+                v-if="!items.data.length && !bible"
                 class="rounded-2xl border border-dashed p-12 text-center text-slate-500"
             >
                 {{ t('library.empty') }}
@@ -106,6 +147,6 @@ const publicTemplate = usePublicTemplate('library');
                 /></Link>
             </nav>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

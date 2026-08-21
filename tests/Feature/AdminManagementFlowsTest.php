@@ -6,6 +6,8 @@ use App\Models\Community;
 use App\Models\Event;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -93,6 +95,7 @@ it('scopes multicongregation management to the administrators community', functi
         ->assertInertia(fn (Assert $page) => $page
             ->component('Admin/MultiCongregation')
             ->where('canManageCommunities', false)
+            ->where('canChangeChurchCommunity', false)
             ->has('churches', 1)
             ->where('churches.0.id', $church->id)
             ->has('communities', 1)
@@ -122,6 +125,55 @@ it('prevents administrators from managing churches outside their community', fun
 
     $this->assertDatabaseHas('churches', ['slug' => 'new-local-church', 'community_id' => $community->id]);
 });
+
+it('protects church community changes while allowing logo and icon uploads', function () {
+    Storage::fake('media');
+    $community = Community::factory()->create();
+    $otherCommunity = Community::factory()->create();
+    $church = Church::factory()->for($community)->create();
+    $churchLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church->assignMember($churchLeader);
+
+    $this->actingAs($churchLeader)
+        ->putJson("/api/church/{$church->id}", ['community_id' => $otherCommunity->id])
+        ->assertForbidden();
+
+    expect($church->refresh()->community_id)->toBe($community->id);
+
+    $this->actingAs($churchLeader)
+        ->post("/api/church/{$church->id}", [
+            '_method' => 'PUT',
+            'logo' => UploadedFile::fake()->createWithContent(
+                'church-logo.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII='),
+            ),
+            'icon' => UploadedFile::fake()->createWithContent(
+                'church-icon.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII='),
+            ),
+        ])
+        ->assertSuccessful();
+
+    $branding = $church->settings()->firstOrFail()->options['branding'];
+    expect($branding['logo_path'])->toStartWith("church/{$church->id}/branding/")
+        ->and($branding['icon_path'])->toStartWith("church/{$church->id}/branding/");
+    Storage::disk('media')->assertExists($branding['logo_path']);
+    Storage::disk('media')->assertExists($branding['icon_path']);
+});
+
+it('allows superadmin and system roles to change a registered church community', function (UserRole $role) {
+    $community = Community::factory()->create();
+    $otherCommunity = Community::factory()->create();
+    $church = Church::factory()->for($community)->create();
+    $administrator = User::factory()->create(['role' => $role]);
+    $church->assignMember($administrator);
+
+    $this->actingAs($administrator)
+        ->putJson("/api/church/{$church->id}", ['community_id' => $otherCommunity->id])
+        ->assertSuccessful();
+
+    expect($church->refresh()->community_id)->toBe($otherCommunity->id);
+})->with([UserRole::SUPERADMIN, UserRole::SYSTEM]);
 
 it('allows only system users to manage communities', function () {
     $admin = managementUser();

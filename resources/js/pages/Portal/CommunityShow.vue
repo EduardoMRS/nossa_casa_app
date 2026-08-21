@@ -136,9 +136,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head
-        :title="t('portal.community.meta_title', { name: community.name })"
-    />
+    <Head :title="t('portal.community.meta_title', { name: community.name })" />
     <div class="min-h-screen bg-[#f7f8fc] text-slate-950">
         <PortalHeader :user-church-url="userChurchUrl" />
 

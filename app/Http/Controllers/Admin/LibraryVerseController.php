@@ -4,28 +4,55 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\CategoryType;
 use App\Http\Controllers\Controller;
+use App\Models\Church;
 use App\Models\Library;
-use App\Models\Vercicle;
+use App\Models\Setting;
+use App\Services\Bible\BibleAccessResolver;
+use App\Services\Bible\BibleApiClient;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class LibraryVerseController extends Controller
 {
     use ManagesChurchCategories;
     use UploadsMedia;
 
-    public function index(): Response
+    public function __construct(
+        private readonly BibleApiClient $bible,
+        private readonly BibleAccessResolver $bibleAccess,
+    ) {}
+
+    public function index(Request $request): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $church = $this->currentChurch($request);
+        $access = $this->bibleAccess->forChurch($church);
+
+        try {
+            $versions = $this->bible->versions();
+            $bibleAvailable = true;
+        } catch (Throwable $exception) {
+            report($exception);
+            $versions = [];
+            $bibleAvailable = false;
+        }
 
         return Inertia::render('Admin/LibraryVerse', [
-            'verse' => $this->versePayload($churchId),
-            'categories' => $this->availableChurchCategories($churchId, CategoryType::LIBRARY->value),
+            'verse' => $this->versePayload($church),
+            'bible' => [
+                ...$access,
+                'catalog' => $versions,
+                'available' => $bibleAvailable,
+                'can_manage_community' => $this->bibleAccess->canManageCommunity($request->user(), $church),
+            ],
+            'categories' => $this->availableChurchCategories($church->id, CategoryType::LIBRARY->value),
             'libraries' => Library::query()
-                ->where('church_id', $churchId)
+                ->where('church_id', $church->id)
                 ->where('type', '!=', 'Versiculo do Dia')
                 ->latest()
                 ->get()
@@ -34,7 +61,7 @@ class LibraryVerseController extends Controller
         ]);
     }
 
-    public function storeLibrary(Request $request)
+    public function storeLibrary(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -45,8 +72,7 @@ class LibraryVerseController extends Controller
             'category_ids.*' => ['string'],
         ]);
 
-        $churchId = $request->user()->church?->id;
-        abort_unless($churchId !== null, 422, __('church.membership_library_manage_required'));
+        $churchId = $this->currentChurch($request)->id;
 
         $savedPath = $this->handleMediaUpload($request->file('file_path') ?? $validated['file_path'] ?? null, "church/{$churchId}/library");
 
@@ -61,7 +87,7 @@ class LibraryVerseController extends Controller
         return back();
     }
 
-    public function updateLibrary(Request $request, Library $library)
+    public function updateLibrary(Request $request, Library $library): RedirectResponse
     {
         $this->ensureChurchAccess($request, $library->church_id);
 
@@ -88,7 +114,7 @@ class LibraryVerseController extends Controller
         return back();
     }
 
-    public function destroyLibrary(Request $request, Library $library)
+    public function destroyLibrary(Request $request, Library $library): RedirectResponse
     {
         $this->ensureChurchAccess($request, $library->church_id);
         $library->delete();
@@ -96,59 +122,131 @@ class LibraryVerseController extends Controller
         return back();
     }
 
-    public function updateVerse(Request $request)
+    public function updateBiblePreferences(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'book' => ['required', 'string', 'max:120'],
-            'chapter' => ['required', 'integer', 'min:1'],
-            'verse' => ['required', 'integer', 'min:1'],
-            'content' => ['required', 'string'],
-            'version' => ['required', 'string', 'max:120'],
-        ]);
+        $church = $this->currentChurch($request);
 
-        $churchId = $request->user()->church?->id;
-        abort_unless($churchId !== null, 422, __('church.membership_daily_verse_manage_required'));
+        try {
+            $catalogIds = collect($this->bible->versions())->pluck('id')->all();
+        } catch (Throwable $exception) {
+            report($exception);
 
-        $library = Library::query()->firstOrCreate(
-            ['church_id' => $churchId, 'type' => 'Versiculo do Dia'],
-            [
-                'title' => __('library.daily_verse_title'),
-                'description' => __('library.daily_verse_description'),
-                'file_path' => null,
-            ],
-        );
-
-        $verse = Vercicle::query()->where('library_id', $library->id)->latest()->first();
-
-        if ($verse === null) {
-            $verse = Vercicle::query()->create([
-                ...$validated,
-                'library_id' => $library->id,
-            ]);
-        } else {
-            $verse->update($validated);
+            return back()->withErrors(['bible' => __('bible.service_unavailable')]);
         }
+        $validated = $request->validate([
+            'scope' => ['required', Rule::in(['community', 'church'])],
+            'versions' => ['required', 'array', 'min:1'],
+            'versions.*' => ['required', 'string', Rule::in($catalogIds)],
+            'default_version' => ['required', 'string', Rule::in($catalogIds)],
+        ]);
+        $versions = array_values(array_unique($validated['versions']));
+
+        abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
+
+        if ($validated['scope'] === 'community') {
+            abort_unless($church->community !== null && $this->bibleAccess->canManageCommunity($request->user(), $church), 403);
+            $church->community->update([
+                'bible_versions' => $versions,
+                'default_bible_version' => $validated['default_version'],
+            ]);
+
+            return back();
+        }
+
+        $communityVersions = $this->bibleAccess->forChurch($church)['community_versions'];
+        abort_unless(array_diff($versions, $communityVersions) === [], 422, __('bible.church_versions_invalid'));
+
+        $setting = Setting::query()->firstOrCreate(['church_id' => $church->id], ['options' => []]);
+        $options = $setting->options ?? [];
+        data_set($options, 'bible.versions', $versions);
+        data_set($options, 'bible.default_version', $validated['default_version']);
+        $setting->update(['options' => $options]);
 
         return back();
     }
 
-    private function versePayload(?string $churchId): array
+    public function updateVerse(Request $request): RedirectResponse
     {
-        $verse = Vercicle::query()
-            ->whereHas('library', fn ($query) => $query->where('church_id', $churchId))
-            ->latest()
-            ->first();
+        $validated = $request->validate([
+            'version' => ['required', 'string'],
+            'book' => ['required', 'string', 'max:120'],
+            'chapter' => ['required', 'integer', 'min:1'],
+            'verse' => ['required', 'integer', 'min:1'],
+        ]);
+        $church = $this->currentChurch($request);
+        $access = $this->bibleAccess->forChurch($church);
+        abort_unless(in_array($validated['version'], $access['versions'], true), 422, __('bible.version_not_available'));
+
+        try {
+            $books = $this->bible->books($validated['version']);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['bible' => __('bible.service_unavailable')]);
+        }
+
+        abort_unless(collect($books)->contains('slug', $validated['book']), 422, __('bible.book_not_available'));
+
+        try {
+            $chapters = $this->bible->chapters($validated['version'], $validated['book']);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['bible' => __('bible.service_unavailable')]);
+        }
+
+        abort_unless(in_array($validated['chapter'], $chapters, true), 422, __('bible.chapter_not_available'));
+
+        try {
+            $verse = $this->bible->verse(
+                $validated['version'],
+                $validated['book'],
+                $validated['chapter'],
+                $validated['verse'],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['bible' => __('bible.service_unavailable')]);
+        }
+        $setting = Setting::query()->firstOrCreate(['church_id' => $church->id], ['options' => []]);
+        $options = $setting->options ?? [];
+        data_set($options, 'bible.daily_verse', [
+            ...$validated,
+            'book_name' => $verse['book'],
+            'content' => $verse['text'],
+        ]);
+        $setting->update(['options' => $options]);
+
+        return back();
+    }
+
+    /** @return array{book: string, book_name: string, chapter: int|string, verse: int|string, content: string, version: string, has_record: bool} */
+    private function versePayload(Church $church): array
+    {
+        $verse = data_get($church->settings?->options, 'bible.daily_verse');
+        $verse = is_array($verse) ? $verse : [];
 
         return [
-            'book' => $verse?->book ?? '',
-            'chapter' => $verse?->chapter ?? '',
-            'verse' => $verse?->verse ?? '',
-            'content' => $verse?->content ?? '',
-            'version' => $verse?->version ?? '',
-            'has_record' => $verse !== null,
+            'book' => (string) ($verse['book'] ?? ''),
+            'book_name' => (string) ($verse['book_name'] ?? ''),
+            'chapter' => $verse['chapter'] ?? '',
+            'verse' => $verse['verse'] ?? '',
+            'content' => (string) ($verse['content'] ?? ''),
+            'version' => (string) ($verse['version'] ?? ''),
+            'has_record' => $verse !== [],
         ];
     }
 
+    private function currentChurch(Request $request): Church
+    {
+        $church = $request->user()?->church()->first();
+        abort_unless($church instanceof Church, 422, __('church.membership_library_manage_required'));
+
+        return $church;
+    }
+
+    /** @return array<string, mixed> */
     private function libraryPayload(Library $library): array
     {
         return [

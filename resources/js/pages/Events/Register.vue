@@ -520,6 +520,6 @@ const formatDate = (value: string): string => {
                 </form>
             </section>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

@@ -29,8 +29,12 @@ class ResolveChurchDomain
         $user = $request->user();
 
         if ($user && $user->role !== UserRole::SYSTEM && $this->isDashboardRequest($request)) {
+            $isUnassignedChurchDashboard = $church === null
+                && $user->profile?->church_id !== null
+                && blank($user->church?->domain);
+
             abort_unless(
-                $church && $user->profile?->church_id === $church->id,
+                ($church && $user->profile?->church_id === $church->id) || $isUnassignedChurchDashboard,
                 403,
                 __('auth.church_membership_required'),
             );
@@ -69,6 +73,8 @@ class ResolveChurchDomain
         $routeName = $route->getName();
         $publicRouteNames = [
             'home',
+            'sitemap',
+            'robots',
             'communities.show',
             'events.index',
             'events.show',
@@ -78,11 +84,21 @@ class ResolveChurchDomain
             'gallery.index',
             'gallery.download',
             'library.index',
+            'library.bible',
             'library.show',
+            'bible.offline',
+            'bible.books',
+            'bible.chapters',
+            'bible.chapter',
             'live-streams.show',
             'secure-file',
             'pwa.manifest',
             'pwa.service-worker',
+            'branding.logo',
+            'branding.icon',
+            'branding.favicon',
+            'branding.favicon-svg',
+            'branding.apple-touch-icon',
             'push-subscriptions.store',
             'push-subscriptions.destroy',
             'church.membership.switch',

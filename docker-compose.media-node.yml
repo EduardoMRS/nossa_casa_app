@@ -89,6 +89,7 @@ services:
       - ${MEDIA_NODE_ENV_FILE:-.env.media-node}
     environment:
       MEDIA_RECORDING_WEBHOOK_URL: http://media-webhook:8000/api/internal/media/recording-segment-completed
+      MTX_WEBRTCADDITIONALHOSTS: ${MEDIAMTX_WEBRTC_ADDITIONAL_HOSTS}
     expose:
       - "9997"
       - "8554"
@@ -96,7 +97,8 @@ services:
       - "8189/udp"
     ports:
       - "${MEDIA_API_BIND_IP:-127.0.0.1}:${MEDIAMTX_API_PORT:-9997}:9997"
-      - "${MEDIAMTX_HLS_PORT:-8888}:8888"
+      - "${MEDIAMTX_WEBRTC_PORT:-8889}:8889"
+      - "${MEDIAMTX_WEBRTC_UDP_PORT:-8189}:8189/udp"
       - "${MEDIAMTX_RTMP_PORT:-1935}:1935"
     volumes:
       - media-recordings:/recordings

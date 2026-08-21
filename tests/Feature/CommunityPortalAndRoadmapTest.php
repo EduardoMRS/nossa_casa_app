@@ -4,9 +4,7 @@ use App\Enums\ChurchStatus;
 use App\Models\Church;
 use App\Models\Community;
 use App\Models\Event;
-use App\Models\Library;
 use App\Models\Network;
-use App\Models\Post;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -92,51 +90,4 @@ test('portal community cards link to their public detail page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Portal/Index')
             ->where('communities.0.url', route('communities.show', 'linked-community')));
-});
-
-test('church home exposes a dynamic roadmap with events posts library and community shortcut', function () {
-    $community = Community::factory()->create(['slug' => 'roadmap-community']);
-    $church = Church::factory()->for($community)->create([
-        'name' => 'Roadmap Church',
-        'domain' => 'roadmap.test',
-    ]);
-    $author = User::factory()->create();
-    $church->assignMember($author);
-    $event = Event::query()->create([
-        'church_id' => $church->id,
-        'author_id' => $author->id,
-        'title' => 'Next Community Event',
-        'slug' => 'next-community-event',
-        'description' => 'An event in the community roadmap.',
-        'start_time' => now()->addDay(),
-        'end_time' => now()->addDay()->addHours(2),
-    ]);
-    $post = Post::query()->create([
-        'church_id' => $church->id,
-        'author_id' => $author->id,
-        'title' => 'Recent Community Message',
-        'slug' => 'recent-community-message',
-        'content' => 'A recent message for the roadmap.',
-        'published_at' => now()->subHour(),
-    ]);
-    $library = Library::query()->create([
-        'church_id' => $church->id,
-        'title' => 'Community Study Guide',
-        'description' => 'A library resource for the roadmap.',
-        'type' => 'book',
-        'file_path' => 'church/'.$church->id.'/library/study-guide.pdf',
-    ]);
-
-    $this->get('http://roadmap.test/')
-        ->assertSuccessful()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('Home')
-            ->has('roadmap', 3)
-            ->where('roadmap.0.id', 'event-'.$event->id)
-            ->where('roadmap.0.type', 'event')
-            ->where('roadmap.1.id', 'post-'.$post->id)
-            ->where('roadmap.1.type', 'post')
-            ->where('roadmap.2.id', 'library-'.$library->id)
-            ->where('roadmap.2.type', 'library')
-            ->where('communityUrl', rtrim((string) config('app.url'), '/').'/communities/roadmap-community'));
 });

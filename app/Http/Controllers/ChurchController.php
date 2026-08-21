@@ -5,14 +5,17 @@ namespace App\Http\Controllers;
 use App\Enums\ChurchStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Models\Setting;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ChurchController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
         $churches = Church::with('community')
             ->paginate(15)
@@ -21,7 +24,7 @@ class ChurchController extends Controller
         return response()->json($churches);
     }
 
-    public function show(string $slug)
+    public function show(string $slug): JsonResponse
     {
         $church = Church::with(['community', 'address', 'settings', 'categories'])->where('slug', $slug)->firstOrFail();
 
@@ -45,13 +48,18 @@ class ChurchController extends Controller
             'found_date' => 'nullable|date',
             'community_id' => 'nullable|string|exists:communities,id',
             'founder_id' => 'nullable|string|exists:users,id',
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'icon' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
-        if ($request->user()->role !== UserRole::SYSTEM) {
+        unset($validated['logo'], $validated['icon']);
+
+        if (! $this->canChangeCommunity($request)) {
             $validated['community_id'] = $this->managedCommunityId($request);
         }
 
         $church = Church::create($validated);
+        $this->storeBrandingAssets($church, $request->file('logo'), $request->file('icon'));
 
         return response()->json($church, 201);
     }
@@ -78,13 +86,22 @@ class ChurchController extends Controller
             'found_date' => 'nullable|date',
             'community_id' => 'nullable|string|exists:communities,id',
             'founder_id' => 'nullable|string|exists:users,id',
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'icon' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
-        if ($request->user()->role !== UserRole::SYSTEM) {
-            $validated['community_id'] = $this->managedCommunityId($request);
+        unset($validated['logo'], $validated['icon']);
+
+        if (! $this->canChangeCommunity($request)) {
+            if ($request->has('community_id')) {
+                abort_unless($request->input('community_id') === $church->community_id, 403);
+            }
+
+            unset($validated['community_id']);
         }
 
         $church->update($validated);
+        $this->storeBrandingAssets($church, $request->file('logo'), $request->file('icon'));
 
         return response()->json($church);
     }
@@ -109,11 +126,54 @@ class ChurchController extends Controller
 
     private function managedCommunityId(Request $request): string
     {
-        $communityId = $request->user()->profile?->community_id
-            ?? $request->user()->church?->community_id;
+        $profile = $request->user()->profile;
+        $communityId = $profile?->community_id;
 
-        abort_unless($communityId, 403);
+        if (! is_string($communityId) && $profile?->church_id) {
+            $communityId = Church::query()->whereKey($profile->church_id)->value('community_id');
+        }
+
+        abort_unless(is_string($communityId) && $communityId !== '', 403);
 
         return $communityId;
+    }
+
+    private function canChangeCommunity(Request $request): bool
+    {
+        return in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+    }
+
+    private function storeBrandingAssets(
+        Church $church,
+        ?UploadedFile $logo,
+        ?UploadedFile $icon,
+    ): void {
+        if ($logo === null && $icon === null) {
+            return;
+        }
+
+        $setting = Setting::query()->firstOrCreate(['church_id' => $church->id], ['options' => []]);
+        $options = is_array($setting->options) ? $setting->options : [];
+        $branding = is_array($options['branding'] ?? null) ? $options['branding'] : [];
+
+        foreach (['logo' => $logo, 'icon' => $icon] as $assetName => $uploadedFile) {
+            if ($uploadedFile === null) {
+                continue;
+            }
+
+            $pathKey = $assetName.'_path';
+            $currentPath = $branding[$pathKey] ?? null;
+            $branding[$pathKey] = $uploadedFile->store(
+                "church/{$church->id}/branding",
+                (string) config('media.disk'),
+            );
+
+            if (is_string($currentPath) && $currentPath !== '' && ! filter_var($currentPath, FILTER_VALIDATE_URL)) {
+                Storage::disk((string) config('media.disk'))->delete($currentPath);
+            }
+        }
+
+        $options['branding'] = $branding;
+        $setting->update(['options' => $options]);
     }
 }

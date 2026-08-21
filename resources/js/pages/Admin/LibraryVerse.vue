@@ -18,11 +18,31 @@ import { useI18n } from '@/lib/i18n';
 
 type VerseData = {
     book: string;
+    book_name: string;
     chapter: string | number;
     verse: string | number;
     content: string;
     version: string;
     has_record: boolean;
+};
+type BibleVersion = {
+    id: string;
+    name: string;
+    abbreviation: string;
+    language: string;
+    scope: string;
+    copyright: string;
+};
+type BibleBook = { slug: string; name: string };
+type BibleVerse = { verse: number; text: string };
+type BibleSettings = {
+    catalog: BibleVersion[];
+    versions: string[];
+    default_version: string | null;
+    community_versions: string[];
+    community_default_version: string | null;
+    available: boolean;
+    can_manage_community: boolean;
 };
 type LibraryItem = {
     id: string;
@@ -37,6 +57,7 @@ const props = defineProps<{
     verse: VerseData;
     libraries: LibraryItem[];
     categories: ManagedCategory[];
+    bible: BibleSettings;
 }>();
 const { t } = useI18n();
 const verseOpen = ref(false);
@@ -45,6 +66,15 @@ const categoriesOpen = ref(false);
 const editing = ref<LibraryItem | null>(null);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
+const bibleLoading = ref(false);
+const bibleSearch = ref('');
+const verseBooks = ref<BibleBook[]>([]);
+const verseChapters = ref<number[]>([]);
+const verseOptions = ref<BibleVerse[]>([]);
+const communityVersions = ref([...props.bible.community_versions]);
+const communityDefault = ref(props.bible.community_default_version ?? '');
+const churchVersions = ref([...props.bible.versions]);
+const churchDefault = ref(props.bible.default_version ?? '');
 const inputType = ref<'url' | 'file'>('file');
 const selectedFile = ref<File | null>(null);
 const localPreview = ref('');
@@ -52,8 +82,7 @@ const verseForm = reactive({
     book: props.verse.book,
     chapter: String(props.verse.chapter || ''),
     verse: String(props.verse.verse || ''),
-    content: props.verse.content,
-    version: props.verse.version,
+    version: props.verse.version || props.bible.default_version || '',
 });
 const form = reactive({
     title: '',
@@ -69,6 +98,138 @@ const preview = computed(
         editing.value?.preview_url ||
         '',
 );
+const filteredBibleCatalog = computed(() => {
+    const query = bibleSearch.value.trim().toLocaleLowerCase();
+
+    return props.bible.catalog.filter((version) =>
+        query
+            ? [version.name, version.abbreviation, version.language]
+                  .join(' ')
+                  .toLocaleLowerCase()
+                  .includes(query)
+            : true,
+    );
+});
+const communityCatalog = computed(() =>
+    props.bible.catalog.filter((version) =>
+        communityVersions.value.includes(version.id),
+    ),
+);
+const selectedVerseText = computed(
+    () =>
+        verseOptions.value.find(
+            (item) => item.verse === Number(verseForm.verse),
+        )?.text ?? props.verse.content,
+);
+
+const getJson = async <T,>(url: string): Promise<T> => {
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+        throw new Error(t('admin.library.bible.load_error'));
+    }
+
+    return response.json() as Promise<T>;
+};
+
+const loadVerseChapter = async (): Promise<void> => {
+    if (!verseForm.version || !verseForm.book || !verseForm.chapter) {
+        verseOptions.value = [];
+
+        return;
+    }
+
+    const payload = await getJson<{ verses: BibleVerse[] }>(
+        `/api/bible/${encodeURIComponent(verseForm.version)}/books/${encodeURIComponent(verseForm.book)}/chapters/${verseForm.chapter}`,
+    );
+    verseOptions.value = payload.verses;
+
+    if (
+        !payload.verses.some((item) => item.verse === Number(verseForm.verse))
+    ) {
+        verseForm.verse = String(payload.verses[0]?.verse ?? '');
+    }
+};
+
+const loadVerseChapters = async (): Promise<void> => {
+    const payload = await getJson<{ chapters: number[] }>(
+        `/api/bible/${encodeURIComponent(verseForm.version)}/books/${encodeURIComponent(verseForm.book)}/chapters`,
+    );
+    verseChapters.value = payload.chapters;
+
+    if (!payload.chapters.includes(Number(verseForm.chapter))) {
+        verseForm.chapter = String(payload.chapters[0] ?? '');
+    }
+
+    await loadVerseChapter();
+};
+
+const loadVerseBooks = async (): Promise<void> => {
+    bibleLoading.value = true;
+    errors.value = {};
+
+    try {
+        const payload = await getJson<{ books: BibleBook[] }>(
+            `/api/bible/${encodeURIComponent(verseForm.version)}/books`,
+        );
+        verseBooks.value = payload.books;
+
+        if (!payload.books.some((item) => item.slug === verseForm.book)) {
+            verseForm.book = payload.books[0]?.slug ?? '';
+        }
+
+        await loadVerseChapters();
+    } catch {
+        errors.value = { bible: t('admin.library.bible.load_error') };
+    } finally {
+        bibleLoading.value = false;
+    }
+};
+
+const openVerse = (): void => {
+    verseOpen.value = true;
+    void loadVerseBooks();
+};
+
+const changeVerseBook = async (): Promise<void> => {
+    bibleLoading.value = true;
+
+    try {
+        await loadVerseChapters();
+    } finally {
+        bibleLoading.value = false;
+    }
+};
+
+const changeVerseChapter = async (): Promise<void> => {
+    bibleLoading.value = true;
+
+    try {
+        await loadVerseChapter();
+    } finally {
+        bibleLoading.value = false;
+    }
+};
+
+const saveBiblePreferences = (scope: 'community' | 'church'): void => {
+    const versions =
+        scope === 'community' ? communityVersions.value : churchVersions.value;
+    const defaultVersion =
+        scope === 'community' ? communityDefault.value : churchDefault.value;
+
+    router.put(
+        '/dashboard/biblioteca-versiculo/bible',
+        {
+            scope,
+            versions,
+            default_version: defaultVersion,
+        },
+        { preserveScroll: true },
+    );
+};
 const revokePreview = (): void => {
     if (localPreview.value) {
         URL.revokeObjectURL(localPreview.value);
@@ -148,7 +309,8 @@ const saveVerse = (): void => {
     router.put(
         '/dashboard/biblioteca-versiculo/verse',
         {
-            ...verseForm,
+            version: verseForm.version,
+            book: verseForm.book,
             chapter: Number(verseForm.chapter),
             verse: Number(verseForm.verse),
         },
@@ -198,7 +360,8 @@ onBeforeUnmount(revokePreview);
             <div class="flex flex-wrap gap-2">
                 <button
                     class="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-3 text-sm font-black"
-                    @click="verseOpen = true"
+                    :disabled="!bible.available || !bible.versions.length"
+                    @click="openVerse"
                 >
                     <Sparkles class="size-4" />{{
                         t('admin.library.verse_of_day')
@@ -218,6 +381,152 @@ onBeforeUnmount(revokePreview);
                 </button>
             </div>
         </header>
+
+        <section class="grid gap-5 xl:grid-cols-2">
+            <article class="rounded-2xl border bg-white p-5 shadow-sm">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 class="font-black">
+                            {{ t('admin.library.bible.community_title') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-slate-500">
+                            {{ t('admin.library.bible.community_description') }}
+                        </p>
+                    </div>
+                    <BookOpen class="size-5 text-indigo-600" />
+                </div>
+
+                <template v-if="bible.can_manage_community">
+                    <input
+                        v-model="bibleSearch"
+                        class="mt-4 w-full rounded-lg border-slate-300 text-sm"
+                        :placeholder="t('admin.library.bible.search_versions')"
+                    />
+                    <div
+                        class="mt-3 max-h-56 space-y-2 overflow-y-auto rounded-xl border p-3"
+                    >
+                        <label
+                            v-for="version in filteredBibleCatalog"
+                            :key="version.id"
+                            class="flex items-start gap-2 text-sm"
+                        >
+                            <input
+                                v-model="communityVersions"
+                                type="checkbox"
+                                :value="version.id"
+                                class="mt-1 rounded border-slate-300"
+                            />
+                            <span>
+                                <strong>{{ version.abbreviation }}</strong>
+                                — {{ version.name }}
+                                <small class="block text-slate-500">
+                                    {{ version.language }} · {{ version.scope }}
+                                </small>
+                                <small
+                                    v-if="version.copyright"
+                                    class="block text-slate-400"
+                                >
+                                    {{ version.copyright }}
+                                </small>
+                            </span>
+                        </label>
+                    </div>
+                    <label class="mt-4 block text-xs font-bold">
+                        {{ t('admin.library.bible.default_version') }}
+                        <select
+                            v-model="communityDefault"
+                            class="mt-1 w-full rounded-lg border-slate-300"
+                        >
+                            <option
+                                v-for="version in bible.catalog.filter((item) =>
+                                    communityVersions.includes(item.id),
+                                )"
+                                :key="version.id"
+                                :value="version.id"
+                            >
+                                {{ version.abbreviation }} — {{ version.name }}
+                            </option>
+                        </select>
+                    </label>
+                    <button
+                        type="button"
+                        class="mt-4 w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-black text-white"
+                        @click="saveBiblePreferences('community')"
+                    >
+                        {{ t('admin.library.bible.save_community') }}
+                    </button>
+                </template>
+                <div v-else class="mt-4 flex flex-wrap gap-2">
+                    <span
+                        v-for="version in communityCatalog"
+                        :key="version.id"
+                        class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700"
+                    >
+                        {{ version.abbreviation }} · {{ version.language }}
+                    </span>
+                </div>
+            </article>
+
+            <article class="rounded-2xl border bg-white p-5 shadow-sm">
+                <h2 class="font-black">
+                    {{ t('admin.library.bible.church_title') }}
+                </h2>
+                <p class="mt-1 text-sm text-slate-500">
+                    {{ t('admin.library.bible.church_description') }}
+                </p>
+                <div class="mt-4 space-y-2 rounded-xl border p-3">
+                    <label
+                        v-for="version in communityCatalog"
+                        :key="version.id"
+                        class="flex items-start gap-2 text-sm"
+                    >
+                        <input
+                            v-model="churchVersions"
+                            type="checkbox"
+                            :value="version.id"
+                            class="mt-1 rounded border-slate-300"
+                        />
+                        <span>
+                            <strong>{{ version.abbreviation }}</strong>
+                            — {{ version.name }}
+                            <small class="block text-slate-500">
+                                {{ version.language }} · {{ version.scope }}
+                            </small>
+                            <small
+                                v-if="version.copyright"
+                                class="block text-slate-400"
+                            >
+                                {{ version.copyright }}
+                            </small>
+                        </span>
+                    </label>
+                </div>
+                <label class="mt-4 block text-xs font-bold">
+                    {{ t('admin.library.bible.default_version') }}
+                    <select
+                        v-model="churchDefault"
+                        class="mt-1 w-full rounded-lg border-slate-300"
+                    >
+                        <option
+                            v-for="version in communityCatalog.filter((item) =>
+                                churchVersions.includes(item.id),
+                            )"
+                            :key="version.id"
+                            :value="version.id"
+                        >
+                            {{ version.abbreviation }} — {{ version.name }}
+                        </option>
+                    </select>
+                </label>
+                <button
+                    type="button"
+                    class="mt-4 w-full rounded-lg bg-slate-950 px-4 py-3 text-sm font-black text-white"
+                    @click="saveBiblePreferences('church')"
+                >
+                    {{ t('admin.library.bible.save_church') }}
+                </button>
+            </article>
+        </section>
 
         <section
             class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -421,47 +730,95 @@ onBeforeUnmount(revokePreview);
                     </button>
                 </header>
                 <div class="space-y-4">
-                    <label class="block text-xs font-bold"
-                        >{{ t('admin.library.verse_text')
-                        }}<textarea
-                            v-model="verseForm.content"
+                    <label class="block text-xs font-bold">
+                        {{ t('admin.library.version') }}
+                        <select
+                            v-model="verseForm.version"
                             required
-                            rows="5"
                             class="mt-1 w-full rounded-lg border-slate-300"
-                        />
+                            @change="loadVerseBooks"
+                        >
+                            <option
+                                v-for="version in bible.catalog.filter((item) =>
+                                    bible.versions.includes(item.id),
+                                )"
+                                :key="version.id"
+                                :value="version.id"
+                            >
+                                {{ version.abbreviation }} — {{ version.name }}
+                            </option>
+                        </select>
                     </label>
                     <div class="grid gap-3 sm:grid-cols-3">
                         <label class="text-xs font-bold"
                             >{{ t('admin.library.book')
-                            }}<input
+                            }}<select
                                 v-model="verseForm.book"
                                 required
-                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                                :disabled="bibleLoading"
+                                class="mt-1 w-full rounded-lg border-slate-300"
+                                @change="changeVerseBook"
+                            >
+                                <option
+                                    v-for="book in verseBooks"
+                                    :key="book.slug"
+                                    :value="book.slug"
+                                >
+                                    {{ book.name }}
+                                </option>
+                            </select></label
                         ><label class="text-xs font-bold"
                             >{{ t('admin.library.chapter')
-                            }}<input
+                            }}<select
                                 v-model="verseForm.chapter"
                                 required
-                                type="number"
-                                min="1"
-                                class="mt-1 w-full rounded-lg border-slate-300" /></label
+                                :disabled="bibleLoading"
+                                class="mt-1 w-full rounded-lg border-slate-300"
+                                @change="changeVerseChapter"
+                            >
+                                <option
+                                    v-for="chapter in verseChapters"
+                                    :key="chapter"
+                                    :value="String(chapter)"
+                                >
+                                    {{ chapter }}
+                                </option>
+                            </select></label
                         ><label class="text-xs font-bold"
                             >{{ t('admin.library.verse')
-                            }}<input
+                            }}<select
                                 v-model="verseForm.verse"
                                 required
-                                type="number"
-                                min="1"
                                 class="mt-1 w-full rounded-lg border-slate-300"
-                        /></label>
+                            >
+                                <option
+                                    v-for="verse in verseOptions"
+                                    :key="verse.verse"
+                                    :value="String(verse.verse)"
+                                >
+                                    {{ verse.verse }}
+                                </option>
+                            </select></label
+                        >
                     </div>
-                    <label class="block text-xs font-bold"
-                        >{{ t('admin.library.version')
-                        }}<input
-                            v-model="verseForm.version"
-                            required
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
-                    ><button
+                    <div
+                        class="rounded-xl bg-emerald-50 p-4 text-sm leading-6 text-emerald-950"
+                    >
+                        <p
+                            class="text-xs font-black text-emerald-700 uppercase"
+                        >
+                            {{ t('admin.library.verse_text') }}
+                        </p>
+                        <p class="mt-2">{{ selectedVerseText }}</p>
+                    </div>
+                    <p
+                        v-for="message in errors"
+                        :key="message"
+                        class="text-xs font-bold text-rose-600"
+                    >
+                        {{ message }}
+                    </p>
+                    <button
                         :disabled="processing"
                         class="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-black text-white"
                     >

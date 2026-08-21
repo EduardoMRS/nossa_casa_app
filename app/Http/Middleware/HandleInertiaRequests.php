@@ -6,6 +6,7 @@ use App\Enums\LiveStreamStatus;
 use App\Models\Classroom;
 use App\Models\LiveStream;
 use App\Models\Setting;
+use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
 use Illuminate\Http\Request;
@@ -13,7 +14,10 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    public function __construct(private ChurchTerminology $terminology) {}
+    public function __construct(
+        private ChurchTerminology $terminology,
+        private ChurchBrandingResolver $brandingResolver,
+    ) {}
 
     /**
      * The root template that's loaded on the first page visit.
@@ -51,9 +55,14 @@ class HandleInertiaRequests extends Middleware
             && $user !== null
             && $user->role?->value !== 'system'
             && $user->profile?->church_id !== $currentChurch->id;
-        $isOwnChurch = $currentChurch !== null
+        $isUnassignedChurchDashboard = $currentChurch === null
+            && $user?->profile?->church_id !== null
+            && blank($user->church?->domain)
+            && $request->is('dashboard', 'dashboard/*');
+        $isOwnChurch = ($currentChurch !== null
             && $user !== null
-            && $user->profile?->church_id === $currentChurch->id;
+            && $user->profile?->church_id === $currentChurch->id)
+            || $isUnassignedChurchDashboard;
         $classroomChurchId = $currentChurch?->id ?? $user?->profile?->church_id ?? $user?->church?->id;
 
         $branding = [
@@ -67,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             'surface_color' => '#f4f7fb',
             'font_family' => 'Manrope, ui-sans-serif',
             'logo_path' => '',
+            'icon_path' => '',
             'logo_url' => '',
             'icon_name' => 'Sparkles',
             'contact_email' => '',
@@ -87,13 +97,11 @@ class HandleInertiaRequests extends Middleware
             $savedBranding = $setting?->options['branding'] ?? [];
 
             if (is_array($savedBranding)) {
-                if (! empty($savedBranding['logo_path'])) {
-                    $savedBranding['logo_url'] = genUrl($savedBranding['logo_path']);
-                }
-
                 $branding = array_merge($branding, $savedBranding);
             }
         }
+
+        $branding = array_merge($branding, $this->brandingResolver->sharedLogo($brandingChurch));
 
         return [
             ...parent::share($request),
@@ -129,6 +137,7 @@ class HandleInertiaRequests extends Middleware
                     'id' => $user->church->id,
                     'name' => $user->church->name,
                     'domain' => $user->church->domain,
+                    'url' => $domainContext->churchUrl($user->church),
                 ] : null,
                 'isForeignChurch' => $isForeignChurch,
             ],

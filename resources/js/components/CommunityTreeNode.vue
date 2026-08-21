@@ -42,7 +42,9 @@ const { t } = useI18n();
                         class="mt-1 flex items-center gap-1 text-slate-500"
                     >
                         <MapPin class="size-3" />
-                        {{ [node.city, node.state].filter(Boolean).join(' · ') }}
+                        {{
+                            [node.city, node.state].filter(Boolean).join(' · ')
+                        }}
                     </small>
                 </span>
             </div>

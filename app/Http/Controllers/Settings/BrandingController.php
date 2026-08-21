@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
 use App\Models\Setting;
+use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,10 @@ use Inertia\Response;
 
 class BrandingController extends Controller
 {
-    public function __construct(private ChurchTerminology $terminology) {}
+    public function __construct(
+        private ChurchTerminology $terminology,
+        private ChurchBrandingResolver $brandingResolver,
+    ) {}
 
     public function edit(Request $request): Response
     {
@@ -38,6 +42,11 @@ class BrandingController extends Controller
         );
         if (is_array($branding) && ! empty($branding['logo_path'])) {
             $branding['logo_url'] = genUrl($branding['logo_path']);
+        } else {
+            $branding = array_merge(
+                is_array($branding) ? $branding : [],
+                $this->brandingResolver->sharedLogo($church),
+            );
         }
         $address = $church->address()->first();
 
@@ -129,6 +138,7 @@ class BrandingController extends Controller
             'font_family' => 'Manrope, ui-sans-serif',
             'logo_path' => '',
             'logo_url' => '',
+            'icon_path' => '',
             'icon_name' => 'Sparkles',
             'contact_email' => '',
             'contact_phone' => '',

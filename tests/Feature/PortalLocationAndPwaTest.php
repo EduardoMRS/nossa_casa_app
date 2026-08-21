@@ -74,12 +74,16 @@ test('manifest and service worker are generated dynamically for the church domai
         ->assertOk()
         ->assertHeader('Content-Type', 'application/manifest+json')
         ->assertJsonPath('name', 'PWA Church App')
-        ->assertJsonPath('theme_color', '#123456');
+        ->assertJsonPath('theme_color', '#123456')
+        ->assertJsonPath('shortcuts.0.url', '/biblioteca/biblia');
 
     $this->get('http://pwa.test/sw.js')
         ->assertOk()
         ->assertHeader('Service-Worker-Allowed', '/')
-        ->assertSee('nossa-casa', escape: false);
+        ->assertSee('nossa-casa', escape: false)
+        ->assertSee('CACHE_BIBLES', escape: false)
+        ->assertSee('BIBLE_CACHE_READY', escape: false)
+        ->assertSee("url.pathname.startsWith('/api/bible/')", escape: false);
 
     $this->artisan('service-worker:update')->assertSuccessful();
 });

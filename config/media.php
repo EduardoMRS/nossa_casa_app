@@ -15,7 +15,7 @@ return [
     'mediamtx' => [
         'api_url' => env('MEDIAMTX_API_URL', 'http://127.0.0.1:9997'),
         'api_token' => env('MEDIAMTX_API_TOKEN'),
-        'public_hls_url' => env('MEDIAMTX_PUBLIC_HLS_URL', 'http://localhost:8888'),
+        'public_webrtc_url' => env('MEDIAMTX_PUBLIC_WEBRTC_URL', 'http://localhost:8889'),
         'public_rtmp_url' => env('MEDIAMTX_PUBLIC_RTMP_URL', 'rtmp://localhost:1935'),
         'connect_timeout' => (float) env('MEDIAMTX_CONNECT_TIMEOUT', 3),
         'timeout' => (float) env('MEDIAMTX_TIMEOUT', 10),

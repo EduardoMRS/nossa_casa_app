@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\CategoryType;
-use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Church;
@@ -15,21 +14,18 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\Highlight;
 use App\Models\Library;
-use App\Models\LiveStream;
 use App\Models\Media;
 use App\Models\Network;
 use App\Models\Post;
 use App\Models\PrayerRequest;
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\Vercicle;
 use App\Services\SystemBackupService;
 use App\Support\ChurchTerminology;
+use App\Support\SystemMetricsSnapshot;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -196,7 +192,7 @@ class AdminWorkspaceController extends Controller
             description: __('admin.modules.library.description'),
             stats: [
                 ['label' => __('admin.modules.library.stats.0'), 'value' => Library::query()->count()],
-                ['label' => __('admin.modules.library.stats.1'), 'value' => Vercicle::query()->count()],
+                ['label' => __('admin.modules.library.stats.1'), 'value' => Setting::query()->get(['options'])->filter(fn (Setting $setting): bool => is_array(data_get($setting->options, 'bible.daily_verse')))->count()],
                 ['label' => __('admin.modules.library.stats.2'), 'value' => Form::query()->count()],
             ],
             actions: [
@@ -376,6 +372,7 @@ class AdminWorkspaceController extends Controller
     {
         $user = $request->user();
         $isSystem = $user?->role === UserRole::SYSTEM;
+        $canChangeChurchCommunity = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
         $communityId = $user?->profile?->community_id ?? $user?->church?->community_id;
 
         if (! $isSystem) {
@@ -385,7 +382,7 @@ class AdminWorkspaceController extends Controller
         $churchQuery = Church::query()
             ->when(! $isSystem, fn ($query) => $query->where('community_id', $communityId));
         $communityQuery = Community::query()
-            ->when(! $isSystem, fn ($query) => $query->whereKey($communityId));
+            ->when(! $canChangeChurchCommunity, fn ($query) => $query->whereKey($communityId));
         $networkQuery = Network::query()
             ->when(! $isSystem, function ($query) use ($communityId): void {
                 $query->where(function ($networkQuery) use ($communityId): void {
@@ -398,8 +395,16 @@ class AdminWorkspaceController extends Controller
                 });
             });
 
-        $churches = (clone $churchQuery)->with('community:id,name')->withCount('members')->orderBy('name')->get();
+        $churches = (clone $churchQuery)->with(['community:id,name', 'settings'])->withCount('members')->orderBy('name')->get();
         $churches->each(function (Church $church): void {
+            $branding = $church->settings?->options['branding'] ?? [];
+            $church->setAttribute('logo_url', is_array($branding) && filled($branding['logo_path'] ?? null)
+                ? genUrl($branding['logo_path'])
+                : null);
+            $church->setAttribute('icon_url', is_array($branding) && filled($branding['icon_path'] ?? null)
+                ? genUrl($branding['icon_path'])
+                : null);
+            $church->makeHidden('settings');
             $church->makeHidden('translations');
             $church->community?->makeHidden('translations');
         });
@@ -425,6 +430,7 @@ class AdminWorkspaceController extends Controller
             'networks' => $networks,
             'registrationRequests' => $registrationRequests,
             'canManageCommunities' => $isSystem,
+            'canChangeChurchCommunity' => $canChangeChurchCommunity,
             'stats' => [
                 ['label' => __('admin.multicongregation.stats.0'), 'value' => (clone $churchQuery)->count()],
                 ['label' => __('admin.multicongregation.stats.1'), 'value' => (clone $communityQuery)->count()],
@@ -511,50 +517,18 @@ class AdminWorkspaceController extends Controller
         return back();
     }
 
-    public function logsMetrics(): Response
+    public function logsMetrics(SystemMetricsSnapshot $snapshot): Response
     {
         $this->ensureBackupAccess(request());
 
-        $logPath = storage_path('logs/laravel.log');
-        $logLines = File::exists($logPath)
-            ? collect(preg_split('/\R/', File::get($logPath)) ?: [])->filter()->take(-100)->values()
-            : collect();
-
         return Inertia::render('Admin/LogsMetrics', [
-            'stats' => [
-                ['label' => 'Usuários', 'value' => User::query()->count(), 'tone' => 'indigo'],
-                ['label' => 'Eventos', 'value' => Event::query()->count(), 'tone' => 'emerald'],
-                ['label' => 'Postagens', 'value' => Post::query()->count(), 'tone' => 'amber'],
-                ['label' => 'Comentários', 'value' => Comment::query()->count(), 'tone' => 'rose'],
-                ['label' => 'Mídias', 'value' => Media::query()->count(), 'tone' => 'sky'],
-                ['label' => 'Formulários', 'value' => Form::query()->count(), 'tone' => 'violet'],
-            ],
-            'queue' => [
-                'pending' => Schema::hasTable('jobs') ? DB::table('jobs')->count() : 0,
-                'failed' => Schema::hasTable('failed_jobs') ? DB::table('failed_jobs')->count() : 0,
-            ],
-            'liveStreams' => LiveStream::query()
-                ->where('status', LiveStreamStatus::LIVE)
-                ->withCount('recordings')
-                ->latest('started_at')
-                ->get()
-                ->map(fn (LiveStream $liveStream): array => [
-                    'id' => $liveStream->id,
-                    'name' => $liveStream->name,
-                    'path' => $liveStream->path,
-                    'worker_id' => $liveStream->worker_id,
-                    'source_type' => $liveStream->source_type,
-                    'started_at' => $liveStream->started_at?->toIso8601String(),
-                    'recordings_count' => $liveStream->recordings_count,
-                    'playback_url' => $liveStream->playback_url,
-                ]),
+            ...$snapshot->make(),
             'system' => [
                 'environment' => app()->environment(),
                 'laravel' => app()->version(),
                 'php' => PHP_VERSION,
                 'queue_connection' => config('queue.default'),
             ],
-            'logs' => $logLines,
             'maintenance' => app()->isDownForMaintenance(),
         ]);
     }

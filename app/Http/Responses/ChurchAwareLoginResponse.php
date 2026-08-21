@@ -4,6 +4,7 @@ namespace App\Http\Responses;
 
 use App\Enums\UserRole;
 use App\Support\ChurchDomainContext;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -40,11 +41,22 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
             );
         }
 
-        return $this->response($request, route('dashboard', absolute: false));
+        $canAccessDashboard = $user !== null && in_array($user->role, [
+            UserRole::LEADER,
+            UserRole::MEDIA,
+            UserRole::CHURCH_LEADER,
+            UserRole::SUPERADMIN,
+            UserRole::SYSTEM,
+        ], true);
+
+        return $this->response(
+            $request,
+            route($canAccessDashboard ? 'dashboard' : 'home', absolute: false),
+        );
     }
 
     /** @param array<string, mixed> $extra */
-    private function response($request, string $url, array $extra = [], bool $external = false): Response
+    private function response(Request $request, string $url, array $extra = [], bool $external = false): Response
     {
         if ($request->wantsJson()) {
             return response()->json(['two_factor' => false, 'redirect' => $url, ...$extra]);

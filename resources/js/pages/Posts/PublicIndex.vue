@@ -384,6 +384,6 @@ const clearFilters = (): void => {
                 </aside>
             </div>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

@@ -159,7 +159,7 @@ test('login on the main domain redirects through a single use church handoff', f
 
     Auth::guard('web')->logout();
     $this->withoutHeader('X-Inertia');
-    $this->get($location)->assertRedirect('/dashboard');
+    $this->get($location)->assertRedirect('/');
     $this->assertAuthenticatedAs($user);
     $this->get($location)->assertForbidden();
 });

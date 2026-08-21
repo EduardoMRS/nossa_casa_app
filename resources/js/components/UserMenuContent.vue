@@ -8,8 +8,10 @@ import {
     LayoutDashboard,
     LogOut,
     Settings,
+    Undo2,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -52,7 +54,7 @@ const churchContext = computed(
             | {
                   isForeignChurch?: boolean;
                   church?: { name: string } | null;
-                  userChurch?: { name: string } | null;
+                  userChurch?: { name: string; url: string } | null;
               }
             | undefined,
 );
@@ -106,6 +108,18 @@ const transferMembership = (): void => {
         </p>
     </div>
     <DropdownMenuGroup v-if="isForeignChurch">
+        <DropdownMenuItem
+            v-if="churchContext?.userChurch?.url"
+            :as-child="true"
+        >
+            <a
+                class="block w-full cursor-pointer"
+                :href="churchContext.userChurch.url"
+            >
+                <Undo2 class="mr-2 size-4" />
+                {{ t('membership.return_to_own_church') }}
+            </a>
+        </DropdownMenuItem>
         <DropdownMenuItem
             class="cursor-pointer text-sky-700 focus:text-sky-800"
             @select.prevent="transferMembership"
@@ -170,6 +184,10 @@ const transferMembership = (): void => {
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
+    <DropdownMenuSeparator />
+    <DropdownMenuLabel class="px-2 py-1.5 font-normal">
+        <LocaleSwitcher class="w-full justify-between rounded-lg" />
+    </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
         <Link

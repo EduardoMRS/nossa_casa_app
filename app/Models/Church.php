@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy(ChurchObserver::class)]
 class Church extends Model
@@ -103,7 +105,8 @@ class Church extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    public function settings()
+    /** @return HasOne<Setting, $this> */
+    public function settings(): HasOne
     {
         return $this->hasOne(Setting::class);
     }
@@ -118,7 +121,8 @@ class Church extends Model
         return $this->belongsToMany(Church::class, 'networks', 'parent_church_id', 'child_church_id');
     }
 
-    public function community()
+    /** @return BelongsTo<Community, $this> */
+    public function community(): BelongsTo
     {
         return $this->belongsTo(Community::class);
     }

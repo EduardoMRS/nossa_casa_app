@@ -8,6 +8,8 @@ use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\Contracts\PasskeyUser;
@@ -51,12 +53,14 @@ class User extends Authenticatable implements PasskeyUser
         'role' => UserRole::class, // Cast automático para o Enum
     ];
 
-    public function church()
+    /** @return HasOneThrough<Church, UserProfile, $this> */
+    public function church(): HasOneThrough
     {
         return $this->hasOneThrough(Church::class, UserProfile::class, 'user_id', 'id', 'id', 'church_id');
     }
 
-    public function profile()
+    /** @return HasOne<UserProfile, $this> */
+    public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
     }

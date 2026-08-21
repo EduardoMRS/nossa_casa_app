@@ -26,7 +26,6 @@ use App\Models\PrayerRequest;
 use App\Models\Translation;
 use App\Models\User;
 use App\Models\UserRelationship;
-use App\Models\Vercicle;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -189,9 +188,8 @@ class RelationTesterSeeder extends Seeder
 
     private function seedSupportingModules(): void
     {
-        $library = Library::query()->updateOrCreate(['church_id' => $this->church->id, 'title' => 'Evangelho de João'], ['description' => 'Leitura guiada para a comunidade.', 'type' => 'book', 'file_path' => 'seeders/evangelho-joao.pdf']);
+        $library = Library::query()->updateOrCreate(['church_id' => $this->church->id, 'title' => 'Guia de acolhimento'], ['description' => 'Material de apoio para receber novos membros.', 'type' => 'support-material', 'file_path' => 'seeders/guia-acolhimento.pdf']);
         $library->categories()->syncWithoutDetaching($this->categoryIds(CategoryType::LIBRARY));
-        Vercicle::query()->updateOrCreate(['library_id' => $library->id, 'book' => 'João', 'chapter' => '3', 'verse' => '16'], ['content' => 'Porque Deus amou o mundo de tal maneira...', 'version' => 'NAA']);
         AiQuery::query()->updateOrCreate(['church_id' => $this->church->id, 'provider' => 'openrouter', 'model' => 'inclusionai/ling-3.0-flash:free', 'input' => 'Traduzir o título da postagem de boas-vindas.'], ['response' => 'Welcome to our community', 'usage' => ['prompt_tokens' => 12, 'completion_tokens' => 8, 'total_tokens' => 20], 'status' => 'completed', 'type' => 'translation']);
     }
 

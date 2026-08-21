@@ -37,7 +37,12 @@ test('active live stream paths are restored after mediamtx restarts', function (
         'http://mediamtx:9997/*' => Http::response([], 200),
     ]);
 
-    $this->artisan('media:reconcile-paths')->assertSuccessful();
+    $this->artisan('media:reconcile-paths')
+        ->expectsOutput(__('media.reconcile_summary', [
+            'synchronized' => 2,
+            'failed' => 0,
+        ]))
+        ->assertSuccessful();
 
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
         && $request->url() === 'http://mediamtx:9997/v3/config/paths/add/'.$missingPath->path

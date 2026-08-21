@@ -9,6 +9,11 @@ defineProps<{ userChurchUrl?: string | null }>();
 const page = usePage();
 const { t } = useI18n();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+const branding = computed(
+    () =>
+        (page.props.branding as
+            { logo_url?: string; brand_name?: string } | undefined) ?? {},
+);
 </script>
 
 <template>
@@ -18,9 +23,14 @@ const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
         >
             <Link :href="home()" class="flex items-center gap-3">
                 <span
-                    class="grid size-11 place-items-center rounded-xl border border-white/25 bg-white/10 text-lg font-black"
-                    >{{ t('portal.brand_initials') }}</span
+                    class="grid size-11 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 p-1"
                 >
+                    <img
+                        :src="branding.logo_url || '/branding/logo'"
+                        :alt="branding.brand_name || t('portal.brand_name')"
+                        class="size-full object-contain"
+                    />
+                </span>
                 <span>
                     <strong class="block text-base leading-none">{{
                         t('portal.brand_name')

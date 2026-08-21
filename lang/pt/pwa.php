@@ -2,6 +2,8 @@
 
 return [
     'description' => ':name mantém sua comunidade de fé conectada.',
+    'bible_shortcut' => 'Abrir o leitor da Bíblia',
+    'bible_shortcut_short' => 'Ler Bíblia',
     'notification_fallback' => 'Você recebeu uma nova atualização da comunidade.',
     'open_action' => 'Abrir',
     'offline_title' => 'Você está offline',

@@ -31,7 +31,7 @@ test('church leaders can configure organizational and role display terms', funct
     ];
 
     $this->actingAs($churchLeader)
-        ->put(route('admin.branding.update'), ['terminology' => $terminology])
+        ->put('http://terms.test/dashboard/configuracoes-church', ['terminology' => $terminology])
         ->assertRedirect();
 
     $stored = Setting::query()->where('church_id', $church->id)->firstOrFail();
@@ -58,13 +58,13 @@ test('church leaders can configure organizational and role display terms', funct
 });
 
 test('church terminology rejects unknown keys', function () {
-    $church = Church::factory()->create();
+    $church = Church::factory()->create(['domain' => 'invalid-terms.test']);
     $churchLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
     $church->assignMember($churchLeader);
 
     $this->actingAs($churchLeader)
-        ->from(route('admin.branding.edit'))
-        ->put(route('admin.branding.update'), [
+        ->from('http://invalid-terms.test/dashboard/configuracoes-church')
+        ->put('http://invalid-terms.test/dashboard/configuracoes-church', [
             'terminology' => [
                 'units' => ['headquarters' => 'cathedral', 'branch' => 'branch'],
                 'roles' => [
@@ -78,7 +78,7 @@ test('church terminology rejects unknown keys', function () {
                 ],
             ],
         ])
-        ->assertRedirect(route('admin.branding.edit'))
+        ->assertRedirect('http://invalid-terms.test/dashboard/configuracoes-church')
         ->assertSessionHasErrors('terminology.units.headquarters');
 });
 

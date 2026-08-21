@@ -978,6 +978,6 @@ onBeforeUnmount(() => {
             </div>
         </Teleport>
 
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

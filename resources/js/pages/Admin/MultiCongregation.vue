@@ -32,6 +32,8 @@ type Church = {
     status: string;
     community?: { id: string; name: string } | null;
     members_count: number;
+    logo_url?: string | null;
+    icon_url?: string | null;
 };
 
 type RegistrationRequest = {
@@ -58,6 +60,7 @@ const props = defineProps<{
     registrationRequests: RegistrationRequest[];
     stats: Array<{ label: string; value: number }>;
     canManageCommunities: boolean;
+    canChangeChurchCommunity: boolean;
 }>();
 
 const { t } = useI18n();
@@ -72,6 +75,8 @@ const communityModalOpen = ref(false);
 const editingChurch = ref<Church | null>(null);
 const editingCommunity = ref<Community | null>(null);
 const errorMessage = ref('');
+const churchLogo = ref<File | null>(null);
+const churchIcon = ref<File | null>(null);
 const churchForm = ref({
     name: '',
     slug: '',
@@ -101,6 +106,8 @@ const openChurchEditor = (church?: Church): void => {
                   : (communities.value[0]?.id ?? ''),
           };
     errorMessage.value = '';
+    churchLogo.value = null;
+    churchIcon.value = null;
     churchModalOpen.value = true;
 };
 
@@ -133,19 +140,43 @@ const requestError = (error: unknown): string => {
 
 const saveChurch = async (): Promise<void> => {
     try {
+        const payload = new FormData();
+        payload.append('name', churchForm.value.name);
+        payload.append('slug', churchForm.value.slug);
+        payload.append('domain', churchForm.value.domain);
+        payload.append('status', churchForm.value.status);
+
+        if (props.canChangeChurchCommunity) {
+            payload.append('community_id', churchForm.value.community_id);
+        }
+
+        if (churchLogo.value) {
+            payload.append('logo', churchLogo.value);
+        }
+
+        if (churchIcon.value) {
+            payload.append('icon', churchIcon.value);
+        }
+
         if (editingChurch.value) {
-            await axios.put(
-                `/api/church/${editingChurch.value.id}`,
-                churchForm.value,
-            );
+            payload.append('_method', 'PUT');
+            await axios.post(`/api/church/${editingChurch.value.id}`, payload);
         } else {
-            await axios.post('/api/church', churchForm.value);
+            await axios.post('/api/church', payload);
         }
 
         window.location.reload();
     } catch (error) {
         errorMessage.value = requestError(error);
     }
+};
+
+const selectChurchLogo = (event: Event): void => {
+    churchLogo.value = (event.target as HTMLInputElement).files?.[0] ?? null;
+};
+
+const selectChurchIcon = (event: Event): void => {
+    churchIcon.value = (event.target as HTMLInputElement).files?.[0] ?? null;
 };
 
 const removeChurch = async (church: Church): Promise<void> => {
@@ -598,11 +629,11 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </option>
                 </select>
                 <select
+                    v-if="props.canChangeChurchCommunity"
                     v-model="churchForm.community_id"
                     class="w-full rounded-lg border-slate-300"
-                    :disabled="!props.canManageCommunities"
                 >
-                    <option v-if="props.canManageCommunities" value="">
+                    <option value="">
                         {{ t('admin.multicongregation.no_community') }}
                     </option>
                     <option
@@ -613,6 +644,38 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         {{ community.name }}
                     </option>
                 </select>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="space-y-2 text-sm font-bold text-slate-700">
+                        <span>{{ t('admin.multicongregation.logo') }}</span>
+                        <img
+                            v-if="editingChurch?.logo_url"
+                            :src="editingChurch.logo_url"
+                            :alt="t('admin.multicongregation.logo_preview')"
+                            class="size-16 rounded-xl border object-contain p-1"
+                        />
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            class="block w-full text-xs font-normal"
+                            @change="selectChurchLogo"
+                        />
+                    </label>
+                    <label class="space-y-2 text-sm font-bold text-slate-700">
+                        <span>{{ t('admin.multicongregation.icon') }}</span>
+                        <img
+                            v-if="editingChurch?.icon_url"
+                            :src="editingChurch.icon_url"
+                            :alt="t('admin.multicongregation.icon_preview')"
+                            class="size-16 rounded-xl border object-contain p-1"
+                        />
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            class="block w-full text-xs font-normal"
+                            @change="selectChurchIcon"
+                        />
+                    </label>
+                </div>
                 <p
                     v-if="errorMessage"
                     class="text-sm font-semibold text-rose-600"

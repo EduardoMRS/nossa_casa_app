@@ -21,8 +21,7 @@ const branding = computed(
 const churchContext = computed(
     () =>
         page.props.churchContext as
-            | { church?: { name: string } | null }
-            | undefined,
+            { church?: { name: string } | null } | undefined,
 );
 const portalUrl = computed(
     () => (page.props.portalUrl as string | undefined) ?? '/',

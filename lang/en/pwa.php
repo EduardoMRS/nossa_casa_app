@@ -2,6 +2,8 @@
 
 return [
     'description' => ':name keeps your faith community connected.',
+    'bible_shortcut' => 'Open the Bible reader',
+    'bible_shortcut_short' => 'Read Bible',
     'notification_fallback' => 'You have a new community update.',
     'open_action' => 'Open',
     'offline_title' => 'You are offline',

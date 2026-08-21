@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import {
+    Check,
     Clock3,
     Globe2,
     ImageUp,
@@ -14,6 +15,7 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import InputError from '@/components/InputError.vue';
+import TemplateVariantPreview from '@/components/TemplateVariantPreview.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +35,9 @@ type BrandingData = {
     font_family: string;
     logo_path: string;
     logo_url: string;
+    logo_source_church_name?: string | null;
+    logo_inherited?: boolean;
+    logo_fallback?: boolean;
     icon_name: string;
     contact_email: string;
     contact_phone: string;
@@ -61,6 +66,8 @@ type TemplateSection =
     | 'library'
     | 'gallery';
 
+type TemplateVariant = 'classic' | 'editorial' | 'minimal';
+
 type TerminologySelections = {
     units: Record<'headquarters' | 'branch', string>;
     roles: Record<string, string>;
@@ -82,7 +89,7 @@ type TerminologyOptions = {
 
 const props = defineProps<{
     branding: BrandingData;
-    templates: Record<TemplateSection, 'classic' | 'editorial' | 'minimal'>;
+    templates: Record<TemplateSection, TemplateVariant>;
     terminology: TerminologySelections;
     terminologyOptions: TerminologyOptions;
 }>();
@@ -95,6 +102,9 @@ const colors = ref({
 const weeklySchedule = ref<WeeklySchedule[]>(
     props.branding.weekly_schedule.map((item) => ({ ...item })),
 );
+const templateSelections = ref<Record<TemplateSection, TemplateVariant>>({
+    ...props.templates,
+});
 const localLogoPreview = ref('');
 const removeLogo = ref(false);
 const logoPreview = computed(() =>
@@ -285,6 +295,24 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                             <p class="mt-1 text-xs text-muted-foreground">
                                 {{ t('admin.branding.logo_hint') }}
                             </p>
+                            <p
+                                v-if="props.branding.logo_inherited"
+                                class="mt-2 text-xs font-semibold text-sky-700"
+                            >
+                                {{
+                                    t('admin.branding.logo_inherited', {
+                                        church:
+                                            props.branding
+                                                .logo_source_church_name || '',
+                                    })
+                                }}
+                            </p>
+                            <p
+                                v-else-if="props.branding.logo_fallback"
+                                class="mt-2 text-xs font-semibold text-sky-700"
+                            >
+                                {{ t('admin.branding.logo_project_fallback') }}
+                            </p>
                         </div>
                     </div>
                     <div class="grid gap-3">
@@ -302,7 +330,11 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                             :value="removeLogo ? 1 : 0"
                         />
                         <button
-                            v-if="logoPreview || props.branding.logo_url"
+                            v-if="
+                                (logoPreview || props.branding.logo_url) &&
+                                !props.branding.logo_inherited &&
+                                !props.branding.logo_fallback
+                            "
                             type="button"
                             class="justify-self-start text-xs font-bold text-destructive hover:underline"
                             @click="removeLogo = !removeLogo"
@@ -337,7 +369,9 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                             id="domain"
                             name="domain"
                             :default-value="props.branding.domain"
-                            placeholder="igreja.exemplo.com"
+                            :placeholder="
+                                t('admin.branding.domain_placeholder')
+                            "
                         />
                         <p class="text-xs text-muted-foreground">
                             {{ t('admin.branding.domain_hint') }}
@@ -652,33 +686,74 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                             </p>
                         </div>
                     </div>
-                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <label
+                    <p class="text-xs text-muted-foreground">
+                        {{ t('admin.branding.templates_preview_hint') }}
+                    </p>
+                    <div class="grid gap-4 xl:grid-cols-2">
+                        <fieldset
                             v-for="section in templateSections"
                             :key="section"
-                            class="grid gap-2 text-xs font-bold text-foreground"
+                            class="rounded-xl border border-border bg-muted/20 p-3"
                         >
-                            {{
-                                t(`admin.branding.template_sections.${section}`)
-                            }}
-                            <select
-                                :name="`templates[${section}]`"
-                                :value="props.templates[section]"
-                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            <legend
+                                class="px-1 text-sm font-bold text-foreground"
                             >
-                                <option
+                                {{
+                                    t(
+                                        `admin.branding.template_sections.${section}`,
+                                    )
+                                }}
+                            </legend>
+                            <div class="mt-2 grid grid-cols-3 gap-2">
+                                <label
                                     v-for="variant in templateVariants"
                                     :key="variant"
-                                    :value="variant"
+                                    class="group relative grid cursor-pointer gap-2 rounded-lg border bg-background p-1.5 transition focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:border-primary/60"
+                                    :class="
+                                        templateSelections[section] === variant
+                                            ? 'border-primary ring-1 ring-primary'
+                                            : 'border-border'
+                                    "
                                 >
-                                    {{
-                                        t(
-                                            `admin.branding.template_variants.${variant}`,
-                                        )
-                                    }}
-                                </option>
-                            </select>
-                        </label>
+                                    <input
+                                        v-model="templateSelections[section]"
+                                        type="radio"
+                                        class="sr-only"
+                                        :name="`templates[${section}]`"
+                                        :value="variant"
+                                    />
+                                    <TemplateVariantPreview
+                                        :section="section"
+                                        :variant="variant"
+                                        :primary-color="colors.primary_color"
+                                        :secondary-color="
+                                            colors.secondary_color
+                                        "
+                                        :surface-color="colors.surface_color"
+                                    />
+                                    <span
+                                        class="flex items-center justify-center gap-1 text-center text-[11px] font-semibold text-foreground sm:text-xs"
+                                    >
+                                        <Check
+                                            v-if="
+                                                templateSelections[section] ===
+                                                variant
+                                            "
+                                            class="size-3 text-primary"
+                                        />
+                                        {{
+                                            t(
+                                                `admin.branding.template_variants.${variant}`,
+                                            )
+                                        }}
+                                    </span>
+                                </label>
+                            </div>
+                            <InputError
+                                class="mt-2"
+                                :message="errors[`templates.${section}`]"
+                            />
+                        </fieldset>
                     </div>
                     <InputError :message="errors.templates" />
                 </section>

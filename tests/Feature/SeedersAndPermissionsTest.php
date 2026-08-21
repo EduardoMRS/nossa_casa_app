@@ -25,7 +25,6 @@ use App\Models\Setting;
 use App\Models\Translation;
 use App\Models\User;
 use App\Models\UserRelationship;
-use App\Models\Vercicle;
 use Database\Seeders\InitialAiModelSeeder;
 use Database\Seeders\RelationTesterSeeder;
 use Illuminate\Support\Facades\Hash;
@@ -75,7 +74,6 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
         ->and(ClassroomPresence::query()->whereNotNull('check_out')->exists())->toBeTrue()
         ->and(PrayerRequest::query()->where('church_id', $church->id)->whereNull('user_id')->exists())->toBeTrue()
         ->and(Library::query()->where('church_id', $church->id)->exists())->toBeTrue()
-        ->and(Vercicle::query()->exists())->toBeTrue()
         ->and(UserRelationship::query()->count())->toBe(3)
         ->and(Setting::query()->where('church_id', $church->id)->exists())->toBeTrue()
         ->and(Category::query()->where('church_id', $church->id)->where('type', 'form')->exists())->toBeTrue()

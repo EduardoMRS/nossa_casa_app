@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\BroadcastSystemMetrics;
 use App\Console\Commands\ReconcileMediaMtxPaths;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -11,5 +12,10 @@ Artisan::command('inspire', function () {
 
 Schedule::command(ReconcileMediaMtxPaths::class)
     ->everyMinute()
+    ->withoutOverlapping(1)
+    ->onOneServer();
+
+Schedule::command(BroadcastSystemMetrics::class)
+    ->everyFiveSeconds()
     ->withoutOverlapping(1)
     ->onOneServer();

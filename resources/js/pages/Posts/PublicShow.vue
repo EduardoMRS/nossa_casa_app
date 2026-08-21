@@ -145,6 +145,6 @@ const formatDate = (value: string | null): string =>
                 </aside>
             </div>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

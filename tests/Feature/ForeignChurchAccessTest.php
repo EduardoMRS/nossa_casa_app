@@ -56,7 +56,8 @@ test('a foreign church visitor can use public interactions but not private route
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('canInteract', true)
-            ->where('churchContext.isForeignChurch', true));
+            ->where('churchContext.isForeignChurch', true)
+            ->where('churchContext.userChurch.url', 'https://home-church.test/'));
 
     $commentId = $this->postJson('http://visited-church.test/api/comments', [
         'commentable_type' => 'post',
@@ -101,7 +102,7 @@ test('a foreign church visitor can use public interactions but not private route
     ])->assertSuccessful();
 
     $this->get('http://visited-church.test/dashboard')
-        ->assertRedirect('http://visited-church.test');
+        ->assertForbidden();
     $this->postJson('http://visited-church.test/api/event', [])->assertForbidden();
 });
 

@@ -407,11 +407,14 @@
             "logo_file": "Church logo",
             "logo_preview": "Church logo preview",
             "logo_hint": "Upload a JPG, PNG, or WebP image up to 4 MB.",
+            "logo_inherited": "Using the logo inherited from {church}. Upload a logo here to override it for this church.",
+            "logo_project_fallback": "Using the default Nossa Casa logo. Upload a logo here to customize this church.",
             "remove_logo": "Remove current logo",
             "keep_logo": "Keep current logo",
             "domain_title": "Church access domain",
             "domain_description": "Define the address members will use to access this church.",
             "domain": "Domain",
+            "domain_placeholder": "church.example.com",
             "domain_hint": "Enter only the domain, without protocol or paths. The current domain is used when this field is left empty.",
             "terminology_title": "Community terminology",
             "terminology_description": "Choose how organizational units and access levels are presented without changing their permissions.",
@@ -433,6 +436,7 @@
             "coordinates_hint": "Coordinates allow the main portal to highlight nearby communities. Use the church entrance location.",
             "templates_title": "Public page templates",
             "templates_description": "Choose the visual composition used by each public experience without changing its content.",
+            "templates_preview_hint": "Select a preview to apply that visual style to the page. The preview follows the colors chosen above.",
             "template_sections": {
                 "home": "Church home",
                 "posts_index": "Post listing",
@@ -620,6 +624,8 @@
             "kicker": "Operational overview",
             "description": "A live summary of platform activity.",
             "system": "System",
+            "runtime": "Laravel / PHP runtime",
+            "log_file": "Application log",
             "empty": "No recent activity.",
             "environment": "Environment",
             "pending_jobs": "Pending jobs",
@@ -766,6 +772,10 @@
             "requests": "Requests",
             "empty_requests": "No congregation requests were found.",
             "domain": "Custom domain (e.g. church.example.com)",
+            "logo": "Church logo",
+            "logo_preview": "Current church logo",
+            "icon": "Site and PWA icon",
+            "icon_preview": "Current site icon",
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
@@ -855,6 +865,7 @@
             "verse_text": "Verse text",
             "book": "Book",
             "chapter": "Chapter",
+            "copyright_notice": "Edition rights notice",
             "verse": "Verse",
             "version": "Version / translation",
             "categories": "Library categories",
@@ -879,7 +890,18 @@
             "records": "{count} records",
             "no_description": "No description",
             "empty": "No works registered yet.",
-            "delete_confirm": "Delete “{title}”?"
+            "delete_confirm": "Delete “{title}”?",
+            "bible": {
+                "community_title": "Community Bible versions",
+                "community_description": "Choose the original-language editions that churches in this community may provide.",
+                "church_title": "Versions available in this church",
+                "church_description": "Select a subset of the versions approved by the community.",
+                "default_version": "Default version",
+                "search_versions": "Search by version or language",
+                "save_community": "Save community versions",
+                "save_church": "Save church versions",
+                "load_error": "Bible data could not be loaded. Try again shortly."
+            }
         },
         "events": {
             "title": "Manage events",
@@ -955,7 +977,39 @@
         "title": "Community library",
         "description": "Browse studies, devotionals, books, and materials shared by your church.",
         "open": "Open material",
-        "empty": "No materials are available yet."
+        "empty": "No materials are available yet.",
+        "bible": {
+            "title": "Holy Bible",
+            "description": "Navigate through books, chapters, and verses without automatic translation of Scripture.",
+            "type": "Scripture",
+            "read": "Read Bible",
+            "versions_available": "{count} versions available",
+            "version": "Version",
+            "book": "Book",
+            "chapter": "Chapter",
+            "copyright_notice": "Edition rights notice",
+            "previous_chapter": "Previous chapter",
+            "next_chapter": "Next chapter",
+            "no_versions": "No Bible version has been enabled for this church.",
+            "load_error": "Bible data could not be loaded. Try again shortly.",
+            "offline_download": "Make available offline",
+            "offline_download_description": "Download the open Bible versions enabled by this church for reading without an internet connection.",
+            "offline_downloading": "Preparing the Bibles for offline reading…",
+            "offline_ready": "Available offline",
+            "offline_error": "The offline download could not be completed. Check your connection and try again.",
+            "offline_missing": "This chapter has not been downloaded for offline reading yet.",
+            "offline_open_versions": "{count} open versions enabled by this church can be downloaded. Versions with restricted licenses remain online only."
+        }
+    },
+    "reader": {
+        "appearance": "Reading appearance",
+        "close": "Close reader",
+        "themes": {
+            "light": "Light background",
+            "paper": "Paper background",
+            "sepia": "Sepia background",
+            "dark": "Dark background"
+        }
     },
     "live_stream": {
         "ended": "This live stream has ended.",
@@ -974,6 +1028,9 @@
     },
     "home": {
         "meta_title": "Home",
+        "daily_verse": {
+            "kicker": "Verse of the day"
+        },
         "hero": {
             "kicker": "Living community",
             "title": "Welcome to the Nossa Casa ecosystem",
@@ -996,27 +1053,6 @@
         "latest_posts": {
             "kicker": "Communication",
             "title": "Latest updates"
-        },
-        "roadmap": {
-            "kicker": "Your next steps",
-            "title": "Community roadmap",
-            "description": "Follow upcoming events, recent messages, and library resources in one living sequence.",
-            "empty": "New events, posts, and library resources will appear here as they are published.",
-            "types": {
-                "event": "Upcoming event",
-                "post": "Recent post",
-                "library": "Library resource"
-            },
-            "shortcuts_kicker": "Quick access",
-            "shortcuts_title": "Where do you want to go?",
-            "shortcuts": {
-                "events": "Events",
-                "posts": "Posts",
-                "library": "Library",
-                "community": "Community network",
-                "login": "Sign in",
-                "register": "Create account"
-            }
         },
         "latest_recordings": {
             "kicker": "Watch again",
@@ -1318,6 +1354,7 @@
         "visiting_title": "Visiting another congregation",
         "visiting_description": "You belong to {current} and are viewing {church}. Public interactions remain available.",
         "transfer": "Transfer to this congregation",
+        "return_to_own_church": "Return to my congregation",
         "confirm": "Do you really want to transfer your membership to {church}? Local leadership and media roles will be changed to member."
     },
     "portal": {

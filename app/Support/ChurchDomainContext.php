@@ -27,7 +27,7 @@ class ChurchDomainContext
         }
 
         $query = Church::query()
-            ->with('community:id,name,slug')
+            ->with('community:id,owner_id,name,slug,bible_versions,default_bible_version')
             ->where('domain', $host)
             ->where('status', ChurchStatus::ACTIVE);
 

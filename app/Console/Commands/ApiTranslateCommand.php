@@ -11,7 +11,6 @@ use App\Models\Form;
 use App\Models\Library;
 use App\Models\Post;
 use App\Models\Translation;
-use App\Models\Vercicle;
 use App\Services\AiProvider;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -40,7 +39,6 @@ class ApiTranslateCommand extends Command
         Form::class => ['title', 'description', 'schema'],
         Library::class => ['title', 'description', 'type'],
         Post::class => ['title', 'content'],
-        Vercicle::class => ['book', 'content'],
     ];
 
     protected array $backendContentBase = [];

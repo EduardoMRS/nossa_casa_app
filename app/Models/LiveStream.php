@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\LiveStreamStatus;
+use App\Observers\LiveStreamObserver;
 use Database\Factories\LiveStreamFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,10 +13,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property LiveStreamStatus $status
+ * @property Carbon|null $started_at
+ * @property Carbon|null $ended_at
  */
+#[ObservedBy(LiveStreamObserver::class)]
 class LiveStream extends Model
 {
     /** @use HasFactory<LiveStreamFactory> */
@@ -123,13 +129,13 @@ class LiveStream extends Model
 
     public function getPlaybackUrlAttribute(): string
     {
-        return rtrim((string) config('media.mediamtx.public_hls_url'), '/')
-            .'/'.$this->path.'/index.m3u8';
+        return rtrim((string) config('media.mediamtx.public_webrtc_url'), '/')
+            .'/'.$this->path;
     }
 
     public function getEmbedUrlAttribute(): string
     {
-        return rtrim((string) config('media.mediamtx.public_hls_url'), '/')
+        return rtrim((string) config('media.mediamtx.public_webrtc_url'), '/')
             .'/'.$this->path.'?controls=true&muted=false&autoplay=true&playsInline=true';
     }
 }

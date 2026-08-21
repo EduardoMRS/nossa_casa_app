@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Church;
 use App\Models\User;
 use App\Services\SystemBackupService;
 use Illuminate\Http\UploadedFile;
@@ -24,6 +25,9 @@ it('provides translated backup messages for each supported locale', function () 
 it('allows only users above admin to access the backup screen during maintenance', function () {
     $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
     $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church = Church::factory()->create();
+    $church->assignMember($superadmin);
+    $church->assignMember($admin);
 
     app()->maintenanceMode()->activate(['status' => 503]);
 

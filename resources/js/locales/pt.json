@@ -407,11 +407,14 @@
             "logo_file": "Logotipo da church",
             "logo_preview": "Pré-visualização do logotipo da church",
             "logo_hint": "Envie uma imagem JPG, PNG ou WebP de até 4 MB.",
+            "logo_inherited": "Usando o logotipo herdado de {church}. Envie um logotipo aqui para substituí-lo nesta church.",
+            "logo_project_fallback": "Usando o logotipo padrão do Nossa Casa. Envie um logotipo aqui para personalizar esta church.",
             "remove_logo": "Remover logotipo atual",
             "keep_logo": "Manter logotipo atual",
             "domain_title": "Domínio de acesso da church",
             "domain_description": "Defina o endereço que os membros usarão para acessar esta church.",
             "domain": "Domínio",
+            "domain_placeholder": "igreja.exemplo.com",
             "domain_hint": "Informe somente o domínio, sem protocolo ou caminhos. Se o campo ficar vazio, será usado o domínio atual.",
             "terminology_title": "Terminologia da comunidade",
             "terminology_description": "Escolha como as unidades organizacionais e os níveis de acesso serão apresentados sem alterar suas permissões.",
@@ -433,6 +436,7 @@
             "coordinates_hint": "As coordenadas permitem que o portal principal destaque comunidades próximas. Use a localização da entrada da congregação.",
             "templates_title": "Templates das páginas públicas",
             "templates_description": "Escolha a composição visual usada por cada experiência pública sem alterar seu conteúdo.",
+            "templates_preview_hint": "Selecione uma prévia para aplicar esse estilo visual à página. A prévia acompanha as cores escolhidas acima.",
             "template_sections": {
                 "home": "Home da congregação",
                 "posts_index": "Listagem de publicações",
@@ -620,6 +624,8 @@
             "kicker": "Visão geral operacional",
             "description": "Um resumo ao vivo da atividade da plataforma.",
             "system": "Sistema",
+            "runtime": "Ambiente Laravel / PHP",
+            "log_file": "Log da aplicação",
             "empty": "Nenhuma atividade recente.",
             "environment": "Ambiente",
             "pending_jobs": "Tarefas pendentes",
@@ -766,6 +772,10 @@
             "requests": "Solicitações",
             "empty_requests": "Nenhuma solicitação de congregação encontrada.",
             "domain": "Domínio personalizado (ex.: igreja.exemplo.com)",
+            "logo": "Logo da church",
+            "logo_preview": "Logo atual da church",
+            "icon": "Ícone do site e PWA",
+            "icon_preview": "Ícone atual do site",
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
@@ -855,6 +865,7 @@
             "verse_text": "Texto do verso",
             "book": "Livro",
             "chapter": "Capítulo",
+            "copyright_notice": "Aviso de direitos da edição",
             "verse": "Versículo",
             "version": "Versão / tradução",
             "categories": "Categorias da biblioteca",
@@ -879,7 +890,18 @@
             "records": "{count} registros",
             "no_description": "Sem descrição",
             "empty": "Nenhum trabalho registrado ainda.",
-            "delete_confirm": "Excluir “{title}”?"
+            "delete_confirm": "Excluir “{title}”?",
+            "bible": {
+                "community_title": "Versões bíblicas da comunidade",
+                "community_description": "Escolha as edições em seu idioma original que as igrejas desta comunidade poderão disponibilizar.",
+                "church_title": "Versões disponíveis nesta igreja",
+                "church_description": "Selecione um subconjunto das versões aprovadas pela comunidade.",
+                "default_version": "Versão padrão",
+                "search_versions": "Buscar por versão ou idioma",
+                "save_community": "Salvar versões da comunidade",
+                "save_church": "Salvar versões da igreja",
+                "load_error": "Não foi possível carregar os dados bíblicos. Tente novamente em instantes."
+            }
         },
         "events": {
             "title": "Gerenciar eventos",
@@ -955,7 +977,39 @@
         "title": "Biblioteca comunitária",
         "description": "Navegue por estudos, devocionais, livros e materiais compartilhados por sua igreja.",
         "open": "Abrir material",
-        "empty": "Ainda não há materiais disponíveis."
+        "empty": "Ainda não há materiais disponíveis.",
+        "bible": {
+            "title": "Bíblia Sagrada",
+            "description": "Navegue por livros, capítulos e versículos sem tradução automática das Escrituras.",
+            "type": "Escrituras",
+            "read": "Ler a Bíblia",
+            "versions_available": "{count} versões disponíveis",
+            "version": "Versão",
+            "book": "Livro",
+            "chapter": "Capítulo",
+            "copyright_notice": "Aviso de direitos da edição",
+            "previous_chapter": "Capítulo anterior",
+            "next_chapter": "Próximo capítulo",
+            "no_versions": "Nenhuma versão bíblica foi habilitada para esta igreja.",
+            "load_error": "Não foi possível carregar os dados bíblicos. Tente novamente em instantes.",
+            "offline_download": "Disponibilizar offline",
+            "offline_download_description": "Baixe as versões bíblicas abertas habilitadas por esta church para ler sem conexão com a internet.",
+            "offline_downloading": "Preparando as Bíblias para leitura offline…",
+            "offline_ready": "Disponível offline",
+            "offline_error": "Não foi possível concluir o download offline. Verifique a conexão e tente novamente.",
+            "offline_missing": "Este capítulo ainda não foi baixado para leitura offline.",
+            "offline_open_versions": "{count} versões abertas habilitadas por esta church podem ser baixadas. Versões com licença restrita permanecem apenas online."
+        }
+    },
+    "reader": {
+        "appearance": "Aparência da leitura",
+        "close": "Fechar leitor",
+        "themes": {
+            "light": "Fundo claro",
+            "paper": "Fundo papel",
+            "sepia": "Fundo sépia",
+            "dark": "Fundo escuro"
+        }
     },
     "live_stream": {
         "ended": "Esta transmissão foi encerrada.",
@@ -974,6 +1028,9 @@
     },
     "home": {
         "meta_title": "Casa",
+        "daily_verse": {
+            "kicker": "Versículo do dia"
+        },
         "hero": {
             "kicker": "Comunidade viva",
             "title": "Bem-vindo ao ecossistema Nossa Casa",
@@ -996,27 +1053,6 @@
         "latest_posts": {
             "kicker": "Comunicação",
             "title": "Últimas atualizações"
-        },
-        "roadmap": {
-            "kicker": "Seus próximos passos",
-            "title": "Roadmap da comunidade",
-            "description": "Acompanhe próximos eventos, mensagens recentes e materiais da biblioteca em uma sequência sempre atualizada.",
-            "empty": "Novos eventos, posts e materiais da biblioteca aparecerão aqui conforme forem publicados.",
-            "types": {
-                "event": "Próximo evento",
-                "post": "Post recente",
-                "library": "Material da biblioteca"
-            },
-            "shortcuts_kicker": "Acesso rápido",
-            "shortcuts_title": "Para onde você quer ir?",
-            "shortcuts": {
-                "events": "Eventos",
-                "posts": "Posts",
-                "library": "Biblioteca",
-                "community": "Rede da comunidade",
-                "login": "Entrar",
-                "register": "Criar conta"
-            }
         },
         "latest_recordings": {
             "kicker": "Assista novamente",
@@ -1318,6 +1354,7 @@
         "visiting_title": "Visitando outra congregação",
         "visiting_description": "Você congrega em {current} e está acessando {church}. As interações públicas continuam disponíveis.",
         "transfer": "Transferir para esta congregação",
+        "return_to_own_church": "Retornar à minha congregação",
         "confirm": "Deseja realmente transferir seu vínculo para {church}? Cargos locais de liderança e mídia serão alterados para membro."
     },
     "portal": {

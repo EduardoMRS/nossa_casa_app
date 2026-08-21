@@ -815,6 +815,6 @@ const personFor = (item: Relationship): Person | undefined =>
                 </div>
             </section>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

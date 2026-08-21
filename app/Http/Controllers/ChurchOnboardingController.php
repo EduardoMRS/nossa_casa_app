@@ -135,7 +135,15 @@ class ChurchOnboardingController extends Controller
         $request->session()->regenerate();
         $request->session()->forget('church_membership_pending');
 
-        return redirect()->route('dashboard');
+        $canAccessDashboard = in_array($request->user()?->role, [
+            UserRole::LEADER,
+            UserRole::MEDIA,
+            UserRole::CHURCH_LEADER,
+            UserRole::SUPERADMIN,
+            UserRole::SYSTEM,
+        ], true);
+
+        return redirect()->route($canAccessDashboard ? 'dashboard' : 'home');
     }
 
     public function switchMembership(Request $request): RedirectResponse

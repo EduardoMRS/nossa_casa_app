@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Setting;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -12,10 +11,7 @@ class PwaController extends Controller
     public function manifest(ChurchDomainContext $context): JsonResponse
     {
         $church = $context->church();
-        $setting = $church
-            ? Setting::query()->where('church_id', $church->id)->first()
-            : null;
-        $branding = $setting?->options['branding'] ?? [];
+        $branding = $church?->settings?->options['branding'] ?? [];
         $name = is_array($branding) && filled($branding['brand_name'] ?? null)
             ? $branding['brand_name']
             : config('app.name');
@@ -32,9 +28,32 @@ class PwaController extends Controller
             'background_color' => $this->color($branding, 'surface_color', '#f4f7fb'),
             'theme_color' => $this->color($branding, 'primary_color', '#342f87'),
             'icons' => [
-                ['src' => '/favicon.ico', 'sizes' => '16x16 24x24 32x32 64x64', 'type' => 'image/x-icon'],
-                ['src' => '/apple-touch-icon.png', 'sizes' => '180x180', 'type' => 'image/png', 'purpose' => 'any maskable'],
+                [
+                    'src' => route('branding.icon', absolute: false),
+                    'sizes' => 'any',
+                    'type' => 'image/svg+xml',
+                    'purpose' => 'any maskable',
+                ],
+                [
+                    'src' => route('branding.logo', absolute: false),
+                    'sizes' => 'any',
+                    'purpose' => 'any',
+                ],
             ],
+            'shortcuts' => $church ? [
+                [
+                    'name' => __('pwa.bible_shortcut'),
+                    'short_name' => __('pwa.bible_shortcut_short'),
+                    'url' => route('library.bible', absolute: false),
+                    'icons' => [
+                        [
+                            'src' => route('branding.icon', absolute: false),
+                            'sizes' => 'any',
+                            'type' => 'image/svg+xml',
+                        ],
+                    ],
+                ],
+            ] : [],
         ])->header('Content-Type', 'application/manifest+json');
     }
 
@@ -43,10 +62,7 @@ class PwaController extends Controller
         $template = file_get_contents(resource_path('pwa/sw.js'));
         abort_if($template === false, 404);
         $church = $context->church();
-        $setting = $church
-            ? Setting::query()->where('church_id', $church->id)->first()
-            : null;
-        $branding = $setting?->options['branding'] ?? [];
+        $branding = $church?->settings?->options['branding'] ?? [];
         $name = is_array($branding) && filled($branding['brand_name'] ?? null)
             ? $branding['brand_name']
             : config('app.name');

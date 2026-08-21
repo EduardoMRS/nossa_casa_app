@@ -7,6 +7,7 @@ use Database\Factories\CommunityFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 class Community extends Model
@@ -23,13 +24,21 @@ class Community extends Model
         'description',
         'found_date',
         'logo_path',
+        'bible_versions',
+        'default_bible_version',
+    ];
+
+    protected $casts = [
+        'found_date' => 'date',
+        'bible_versions' => 'array',
     ];
 
     protected $appends = [
         'translations',
     ];
 
-    public function churches()
+    /** @return HasMany<Church, $this> */
+    public function churches(): HasMany
     {
         return $this->hasMany(Church::class, 'community_id');
     }

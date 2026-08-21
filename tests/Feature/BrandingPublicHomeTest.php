@@ -40,7 +40,7 @@ test('church branding stores location embed and grouped weekly schedules for the
     );
 
     $this->actingAs($admin)
-        ->put(route('admin.branding.update'), [
+        ->put('http://weekly.test/dashboard/configuracoes-church', [
             'domain' => 'https://WEEKLY-NEW.test/welcome',
             'brand_name' => 'Weekly Church',
             'logo' => $logo,
@@ -86,7 +86,7 @@ test('church branding stores location embed and grouped weekly schedules for the
         ->assertInertia(fn (Assert $page) => $page
             ->component('Home')
             ->where('branding.logo_path', $branding['logo_path'])
-            ->where('branding.logo_url', fn (string $logoUrl): bool => str_contains($logoUrl, '/d/'))
+            ->where('branding.logo_url', '/branding/logo')
             ->where('branding.address', '100 Main Street, Manaus')
             ->where('branding.map_embed', 'https://www.google.com/maps/embed?pb=church')
             ->has('branding.weekly_schedule', 2)
@@ -104,11 +104,11 @@ test('branding rejects unsafe map embeds', function () {
     $church->assignMember($admin);
 
     $this->actingAs($admin)
-        ->from(route('admin.branding.edit'))
-        ->put(route('admin.branding.update'), [
+        ->from('http://safe-church.test/dashboard/configuracoes-church')
+        ->put('http://safe-church.test/dashboard/configuracoes-church', [
             'map_embed' => '<iframe src="https://unsafe.example/map"></iframe>',
         ])
-        ->assertRedirect(route('admin.branding.edit'))
+        ->assertRedirect('http://safe-church.test/dashboard/configuracoes-church')
         ->assertSessionHasErrors('map_embed');
 });
 
@@ -123,7 +123,7 @@ test('church settings keep the current domain when the domain input is omitted',
     $church->assignMember($admin);
 
     $this->actingAs($admin)
-        ->put(route('admin.branding.update'), [
+        ->put('http://current-domain.test/dashboard/configuracoes-church', [
             'brand_name' => 'Updated Church Name',
         ])
         ->assertRedirect();

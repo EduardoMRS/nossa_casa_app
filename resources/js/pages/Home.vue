@@ -7,16 +7,11 @@ import {
     ChevronRight,
     Clock3,
     HeartHandshake,
-    LibraryBig,
-    LogIn,
     Mail,
     MapPin,
-    Network,
-    Newspaper,
     Play,
     Phone,
     Send,
-    UserPlus,
     X,
 } from '@lucide/vue';
 import axios from 'axios';
@@ -25,14 +20,9 @@ import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
-import { login, register } from '@/routes';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
-import { index as libraryIndex } from '@/routes/library';
-import {
-    index as publicPostsIndex,
-    show as publicPostShow,
-} from '@/routes/posts/public';
+import { show as publicPostShow } from '@/routes/posts/public';
 
 type EventCard = {
     id: string;
@@ -101,13 +91,12 @@ type CalendarItem = {
     recurring: boolean;
 };
 
-type RoadmapItem = {
-    id: string;
-    type: 'event' | 'post' | 'library';
-    title: string;
-    description: string;
-    date: string | null;
-    href: string;
+type DailyVerse = {
+    book_name: string;
+    chapter: number;
+    verse: number;
+    content: string;
+    version: string;
 };
 
 const props = defineProps<{
@@ -120,8 +109,7 @@ const props = defineProps<{
     latestPosts: PostCard[];
     latestRecordings: RecordingCard[];
     calendarEvents: CalendarEvent[];
-    roadmap: RoadmapItem[];
-    communityUrl: string;
+    dailyVerse: DailyVerse | null;
 }>();
 
 const { locale, t } = useI18n();
@@ -162,50 +150,6 @@ const scheduleGroups = computed(() => {
     }));
 });
 const authenticatedUser = computed(() => page.props.auth?.user);
-const roadmapShortcuts = computed(() =>
-    [
-        {
-            key: 'events',
-            href: eventsIndex(),
-            icon: CalendarDays,
-            external: false,
-        },
-        {
-            key: 'posts',
-            href: publicPostsIndex(),
-            icon: Newspaper,
-            external: false,
-        },
-        {
-            key: 'library',
-            href: libraryIndex(),
-            icon: LibraryBig,
-            external: false,
-        },
-        {
-            key: 'community',
-            href: props.communityUrl,
-            icon: Network,
-            external: true,
-        },
-        {
-            key: 'login',
-            href: login(),
-            icon: LogIn,
-            external: false,
-            guestOnly: true,
-        },
-        {
-            key: 'register',
-            href: register(),
-            icon: UserPlus,
-            external: false,
-            guestOnly: true,
-        },
-    ].filter((shortcut) => !shortcut.guestOnly || !authenticatedUser.value),
-);
-const roadmapIcon = (type: RoadmapItem['type']) =>
-    ({ event: CalendarDays, post: Newspaper, library: LibraryBig })[type];
 const prayerContent = ref('');
 const prayerAnonymous = ref(false);
 const prayerProcessing = ref(false);
@@ -506,6 +450,28 @@ const submitPrayer = async (): Promise<void> => {
                 </Link>
             </section>
 
+            <section
+                v-if="dailyVerse"
+                class="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-6 text-center shadow-sm"
+            >
+                <p
+                    class="font-mono text-[10px] font-bold tracking-[0.2em] text-amber-700 uppercase"
+                >
+                    {{ t('home.daily_verse.kicker') }}
+                </p>
+                <blockquote
+                    class="mx-auto mt-3 max-w-4xl text-xl leading-8 font-bold text-slate-800"
+                >
+                    “{{ dailyVerse.content }}”
+                </blockquote>
+                <p class="mt-3 text-sm font-black text-indigo-700">
+                    {{ dailyVerse.book_name }} {{ dailyVerse.chapter }}:<span>{{
+                        dailyVerse.verse
+                    }}</span>
+                    · {{ dailyVerse.version }}
+                </p>
+            </section>
+
             <section class="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
                 <div>
                     <div class="mb-4 flex items-end justify-between">
@@ -614,141 +580,6 @@ const submitPrayer = async (): Promise<void> => {
                         </Link>
                     </div>
                 </div>
-            </section>
-
-            <section
-                class="grid gap-6 rounded-3xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:p-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]"
-            >
-                <div>
-                    <p
-                        class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"
-                    >
-                        {{ t('home.roadmap.kicker') }}
-                    </p>
-                    <h2 class="mt-1 text-2xl font-black">
-                        {{ t('home.roadmap.title') }}
-                    </h2>
-                    <p class="mt-2 max-w-2xl text-sm text-slate-500">
-                        {{ t('home.roadmap.description') }}
-                    </p>
-
-                    <ol v-if="roadmap.length" class="relative mt-7 grid gap-4">
-                        <li
-                            v-for="(item, index) in roadmap"
-                            :key="item.id"
-                            class="group relative grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3"
-                        >
-                            <span
-                                v-if="index < roadmap.length - 1"
-                                class="absolute top-11 bottom-[-1rem] left-[1.35rem] w-px bg-indigo-200"
-                            />
-                            <span
-                                class="relative z-10 grid size-11 place-items-center rounded-2xl bg-indigo-700 text-white shadow-sm"
-                            >
-                                <component
-                                    :is="roadmapIcon(item.type)"
-                                    class="size-5"
-                                />
-                            </span>
-                            <Link
-                                :href="item.href"
-                                class="rounded-2xl border border-slate-200 bg-white p-4 transition group-hover:border-indigo-300 group-hover:shadow-sm"
-                            >
-                                <div
-                                    class="flex flex-wrap items-center justify-between gap-2"
-                                >
-                                    <span
-                                        class="text-[10px] font-black tracking-wide text-indigo-600 uppercase"
-                                    >
-                                        {{
-                                            t(
-                                                `home.roadmap.types.${item.type}`,
-                                            )
-                                        }}
-                                    </span>
-                                    <time
-                                        v-if="item.date"
-                                        class="text-[10px] font-bold text-slate-400"
-                                    >
-                                        {{ formatDate(item.date) }}
-                                    </time>
-                                </div>
-                                <h3 class="mt-1 font-black">
-                                    {{ item.title }}
-                                </h3>
-                                <p
-                                    v-if="item.description"
-                                    class="mt-1 line-clamp-2 text-sm leading-6 text-slate-500"
-                                >
-                                    {{ item.description }}
-                                </p>
-                            </Link>
-                        </li>
-                    </ol>
-                    <p
-                        v-else
-                        class="mt-6 rounded-2xl border border-dashed border-indigo-200 bg-white/70 p-6 text-sm text-slate-500"
-                    >
-                        {{ t('home.roadmap.empty') }}
-                    </p>
-                </div>
-
-                <aside
-                    class="h-fit rounded-2xl bg-indigo-950 p-5 text-white lg:sticky lg:top-24"
-                >
-                    <p
-                        class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-300 uppercase"
-                    >
-                        {{ t('home.roadmap.shortcuts_kicker') }}
-                    </p>
-                    <h3 class="mt-1 text-xl font-black">
-                        {{ t('home.roadmap.shortcuts_title') }}
-                    </h3>
-                    <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                        <a
-                            v-for="shortcut in roadmapShortcuts.filter(
-                                (item) => item.external,
-                            )"
-                            :key="shortcut.key"
-                            :href="String(shortcut.href)"
-                            class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-3 text-sm font-bold transition hover:bg-white/15"
-                        >
-                            <span class="flex items-center gap-2">
-                                <component
-                                    :is="shortcut.icon"
-                                    class="size-4 text-indigo-300"
-                                />
-                                {{
-                                    t(
-                                        `home.roadmap.shortcuts.${shortcut.key}`,
-                                    )
-                                }}
-                            </span>
-                            <ArrowRight class="size-4" />
-                        </a>
-                        <Link
-                            v-for="shortcut in roadmapShortcuts.filter(
-                                (item) => !item.external,
-                            )"
-                            :key="shortcut.key"
-                            :href="shortcut.href"
-                            class="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-3 text-sm font-bold transition hover:bg-white/15"
-                        >
-                            <span class="flex items-center gap-2">
-                                <component
-                                    :is="shortcut.icon"
-                                    class="size-4 text-indigo-300"
-                                />
-                                {{
-                                    t(
-                                        `home.roadmap.shortcuts.${shortcut.key}`,
-                                    )
-                                }}
-                            </span>
-                            <ArrowRight class="size-4" />
-                        </Link>
-                    </div>
-                </aside>
             </section>
 
             <section v-if="props.latestRecordings.length">

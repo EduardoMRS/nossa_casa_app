@@ -47,6 +47,7 @@ class PublicLiveStreamController extends Controller
                 'started_at' => $liveStream->started_at,
                 'is_public' => $liveStream->is_public,
             ],
+            'realtimePrivate' => ! $liveStream->is_public,
             'comments' => $comments,
             'canComment' => $user !== null,
             'canModerate' => $hasChurchAccess && in_array($role, [

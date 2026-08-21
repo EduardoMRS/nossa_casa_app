@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router, usePoll } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import {
     Activity,
     Archive,
@@ -44,23 +45,41 @@ const props = defineProps<{
     }>;
     maintenance: boolean;
 }>();
+type LiveStreamMetric = (typeof props.liveStreams)[number];
+type MetricsSnapshot = {
+    stats: typeof props.stats;
+    queue: typeof props.queue;
+    logs: string[];
+    liveStreams: LiveStreamMetric[];
+};
+
 const { t } = useI18n();
+const stats = ref([...props.stats]);
+const queue = ref({ ...props.queue });
+const logs = ref([...props.logs]);
+const liveStreams = ref([...props.liveStreams]);
 const query = ref('');
 const operation = ref<'export' | 'import' | null>(null);
 const selectedBackup = ref<File | null>(null);
 const backupInput = ref<HTMLInputElement | null>(null);
 const errors = ref<Record<string, string>>({});
 const filteredLogs = computed(() =>
-    props.logs
+    logs.value
         .filter((line) =>
             line.toLowerCase().includes(query.value.toLowerCase()),
         )
         .reverse(),
 );
-const { start: startPolling, stop: stopPolling } = usePoll(
-    5000,
-    { only: ['queue', 'liveStreams', 'logs'] },
-    { autoStart: true },
+
+useEcho<MetricsSnapshot>(
+    'system.metrics',
+    '.system.metrics.updated',
+    (snapshot) => {
+        stats.value = snapshot.stats;
+        queue.value = snapshot.queue;
+        logs.value = snapshot.logs;
+        liveStreams.value = snapshot.liveStreams;
+    },
 );
 
 const chooseBackup = (event: Event): void => {
@@ -76,7 +95,6 @@ const exportBackup = async (): Promise<void> => {
 
     operation.value = 'export';
     errors.value = {};
-    stopPolling();
 
     try {
         const response = await fetch(exportBackupRoute.url(), {
@@ -109,7 +127,6 @@ const exportBackup = async (): Promise<void> => {
         };
     } finally {
         operation.value = null;
-        startPolling();
     }
 };
 
@@ -126,7 +143,6 @@ const importBackup = (): void => {
 
     operation.value = 'import';
     errors.value = {};
-    stopPolling();
 
     router.post(
         importBackupRoute.url(),
@@ -151,7 +167,6 @@ const importBackup = (): void => {
             },
             onFinish: () => {
                 operation.value = null;
-                startPolling();
             },
         },
     );
@@ -166,7 +181,7 @@ const importBackup = (): void => {
             <p
                 class="text-xs font-bold tracking-[0.2em] text-slate-300 uppercase"
             >
-                SYSTEM
+                {{ t('admin.logs.system') }}
             </p>
             <h1 class="mt-2 text-3xl font-black">
                 {{ t('admin.logs.title') }}
@@ -186,7 +201,7 @@ const importBackup = (): void => {
             <article class="rounded-2xl border bg-white p-5 shadow-sm">
                 <Cpu class="size-5 text-cyan-600" />
                 <p class="mt-4 text-xs font-bold text-slate-400 uppercase">
-                    Laravel / PHP
+                    {{ t('admin.logs.runtime') }}
                 </p>
                 <p class="mt-1 text-xl font-black">
                     {{ system.laravel }} / {{ system.php }}
@@ -399,7 +414,8 @@ const importBackup = (): void => {
                 class="flex flex-col gap-3 border-b border-slate-800 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <h2 class="flex items-center gap-2 font-black">
-                    <Activity class="size-4 text-emerald-400" />laravel.log
+                    <Activity class="size-4 text-emerald-400" />
+                    <span>{{ t('admin.logs.log_file') }}</span>
                 </h2>
                 <input
                     v-model="query"

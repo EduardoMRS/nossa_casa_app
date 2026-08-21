@@ -35,19 +35,12 @@ function createDashboardUser(string $role): User
     return $user;
 }
 
-it('shows member-appropriate modules on dashboard', function () {
+it('blocks member access to dashboard modules', function () {
     $member = createDashboardUser('member');
 
     $this->actingAs($member)
         ->get(route('dashboard'))
-        ->assertSuccessful()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('Dashboard')
-            ->has('modules', 5)
-            ->where('modules.0.href', route('events.index'))
-            ->where('modules.3.href', route('profile.edit'))
-            ->where('modules.4.href', route('security.edit'))
-        );
+        ->assertForbidden();
 });
 
 it('shows leader modules on dashboard', function () {

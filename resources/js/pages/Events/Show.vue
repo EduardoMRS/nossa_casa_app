@@ -173,6 +173,6 @@ const coverStyle = computed(() => {
                 </aside>
             </section>
         </main>
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

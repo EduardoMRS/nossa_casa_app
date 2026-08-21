@@ -5,21 +5,24 @@ use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Admin\LiveStreamControlController;
 use App\Http\Controllers\Admin\StopLiveStreamController;
+use App\Http\Controllers\BibleController;
+use App\Http\Controllers\BrandingAssetController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
-use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PortalCommunityController;
+use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicGalleryController;
+use App\Http\Controllers\PublicLibraryController;
 use App\Http\Controllers\PublicLiveStreamController;
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\PwaController;
+use App\Http\Controllers\SearchIndexController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Church;
 use App\Models\Event;
 use App\Models\Form;
-use App\Models\Library;
 use App\Models\Media;
 use App\Models\Post;
 use App\Support\ChurchDomainContext;
@@ -54,9 +57,16 @@ if (! function_exists('categoriesForChurchAndType')) {
 }
 
 Route::get('/', [PortalController::class, 'index'])->name('home');
+Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
 Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
 Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
 Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
+Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
+Route::get('/branding/icon.svg', [BrandingAssetController::class, 'icon'])->name('branding.icon');
+Route::get('/favicon.ico', [BrandingAssetController::class, 'icon'])->name('branding.favicon');
+Route::get('/favicon.svg', [BrandingAssetController::class, 'icon'])->name('branding.favicon-svg');
+Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->name('branding.apple-touch-icon');
 
 Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
 
@@ -117,16 +127,14 @@ Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public
 
 Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.public.show');
 
-Route::get('/biblioteca', function () {
-    $churchId = app(ChurchDomainContext::class)->churchId();
-    $items = Library::query()
-        ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
-        ->latest()
-        ->paginate(18)
-        ->through(fn (Library $item): Library => $item->localize());
-
-    return Inertia::render('Library/Index', ['items' => $items]);
-})->name('library.index');
+Route::get('/biblioteca', [PublicLibraryController::class, 'index'])->name('library.index');
+Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible'])->name('library.bible');
+Route::get('/api/bible/{version}/offline', [BibleController::class, 'offline'])->name('bible.offline');
+Route::get('/api/bible/{version}/books', [BibleController::class, 'books'])->name('bible.books');
+Route::get('/api/bible/{version}/books/{book}/chapters', [BibleController::class, 'chapters'])->name('bible.chapters');
+Route::get('/api/bible/{version}/books/{book}/chapters/{chapter}', [BibleController::class, 'chapter'])
+    ->whereNumber('chapter')
+    ->name('bible.chapter');
 
 Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
     abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
@@ -269,13 +277,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $role = $user?->role?->value ?? (string) $user?->role;
 
         $modules = match ($role) {
-            'member' => [
-                ['title_key' => 'dashboard.module.my_events.title', 'description_key' => 'dashboard.module.my_events.description', 'href' => route('events.index')],
-                ['title_key' => 'dashboard.module.community_gallery.title', 'description_key' => 'dashboard.module.community_gallery.description', 'href' => route('gallery.index')],
-                ['title_key' => 'dashboard.module.recent_updates.title', 'description_key' => 'dashboard.module.recent_updates.description', 'href' => route('posts.index')],
-                ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
-                ['title_key' => 'dashboard.module.security_settings.title', 'description_key' => 'dashboard.module.security_settings.description', 'href' => route('security.edit')],
-            ],
             'leader' => [
                 ['title_key' => 'dashboard.module.organize_events.title', 'description_key' => 'dashboard.module.organize_events.description', 'href' => route('events.create')],
                 ['title_key' => 'dashboard.module.track_registrations.title', 'description_key' => 'dashboard.module.track_registrations.description', 'href' => route('events.index')],
@@ -315,7 +316,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ],
             'modules' => $modules,
         ]);
-    })->name('dashboard');
+    })->middleware('role:leader|media|church_leader|superadmin|system')->name('dashboard');
 
     Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])
         ->middleware('role:member|leader|media|church_leader|superadmin|system')
@@ -343,6 +344,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'updateLibrary'])->name('libraryVerse.library.update');
             Route::delete('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
             Route::put('/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
+            Route::put('/biblioteca-versiculo/bible', [LibraryVerseController::class, 'updateBiblePreferences'])->name('libraryVerse.bible.update');
             Route::get('/formularios', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
             Route::get('/formularios/criar', [AdminWorkspaceController::class, 'formCreate'])->name('forms.create');
             Route::get('/formularios/{form}/editar', [AdminWorkspaceController::class, 'formEdit'])->name('forms.edit');

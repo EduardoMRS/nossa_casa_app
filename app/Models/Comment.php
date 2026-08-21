@@ -2,10 +2,17 @@
 
 namespace App\Models;
 
+use App\Observers\CommentObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property-read User|null $user
+ */
+#[ObservedBy(CommentObserver::class)]
 class Comment extends Model
 {
     use HasUlids;
@@ -30,7 +37,7 @@ class Comment extends Model
         'commentable_type',
         'commentable_id',
         'updated_at',
-        'user'
+        'user',
     ];
 
     protected function casts(): array
@@ -61,7 +68,8 @@ class Comment extends Model
         return $this->morphTo(Event::class, 'commentable');
     }
 
-    public function user()
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -70,6 +78,7 @@ class Comment extends Model
     {
         return $this->user?->details ?? null;
     }
+
     // Auto-relacionamento polimórfico: Um comentário pode ter respostas (outros comentários)
     public function replies()
     {
@@ -81,6 +90,7 @@ class Comment extends Model
     {
         return $this->morphMany(Reaction::class, 'reactionable');
     }
+
     public function getMetricsAttribute()
     {
         return [

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage, usePoll } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import { ArrowLeft, MessageCircle, Pin, Send, Trash2 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
@@ -29,25 +30,54 @@ const props = defineProps<{
         embed_url: string;
         started_at: string | null;
     };
+    realtimePrivate: boolean;
     comments: CommentItem[];
     canComment: boolean;
     canModerate: boolean;
 }>();
 
 const { locale, t } = useI18n();
-
-usePoll(3000, { only: ['comments', 'liveStream'] });
-
 const page = usePage();
+const stream = ref({ ...props.liveStream });
+const comments = ref([...props.comments]);
 const content = ref('');
 const processing = ref(false);
 const error = ref('');
-const isLive = computed(() => props.liveStream.status === 'live');
+const isLive = computed(() => stream.value.status === 'live');
 const isEnded = computed(() =>
-    ['stopped', 'failed'].includes(props.liveStream.status),
+    ['stopped', 'failed'].includes(stream.value.status),
 );
 const loginUrl = computed(
     () => `/login?redirect=${encodeURIComponent(page.url)}`,
+);
+
+type StreamUpdatedPayload = {
+    id: string;
+    status: string;
+    embed_url: string;
+    started_at: string | null;
+};
+
+type CommentsUpdatedPayload = { comments: CommentItem[] };
+
+useEcho<StreamUpdatedPayload, 'reverb', 'private' | 'public'>(
+    `live-stream.${props.liveStream.id}`,
+    '.live-stream.updated',
+    (payload) => {
+        stream.value = { ...stream.value, ...payload };
+    },
+    [],
+    props.realtimePrivate ? 'private' : 'public',
+);
+
+useEcho<CommentsUpdatedPayload, 'reverb', 'private' | 'public'>(
+    `live-stream.${props.liveStream.id}`,
+    '.live-stream.comments.updated',
+    (payload) => {
+        comments.value = payload.comments;
+    },
+    [],
+    props.realtimePrivate ? 'private' : 'public',
 );
 
 const submitComment = async (): Promise<void> => {
@@ -65,7 +95,6 @@ const submitComment = async (): Promise<void> => {
             content: content.value,
         });
         content.value = '';
-        router.reload({ only: ['comments'] });
     } catch {
         error.value = t('live_stream.comment_error');
     } finally {
@@ -77,7 +106,6 @@ const togglePin = async (comment: CommentItem): Promise<void> => {
     await axios.put(`/api/comments/${comment.id}/pin`, {
         is_pinned: !comment.is_pinned,
     });
-    router.reload({ only: ['comments'] });
 };
 
 const removeComment = async (comment: CommentItem): Promise<void> => {
@@ -86,7 +114,6 @@ const removeComment = async (comment: CommentItem): Promise<void> => {
     }
 
     await axios.delete(`/api/comments/${comment.id}`);
-    router.reload({ only: ['comments'] });
 };
 
 const formatDate = (value: string): string =>
@@ -97,7 +124,7 @@ const formatDate = (value: string): string =>
 </script>
 
 <template>
-    <Head :title="liveStream.name" />
+    <Head :title="stream.name" />
 
     <div class="flex min-h-screen flex-col bg-slate-950 text-white">
         <PublicHeader />
@@ -118,8 +145,8 @@ const formatDate = (value: string): string =>
                 >
                     <iframe
                         v-if="isLive"
-                        :src="liveStream.embed_url"
-                        :title="liveStream.name"
+                        :src="stream.embed_url"
+                        :title="stream.name"
                         class="h-full w-full border-0"
                         allow="autoplay; fullscreen; picture-in-picture"
                         allowfullscreen
@@ -142,7 +169,7 @@ const formatDate = (value: string): string =>
                             {{ t('live_stream.kicker') }}
                         </p>
                         <h1 class="mt-1 text-2xl font-black sm:text-3xl">
-                            {{ liveStream.name }}
+                            {{ stream.name }}
                         </h1>
                     </div>
                     <span
@@ -261,6 +288,6 @@ const formatDate = (value: string): string =>
             </aside>
         </main>
 
-        <PublicFooter />
+        <PublicFooter show-locale />
     </div>
 </template>

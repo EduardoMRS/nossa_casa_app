@@ -27,7 +27,7 @@ class ReconcileMediaMtxPaths extends Command
             $configuredPaths = array_fill_keys($this->mediaMtx->configuredPathNames(), true);
         } catch (Throwable $exception) {
             report($exception);
-            $this->error(__('Could not list MediaMTX paths.'));
+            $this->error(__('media.reconcile_list_failed'));
 
             return self::FAILURE;
         }
@@ -51,13 +51,13 @@ class ReconcileMediaMtxPaths extends Command
                     report($exception);
                     $failed++;
 
-                    $this->error(__('Could not reconcile MediaMTX path :path.', [
+                    $this->error(__('media.reconcile_path_failed', [
                         'path' => $liveStream->path,
                     ]));
                 }
             });
 
-        $this->info(__('MediaMTX paths reconciled: :synchronized; failed: :failed.', [
+        $this->info(__('media.reconcile_summary', [
             'synchronized' => $synchronized,
             'failed' => $failed,
         ]));
