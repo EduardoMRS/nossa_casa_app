@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import {
     BookOpen,
     CheckCircle2,
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     CloudDownload,
@@ -67,6 +68,9 @@ const offlineState = ref<
 >('checking');
 const offlineProgress = ref({ completed: 0, total: 0 });
 const readyOfflineVersions = ref<string[]>([]);
+const selectorsExpanded = ref(false);
+const automaticDownloadStarted = ref(false);
+let lastScrollPosition = 0;
 const currentChapterIndex = computed(() =>
     chapters.value.findIndex((item) => item === chapter.value),
 );
@@ -224,6 +228,33 @@ const downloadForOffline = async (): Promise<void> => {
     });
 };
 
+const downloadMissingOpenVersions = async (): Promise<void> => {
+    if (
+        automaticDownloadStarted.value ||
+        !navigator.onLine ||
+        offlineReadyCount.value === downloadableVersions.value.length
+    ) {
+        return;
+    }
+
+    automaticDownloadStarted.value = true;
+    await downloadForOffline();
+};
+
+const handleScroll = (): void => {
+    const currentScrollPosition = window.scrollY;
+
+    if (
+        selectorsExpanded.value &&
+        currentScrollPosition > 24 &&
+        currentScrollPosition > lastScrollPosition + 4
+    ) {
+        selectorsExpanded.value = false;
+    }
+
+    lastScrollPosition = currentScrollPosition;
+};
+
 const handleServiceWorkerMessage = (event: MessageEvent): void => {
     const message = event.data as BibleCacheMessage;
 
@@ -238,6 +269,7 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
             downloadableVersions.value.length > 0
                 ? 'ready'
                 : 'idle';
+        void downloadMissingOpenVersions();
     }
 
     if (message.type === 'BIBLE_CACHE_PROGRESS') {
@@ -250,7 +282,10 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
 
     if (message.type === 'BIBLE_CACHE_READY') {
         readyOfflineVersions.value = message.readyVersions ?? [];
-        offlineState.value = 'ready';
+        offlineState.value =
+            offlineReadyCount.value === downloadableVersions.value.length
+                ? 'ready'
+                : 'idle';
     }
 
     if (message.type === 'BIBLE_CACHE_ERROR') {
@@ -258,11 +293,20 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
     }
 };
 
+const handleOnline = (): void => {
+    automaticDownloadStarted.value = false;
+    void checkOfflineStatus();
+};
+
 onMounted(() => {
+    selectorsExpanded.value = window.matchMedia('(min-width: 640px)').matches;
+    lastScrollPosition = window.scrollY;
     navigator.serviceWorker?.addEventListener(
         'message',
         handleServiceWorkerMessage,
     );
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('online', handleOnline);
 
     if (version.value) {
         void loadBooks();
@@ -276,6 +320,8 @@ onBeforeUnmount(() => {
         'message',
         handleServiceWorkerMessage,
     );
+    window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('online', handleOnline);
 });
 </script>
 
@@ -288,7 +334,7 @@ onBeforeUnmount(() => {
                 class="mx-auto size-9 text-[var(--church-primary,#6750a4)]"
             />
             <p
-                class="mt-3 text-xs font-bold tracking-[0.22em] text-[var(--reader-muted)] uppercase"
+                class="mt-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--reader-muted)]"
             >
                 {{ t('library.bible.type') }}
             </p>
@@ -302,9 +348,37 @@ onBeforeUnmount(() => {
 
         <section
             v-if="versions.length"
-            class="sticky top-16 z-30 mt-7 rounded-2xl border border-[var(--reader-border)] bg-[color:var(--reader-surface)]/95 p-3 shadow-lg shadow-black/5 backdrop-blur sm:p-4"
+            class="bg-[color:var(--reader-surface)]/95 sticky top-14 z-30 mt-5 overflow-hidden rounded-2xl border border-[var(--reader-border)] shadow-lg shadow-black/5 backdrop-blur sm:top-16 sm:mt-7"
         >
-            <div class="grid gap-3 md:grid-cols-[1.5fr_1fr_0.65fr_auto]">
+            <button
+                type="button"
+                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left sm:px-4"
+                :aria-expanded="selectorsExpanded"
+                @click="selectorsExpanded = !selectorsExpanded"
+            >
+                <span class="min-w-0">
+                    <span
+                        class="block text-xs font-bold uppercase text-[var(--reader-muted)]"
+                    >
+                        {{ t('library.bible.navigation') }}
+                    </span>
+                    <span class="block truncate text-sm font-semibold">
+                        {{ selectedVersion?.abbreviation
+                        }}<template v-if="verses[0]">
+                            · {{ verses[0].book }} {{ chapter }}</template
+                        >
+                    </span>
+                </span>
+                <ChevronDown
+                    class="size-5 shrink-0 transition-transform"
+                    :class="{ 'rotate-180': selectorsExpanded }"
+                />
+            </button>
+
+            <div
+                v-show="selectorsExpanded"
+                class="grid gap-3 border-t border-[var(--reader-border)] p-3 sm:p-4 md:grid-cols-[1.5fr_1fr_0.65fr_auto]"
+            >
                 <label
                     class="grid gap-1 text-xs font-bold text-[var(--reader-muted)]"
                 >
@@ -365,7 +439,7 @@ onBeforeUnmount(() => {
                 <button
                     v-if="downloadableVersions.length"
                     type="button"
-                    class="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--church-primary,#6750a4)] px-3 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+                    class="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--church-primary,#6750a4)] px-3 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-default disabled:opacity-70"
                     :disabled="offlineState === 'downloading'"
                     :title="t('library.bible.offline_download_description')"
                     @click="downloadForOffline"
@@ -389,7 +463,10 @@ onBeforeUnmount(() => {
                 </button>
             </div>
 
-            <div v-if="offlineState === 'downloading'" class="mt-3 grid gap-1">
+            <div
+                v-if="offlineState === 'downloading'"
+                class="mx-3 mb-3 grid gap-1 sm:mx-4 sm:mb-4"
+            >
                 <div class="flex justify-between gap-3 text-xs font-semibold">
                     <span>{{ t('library.bible.offline_downloading') }}</span>
                     <span>{{ offlineProgressPercentage }}%</span>
@@ -405,14 +482,14 @@ onBeforeUnmount(() => {
             </div>
             <p
                 v-else-if="offlineState === 'error'"
-                class="mt-3 flex items-center gap-2 text-xs font-semibold text-rose-600"
+                class="mx-3 mb-3 flex items-center gap-2 text-xs font-semibold text-rose-600 sm:mx-4 sm:mb-4"
             >
                 <WifiOff class="size-4" />
                 {{ t('library.bible.offline_error') }}
             </p>
             <p
-                v-else-if="downloadableVersions.length < versions.length"
-                class="mt-3 text-xs leading-5 text-[var(--reader-muted)]"
+                v-else-if="downloadableVersions.length < versions.length && selectorsExpanded"
+                class="mx-3 mb-3 text-xs leading-5 text-[var(--reader-muted)] sm:mx-4 sm:mb-4"
             >
                 {{
                     t('library.bible.offline_open_versions', {
@@ -447,7 +524,10 @@ onBeforeUnmount(() => {
                 class="size-8 animate-spin text-[var(--church-primary,#6750a4)]"
             />
         </div>
-        <article v-else-if="verses.length" class="mx-auto mt-10 max-w-3xl">
+        <article
+            v-else-if="verses.length"
+            class="mx-auto mt-7 max-w-3xl sm:mt-10"
+        >
             <header class="flex items-center justify-between gap-4">
                 <button
                     type="button"
@@ -460,7 +540,7 @@ onBeforeUnmount(() => {
                 </button>
                 <div class="text-center">
                     <p
-                        class="text-xs font-bold text-[var(--reader-muted)] uppercase"
+                        class="text-xs font-bold uppercase text-[var(--reader-muted)]"
                     >
                         {{ selectedVersion?.abbreviation }}
                     </p>
@@ -480,15 +560,21 @@ onBeforeUnmount(() => {
             </header>
 
             <div
-                class="mt-8 space-y-5 font-serif text-lg leading-9 sm:text-xl sm:leading-10"
+                class="mt-6 font-serif text-[1.08rem] leading-8 sm:mt-8 sm:text-xl sm:leading-10"
             >
-                <p v-for="item in verses" :key="item.verse">
-                    <sup
-                        class="mr-1.5 font-sans text-xs font-black text-[var(--church-primary,#6750a4)]"
+                <p class="text-pretty">
+                    <span
+                        v-for="item in verses"
+                        :key="item.verse"
+                        class="mr-1.5 inline"
                     >
-                        {{ item.verse }}
-                    </sup>
-                    {{ item.text }}
+                        <sup
+                            class="mr-1.5 font-sans text-xs font-black text-[var(--church-primary,#6750a4)]"
+                        >
+                            {{ item.verse }}
+                        </sup>
+                        {{ item.text }}
+                    </span>
                 </p>
             </div>
 

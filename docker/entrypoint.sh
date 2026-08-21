@@ -38,18 +38,59 @@ if [ -f "$env_template" ]; then
     done < "$env_template"
 fi
 
-mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
-chown -R www-data:www-data storage/framework bootstrap/cache
+mkdir -p \
+    storage/app/private/backups \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache
+chown -R laravel:laravel storage/app
+chown -R laravel:laravel storage/framework bootstrap/cache
+
+# The project is bind-mounted from the host. Keep the log writable by PHP-FPM
+# while allowing the host user to inspect and edit it.
+mkdir -p storage/logs
+touch storage/logs/laravel.log
+chown -R laravel:laravel storage/logs
+chmod 0775 storage/logs
+chmod 0664 storage/logs/laravel.log
 
 composer_manifest="composer.lock"
 [ -f "$composer_manifest" ] || composer_manifest="composer.json"
 composer_manifest_hash="$(sha256sum "$composer_manifest" | awk '{print $1}')"
+app_environment="${APP_ENV:-}"
+
+if [ -z "$app_environment" ]; then
+    while IFS='=' read -r env_key env_value; do
+        if [ "$env_key" = "APP_ENV" ]; then
+            app_environment="$env_value"
+            break
+        fi
+    done < .env
+fi
+
+app_environment="$(printf '%s' "$app_environment" | tr -d "\"'")"
+composer_install_mode="development"
+
+if [ "$app_environment" = "production" ]; then
+    composer_install_mode="production"
+    export BOOST_ENABLED=false
+    export BOOST_BROWSER_LOGS_WATCHER=false
+fi
+
+composer_state_hash="${composer_manifest_hash}:${composer_install_mode}"
 installed_composer_hash="$(cat vendor/.composer-manifest.sha256 2>/dev/null || true)"
 
-if [ ! -f vendor/autoload.php ] || [ "$composer_manifest_hash" != "$installed_composer_hash" ]; then
+if [ ! -f vendor/autoload.php ] || [ "$composer_state_hash" != "$installed_composer_hash" ]; then
     echo "Instalando dependências do Composer..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-    printf '%s' "$composer_manifest_hash" > vendor/.composer-manifest.sha256
+
+    if [ "$composer_install_mode" = "production" ]; then
+        composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+    else
+        composer install --no-interaction --prefer-dist --optimize-autoloader
+    fi
+
+    printf '%s' "$composer_state_hash" > vendor/.composer-manifest.sha256
 fi
 
 if [ "$created_project_env" = "true" ] || grep -Eq '^APP_KEY=$' .env; then
@@ -66,6 +107,11 @@ if [ "${SKIP_NODE_INSTALL:-false}" != "true" ] && { [ ! -x node_modules/.bin/vit
     echo "Instalando dependências do NPM..."
     npm install
     printf '%s' "$node_manifest_hash" > node_modules/.node-manifest.sha256
+fi
+
+if [ "$1" = "php-fpm" ]; then
+    echo "Gerando os assets frontend..."
+    npm run build
 fi
 
 exec "$@"

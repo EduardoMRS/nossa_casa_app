@@ -17,6 +17,11 @@ RUN apk add --no-cache \
 
 RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd
 
+# Run PHP-FPM with the project user so bind-mounted files remain editable on
+# the host without making storage world-writable.
+RUN sed -i "s/^user = www-data/user = $USER/; s/^group = www-data/group = $USER/" \
+    /usr/local/etc/php-fpm.d/www.conf
+
 # Composer
 COPY --from=composer:2.8.12 /usr/bin/composer /usr/bin/composer
 

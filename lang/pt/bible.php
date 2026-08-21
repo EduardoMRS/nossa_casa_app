@@ -9,6 +9,8 @@ return [
     'library_title' => 'Bíblia Sagrada',
     'licenses' => [
         'get_bible_public_domain' => 'Texto em domínio público. Base de dados GetBible distribuída sob a GPL.',
+        'nvi_online_only' => 'Nova Versão Internacional. Edição protegida disponível apenas para consulta online; o armazenamento offline está desabilitado.',
+        'nvt_online_only' => 'Nova Versão Transformadora. Edição protegida disponível apenas para consulta online; o armazenamento offline está desabilitado.',
     ],
     'service_unavailable' => 'O serviço de Bíblia está temporariamente indisponível. Tente novamente em instantes.',
     'version_not_available' => 'Esta versão bíblica não está disponível para esta igreja.',

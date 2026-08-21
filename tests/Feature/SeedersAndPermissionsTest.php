@@ -28,24 +28,32 @@ use App\Models\UserRelationship;
 use Database\Seeders\InitialAiModelSeeder;
 use Database\Seeders\RelationTesterSeeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 test('relation tester seeder creates a complete and repeatable demonstration graph', function () {
+    Storage::fake((string) config('media.disk'));
     $this->seed(InitialAiModelSeeder::class);
     $this->seed(RelationTesterSeeder::class);
     $this->seed(RelationTesterSeeder::class);
 
-    $church = Church::query()->where('slug', 'nossa-casa-central')->firstOrFail();
-    $event = Event::query()->where('slug', 'encontro-da-comunidade')->firstOrFail();
-    $post = Post::query()->where('slug', 'boas-vindas-comunidade')->firstOrFail();
+    $church = Church::query()->where('slug', 'assembleia-de-deus-machadinho-doeste')->firstOrFail();
+    $event = Event::query()->where('slug', 'conferencia-da-familia-machadinho')->firstOrFail();
+    $post = Post::query()->where('slug', 'familias-firmes-em-cristo-machadinho')->firstOrFail();
     $form = Form::query()->where('church_id', $church->id)->firstOrFail();
     $kidsClassroom = Classroom::query()->where('church_id', $church->id)->where('is_kids', true)->firstOrFail();
     $kidsPresence = ClassroomPresence::query()->where('classroom_id', $kidsClassroom->id)->whereNull('check_out')->firstOrFail();
 
-    expect(Church::query()->where('slug', 'nossa-casa-central')->count())->toBe(1)
+    $community = $church->community()->firstOrFail();
+    $branding = $church->settings()->firstOrFail()->options['branding'];
+
+    expect(Church::query()->where('slug', 'assembleia-de-deus-machadinho-doeste')->count())->toBe(1)
+        ->and(Church::query()->where('slug', 'congregacao-ad-bom-futuro')->exists())->toBeTrue()
+        ->and(Church::query()->where('slug', 'primeira-igreja-batista-ji-parana')->exists())->toBeTrue()
+        ->and(Church::query()->where('slug', 'igreja-batista-esperanca-ariquemes')->exists())->toBeTrue()
         ->and(Network::query()->where('parent_church_id', $church->id)->exists())->toBeTrue()
         ->and($church->members()->count())->toBe(8)
         ->and(User::query()->whereIn('email', [
-            'guest@nossacasa.test',
+            'visitante@nossacasa.test',
             config('app.system_user.email'),
             'superadmin@nossacasa.test',
             'church_leader@nossacasa.test',
@@ -54,7 +62,7 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
             'member@nossacasa.test',
             'child@nossacasa.test',
         ])->count())->toBe(8)
-        ->and(User::query()->where('email', 'guest@nossacasa.test')->value('role'))->toBe(UserRole::GUEST)
+        ->and(User::query()->where('email', 'visitante@nossacasa.test')->value('role'))->toBe(UserRole::GUEST)
         ->and(User::query()->where('email', 'superadmin@nossacasa.test')->value('role'))->toBe(UserRole::SUPERADMIN)
         ->and($form->events()->whereKey($event->id)->exists())->toBeTrue()
         ->and($form->posts()->whereKey($post->id)->exists())->toBeTrue()
@@ -76,6 +84,14 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
         ->and(Library::query()->where('church_id', $church->id)->exists())->toBeTrue()
         ->and(UserRelationship::query()->count())->toBe(3)
         ->and(Setting::query()->where('church_id', $church->id)->exists())->toBeTrue()
+        ->and($branding['primary_color'])->toBe('#123B6D')
+        ->and($branding['icon_name'])->toBe('Flame')
+        ->and(Storage::disk((string) config('media.disk'))->exists($branding['logo_path']))->toBeTrue()
+        ->and($community->bible_versions)->toBe(['pt-br-nvi', 'pt-br-nvt', 'pt-almeida-1911'])
+        ->and($community->default_bible_version)->toBe('pt-br-nvi')
+        ->and(Classroom::query()->whereHas('church', fn ($query) => $query->where('slug', 'primeira-igreja-batista-ji-parana'))->where('name', 'Salinha Sementinhas - 4 a 7 anos')->exists())->toBeTrue()
+        ->and(Form::query()->whereHas('events', fn ($query) => $query->where('slug', 'tarde-divertida-pib-kids'))->exists())->toBeTrue()
+        ->and(Post::query()->where('slug', 'cafe-com-esperanca-ariquemes')->exists())->toBeTrue()
         ->and(Category::query()->where('church_id', $church->id)->where('type', 'form')->exists())->toBeTrue()
         ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue()
         ->and(AiQuery::query()->where('church_id', $church->id)->exists())->toBeTrue();

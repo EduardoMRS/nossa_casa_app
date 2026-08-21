@@ -15,14 +15,6 @@ configureEcho({
     broadcaster: 'reverb',
 });
 
-if (import.meta.env.PROD) {
-    const noop = (): void => {};
-
-    console.error = noop;
-    console.log = noop;
-    console.warn = noop;
-}
-
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';

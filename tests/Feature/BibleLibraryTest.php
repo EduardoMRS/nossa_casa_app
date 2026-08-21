@@ -39,6 +39,26 @@ beforeEach(function () {
                     ],
                 ],
             ]),
+            str_ends_with($url, '/nvi.json') => Http::response(
+                "\xEF\xBB\xBF".json_encode([
+                    [
+                        'id' => 'jo',
+                        'name' => 'João',
+                        'chapters' => [
+                            ['No princípio era aquele que é a Palavra.'],
+                        ],
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                headers: ['Content-Type' => 'text/plain; charset=utf-8'],
+            ),
+            str_ends_with($url, '/NVT - Nova Versão Transformadora.json') => Http::response([
+                [
+                    'abbrev' => 'Gn',
+                    'chapters' => [
+                        ['No princípio, Deus criou os céus e a terra.'],
+                    ],
+                ],
+            ]),
             str_ends_with($url, '/bibles.json') => Http::response([
                 [
                     'id' => 'pt-BR-blt',
@@ -82,8 +102,8 @@ function createBibleChurch(User $owner): Church
 {
     $community = Community::factory()->create([
         'owner_id' => $owner->id,
-        'bible_versions' => ['pt-almeida-1911', 'pt-BR-blt', 'en-kjv'],
-        'default_bible_version' => 'pt-BR-blt',
+        'bible_versions' => ['pt-br-nvi', 'pt-br-nvt', 'pt-almeida-1911', 'pt-BR-blt'],
+        'default_bible_version' => 'pt-br-nvi',
     ]);
 
     return Church::factory()->create([
@@ -106,17 +126,19 @@ test('the public library exposes one virtual Bible with community versions', fun
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Library/Index')
-            ->where('bible.versions_count', 3)
+            ->where('bible.versions_count', 4)
             ->has('items.data', 1));
 
     $this->get('http://bible-church.test/biblioteca/biblia')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Library/Bible')
-            ->where('defaultVersion', 'pt-BR-blt')
-            ->has('versions', 3)
-            ->where('versions.1.offline_available', true)
-            ->where('versions.1.offline_url', '/api/bible/pt-almeida-1911/offline'));
+            ->where('defaultVersion', 'pt-br-nvi')
+            ->has('versions', 4)
+            ->where('versions', fn ($versions): bool => collect($versions)
+                ->contains(fn (array $version): bool => $version['id'] === 'pt-almeida-1911'
+                    && $version['offline_available'] === true
+                    && $version['offline_url'] === '/api/bible/pt-almeida-1911/offline')));
 });
 
 test('an enabled open Bible version exposes a normalized offline bundle', function () {
@@ -149,6 +171,27 @@ test('Bible navigation only proxies versions enabled for the current church', fu
         ->assertOk()
         ->assertJsonPath('verses.0.text', 'Porque Deus amou o mundo.');
     $this->getJson('http://bible-church.test/api/bible/es-unknown/books')
+        ->assertNotFound();
+});
+
+test('copyrighted NVI and NVT versions remain online only', function () {
+    $owner = User::factory()->create();
+    createBibleChurch($owner);
+
+    $this->getJson('http://bible-church.test/api/bible/pt-br-nvi/books')
+        ->assertOk()
+        ->assertHeader('X-Bible-Offline-Allowed', '0')
+        ->assertJsonPath('books.0.slug', 'jo')
+        ->assertJsonPath('books.0.name', 'João');
+    $this->getJson('http://bible-church.test/api/bible/pt-br-nvi/books/jo/chapters/1')
+        ->assertOk()
+        ->assertJsonPath('verses.0.text', 'No princípio era aquele que é a Palavra.');
+    $this->getJson('http://bible-church.test/api/bible/pt-br-nvt/books')
+        ->assertOk()
+        ->assertHeader('X-Bible-Offline-Allowed', '0')
+        ->assertJsonPath('books.0.slug', 'genesis')
+        ->assertJsonPath('books.0.name', 'Gênesis');
+    $this->getJson('http://bible-church.test/api/bible/pt-br-nvt/offline')
         ->assertNotFound();
 });
 

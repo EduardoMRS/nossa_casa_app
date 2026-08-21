@@ -9,6 +9,8 @@ return [
     'library_title' => 'Holy Bible',
     'licenses' => [
         'get_bible_public_domain' => 'Public domain text. GetBible dataset distributed under the GPL.',
+        'nvi_online_only' => 'Nova Versão Internacional. Copyrighted edition available for online consultation only; offline storage is disabled.',
+        'nvt_online_only' => 'Nova Versão Transformadora. Copyrighted edition available for online consultation only; offline storage is disabled.',
     ],
     'service_unavailable' => 'The Bible service is temporarily unavailable. Please try again shortly.',
     'version_not_available' => 'This Bible version is not available for this church.',

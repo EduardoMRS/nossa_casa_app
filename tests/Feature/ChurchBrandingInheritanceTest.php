@@ -10,7 +10,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config(['app.url' => 'http://platform.test']);
-    Storage::fake('media');
+    Storage::fake((string) config('media.disk'));
     $this->withoutVite();
 });
 
@@ -21,7 +21,7 @@ function brandingLogoPng(string $suffix = ''): string
 
 function storeChurchBrandingLogo(Church $church, string $path, string $contents): void
 {
-    Storage::disk('media')->put($path, $contents);
+    Storage::disk((string) config('media.disk'))->put($path, $contents);
     $setting = $church->settings()->firstOrFail();
     $options = $setting->options;
     $options['branding']['logo_path'] = $path;
@@ -46,7 +46,7 @@ test('church branding inherits the nearest available logo through every headquar
     $seniorLogo = brandingLogoPng('senior');
     storeChurchBrandingLogo($seniorHeadquarters, 'church/senior/branding/logo.png', $seniorLogo);
     $seniorIcon = brandingLogoPng('senior-icon');
-    Storage::disk('media')->put('church/senior/branding/icon.png', $seniorIcon);
+    Storage::disk((string) config('media.disk'))->put('church/senior/branding/icon.png', $seniorIcon);
     $seniorOptions = $seniorHeadquarters->settings()->firstOrFail()->options;
     $seniorOptions['branding']['icon_path'] = 'church/senior/branding/icon.png';
     $seniorHeadquarters->settings()->firstOrFail()->update(['options' => $seniorOptions]);

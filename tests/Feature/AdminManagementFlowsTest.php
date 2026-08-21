@@ -127,7 +127,7 @@ it('prevents administrators from managing churches outside their community', fun
 });
 
 it('protects church community changes while allowing logo and icon uploads', function () {
-    Storage::fake('media');
+    Storage::fake((string) config('media.disk'));
     $community = Community::factory()->create();
     $otherCommunity = Community::factory()->create();
     $church = Church::factory()->for($community)->create();
@@ -157,8 +157,8 @@ it('protects church community changes while allowing logo and icon uploads', fun
     $branding = $church->settings()->firstOrFail()->options['branding'];
     expect($branding['logo_path'])->toStartWith("church/{$church->id}/branding/")
         ->and($branding['icon_path'])->toStartWith("church/{$church->id}/branding/");
-    Storage::disk('media')->assertExists($branding['logo_path']);
-    Storage::disk('media')->assertExists($branding['icon_path']);
+    Storage::disk((string) config('media.disk'))->assertExists($branding['logo_path']);
+    Storage::disk((string) config('media.disk'))->assertExists($branding['icon_path']);
 });
 
 it('allows superadmin and system roles to change a registered church community', function (UserRole $role) {

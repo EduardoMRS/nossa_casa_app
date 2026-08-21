@@ -865,6 +865,7 @@
             "verse_text": "Texto do verso",
             "book": "Livro",
             "chapter": "Capítulo",
+            "navigation": "Navegação da Bíblia",
             "copyright_notice": "Aviso de direitos da edição",
             "verse": "Versículo",
             "version": "Versão / tradução",
@@ -992,13 +993,13 @@
             "next_chapter": "Próximo capítulo",
             "no_versions": "Nenhuma versão bíblica foi habilitada para esta igreja.",
             "load_error": "Não foi possível carregar os dados bíblicos. Tente novamente em instantes.",
-            "offline_download": "Disponibilizar offline",
-            "offline_download_description": "Baixe as versões bíblicas abertas habilitadas por esta church para ler sem conexão com a internet.",
-            "offline_downloading": "Preparando as Bíblias para leitura offline…",
+            "offline_download": "Baixar novamente",
+            "offline_download_description": "Baixe as versões bíblicas abertas habilitadas por esta igreja para ler sem conexão com a internet.",
+            "offline_downloading": "Preparando automaticamente as Bíblias com licença aberta para leitura offline…",
             "offline_ready": "Disponível offline",
             "offline_error": "Não foi possível concluir o download offline. Verifique a conexão e tente novamente.",
             "offline_missing": "Este capítulo ainda não foi baixado para leitura offline.",
-            "offline_open_versions": "{count} versões abertas habilitadas por esta church podem ser baixadas. Versões com licença restrita permanecem apenas online."
+            "offline_open_versions": "{count} versões abertas habilitadas por esta igreja são baixadas automaticamente. Versões com licença restrita permanecem apenas online."
         }
     },
     "reader": {

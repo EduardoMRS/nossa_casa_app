@@ -13,7 +13,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     Storage::fake('public');
-    Storage::fake('media');
+    Storage::fake((string) config('media.disk'));
 });
 
 test('church branding stores location embed and grouped weekly schedules for the public home', function () {
@@ -76,7 +76,7 @@ test('church branding stores location embed and grouped weekly schedules for the
         ->and($branding['map_embed'])->toBe('https://www.google.com/maps/embed?pb=church')
         ->and($branding['weekly_schedule'])->toHaveCount(2)
         ->and($branding['weekly_schedule'][0]['title'])->toBe('Worship service');
-    expect(Storage::disk('media')->exists($branding['logo_path']))->toBeTrue();
+    expect(Storage::disk((string) config('media.disk'))->exists($branding['logo_path']))->toBeTrue();
 
     $this->get('http://weekly-new.test/')
         ->assertSuccessful()

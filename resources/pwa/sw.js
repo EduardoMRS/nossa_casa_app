@@ -221,13 +221,28 @@ async function cacheBibleVersions(versions, readerUrl, client) {
     }
 
     try {
+        const cache = await caches.open(BIBLE_CACHE);
+
         for (let index = 0; index < versions.length; index += 1) {
-            await cacheBibleVersion(
-                versions[index],
-                index,
-                versions.length,
-                client,
-            );
+            const version = versions[index];
+            const cachedMarker = version?.id
+                ? await cache.match(bibleMarkerUrl(version.id))
+                : null;
+
+            if (!cachedMarker) {
+                await cacheBibleVersion(
+                    version,
+                    index,
+                    versions.length,
+                    client,
+                );
+            } else {
+                client?.postMessage({
+                    type: 'BIBLE_CACHE_PROGRESS',
+                    completed: index + 1,
+                    total: versions.length,
+                });
+            }
         }
 
         await cacheReaderPage(readerUrl);

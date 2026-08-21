@@ -11,10 +11,12 @@
         "infer-conventions",
         "fortify-development",
         "laravel-best-practices",
-        "mcp-development",
         "wayfinder-development",
+        "mcp-development",
         "pest-testing",
         "inertia-vue-development",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "echo-vue-development",
+        "echo-development"
     ]
 }
