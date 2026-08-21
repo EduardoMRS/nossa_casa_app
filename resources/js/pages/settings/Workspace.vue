@@ -12,9 +12,11 @@ import {
     ShieldCheck,
     Trash2,
     UserRound,
+    Languages,
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
@@ -382,6 +384,22 @@ const personFor = (item: Relationship): Person | undefined =>
                             class="mt-1 w-full rounded-lg border p-2 text-sm"
                             @change="selectAvatar"
                     /></label>
+                    <div
+                        class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2"
+                    >
+                        <div class="flex items-center gap-3">
+                            <Languages class="size-5 text-indigo-600" />
+                            <div>
+                                <p class="text-sm font-black text-slate-900">
+                                    {{ t('settings.profile.language') }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                    {{ t('settings.profile.language_hint') }}
+                                </p>
+                            </div>
+                        </div>
+                        <LocaleSwitcher />
+                    </div>
                     <div class="sm:col-span-2">
                         <button
                             :disabled="saving"

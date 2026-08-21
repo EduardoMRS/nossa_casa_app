@@ -103,7 +103,7 @@ class PortalController extends Controller
             $ownedCommunityIds = Community::query()->where('owner_id', $user->id)->pluck('id');
             $reviewableRequests = ChurchRegistrationRequest::query()
                 ->where('status', 'pending')
-                ->when($user->role !== UserRole::SYSTEM, function ($query) use ($user, $communityId, $ownedCommunityIds): void {
+                ->when(! in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), function ($query) use ($user, $communityId, $ownedCommunityIds): void {
                     $allowedCommunityIds = $ownedCommunityIds;
 
                     if ($communityId && in_array($user->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)) {
@@ -114,7 +114,13 @@ class PortalController extends Controller
                 })
                 ->with(['community:id,name', 'requester:id,first_name,last_name,email'])
                 ->latest()
-                ->get();
+                ->get()
+                ->map(fn (ChurchRegistrationRequest $registrationRequest): array => [
+                    ...$registrationRequest->toArray(),
+                    'document_url' => $registrationRequest->proof_document_path
+                        ? route('onboarding.churches.proof', $registrationRequest, absolute: false)
+                        : null,
+                ]);
             $myRequests = ChurchRegistrationRequest::query()
                 ->where('requester_id', $user->id)
                 ->with('community:id,name')

@@ -2,7 +2,6 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import NavUser from '@/components/NavUser.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem } from '@/types';
@@ -33,7 +32,6 @@ const hasUser = computed(() => Boolean(page.props.auth?.user));
             </template>
         </div>
         <div class="ml-auto flex items-center gap-2">
-            <LocaleSwitcher />
             <div v-if="hasUser" class="w-56 max-w-[55vw]">
                 <NavUser />
             </div>

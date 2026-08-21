@@ -141,11 +141,12 @@ test('media user creates a protected publisher link and rotates its token', func
     $church = Church::query()->create([
         'name' => 'Publisher Church',
         'slug' => 'publisher-church',
+        'domain' => 'publisher.test',
         'status' => 'active',
     ]);
     $church->assignMember($user);
 
-    $this->actingAs($user)->postJson('/api/live-streams', [
+    $this->actingAs($user)->postJson('http://publisher.test/api/live-streams', [
         'name' => 'Sunday live',
         'mode' => 'publisher',
         'record' => true,
@@ -158,14 +159,14 @@ test('media user creates a protected publisher link and rotates its token', func
         ->input_mode->toBe('publisher')
         ->and($firstToken)->toBeString()->not->toBeEmpty();
 
-    $this->get('/dashboard/transmissoes')
+    $this->get('http://publisher.test/dashboard/transmissoes')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('streams.0.token', $firstToken)
             ->where('streams.0.ingest_server', 'rtmp://stream.test:1935')
             ->where('streams.0.stream_key', "{$liveStream->path}?token={$firstToken}")
             ->where('streams.0.ingest_url', "rtmp://stream.test:1935/{$liveStream->path}?token={$firstToken}")
-            ->where('streams.0.public_url', fn (string $url): bool => str_contains($url, "/transmissoes/{$liveStream->id}")));
+            ->where('streams.0.public_url', "https://publisher.test/transmissoes/{$liveStream->id}"));
 
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
         && $request->url() === 'http://mediamtx:9997/v3/config/paths/add/'.$liveStream->path

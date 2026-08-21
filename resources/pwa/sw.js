@@ -1,10 +1,12 @@
 const CACHE_VERSION = __CACHE_VERSION__;
+const CACHE_SCOPE = __CACHE_SCOPE__;
 const APP_NAME = __APP_NAME__;
 const NOTIFICATION_FALLBACK = __NOTIFICATION_FALLBACK__;
 const OPEN_ACTION = __OPEN_ACTION__;
 const OFFLINE_TITLE = __OFFLINE_TITLE__;
 const OFFLINE_MESSAGE = __OFFLINE_MESSAGE__;
-const CACHE_PREFIX = 'nossa-casa';
+const CACHE_ROOT = 'nossa-casa';
+const CACHE_PREFIX = `${CACHE_ROOT}-${CACHE_SCOPE}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const BIBLE_CACHE = `${CACHE_PREFIX}-bible-${CACHE_VERSION}`;
 const PAGE_CACHE = `${CACHE_PREFIX}-pages-${CACHE_VERSION}`;
@@ -13,6 +15,7 @@ const CORE_ASSETS = [
     '/manifest.webmanifest',
     '/branding/icon.svg',
     '/branding/logo',
+    '/',
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,7 +40,7 @@ self.addEventListener('activate', (event) => {
                     keys
                         .filter(
                             (key) =>
-                                key.startsWith(`${CACHE_PREFIX}-`) &&
+                                key.startsWith(`${CACHE_ROOT}-`) &&
                                 !ACTIVE_CACHES.includes(key),
                         )
                         .map((key) => caches.delete(key)),
@@ -141,6 +144,12 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (request.mode === 'navigate') {
+        event.respondWith(networkFirstPage(request));
+
+        return;
+    }
+
+    if (request.headers.get('X-Inertia') === 'true') {
         event.respondWith(networkFirstPage(request));
     }
 });
@@ -365,10 +374,7 @@ async function networkFirstPage(request) {
     try {
         const response = await fetch(request);
 
-        if (
-            response.ok &&
-            new URL(request.url).pathname === '/biblioteca/biblia'
-        ) {
+        if (response.ok) {
             const cache = await caches.open(PAGE_CACHE);
 
             await cache.put(request, response.clone());
@@ -376,10 +382,19 @@ async function networkFirstPage(request) {
 
         return response;
     } catch {
-        const cached = await caches.match(request);
+        const cache = await caches.open(PAGE_CACHE);
+        const cached = await cache.match(request, { ignoreVary: true });
 
         if (cached) {
             return cached;
+        }
+
+        if (request.mode === 'navigate') {
+            const cachedHome = await cache.match('/', { ignoreVary: true });
+
+            if (cachedHome) {
+                return cachedHome;
+            }
         }
 
         return new Response(

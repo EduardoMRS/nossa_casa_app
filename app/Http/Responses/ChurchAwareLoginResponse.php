@@ -22,11 +22,13 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
         $domainChurch = $this->context->church();
         $userChurch = $user?->church;
 
-        if ($domainChurch && $user && $user->role !== UserRole::SYSTEM && $userChurch?->id !== $domainChurch->id) {
+        $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+
+        if ($domainChurch && $user && ! $isGlobalAdministrator && $userChurch?->id !== $domainChurch->id) {
             return $this->response($request, route('home', absolute: false));
         }
 
-        if ($this->context->isMainDomain() && $userChurch?->domain) {
+        if ($this->context->isMainDomain() && $userChurch?->domain && ! $isGlobalAdministrator) {
             $token = Str::random(64);
             Cache::put('church-auth-handoff:'.$token, [
                 'user_id' => $user->id,

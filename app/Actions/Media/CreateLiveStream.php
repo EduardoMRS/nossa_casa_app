@@ -23,7 +23,7 @@ class CreateLiveStream
      */
     public function handle(User $user, array $data): LiveStream
     {
-        $church = $user->role === UserRole::SYSTEM && isset($data['church_id'])
+        $church = in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true) && isset($data['church_id'])
             ? Church::query()->find($data['church_id'])
             : $user->church()->first();
 

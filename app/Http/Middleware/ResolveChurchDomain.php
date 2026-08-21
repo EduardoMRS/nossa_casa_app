@@ -28,7 +28,9 @@ class ResolveChurchDomain
         $church = $this->context->church();
         $user = $request->user();
 
-        if ($user && $user->role !== UserRole::SYSTEM && $this->isDashboardRequest($request)) {
+        $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+
+        if ($user && ! $isGlobalAdministrator && $this->isDashboardRequest($request)) {
             $isUnassignedChurchDashboard = $church === null
                 && $user->profile?->church_id !== null
                 && blank($user->church?->domain);
@@ -40,7 +42,7 @@ class ResolveChurchDomain
             );
         }
 
-        if (! $church || ! $user || $user->role === UserRole::SYSTEM) {
+        if (! $church || ! $user || $isGlobalAdministrator) {
             return $next($request);
         }
 

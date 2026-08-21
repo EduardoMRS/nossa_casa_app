@@ -49,6 +49,10 @@ test('church branding stores location embed and grouped weekly schedules for the
             'accent_color' => '#c88b4a',
             'surface_color' => '#f4f7fb',
             'font_family' => 'Nunito Sans, sans-serif',
+            'social_links' => [
+                'instagram' => 'https://instagram.com/weeklychurch',
+                'youtube' => 'https://youtube.com/@weeklychurch',
+            ],
             'address' => '100 Main Street, Manaus',
             'map_embed' => '<iframe src="https://www.google.com/maps/embed?pb=church"></iframe>',
             'weekly_schedule' => [
@@ -74,6 +78,7 @@ test('church branding stores location embed and grouped weekly schedules for the
         ->and($church->refresh()->domain)->toBe('weekly-new.test')
         ->and($branding['logo_path'])->toStartWith('church/'.$church->id.'/branding/')
         ->and($branding['map_embed'])->toBe('https://www.google.com/maps/embed?pb=church')
+        ->and($branding['social_links']['instagram'])->toBe('https://instagram.com/weeklychurch')
         ->and($branding['weekly_schedule'])->toHaveCount(2)
         ->and($branding['weekly_schedule'][0]['title'])->toBe('Worship service');
     expect(Storage::disk((string) config('media.disk'))->exists($branding['logo_path']))->toBeTrue();
@@ -89,8 +94,24 @@ test('church branding stores location embed and grouped weekly schedules for the
             ->where('branding.logo_url', '/branding/logo')
             ->where('branding.address', '100 Main Street, Manaus')
             ->where('branding.map_embed', 'https://www.google.com/maps/embed?pb=church')
+            ->where('branding.social_links.instagram', 'https://instagram.com/weeklychurch')
             ->has('branding.weekly_schedule', 2)
             ->where('calendarEvents.0.id', $event->id));
+});
+
+test('church settings reject a domain already used by another church', function () {
+    Church::factory()->create(['domain' => 'already-used.test']);
+    $church = Church::factory()->create(['domain' => 'editable.test']);
+    $admin = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church->assignMember($admin);
+
+    $this->actingAs($admin)
+        ->put('http://editable.test/dashboard/configuracoes-church', [
+            'domain' => 'already-used.test',
+        ])
+        ->assertSessionHasErrors('domain');
+
+    expect($church->fresh()->domain)->toBe('editable.test');
 });
 
 test('branding rejects unsafe map embeds', function () {

@@ -13,6 +13,8 @@ import {
     Radio,
     ShieldCheck,
     X,
+    FileCheck2,
+    Paperclip,
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
@@ -55,6 +57,7 @@ type RegistrationRequest = {
     review_notes?: string | null;
     community: { id: string; name: string };
     requester?: { name: string; email: string };
+    document_url?: string | null;
 };
 
 const props = defineProps<{
@@ -78,6 +81,7 @@ const successMessage = ref('');
 const locating = ref(false);
 const domainMode = ref<'subdomain' | 'external'>('subdomain');
 const domainInput = ref('');
+const proofDocument = ref<File | null>(null);
 const communityForm = ref({
     name: '',
     slug: '',
@@ -109,6 +113,7 @@ const requestedDomain = computed(() =>
         ? `${normalizedDomainInput.value}.${props.mainDomain}`
         : normalizedDomainInput.value,
 );
+const domainModes = ['subdomain', 'external'] as const;
 
 const domainError = computed(() => {
     if (!normalizedDomainInput.value) {
@@ -245,10 +250,18 @@ const requestChurch = async (): Promise<void> => {
     errorMessage.value = '';
 
     try {
-        await axios.post('/onboarding/churches', {
+        const payload = new FormData();
+
+        Object.entries({
             ...churchForm.value,
             domain: requestedDomain.value,
-        });
+        }).forEach(([key, value]) => payload.append(key, value));
+
+        if (proofDocument.value) {
+            payload.append('proof_document', proofDocument.value);
+        }
+
+        await axios.post('/onboarding/churches', payload);
         churchModalOpen.value = false;
         successMessage.value = t('portal.onboarding.request_sent');
         window.setTimeout(() => window.location.reload(), 900);
@@ -257,6 +270,10 @@ const requestChurch = async (): Promise<void> => {
     } finally {
         processing.value = false;
     }
+};
+
+const selectProofDocument = (event: Event): void => {
+    proofDocument.value = (event.target as HTMLInputElement).files?.[0] ?? null;
 };
 
 const approveRequest = async (request: RegistrationRequest): Promise<void> => {
@@ -676,6 +693,16 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     >
                                         {{ item.address }}
                                     </p>
+                                    <a
+                                        v-if="item.document_url"
+                                        :href="item.document_url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="mt-3 inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-black text-indigo-700"
+                                    >
+                                        <FileCheck2 class="size-4" />
+                                        {{ t('portal.review.view_document') }}
+                                    </a>
                                 </div>
                                 <div class="flex shrink-0 gap-2">
                                     <button
@@ -806,23 +833,40 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         class="rounded-xl border-slate-300"
                         :placeholder="t('portal.fields.slug')"
                     />
-                    <div class="space-y-2">
-                        <div class="grid gap-2 sm:grid-cols-[11rem_1fr]">
-                            <select
-                                v-model="domainMode"
-                                class="rounded-xl border-slate-300"
+                    <div class="space-y-3 sm:col-span-2">
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <label
+                                v-for="mode in domainModes"
+                                :key="mode"
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3"
+                                :class="{
+                                    'border-indigo-500 bg-indigo-50':
+                                        domainMode === mode,
+                                }"
                             >
-                                <option value="subdomain">
-                                    {{ t('portal.domain.subdomain') }}
-                                </option>
-                                <option value="external">
-                                    {{ t('portal.domain.external') }}
-                                </option>
-                            </select>
+                                <input
+                                    v-model="domainMode"
+                                    type="radio"
+                                    :value="mode"
+                                    class="mt-1"
+                                />
+                                <span>
+                                    <strong class="block text-sm">{{
+                                        t(`portal.domain.${mode}`)
+                                    }}</strong>
+                                    <span class="text-xs text-slate-500">{{
+                                        t(`portal.domain.${mode}_description`)
+                                    }}</span>
+                                </span>
+                            </label>
+                        </div>
+                        <div
+                            class="flex overflow-hidden rounded-xl border border-slate-300 bg-white"
+                        >
                             <input
                                 v-model="domainInput"
                                 required
-                                class="rounded-xl border-slate-300"
+                                class="min-w-0 flex-1 border-0 focus:ring-0"
                                 :placeholder="
                                     domainMode === 'subdomain'
                                         ? t(
@@ -831,11 +875,17 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         : t('portal.fields.domain')
                                 "
                             />
+                            <span
+                                v-if="domainMode === 'subdomain'"
+                                class="flex items-center border-l border-slate-200 bg-slate-50 px-3 text-sm text-slate-500"
+                                >.{{ mainDomain }}</span
+                            >
                         </div>
                         <p class="text-xs text-slate-500">
                             {{
                                 domainMode === 'subdomain'
-                                    ? requestedDomain || 'subdominio'
+                                    ? requestedDomain ||
+                                      t('portal.domain.preview_empty')
                                     : t('portal.domain.external_hint')
                             }}
                         </p>
@@ -872,6 +922,26 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     class="w-full rounded-xl border-slate-300"
                     :placeholder="t('portal.fields.address')"
                 />
+                <label
+                    class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4"
+                >
+                    <Paperclip class="size-5 text-indigo-600" />
+                    <span class="min-w-0 flex-1">
+                        <strong class="block text-sm text-slate-900">{{
+                            t('portal.fields.proof_document')
+                        }}</strong>
+                        <span class="block truncate text-xs text-slate-500">{{
+                            proofDocument?.name ||
+                            t('portal.fields.proof_document_hint')
+                        }}</span>
+                    </span>
+                    <input
+                        type="file"
+                        accept="application/pdf,image/jpeg,image/png,image/webp"
+                        class="sr-only"
+                        @change="selectProofDocument"
+                    />
+                </label>
                 <p class="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
                     {{ t('portal.onboarding.approval_notice') }}
                 </p>

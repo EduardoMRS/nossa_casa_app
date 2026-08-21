@@ -47,7 +47,18 @@ type BrandingData = {
     longitude: number | null;
     map_embed: string;
     weekly_schedule: WeeklySchedule[];
+    social_links: Record<SocialNetwork, string>;
 };
+
+type SocialNetwork =
+    | 'instagram'
+    | 'facebook'
+    | 'whatsapp'
+    | 'tiktok'
+    | 'youtube'
+    | 'x'
+    | 'telegram'
+    | 'linkedin';
 
 type WeeklySchedule = {
     title: string;
@@ -92,6 +103,7 @@ const props = defineProps<{
     templates: Record<TemplateSection, TemplateVariant>;
     terminology: TerminologySelections;
     terminologyOptions: TerminologyOptions;
+    mainDomain: string;
 }>();
 const colors = ref({
     primary_color: props.branding.primary_color,
@@ -174,6 +186,41 @@ const templateSections: TemplateSection[] = [
     'gallery',
 ];
 const templateVariants = ['classic', 'editorial', 'minimal'] as const;
+const socialNetworks: SocialNetwork[] = [
+    'instagram',
+    'facebook',
+    'whatsapp',
+    'tiktok',
+    'youtube',
+    'x',
+    'telegram',
+    'linkedin',
+];
+const domainModes = ['internal', 'external'] as const;
+const isInternalDomain =
+    props.branding.domain.endsWith(`.${props.mainDomain}`) &&
+    props.branding.domain !== props.mainDomain;
+const domainMode = ref<'internal' | 'external'>(
+    isInternalDomain ? 'internal' : 'external',
+);
+const domainInput = ref(
+    isInternalDomain
+        ? props.branding.domain.slice(0, -(props.mainDomain.length + 1))
+        : props.branding.domain,
+);
+const normalizedDomainInput = computed(() =>
+    domainInput.value
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .split('/')[0]
+        .replace(/\.$/, ''),
+);
+const resolvedDomain = computed(() =>
+    domainMode.value === 'internal'
+        ? `${normalizedDomainInput.value}.${props.mainDomain}`
+        : normalizedDomainInput.value,
+);
 </script>
 
 <template>
@@ -361,18 +408,66 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                             </p>
                         </div>
                     </div>
-                    <div class="grid max-w-2xl gap-2">
+                    <div class="grid max-w-2xl gap-4">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <label
+                                v-for="mode in domainModes"
+                                :key="mode"
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-input bg-background p-4"
+                                :class="{
+                                    'ring-2 ring-primary': domainMode === mode,
+                                }"
+                            >
+                                <input
+                                    v-model="domainMode"
+                                    type="radio"
+                                    :value="mode"
+                                    class="mt-1"
+                                />
+                                <span>
+                                    <strong class="block text-sm">{{
+                                        t(`admin.branding.domain_${mode}`)
+                                    }}</strong>
+                                    <span
+                                        class="text-xs text-muted-foreground"
+                                        >{{
+                                            t(
+                                                `admin.branding.domain_${mode}_hint`,
+                                            )
+                                        }}</span
+                                    >
+                                </span>
+                            </label>
+                        </div>
                         <Label for="domain">{{
                             t('admin.branding.domain')
                         }}</Label>
-                        <Input
-                            id="domain"
+                        <input
+                            type="hidden"
                             name="domain"
-                            :default-value="props.branding.domain"
-                            :placeholder="
-                                t('admin.branding.domain_placeholder')
-                            "
+                            :value="resolvedDomain"
                         />
+                        <div
+                            class="flex overflow-hidden rounded-md border border-input bg-background"
+                        >
+                            <Input
+                                id="domain"
+                                v-model="domainInput"
+                                class="border-0 shadow-none focus-visible:ring-0"
+                                :placeholder="
+                                    domainMode === 'internal'
+                                        ? t(
+                                              'portal.domain.subdomain_placeholder',
+                                          )
+                                        : t('admin.branding.domain_placeholder')
+                                "
+                            />
+                            <span
+                                v-if="domainMode === 'internal'"
+                                class="flex items-center border-l border-input bg-muted px-3 text-sm text-muted-foreground"
+                                >.{{ mainDomain }}</span
+                            >
+                        </div>
                         <p class="text-xs text-muted-foreground">
                             {{ t('admin.branding.domain_hint') }}
                         </p>
@@ -531,6 +626,40 @@ const templateVariants = ['classic', 'editorial', 'minimal'] as const;
                         <InputError :message="errors.accent_color" />
                     </div>
                 </div>
+
+                <section class="grid gap-4 border-t border-border pt-6">
+                    <div>
+                        <h2 class="font-bold">
+                            {{ t('admin.branding.social_links_title') }}
+                        </h2>
+                        <p class="text-sm text-muted-foreground">
+                            {{ t('admin.branding.social_links_description') }}
+                        </p>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div
+                            v-for="network in socialNetworks"
+                            :key="network"
+                            class="grid gap-2"
+                        >
+                            <Label :for="`social_${network}`">{{
+                                t(`admin.branding.social_networks.${network}`)
+                            }}</Label>
+                            <Input
+                                :id="`social_${network}`"
+                                :name="`social_links[${network}]`"
+                                type="url"
+                                :default-value="
+                                    props.branding.social_links?.[network]
+                                "
+                                placeholder="https://"
+                            />
+                            <InputError
+                                :message="errors[`social_links.${network}`]"
+                            />
+                        </div>
+                    </div>
+                </section>
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="grid gap-2">

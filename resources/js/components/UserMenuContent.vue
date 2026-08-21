@@ -11,7 +11,6 @@ import {
     Undo2,
 } from '@lucide/vue';
 import { computed } from 'vue';
-import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -184,10 +183,6 @@ const transferMembership = (): void => {
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
-    <DropdownMenuSeparator />
-    <DropdownMenuLabel class="px-2 py-1.5 font-normal">
-        <LocaleSwitcher class="w-full justify-between rounded-lg" />
-    </DropdownMenuLabel>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">
         <Link

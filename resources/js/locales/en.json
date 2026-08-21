@@ -228,6 +228,8 @@
             "avatar": "Profile photo",
             "other": "Other",
             "save": "Save profile",
+            "language": "Language",
+            "language_hint": "Choose the language used throughout your account.",
             "breadcrumb": "Profile settings",
             "meta_title": "Profile settings",
             "title": "Profile",
@@ -416,6 +418,10 @@
             "domain": "Domain",
             "domain_placeholder": "church.example.com",
             "domain_hint": "Enter only the domain, without protocol or paths. The current domain is used when this field is left empty.",
+            "domain_internal": "Platform subdomain",
+            "domain_internal_hint": "Use an address managed below the platform's main domain.",
+            "domain_external": "External domain",
+            "domain_external_hint": "Use a domain that your church owns and configures.",
             "terminology_title": "Community terminology",
             "terminology_description": "Choose how organizational units and access levels are presented without changing their permissions.",
             "headquarters_term": "Name used for the headquarters",
@@ -428,6 +434,18 @@
             "phone": "Phone",
             "email": "Email",
             "whatsapp": "WhatsApp",
+            "social_links_title": "Social media links",
+            "social_links_description": "Add the official church profiles that should appear on the public home page.",
+            "social_networks": {
+                "instagram": "Instagram",
+                "facebook": "Facebook",
+                "whatsapp": "WhatsApp",
+                "tiktok": "TikTok",
+                "youtube": "YouTube",
+                "x": "X / Twitter",
+                "telegram": "Telegram",
+                "linkedin": "LinkedIn"
+            },
             "location_title": "Location and address",
             "location_description": "Tell visitors how to reach the church and optionally embed a secure map.",
             "address": "Full address",
@@ -1427,6 +1445,9 @@
             "external": "External domain",
             "subdomain_placeholder": "my-church",
             "external_hint": "Enter the full domain without protocol or path.",
+            "subdomain_description": "Create an address under the platform domain.",
+            "external_description": "Use a domain owned by the congregation.",
+            "preview_empty": "Enter the desired subdomain",
             "required": "Enter a domain.",
             "invalid": "Enter a valid domain without spaces or paths.",
             "main_forbidden": "The platform's main domain cannot be used."
@@ -1437,7 +1458,8 @@
             "approve": "Approve",
             "reject": "Reject",
             "approve_confirm": "Approve congregation {name}?",
-            "reject_reason": "Enter the rejection reason:"
+            "reject_reason": "Enter the rejection reason:",
+            "view_document": "View proof document"
         },
         "status": {
             "pending": "Pending",
@@ -1452,7 +1474,9 @@
             "domain": "Domain (e.g. church.example.com)",
             "contact_email": "Contact email",
             "contact_phone": "Contact phone",
-            "address": "Full address"
+            "address": "Full address",
+            "proof_document": "Proof of church existence or authorization",
+            "proof_document_hint": "PDF, JPG, PNG, or WebP up to 10 MB (optional)"
         },
         "errors": {
             "generic": "The operation could not be completed."

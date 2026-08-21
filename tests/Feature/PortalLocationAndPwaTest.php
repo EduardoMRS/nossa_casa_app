@@ -84,6 +84,9 @@ test('manifest and service worker are generated dynamically for the church domai
         ->assertSee('CACHE_BIBLES', escape: false)
         ->assertSee('BIBLE_CACHE_READY', escape: false)
         ->assertSee('cachedMarker', escape: false)
+        ->assertSee('CACHE_SCOPE', escape: false)
+        ->assertSee("request.headers.get('X-Inertia')", escape: false)
+        ->assertSee("cache.match('/', { ignoreVary: true })", escape: false)
         ->assertSee("url.pathname.startsWith('/api/bible/')", escape: false);
 
     $this->artisan('service-worker:update')->assertSuccessful();

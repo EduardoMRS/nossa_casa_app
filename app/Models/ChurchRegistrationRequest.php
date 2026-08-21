@@ -28,6 +28,9 @@ class ChurchRegistrationRequest extends Model
         'status',
         'review_notes',
         'reviewed_at',
+        'proof_document_path',
+        'proof_document_name',
+        'proof_document_mime',
     ];
 
     protected $casts = [

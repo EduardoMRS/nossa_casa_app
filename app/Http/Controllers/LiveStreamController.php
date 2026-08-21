@@ -23,7 +23,7 @@ class LiveStreamController extends Controller
 
         $liveStreams = LiveStream::query()
             ->when(
-                $request->user()?->role !== UserRole::SYSTEM,
+                ! in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true),
                 fn ($query) => $query->where('church_id', $churchId),
             )
             ->withCount('recordings')
@@ -89,7 +89,7 @@ class LiveStreamController extends Controller
         $churchId = $request->user()?->church()->first()?->getKey();
 
         abort_unless(
-            $request->user()?->role === UserRole::SYSTEM
+            in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
                 || $liveStream->church_id === $churchId,
             403,
         );

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Enums\UserRole;
+use App\Models\Church;
 use App\Support\ChurchDomainContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,7 +12,10 @@ class UpdateChurchSettingsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->church !== null;
+        $church = $this->churchForRequest();
+
+        return $church !== null && ($this->user()?->profile?->church_id === $church->id
+            || in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true));
     }
 
     /**
@@ -18,7 +23,7 @@ class UpdateChurchSettingsRequest extends FormRequest
      */
     public function rules(): array
     {
-        $church = $this->user()?->church;
+        $church = $this->churchForRequest();
         $mainDomain = app(ChurchDomainContext::class)->mainHost();
 
         return [
@@ -29,6 +34,7 @@ class UpdateChurchSettingsRequest extends FormRequest
                 'not_in:'.$mainDomain,
                 'regex:/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/',
                 Rule::unique('churches', 'domain')->ignore($church?->id),
+                Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),
             ],
             'brand_name' => ['nullable', 'string', 'max:120'],
             'tagline' => ['nullable', 'string', 'max:180'],
@@ -45,6 +51,8 @@ class UpdateChurchSettingsRequest extends FormRequest
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:60'],
             'contact_whatsapp' => ['nullable', 'string', 'max:60'],
+            'social_links' => ['nullable', 'array:instagram,facebook,whatsapp,tiktok,youtube,x,telegram,linkedin'],
+            'social_links.*' => ['nullable', 'url:http,https', 'max:500'],
             'address' => ['nullable', 'string', 'max:500'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
@@ -73,8 +81,8 @@ class UpdateChurchSettingsRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $church = $this->user()?->church;
         $context = app(ChurchDomainContext::class);
+        $church = $this->churchForRequest();
         $currentHost = ChurchDomainContext::normalizeDomain($this->getHost());
         $currentDomain = $church?->domain ?: (
             $currentHost === $context->mainHost() && $church
@@ -86,5 +94,21 @@ class UpdateChurchSettingsRequest extends FormRequest
         $this->merge([
             'domain' => ChurchDomainContext::normalizeDomain($requestedDomain ?: $currentDomain),
         ]);
+    }
+
+    private function churchForRequest(): ?Church
+    {
+        $context = app(ChurchDomainContext::class);
+        $church = $context->church();
+
+        if ($church || in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+            return $church;
+        }
+
+        $userChurch = $this->user()?->church;
+
+        return $context->isMainDomain() && blank($userChurch?->domain)
+            ? $userChurch
+            : null;
     }
 }

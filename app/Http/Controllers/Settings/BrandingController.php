@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
+use App\Models\Church;
 use App\Models\Setting;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
@@ -21,11 +23,12 @@ class BrandingController extends Controller
     public function __construct(
         private ChurchTerminology $terminology,
         private ChurchBrandingResolver $brandingResolver,
+        private ChurchDomainContext $domainContext,
     ) {}
 
     public function edit(Request $request): Response
     {
-        $church = $request->user()?->church;
+        $church = $this->churchForRequest($request);
         if ($church === null) {
             abort(403);
         }
@@ -64,12 +67,14 @@ class BrandingController extends Controller
             'templates' => array_merge($this->defaultTemplates(), is_array($templates) ? $templates : []),
             'terminology' => $this->terminology->selections(is_array($savedTerminology) ? $savedTerminology : []),
             'terminologyOptions' => $this->terminology->options(),
+            'mainDomain' => $this->domainContext->mainHost(),
         ]);
     }
 
     public function update(UpdateChurchSettingsRequest $request): RedirectResponse
     {
-        $church = $request->user()->church;
+        $church = $this->churchForRequest($request);
+        abort_unless($church, 403);
         $validated = $request->validated();
         $domain = Arr::pull($validated, 'domain');
         $templates = Arr::pull($validated, 'templates', []);
@@ -148,6 +153,7 @@ class BrandingController extends Controller
             'longitude' => null,
             'map_embed' => '',
             'weekly_schedule' => [],
+            'social_links' => [],
         ];
     }
 
@@ -200,5 +206,20 @@ class BrandingController extends Controller
         }
 
         return $mapUrl;
+    }
+
+    private function churchForRequest(Request $request): ?Church
+    {
+        $church = $this->domainContext->church();
+
+        if ($church || in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+            return $church;
+        }
+
+        $userChurch = $request->user()?->church;
+
+        return $this->domainContext->isMainDomain() && blank($userChurch?->domain)
+            ? $userChurch
+            : null;
     }
 }

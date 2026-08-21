@@ -62,6 +62,8 @@ const page = usePage<{
         };
     };
     separateKidsMinistry?: boolean;
+    churchContext?: { church?: { id: string } | null };
+    permissions?: { manageBranding?: boolean };
 }>();
 
 const enabledKidsMinistry = computed(() => {
@@ -82,12 +84,17 @@ const role = computed(() => {
     return '';
 });
 
-const canManageWorkspace = computed(() =>
-    ['church_leader', 'superadmin', 'system'].includes(role.value),
+const canManageWorkspace = computed(
+    () =>
+        ['church_leader', 'superadmin', 'system'].includes(role.value) &&
+        Boolean(page.props.churchContext?.church),
 );
 
-const canControlLiveStreams = computed(() =>
-    ['media', 'church_leader', 'superadmin', 'system'].includes(role.value),
+const canControlLiveStreams = computed(
+    () =>
+        ['media', 'church_leader', 'superadmin', 'system'].includes(
+            role.value,
+        ) && Boolean(page.props.churchContext?.church),
 );
 
 const mainNavItems = computed<NavItem[]>(() => [
@@ -138,11 +145,15 @@ const communicationNavItems = computed<NavItem[]>(() => [
         href: adminLibraryVerseIndex(),
         icon: LibraryBig,
     },
-    {
-        title: t('admin.branding.title'),
-        href: brandingEdit(),
-        icon: Settings2,
-    },
+    ...(page.props.permissions?.manageBranding
+        ? [
+              {
+                  title: t('admin.branding.title'),
+                  href: brandingEdit(),
+                  icon: Settings2,
+              },
+          ]
+        : []),
 ]);
 
 const ministriesNavItems = computed<NavItem[]>(() => [

@@ -20,7 +20,8 @@ class PublicLiveStreamController extends Controller
 
         $user = $request->user();
         $role = $user?->role;
-        $hasChurchAccess = $role === UserRole::SYSTEM || $user?->profile?->church_id === $churchId;
+        $hasChurchAccess = in_array($role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
+            || $user?->profile?->church_id === $churchId;
 
         abort_unless($liveStream->is_public || $hasChurchAccess, 404);
 

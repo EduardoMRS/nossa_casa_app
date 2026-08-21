@@ -4,10 +4,55 @@ use App\Enums\UserRole;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     config(['app.url' => 'http://platform.test']);
+    Storage::fake('local');
     $this->withoutVite();
+});
+
+test('church request accepts a private proof document visible only to reviewers', function () {
+    $owner = User::factory()->create();
+    $requester = User::factory()->create();
+    $outsider = User::factory()->create();
+    $community = Community::factory()->create(['owner_id' => $owner->id]);
+    $requester->profile()->create(['community_id' => $community->id]);
+
+    $this->actingAs($requester)->post('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'name' => 'Documented Church',
+        'slug' => 'documented-church',
+        'domain' => 'documented.platform.test',
+        'proof_document' => UploadedFile::fake()->create('authorization.pdf', 120, 'application/pdf'),
+    ])->assertCreated();
+
+    $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
+    expect($registrationRequest->proof_document_name)->toBe('authorization.pdf');
+    Storage::disk('local')->assertExists($registrationRequest->proof_document_path);
+
+    $proofUrl = "http://platform.test/onboarding/churches/{$registrationRequest->id}/proof";
+    $this->actingAs($outsider)->get($proofUrl)->assertForbidden();
+    $this->actingAs($owner)->get($proofUrl)->assertSuccessful()->assertHeader('X-Content-Type-Options', 'nosniff');
+});
+
+test('church request rejects a domain already reserved by a pending request', function () {
+    $requester = User::factory()->create();
+    $community = Community::factory()->create(['owner_id' => $requester->id]);
+    $requester->profile()->create(['community_id' => $community->id]);
+    ChurchRegistrationRequest::factory()->create([
+        'community_id' => $community->id,
+        'domain' => 'reserved.platform.test',
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'name' => 'Duplicate Church',
+        'slug' => 'duplicate-church',
+        'domain' => 'reserved.platform.test',
+    ])->assertUnprocessable()->assertJsonValidationErrors('domain');
 });
 
 test('church registration requires authentication', function () {

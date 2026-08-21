@@ -16,7 +16,7 @@ class StoreLiveStreamRequest extends FormRequest
     {
         $user = $this->user();
 
-        if ($user?->role === UserRole::SYSTEM) {
+        if (in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return true;
         }
 
@@ -42,7 +42,7 @@ class StoreLiveStreamRequest extends FormRequest
             'record' => ['sometimes', 'boolean'],
             'is_public' => ['sometimes', 'boolean'],
             'church_id' => [
-                Rule::requiredIf($this->user()?->role === UserRole::SYSTEM),
+                Rule::requiredIf(in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)),
                 'nullable',
                 'string',
                 'exists:churches,id',

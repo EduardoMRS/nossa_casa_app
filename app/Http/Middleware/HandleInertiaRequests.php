@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\LiveStreamStatus;
+use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\LiveStream;
 use App\Models\Setting;
@@ -51,9 +52,10 @@ class HandleInertiaRequests extends Middleware
         $role = $user?->role?->value ?? (string) $user?->role;
         $domainContext = app(ChurchDomainContext::class);
         $currentChurch = $domainContext->church();
+        $isGlobalAdministrator = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
         $isForeignChurch = $currentChurch !== null
             && $user !== null
-            && $user->role?->value !== 'system'
+            && ! $isGlobalAdministrator
             && $user->profile?->church_id !== $currentChurch->id;
         $isUnassignedChurchDashboard = $currentChurch === null
             && $user?->profile?->church_id !== null
@@ -87,6 +89,7 @@ class HandleInertiaRequests extends Middleware
             'longitude' => null,
             'map_embed' => '',
             'weekly_schedule' => [],
+            'social_links' => [],
         ];
         $setting = null;
 
@@ -171,9 +174,10 @@ class HandleInertiaRequests extends Middleware
                 'publicKey' => config('services.webpush.public_key'),
             ],
             'permissions' => [
-                'accessDashboard' => ($role === 'system' || $isOwnChurch)
+                'accessDashboard' => ($isGlobalAdministrator || $isOwnChurch)
                     && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true),
-                'manageBranding' => ($role === 'system' || $isOwnChurch)
+                'manageBranding' => ($currentChurch !== null || $isUnassignedChurchDashboard)
+                    && ($isGlobalAdministrator || $isOwnChurch)
                     && in_array($role, ['church_leader', 'superadmin', 'system'], true),
             ],
             'classrooms' => [

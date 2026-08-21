@@ -15,7 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ChurchOnboardingController extends Controller
 {
@@ -63,7 +65,17 @@ class ChurchOnboardingController extends Controller
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'proof_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'mimetypes:application/pdf,image/jpeg,image/png,image/webp', 'max:10240'],
         ]);
+        $proofDocument = $request->file('proof_document');
+        unset($validated['proof_document']);
+
+        if ($proofDocument) {
+            $validated['proof_document_path'] = $proofDocument->store('church-registration-proofs', 'local');
+            $validated['proof_document_name'] = $proofDocument->getClientOriginalName();
+            $validated['proof_document_mime'] = $proofDocument->getMimeType();
+        }
+
         $registrationRequest = ChurchRegistrationRequest::query()->create([
             ...$validated,
             'requester_id' => $request->user()->id,
@@ -71,6 +83,20 @@ class ChurchOnboardingController extends Controller
         ]);
 
         return response()->json($registrationRequest, 201);
+    }
+
+    public function proofDocument(Request $request, ChurchRegistrationRequest $registrationRequest): BinaryFileResponse
+    {
+        $this->ensureCanReview($request, $registrationRequest);
+        $path = $registrationRequest->proof_document_path;
+
+        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'Content-Type' => $registrationRequest->proof_document_mime ?: 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.basename((string) $registrationRequest->proof_document_name).'"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function approve(Request $request, ChurchRegistrationRequest $registrationRequest): JsonResponse
@@ -175,7 +201,7 @@ class ChurchOnboardingController extends Controller
 
     private function ensureCanReview(Request $request, ChurchRegistrationRequest $registrationRequest): void
     {
-        if ($request->user()->role === UserRole::SYSTEM) {
+        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return;
         }
 

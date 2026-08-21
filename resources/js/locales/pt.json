@@ -228,6 +228,8 @@
             "avatar": "Foto de perfil",
             "other": "Outros",
             "save": "Salvar perfil",
+            "language": "Idioma",
+            "language_hint": "Escolha o idioma usado em toda a sua conta.",
             "breadcrumb": "Configurações de perfil",
             "meta_title": "Configurações de perfil",
             "title": "Perfil",
@@ -416,6 +418,10 @@
             "domain": "Domínio",
             "domain_placeholder": "igreja.exemplo.com",
             "domain_hint": "Informe somente o domínio, sem protocolo ou caminhos. Se o campo ficar vazio, será usado o domínio atual.",
+            "domain_internal": "Subdomínio da plataforma",
+            "domain_internal_hint": "Use um endereço gerenciado abaixo do domínio principal da plataforma.",
+            "domain_external": "Domínio externo",
+            "domain_external_hint": "Use um domínio próprio configurado pela church.",
             "terminology_title": "Terminologia da comunidade",
             "terminology_description": "Escolha como as unidades organizacionais e os níveis de acesso serão apresentados sem alterar suas permissões.",
             "headquarters_term": "Nome usado para a matriz",
@@ -428,6 +434,18 @@
             "phone": "Telefone",
             "email": "E-mail",
             "whatsapp": "WhatsApp",
+            "social_links_title": "Links de redes sociais",
+            "social_links_description": "Adicione os perfis oficiais da church que aparecerão na página inicial pública.",
+            "social_networks": {
+                "instagram": "Instagram",
+                "facebook": "Facebook",
+                "whatsapp": "WhatsApp",
+                "tiktok": "TikTok",
+                "youtube": "YouTube",
+                "x": "X / Twitter",
+                "telegram": "Telegram",
+                "linkedin": "LinkedIn"
+            },
             "location_title": "Localização e endereço",
             "location_description": "Informe como os visitantes chegam à igreja e, se desejar, incorpore um mapa seguro.",
             "address": "Endereço completo",
@@ -1427,6 +1445,9 @@
             "external": "Domínio externo",
             "subdomain_placeholder": "minha-igreja",
             "external_hint": "Informe o domínio completo, sem protocolo ou caminho.",
+            "subdomain_description": "Crie um endereço abaixo do domínio da plataforma.",
+            "external_description": "Use um domínio próprio da congregação.",
+            "preview_empty": "Informe o subdomínio desejado",
             "required": "Informe um domínio.",
             "invalid": "Informe um domínio válido, sem espaços ou caminhos.",
             "main_forbidden": "O domínio principal da plataforma não pode ser usado."
@@ -1437,7 +1458,8 @@
             "approve": "Aprovar",
             "reject": "Recusar",
             "approve_confirm": "Aprovar a congregação {name}?",
-            "reject_reason": "Informe o motivo da recusa:"
+            "reject_reason": "Informe o motivo da recusa:",
+            "view_document": "Ver documento comprobatório"
         },
         "status": {
             "pending": "Pendente",
@@ -1452,7 +1474,9 @@
             "domain": "Domínio (ex.: igreja.exemplo.com)",
             "contact_email": "E-mail de contato",
             "contact_phone": "Telefone de contato",
-            "address": "Endereço completo"
+            "address": "Endereço completo",
+            "proof_document": "Comprovante de existência da church ou autorização",
+            "proof_document_hint": "PDF, JPG, PNG ou WebP de até 10 MB (opcional)"
         },
         "errors": {
             "generic": "Não foi possível concluir a operação."

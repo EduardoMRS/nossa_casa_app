@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CategoryType;
+use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Admin\LiveStreamControlController;
@@ -77,6 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding/churches', [ChurchOnboardingController::class, 'storeChurchRequest'])->name('onboarding.churches.store');
     Route::post('/onboarding/churches/{registrationRequest}/approve', [ChurchOnboardingController::class, 'approve'])->name('onboarding.churches.approve');
     Route::post('/onboarding/churches/{registrationRequest}/reject', [ChurchOnboardingController::class, 'reject'])->name('onboarding.churches.reject');
+    Route::get('/onboarding/churches/{registrationRequest}/proof', [ChurchOnboardingController::class, 'proofDocument'])->name('onboarding.churches.proof');
     Route::post('/church-membership/switch', [ChurchOnboardingController::class, 'switchMembership'])->name('church.membership.switch');
     Route::post('/church-membership/decline', [ChurchOnboardingController::class, 'declineMembership'])->name('church.membership.decline');
 });
@@ -275,6 +277,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function (Request $request) {
         $user = $request->user();
         $role = $user?->role?->value ?? (string) $user?->role;
+        $domainChurch = app(ChurchDomainContext::class)->church();
+        $isGlobalAdministrator = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $dashboardChurch = $domainChurch ?? ($isGlobalAdministrator ? null : $user?->church);
 
         $modules = match ($role) {
             'leader' => [
@@ -307,12 +312,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ],
         };
 
+        if ($dashboardChurch === null) {
+            $modules = array_values(array_filter(
+                $modules,
+                fn (array $module): bool => $module['href'] !== route('admin.branding.edit'),
+            ));
+        }
+
         return Inertia::render('Dashboard', [
             'role' => $role,
             'kpis' => [
-                'events' => Event::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
-                'gallery' => Media::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
-                'posts' => Post::query()->when($user?->profile?->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))->count(),
+                'events' => Event::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
+                'gallery' => Media::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
+                'posts' => Post::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
             ],
             'modules' => $modules,
         ]);

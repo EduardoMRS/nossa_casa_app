@@ -42,7 +42,14 @@ class ChurchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:churches',
-            'domain' => ['nullable', 'string', 'max:255', 'not_in:'.app(ChurchDomainContext::class)->mainHost(), Rule::unique('churches')],
+            'domain' => [
+                'nullable',
+                'string',
+                'max:255',
+                'not_in:'.app(ChurchDomainContext::class)->mainHost(),
+                Rule::unique('churches'),
+                Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),
+            ],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',
@@ -80,7 +87,15 @@ class ChurchController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('churches')->ignore($church->id)],
-            'domain' => ['sometimes', 'nullable', 'string', 'max:255', 'not_in:'.app(ChurchDomainContext::class)->mainHost(), Rule::unique('churches')->ignore($church->id)],
+            'domain' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+                'not_in:'.app(ChurchDomainContext::class)->mainHost(),
+                Rule::unique('churches')->ignore($church->id),
+                Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),
+            ],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['sometimes', 'required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',
@@ -117,7 +132,7 @@ class ChurchController extends Controller
 
     private function ensureCommunityAccess(Request $request, Church $church): void
     {
-        if ($request->user()->role === UserRole::SYSTEM) {
+        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return;
         }
 

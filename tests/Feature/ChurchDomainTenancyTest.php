@@ -164,6 +164,23 @@ test('login on the main domain redirects through a single use church handoff', f
     $this->get($location)->assertForbidden();
 });
 
+test('global administrator login on the main domain stays on the portal dashboard', function () {
+    $church = createDomainChurch('Admin Church', 'admin-church.test');
+    $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $church->assignMember($superadmin);
+
+    $this->post('http://platform.test/login', [
+        'email' => $superadmin->email,
+        'password' => 'password',
+    ])->assertRedirect('/dashboard');
+
+    $this->get('http://platform.test/dashboard')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('churchContext.church', null)
+            ->where('permissions.manageBranding', false));
+});
+
 test('system administrator can configure a normalized custom church domain', function () {
     $church = createDomainChurch('Configurable Church', 'old-domain.test');
     $system = User::factory()->create(['role' => UserRole::SYSTEM]);

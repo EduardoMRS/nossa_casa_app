@@ -13,6 +13,7 @@ import {
     Phone,
     Send,
     X,
+    ExternalLink,
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
@@ -80,6 +81,7 @@ type BrandingData = {
     contact_phone?: string;
     contact_email?: string;
     weekly_schedule?: WeeklySchedule[];
+    social_links?: Record<string, string>;
 };
 
 type CalendarItem = {
@@ -160,6 +162,15 @@ const visibleMonth = ref(
 const selectedDateKey = ref('');
 const selectedRecording = ref<RecordingCard | null>(null);
 const featuredRecordings = computed(() => props.latestRecordings.slice(0, 4));
+const socialLinks = computed(() =>
+    Object.entries(branding.value.social_links ?? {})
+        .filter((entry): entry is [string, string] => Boolean(entry[1]))
+        .map(([network, url]) => ({
+            network,
+            url,
+            label: t(`admin.branding.social_networks.${network}`),
+        })),
+);
 let restoreDarkMode = false;
 
 const closeRecording = (): void => {
@@ -916,6 +927,22 @@ const submitPrayer = async (): Promise<void> => {
                                 :style="{ color: 'var(--church-primary)' }"
                             />{{ branding.contact_email }}
                         </a>
+                        <div
+                            v-if="socialLinks.length"
+                            class="flex flex-wrap gap-2 pt-2"
+                        >
+                            <a
+                                v-for="social in socialLinks"
+                                :key="social.network"
+                                :href="social.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-bold hover:border-slate-400 hover:text-slate-950"
+                            >
+                                {{ social.label }}
+                                <ExternalLink class="size-3" />
+                            </a>
+                        </div>
                     </div>
 
                     <div

@@ -68,9 +68,10 @@ class PwaController extends Controller
             : config('app.name');
 
         $content = str_replace(
-            ['__CACHE_VERSION__', '__APP_NAME__', '__NOTIFICATION_FALLBACK__', '__OPEN_ACTION__', '__OFFLINE_TITLE__', '__OFFLINE_MESSAGE__'],
+            ['__CACHE_VERSION__', '__CACHE_SCOPE__', '__APP_NAME__', '__NOTIFICATION_FALLBACK__', '__OPEN_ACTION__', '__OFFLINE_TITLE__', '__OFFLINE_MESSAGE__'],
             [
                 json_encode((string) config('app.version'), JSON_THROW_ON_ERROR),
+                json_encode($context->churchId() ?? $context->mainHost(), JSON_THROW_ON_ERROR),
                 json_encode((string) $name, JSON_THROW_ON_ERROR),
                 json_encode(__('pwa.notification_fallback'), JSON_THROW_ON_ERROR),
                 json_encode(__('pwa.open_action'), JSON_THROW_ON_ERROR),

@@ -17,19 +17,19 @@ class LiveStreamControlController extends Controller
 
     public function index(Request $request): Response
     {
-        $isSystem = $request->user()?->role === UserRole::SYSTEM;
+        $isGlobalAdministrator = in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
         $church = $this->domainContext->church();
 
-        if (! $church && $isSystem && $request->filled('church_id')) {
+        if (! $church && $isGlobalAdministrator && $request->filled('church_id')) {
             $church = Church::query()->find($request->string('church_id')->toString());
         }
 
         $church ??= $request->user()?->church;
-        $church ??= $isSystem ? Church::query()->orderBy('name')->first() : null;
+        $church ??= $isGlobalAdministrator ? Church::query()->orderBy('name')->first() : null;
 
         abort_unless($church instanceof Church, 422, __('church.context_required'));
         abort_unless(
-            $isSystem
+            $isGlobalAdministrator
                 || $request->user()?->profile?->church_id === $church->id,
             403,
         );
@@ -44,7 +44,7 @@ class LiveStreamControlController extends Controller
 
         return Inertia::render('Admin/LiveStreams', [
             'church' => $church->only(['id', 'name']),
-            'churches' => $isSystem
+            'churches' => $isGlobalAdministrator
                 ? Church::query()->orderBy('name')->get(['id', 'name'])
                 : [],
             'streams' => $streams,
