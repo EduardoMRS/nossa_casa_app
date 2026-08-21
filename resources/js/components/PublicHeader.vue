@@ -123,11 +123,11 @@ const navClass = (key: PublicNavKey): string =>
         :style="{ backgroundColor: 'var(--church-primary, #342f87)' }"
     >
         <div
-            class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+            class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:px-8"
         >
             <Link :href="home()" class="group flex shrink-0 items-center gap-3">
                 <span
-                    class="grid size-10 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-lg font-black transition group-hover:scale-105"
+                    class="grid size-9 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black transition group-hover:scale-105 sm:size-10 sm:text-lg"
                 >
                     <img
                         v-if="branding.logo_url"
@@ -206,7 +206,7 @@ const navClass = (key: PublicNavKey): string =>
                 <Link
                     v-else
                     :href="login()"
-                    class="rounded-lg bg-white px-4 py-2 text-xs font-bold text-indigo-950 shadow-sm"
+                    class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950 shadow-sm sm:px-4"
                     >{{ t('nav.login') }}</Link
                 >
                 <button
@@ -225,7 +225,7 @@ const navClass = (key: PublicNavKey): string =>
         <Link
             v-if="activeLiveStream"
             :href="`/transmissoes/${activeLiveStream.id}`"
-            class="flex items-center justify-center gap-3 border-t border-white/15 bg-rose-600 px-4 py-2 text-sm font-black text-white transition hover:bg-rose-700"
+            class="flex items-center justify-center gap-2 border-t border-white/15 bg-rose-600 px-3 py-2 text-xs font-black text-white transition hover:bg-rose-700 sm:gap-3 sm:px-4 sm:text-sm"
         >
             <span class="relative flex size-3">
                 <span
@@ -239,7 +239,7 @@ const navClass = (key: PublicNavKey): string =>
             <span class="truncate">{{
                 t('nav.live_now', { name: activeLiveStream.name })
             }}</span>
-            <span class="text-xs font-bold underline">{{
+            <span class="hidden text-xs font-bold underline sm:inline">{{
                 t('nav.watch')
             }}</span>
         </Link>

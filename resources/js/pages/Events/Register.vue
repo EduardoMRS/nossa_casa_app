@@ -267,9 +267,11 @@ const formatDate = (value: string): string => {
     >
         <PublicHeader active="events" />
 
-        <main class="mx-auto max-w-5xl px-5 py-8 md:px-8 md:py-10">
+        <main
+            class="mx-auto w-full max-w-5xl px-3 py-5 sm:px-5 sm:py-8 md:px-8 md:py-10"
+        >
             <section
-                class="mb-6 rounded-3xl bg-gradient-to-r from-[#0b3d44] via-[#125a63] to-[#0f7a69] p-6 text-white md:p-8"
+                class="mb-5 rounded-2xl bg-gradient-to-r from-[#0b3d44] via-[#125a63] to-[#0f7a69] p-5 text-white sm:mb-6 sm:rounded-3xl sm:p-6 md:p-8"
             >
                 <p
                     class="mb-2 text-xs tracking-[0.2em] text-[#a9f4e3] uppercase"
@@ -297,7 +299,7 @@ const formatDate = (value: string): string => {
             </section>
 
             <section
-                class="rounded-3xl border border-[#d8e2ec] bg-white p-6 shadow-sm md:p-8"
+                class="rounded-2xl border border-[#d8e2ec] bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 md:p-8"
             >
                 <div class="mb-6">
                     <h2

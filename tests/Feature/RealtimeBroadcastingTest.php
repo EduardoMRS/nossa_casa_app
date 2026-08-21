@@ -9,6 +9,9 @@ use App\Models\LiveStream;
 use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Support\Facades\Event;
 
 test('public and private live streams use the matching realtime channel', function () {
     config(['media.mediamtx.public_webrtc_url' => 'https://media.example.test/webrtc']);
@@ -33,9 +36,38 @@ test('public and private live streams use the matching realtime channel', functi
         ->and($publicStream->playback_url)->not->toContain('.m3u8');
 });
 
+test('live stream updates are queued so realtime outages do not fail management requests', function () {
+    $stream = LiveStream::factory()->make();
+
+    expect(LiveStreamUpdated::class)
+        ->toImplement(ShouldBroadcast::class)
+        ->not->toImplement(ShouldBroadcastNow::class)
+        ->and((new LiveStreamUpdated($stream))->connection)
+        ->toBe('database');
+});
+
+test('queued live stream updates keep their snapshot after the stream is deleted', function () {
+    $stream = LiveStream::factory()->create([
+        'is_public' => true,
+        'status' => LiveStreamStatus::STOPPED,
+    ]);
+    $event = new LiveStreamUpdated($stream);
+
+    $stream->delete();
+
+    expect($event->broadcastOn()[0]->name)->toBe('live-stream.'.$stream->id)
+        ->and($event->broadcastWith())
+        ->toMatchArray([
+            'id' => $stream->id,
+            'status' => LiveStreamStatus::STOPPED->value,
+        ]);
+});
+
 test('live chat broadcasts the canonical comment snapshot', function () {
     $stream = LiveStream::factory()->create(['is_public' => true]);
     $user = User::factory()->create();
+    Event::fake([LiveStreamCommentsUpdated::class]);
+
     Comment::query()->create([
         'user_id' => $user->id,
         'commentable_type' => LiveStream::class,

@@ -13,16 +13,21 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class SystemMetricsSnapshot
 {
+    private const LOG_TAIL_BYTES = 32768;
+
+    private const MAX_LOG_LINES = 15;
+
+    private const MAX_LOG_LINE_LENGTH = 320;
+
     /** @return array{stats: list<array{label: string, value: int, tone: string}>, queue: array{pending: int, failed: int}, liveStreams: list<array<string, mixed>>, logs: list<string>} */
     public function make(): array
     {
         $logPath = storage_path('logs/laravel.log');
-        $logLines = File::exists($logPath)
-            ? array_values(collect(preg_split('/\R/', File::get($logPath)) ?: [])->filter()->take(-100)->values()->all())
-            : [];
+        $logLines = $this->recentLogLines($logPath);
 
         return [
             'stats' => [
@@ -56,5 +61,49 @@ class SystemMetricsSnapshot
                 ->all()),
             'logs' => $logLines,
         ];
+    }
+
+    /** @return list<string> */
+    public function recentLogLines(string $logPath): array
+    {
+        if (! File::exists($logPath)) {
+            return [];
+        }
+
+        $handle = fopen($logPath, 'rb');
+
+        if ($handle === false) {
+            return [];
+        }
+
+        try {
+            fseek($handle, 0, SEEK_END);
+            $fileSize = ftell($handle);
+
+            if ($fileSize === false || $fileSize === 0) {
+                return [];
+            }
+
+            $readLength = min($fileSize, self::LOG_TAIL_BYTES);
+            fseek($handle, -$readLength, SEEK_END);
+            $contents = fread($handle, $readLength);
+        } finally {
+            fclose($handle);
+        }
+
+        if ($contents === false || $contents === '') {
+            return [];
+        }
+
+        if ($fileSize > $readLength) {
+            $contents = Str::after($contents, "\n");
+        }
+
+        return collect(preg_split('/\R/', $contents) ?: [])
+            ->filter(fn (string $line): bool => trim($line) !== '')
+            ->take(-self::MAX_LOG_LINES)
+            ->map(fn (string $line): string => Str::limit($line, self::MAX_LOG_LINE_LENGTH))
+            ->values()
+            ->all();
     }
 }

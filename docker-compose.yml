@@ -80,6 +80,10 @@ services:
       DB_DATABASE: ${DOCKER_DB_DATABASE:-laravel}
       DB_USERNAME: ${DOCKER_DB_USERNAME:-root}
       DB_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}
+      BROADCAST_CONNECTION: reverb
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
       MEDIA_DISK: ${DOCKER_MEDIA_DISK:-minio}
       MEDIA_ARCHIVE_DISK: ${DOCKER_MEDIA_ARCHIVE_DISK:-minio}
       MEDIA_WORKER_ID: ${MEDIA_WORKER_ID:-media-worker-1}

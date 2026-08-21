@@ -41,7 +41,7 @@ const publicTemplate = usePublicTemplate('library');
         <Head :title="t('library.title')" />
         <PublicHeader active="library" />
         <main
-            class="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-8 sm:px-6 lg:px-8"
+            class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-6 sm:space-y-7 sm:px-6 sm:py-8 lg:px-8"
         >
             <header class="text-center">
                 <p

@@ -145,7 +145,7 @@ onMounted(() => {
                 class="bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 text-white"
             >
                 <div
-                    class="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8 lg:py-20"
+                    class="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-5 sm:py-14 lg:grid-cols-[1fr_auto] lg:items-end lg:px-8 lg:py-16"
                 >
                     <div>
                         <span
@@ -154,15 +154,19 @@ onMounted(() => {
                             <Network class="size-4" />
                             {{ t('portal.community.badge') }}
                         </span>
-                        <div class="mt-6 flex items-center gap-4">
+                        <div
+                            class="mt-5 flex min-w-0 items-center gap-3 sm:mt-6 sm:gap-4"
+                        >
                             <img
                                 v-if="community.logo_url"
                                 :src="community.logo_url"
                                 :alt="community.name"
-                                class="size-20 rounded-2xl bg-white object-contain p-2"
+                                class="size-14 shrink-0 rounded-2xl bg-white object-contain p-2 sm:size-20"
                             />
-                            <div>
-                                <h1 class="text-4xl font-black sm:text-6xl">
+                            <div class="min-w-0">
+                                <h1
+                                    class="text-3xl font-black break-words sm:text-4xl lg:text-5xl"
+                                >
                                     {{ community.name }}
                                 </h1>
                                 <p
@@ -195,7 +199,7 @@ onMounted(() => {
             </section>
 
             <section
-                class="mx-auto grid max-w-7xl gap-4 px-5 py-10 sm:grid-cols-3 lg:px-8"
+                class="mx-auto grid max-w-6xl gap-4 px-4 py-8 sm:grid-cols-3 sm:px-5 sm:py-10 lg:px-8"
             >
                 <article
                     class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
@@ -232,7 +236,9 @@ onMounted(() => {
                 </article>
             </section>
 
-            <section class="mx-auto max-w-7xl px-5 pb-14 lg:px-8">
+            <section
+                class="mx-auto max-w-6xl px-4 pb-12 sm:px-5 sm:pb-14 lg:px-8"
+            >
                 <div>
                     <p
                         class="font-mono text-xs font-black tracking-[0.18em] text-indigo-600 uppercase"

@@ -313,7 +313,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 class="overflow-hidden bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-800 text-white"
             >
                 <div
-                    class="mx-auto grid max-w-7xl gap-12 px-5 py-20 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-28"
+                    class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-5 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:px-8 lg:py-20"
                 >
                     <div>
                         <span
@@ -322,7 +322,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             {{ t('portal.hero.badge') }}</span
                         >
                         <h1
-                            class="mt-6 max-w-3xl text-4xl font-black tracking-tight sm:text-6xl"
+                            class="mt-5 max-w-3xl text-3xl font-black tracking-tight sm:mt-6 sm:text-4xl lg:text-5xl"
                         >
                             {{ t('portal.hero.title') }}
                         </h1>
@@ -331,16 +331,16 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         >
                             {{ t('portal.hero.description') }}
                         </p>
-                        <div class="mt-8 flex flex-wrap gap-3">
+                        <div class="mt-7 grid gap-3 sm:flex sm:flex-wrap">
                             <a
                                 href="#communities"
-                                class="inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-5 py-3 text-sm font-black text-emerald-950"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 py-3 text-sm font-black text-emerald-950"
                                 >{{ t('portal.hero.explore') }}
                                 <ArrowRight class="size-4"
                             /></a>
                             <button
                                 v-if="canOnboard"
-                                class="rounded-xl border border-white/30 px-5 py-3 text-sm font-black"
+                                class="rounded-xl border border-white/30 px-5 py-3 text-center text-sm font-black"
                                 @click="communityModalOpen = true"
                             >
                                 {{ t('portal.onboarding.register_community') }}
@@ -348,7 +348,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             <Link
                                 v-else
                                 :href="register()"
-                                class="rounded-xl border border-white/30 px-5 py-3 text-sm font-black"
+                                class="rounded-xl border border-white/30 px-5 py-3 text-center text-sm font-black"
                                 >{{ t('portal.hero.join') }}</Link
                             >
                         </div>
@@ -384,7 +384,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 v-if="locating || nearbyCommunities.length"
                 class="border-b border-indigo-100 bg-indigo-50/70"
             >
-                <div class="mx-auto max-w-7xl px-5 py-10 lg:px-8">
+                <div
+                    class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-8"
+                >
                     <div class="flex items-center gap-3">
                         <span
                             class="grid size-11 place-items-center rounded-2xl bg-indigo-700 text-white"
@@ -462,7 +464,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
             <section
                 id="communities"
-                class="mx-auto max-w-7xl px-5 py-16 lg:px-8"
+                class="mx-auto max-w-6xl px-4 py-12 sm:px-5 sm:py-16 lg:px-8"
             >
                 <div
                     class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"
@@ -608,7 +610,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     canOnboard &&
                     (myRequests.length || reviewableRequests.length)
                 "
-                class="mx-auto max-w-7xl space-y-8 px-5 pb-16 lg:px-8"
+                class="mx-auto max-w-6xl space-y-8 px-4 pb-12 sm:px-5 sm:pb-16 lg:px-8"
             >
                 <div
                     v-if="successMessage"

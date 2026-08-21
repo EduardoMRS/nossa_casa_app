@@ -54,7 +54,9 @@ const formatDate = (value: string | null): string =>
         }"
     >
         <PublicHeader active="posts" />
-        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main
+            class="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-6 sm:py-8 lg:px-8"
+        >
             <Link
                 :href="publicPostsIndex()"
                 class="mb-5 inline-flex items-center gap-2 text-sm font-bold"

@@ -19,6 +19,13 @@ import axios from 'axios';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
@@ -160,6 +167,7 @@ const visibleMonth = ref(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1),
 );
 const selectedDateKey = ref('');
+const calendarDialogOpen = ref(false);
 const selectedRecording = ref<RecordingCard | null>(null);
 const featuredRecordings = computed(() => props.latestRecordings.slice(0, 4));
 const socialLinks = computed(() =>
@@ -281,6 +289,14 @@ const selectedCalendarItems = computed(() => {
     return selectedDate?.items ?? [];
 });
 
+const selectCalendarDay = (key: string): void => {
+    selectedDateKey.value = key;
+
+    if (window.matchMedia('(max-width: 639px)').matches) {
+        calendarDialogOpen.value = true;
+    }
+};
+
 const changeMonth = (offset: number): void => {
     visibleMonth.value = new Date(
         visibleMonth.value.getFullYear(),
@@ -339,10 +355,10 @@ const submitPrayer = async (): Promise<void> => {
         <PublicHeader active="home" :show-locale="false" />
 
         <main
-            class="mx-auto w-full max-w-7xl flex-1 space-y-7 px-4 py-7 sm:px-6 lg:px-8 lg:py-9"
+            class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-4 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8 lg:py-9"
         >
             <section
-                class="relative isolate grid overflow-hidden rounded-[2rem] border p-6 text-white shadow-xl shadow-slate-900/10 md:grid-cols-[1.2fr_0.8fr] md:gap-10 md:p-9 lg:p-12"
+                class="relative isolate grid overflow-hidden rounded-2xl border p-5 text-white shadow-xl shadow-slate-900/10 sm:rounded-[2rem] sm:p-7 md:grid-cols-[1.15fr_0.85fr] md:gap-8 md:p-9 lg:p-10"
                 :style="{
                     borderColor:
                         'color-mix(in srgb, var(--church-primary) 75%, black)',
@@ -361,7 +377,7 @@ const submitPrayer = async (): Promise<void> => {
                     class="relative z-10 flex flex-col justify-center"
                     :class="{ 'md:col-span-2': !nextEvent }"
                 >
-                    <div class="mb-7 flex items-center gap-3">
+                    <div class="mb-5 flex items-center gap-3 sm:mb-7">
                         <span
                             class="grid size-12 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white/10 text-lg font-black shadow-lg backdrop-blur"
                         >
@@ -391,7 +407,7 @@ const submitPrayer = async (): Promise<void> => {
                         {{ t('home.hero.kicker') }}
                     </p>
                     <h1
-                        class="max-w-3xl text-4xl leading-[1.05] font-black tracking-tight text-balance sm:text-5xl lg:text-6xl"
+                        class="max-w-3xl text-3xl leading-[1.08] font-black tracking-tight text-balance sm:text-4xl lg:text-5xl"
                     >
                         {{ branding.banner_title || t('home.hero.title') }}
                     </h1>
@@ -404,17 +420,17 @@ const submitPrayer = async (): Promise<void> => {
                         }}
                     </p>
 
-                    <div class="mt-7 flex flex-wrap gap-3">
+                    <div class="mt-6 grid gap-3 sm:flex sm:flex-wrap">
                         <Link
                             :href="eventsIndex()"
-                            class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-extrabold text-indigo-950 shadow-lg transition hover:-translate-y-0.5"
+                            class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-extrabold text-indigo-950 shadow-lg transition hover:-translate-y-0.5"
                         >
                             {{ t('home.hero.cta_events') }}
                             <ArrowRight class="size-4" />
                         </Link>
                         <Link
                             :href="galleryIndex()"
-                            class="rounded-full border border-white/30 bg-white/5 px-5 py-3 text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/15"
+                            class="rounded-full border border-white/30 bg-white/5 px-5 py-3 text-center text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/15"
                         >
                             {{ t('home.hero.cta_gallery') }}
                         </Link>
@@ -424,7 +440,7 @@ const submitPrayer = async (): Promise<void> => {
                 <Link
                     v-if="nextEvent"
                     :href="eventsShow({ event: nextEvent.slug })"
-                    class="group relative z-10 min-h-72 overflow-hidden rounded-3xl border border-white/20 bg-slate-950/25 shadow-2xl backdrop-blur"
+                    class="group relative z-10 mt-6 min-h-56 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/25 shadow-2xl backdrop-blur sm:min-h-64 sm:rounded-3xl md:mt-0 md:min-h-72"
                 >
                     <img
                         v-if="nextEvent.cover_path"
@@ -436,7 +452,7 @@ const submitPrayer = async (): Promise<void> => {
                         class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"
                     />
                     <div
-                        class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-6"
+                        class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6"
                     >
                         <div>
                             <span
@@ -445,7 +461,9 @@ const submitPrayer = async (): Promise<void> => {
                                 <CalendarDays class="size-3" />
                                 {{ t('home.hero.next_event') }}
                             </span>
-                            <h2 class="mt-3 text-2xl font-black text-balance">
+                            <h2
+                                class="mt-3 text-xl font-black text-balance sm:text-2xl"
+                            >
                                 {{ nextEvent.title }}
                             </h2>
                             <p class="mt-2 text-xs text-white/70">
@@ -471,7 +489,7 @@ const submitPrayer = async (): Promise<void> => {
                     {{ t('home.daily_verse.kicker') }}
                 </p>
                 <blockquote
-                    class="mx-auto mt-3 max-w-4xl text-xl leading-8 font-bold text-slate-800"
+                    class="mx-auto mt-3 max-w-4xl text-lg leading-7 font-bold text-slate-800 sm:text-xl sm:leading-8"
                 >
                     “{{ dailyVerse.content }}”
                 </blockquote>
@@ -708,7 +726,7 @@ const submitPrayer = async (): Promise<void> => {
                             v-for="day in calendarDays"
                             :key="day.key"
                             type="button"
-                            class="relative min-h-12 rounded-xl border p-2 text-sm font-bold transition sm:min-h-16"
+                            class="relative min-h-11 rounded-lg border p-1 text-xs font-bold transition sm:min-h-16 sm:rounded-xl sm:p-2 sm:text-sm"
                             :class="[
                                 day.currentMonth
                                     ? 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
@@ -725,7 +743,7 @@ const submitPrayer = async (): Promise<void> => {
                                       }
                                     : undefined
                             "
-                            @click="selectedDateKey = day.key"
+                            @click="selectCalendarDay(day.key)"
                         >
                             {{ day.date.getDate() }}
                             <span
@@ -747,7 +765,7 @@ const submitPrayer = async (): Promise<void> => {
                     </div>
 
                     <div
-                        class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                        class="mt-5 hidden rounded-xl border border-slate-200 bg-slate-50 p-4 sm:block"
                     >
                         <p
                             class="text-[10px] font-black tracking-wide text-slate-500 uppercase"
@@ -765,7 +783,7 @@ const submitPrayer = async (): Promise<void> => {
                                 :key="item.id"
                                 :href="
                                     item.slug
-                                        ? `/events/${item.slug}`
+                                        ? eventsShow({ event: item.slug })
                                         : undefined
                                 "
                                 class="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm"
@@ -877,6 +895,54 @@ const submitPrayer = async (): Promise<void> => {
                     </form>
                 </article>
             </section>
+
+            <Dialog v-model:open="calendarDialogOpen">
+                <DialogContent class="max-h-[85vh] overflow-y-auto sm:hidden">
+                    <DialogHeader class="pr-6 text-left">
+                        <DialogTitle>
+                            {{ t('home.calendar.selected_day') }}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {{ selectedDateKey }}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div v-if="selectedCalendarItems.length" class="grid gap-2">
+                        <component
+                            :is="item.slug ? Link : 'div'"
+                            v-for="item in selectedCalendarItems"
+                            :key="item.id"
+                            :href="
+                                item.slug
+                                    ? eventsShow({ event: item.slug })
+                                    : undefined
+                            "
+                            class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm"
+                        >
+                            <span class="min-w-0">
+                                <strong class="block break-words">{{
+                                    item.title
+                                }}</strong>
+                                <small class="text-slate-500">{{
+                                    item.recurring
+                                        ? t('home.calendar.weekly')
+                                        : t('home.calendar.event')
+                                }}</small>
+                            </span>
+                            <span
+                                class="shrink-0 text-xs font-bold text-slate-500"
+                            >
+                                {{ formatScheduleTime(item.start_time) }}–{{
+                                    formatScheduleTime(item.end_time)
+                                }}
+                            </span>
+                        </component>
+                    </div>
+                    <p v-else class="text-sm text-slate-500">
+                        {{ t('home.calendar.empty') }}
+                    </p>
+                </DialogContent>
+            </Dialog>
 
             <section
                 class="grid gap-6 lg:grid-cols-[minmax(20rem,0.75fr)_minmax(0,1.25fr)]"

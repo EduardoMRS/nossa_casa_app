@@ -77,7 +77,9 @@ const formatDate = (date: string): string =>
         }"
     >
         <PublicHeader active="events" />
-        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main
+            class="mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8"
+        >
             <header class="max-w-2xl space-y-1">
                 <h1 class="text-2xl font-black tracking-tight md:text-3xl">
                     {{ t('events.index.hero.title') }}
@@ -113,10 +115,10 @@ const formatDate = (date: string): string =>
                     v-for="event in filteredEvents"
                     :key="event.id"
                     :href="showEvent({ event: event.slug })"
-                    class="group flex overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md sm:block"
+                    class="group flex min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md sm:block"
                 >
                     <div
-                        class="relative h-36 w-36 shrink-0 overflow-hidden bg-indigo-50 sm:h-44 sm:w-full"
+                        class="relative h-32 w-28 shrink-0 overflow-hidden bg-indigo-50 min-[380px]:w-32 sm:h-44 sm:w-full"
                     >
                         <img
                             v-if="event.cover_path"

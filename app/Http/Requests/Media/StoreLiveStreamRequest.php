@@ -34,6 +34,9 @@ class StoreLiveStreamRequest extends FormRequest
      */
     public function rules(): array
     {
+        $isGlobalAdministrator = in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $userChurchId = $this->user()?->profile?->church_id;
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'mode' => ['sometimes', Rule::in(['publisher', 'pull'])],
@@ -42,10 +45,11 @@ class StoreLiveStreamRequest extends FormRequest
             'record' => ['sometimes', 'boolean'],
             'is_public' => ['sometimes', 'boolean'],
             'church_id' => [
-                Rule::requiredIf(in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)),
+                Rule::requiredIf($isGlobalAdministrator),
                 'nullable',
                 'string',
                 'exists:churches,id',
+                Rule::when(! $isGlobalAdministrator, Rule::in([$userChurchId])),
             ],
         ];
     }

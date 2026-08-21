@@ -73,9 +73,11 @@ const coverStyle = computed(() => {
     >
         <PublicHeader active="events" />
 
-        <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main
+            class="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-6 sm:py-8 lg:px-8"
+        >
             <section
-                class="relative overflow-hidden rounded-3xl p-7 text-white md:p-10"
+                class="relative overflow-hidden rounded-2xl p-5 text-white sm:rounded-3xl sm:p-7 md:p-9"
                 :style="coverStyle"
             >
                 <p
@@ -84,7 +86,7 @@ const coverStyle = computed(() => {
                     {{ event.church?.name ?? t('events.shared.community') }}
                 </p>
                 <h1
-                    class="max-w-4xl [font-family:Manrope,ui-sans-serif] text-3xl font-black md:text-5xl"
+                    class="max-w-4xl [font-family:Manrope,ui-sans-serif] text-2xl font-black sm:text-3xl lg:text-4xl"
                 >
                     {{ event.title }}
                 </h1>
@@ -121,7 +123,7 @@ const coverStyle = computed(() => {
 
             <section class="mt-7 grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
                 <article
-                    class="rounded-3xl border border-[#d8e2ec] bg-white p-6 md:p-8"
+                    class="rounded-2xl border border-[#d8e2ec] bg-white p-4 sm:rounded-3xl sm:p-6 md:p-8"
                 >
                     <h2
                         class="mb-4 [font-family:Manrope,ui-sans-serif] text-xl font-black"

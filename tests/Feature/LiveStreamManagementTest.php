@@ -34,6 +34,7 @@ test('media user can register an encrypted rtsp source in mediamtx', function ()
         'source_url' => 'rtsp://camera-user:camera-password@camera.test/live',
         'source_on_demand' => false,
         'record' => true,
+        'church_id' => $church->id,
     ]);
 
     $response->assertCreated()
@@ -83,6 +84,50 @@ test('member cannot register an rtsp source', function () {
     Http::assertNothingSent();
 });
 
+test('media user cannot create a transmission for another church', function () {
+    $user = User::factory()->create(['role' => UserRole::MEDIA]);
+    $userChurch = Church::query()->create([
+        'name' => 'User Church',
+        'slug' => 'user-church',
+        'status' => 'active',
+    ]);
+    $otherChurch = Church::query()->create([
+        'name' => 'Other Church',
+        'slug' => 'other-church',
+        'status' => 'active',
+    ]);
+    $userChurch->assignMember($user);
+
+    $this->actingAs($user)->postJson('/api/live-streams', [
+        'name' => 'Unauthorized target',
+        'mode' => 'publisher',
+        'church_id' => $otherChurch->id,
+    ])->assertUnprocessable()->assertJsonValidationErrors('church_id');
+
+    expect(LiveStream::query()->count())->toBe(0);
+    Http::assertNothingSent();
+});
+
+test('global administrators can create a transmission for any church', function (UserRole $role) {
+    $user = User::factory()->create(['role' => $role]);
+    $targetChurch = Church::query()->create([
+        'name' => 'Selected Church',
+        'slug' => 'selected-church',
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($user)->postJson('/api/live-streams', [
+        'name' => 'Global transmission',
+        'mode' => 'publisher',
+        'church_id' => $targetChurch->id,
+    ])->assertCreated();
+
+    expect(LiveStream::query()->sole()->church_id)->toBe($targetChurch->id);
+})->with([
+    'superadmin' => UserRole::SUPERADMIN,
+    'system' => UserRole::SYSTEM,
+]);
+
 test('a church cannot reserve more than one live stream at a time', function () {
     $user = User::factory()->create(['role' => UserRole::MEDIA]);
     $church = Church::query()->create([
@@ -112,6 +157,11 @@ test('only media administrators and system users can open transmission control',
         'slug' => 'control-church',
         'status' => 'active',
     ]);
+    $otherChurch = Church::query()->create([
+        'name' => 'Other Control Church',
+        'slug' => 'other-control-church',
+        'status' => 'active',
+    ]);
     $member = User::factory()->create(['role' => UserRole::MEMBER]);
     $leader = User::factory()->create(['role' => UserRole::LEADER]);
     $media = User::factory()->create(['role' => UserRole::MEDIA]);
@@ -122,17 +172,44 @@ test('only media administrators and system users can open transmission control',
 
     $this->actingAs($member)->get('/dashboard/transmissoes')->assertForbidden();
     $this->actingAs($leader)->get('/dashboard/transmissoes')->assertForbidden();
-    $this->actingAs($media)->get('/dashboard/transmissoes')
+    $this->actingAs($media)->get("/dashboard/transmissoes?church_id={$otherChurch->id}")
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Admin/LiveStreams')
-            ->where('church.id', $church->id));
+            ->where('church.id', $church->id)
+            ->has('churches', 0));
     $this->actingAs($system)->get('/dashboard/transmissoes')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('church.id', $church->id)
-            ->has('churches', 1));
+            ->has('churches', 2));
 });
+
+test('global administrators can select any church even from another church domain', function (UserRole $role) {
+    $this->withoutVite();
+    $currentDomainChurch = Church::query()->create([
+        'name' => 'Current Domain Church',
+        'slug' => 'current-domain-church',
+        'domain' => 'current-church.test',
+        'status' => 'active',
+    ]);
+    $selectedChurch = Church::query()->create([
+        'name' => 'Selected Church',
+        'slug' => 'selected-church',
+        'status' => 'active',
+    ]);
+    $user = User::factory()->create(['role' => $role]);
+
+    $this->actingAs($user)
+        ->get("http://{$currentDomainChurch->domain}/dashboard/transmissoes?church_id={$selectedChurch->id}")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('church.id', $selectedChurch->id)
+            ->has('churches', 2));
+})->with([
+    'superadmin' => UserRole::SUPERADMIN,
+    'system' => UserRole::SYSTEM,
+]);
 
 test('media user creates a protected publisher link and rotates its token', function () {
     $this->withoutVite();

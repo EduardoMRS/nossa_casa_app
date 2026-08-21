@@ -98,7 +98,9 @@ const clearFilters = (): void => {
         }"
     >
         <PublicHeader active="posts" />
-        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-9 sm:px-6 lg:px-8">
+        <main
+            class="mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-6 sm:py-9 lg:px-8"
+        >
             <header class="mb-8 max-w-3xl">
                 <p
                     class="text-xs font-black tracking-[0.2em] uppercase"
@@ -130,7 +132,7 @@ const clearFilters = (): void => {
                                 v-if="post.cover_url"
                                 :src="post.cover_url"
                                 :alt="post.title"
-                                class="h-56 w-full object-cover md:h-full"
+                                class="h-44 w-full object-cover sm:h-56 md:h-full"
                             />
                             <div
                                 v-else
@@ -138,7 +140,7 @@ const clearFilters = (): void => {
                             >
                                 <Newspaper class="size-12" />
                             </div>
-                            <div class="flex min-w-0 flex-col p-6">
+                            <div class="flex min-w-0 flex-col p-4 sm:p-6">
                                 <div class="flex flex-wrap gap-2">
                                     <span
                                         v-for="category in post.categories"

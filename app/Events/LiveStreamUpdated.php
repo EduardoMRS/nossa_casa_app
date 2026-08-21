@@ -6,18 +6,39 @@ use App\Models\LiveStream;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
-class LiveStreamUpdated implements ShouldBroadcastNow
+class LiveStreamUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
+
+    public string $connection = 'database';
+
+    public string $liveStreamId;
+
+    public bool $isPublic;
+
+    public string $status;
+
+    public string $embedUrl;
+
+    public ?string $startedAt;
+
+    public ?string $endedAt;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(public LiveStream $liveStream) {}
+    public function __construct(LiveStream $liveStream)
+    {
+        $this->liveStreamId = (string) $liveStream->getKey();
+        $this->isPublic = $liveStream->is_public;
+        $this->status = $liveStream->status->value;
+        $this->embedUrl = $liveStream->embed_url;
+        $this->startedAt = $liveStream->started_at?->toIso8601String();
+        $this->endedAt = $liveStream->ended_at?->toIso8601String();
+    }
 
     /**
      * Get the channels the event should broadcast on.
@@ -27,9 +48,9 @@ class LiveStreamUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            $this->liveStream->is_public
-                ? new Channel('live-stream.'.$this->liveStream->getKey())
-                : new PrivateChannel('live-stream.'.$this->liveStream->getKey()),
+            $this->isPublic
+                ? new Channel('live-stream.'.$this->liveStreamId)
+                : new PrivateChannel('live-stream.'.$this->liveStreamId),
         ];
     }
 
@@ -42,11 +63,11 @@ class LiveStreamUpdated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'id' => (string) $this->liveStream->getKey(),
-            'status' => $this->liveStream->status->value,
-            'embed_url' => $this->liveStream->embed_url,
-            'started_at' => $this->liveStream->started_at?->toIso8601String(),
-            'ended_at' => $this->liveStream->ended_at?->toIso8601String(),
+            'id' => $this->liveStreamId,
+            'status' => $this->status,
+            'embed_url' => $this->embedUrl,
+            'started_at' => $this->startedAt,
+            'ended_at' => $this->endedAt,
         ];
     }
 }

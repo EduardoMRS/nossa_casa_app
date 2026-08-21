@@ -130,7 +130,7 @@ const formatDate = (value: string): string =>
         <PublicHeader />
 
         <main
-            class="mx-auto grid w-full max-w-7xl flex-1 gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_23rem] lg:px-8"
+            class="mx-auto grid w-full max-w-6xl flex-1 gap-5 px-3 py-5 sm:px-6 sm:py-7 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-6 lg:px-8"
         >
             <section class="min-w-0">
                 <Link
@@ -181,7 +181,7 @@ const formatDate = (value: string): string =>
             </section>
 
             <aside
-                class="flex min-h-[32rem] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white text-slate-950 lg:max-h-[calc(100vh-8rem)]"
+                class="flex min-h-96 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white text-slate-950 sm:min-h-[30rem] lg:max-h-[calc(100vh-8rem)]"
             >
                 <header
                     class="flex items-center gap-2 border-b border-slate-200 p-4 font-black"

@@ -18,11 +18,9 @@ class LiveStreamControlController extends Controller
     public function index(Request $request): Response
     {
         $isGlobalAdministrator = in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
-        $church = $this->domainContext->church();
-
-        if (! $church && $isGlobalAdministrator && $request->filled('church_id')) {
-            $church = Church::query()->find($request->string('church_id')->toString());
-        }
+        $church = $isGlobalAdministrator && $request->filled('church_id')
+            ? Church::query()->findOrFail($request->string('church_id')->toString())
+            : $this->domainContext->church();
 
         $church ??= $request->user()?->church;
         $church ??= $isGlobalAdministrator ? Church::query()->orderBy('name')->first() : null;

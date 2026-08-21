@@ -15,7 +15,7 @@ const { t } = useI18n();
         class="mt-auto border-t border-slate-200 bg-white py-7 text-center font-mono text-[9px] font-semibold tracking-[0.14em] text-slate-400 uppercase"
     >
         <div
-            class="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 px-4 sm:px-6"
+            class="mx-auto flex max-w-6xl flex-col items-center justify-center gap-4 px-4 sm:px-6"
         >
             <LocaleSwitcher v-if="showLocale" />
             <PwaActions />

@@ -404,7 +404,9 @@ onBeforeUnmount(() => {
     >
         <PublicHeader active="gallery" />
 
-        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main
+            class="mx-auto w-full max-w-6xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8"
+        >
             <section
                 class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
             >
@@ -460,7 +462,7 @@ onBeforeUnmount(() => {
             </nav>
 
             <section
-                class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+                class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4"
             >
                 <button
                     v-for="item in mediaItems"

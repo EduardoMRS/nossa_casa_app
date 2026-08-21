@@ -15,7 +15,7 @@ RUN apk add --no-cache \
     nodejs=~22 \
     npm
 
-RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd
+RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl
 
 # Run PHP-FPM with the project user so bind-mounted files remain editable on
 # the host without making storage world-writable.
