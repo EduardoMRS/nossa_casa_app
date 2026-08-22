@@ -83,7 +83,7 @@ function roleValue(user: UserItem): string {
 }
 function sendReset(user: UserItem): void {
     router.post(
-        `/dashboard/gestao-usuarios/${user.id}/redefinir-senha`,
+        `/dashboard/user-management/${user.id}/password-reset`,
         {},
         { preserveScroll: true },
     );
@@ -100,14 +100,14 @@ async function remove(user: UserItem): Promise<void> {
         return;
     }
 
-    await axios.delete(`/api/user/${user.id}`);
+    await axios.delete(`/api/users/${user.id}`);
     users.value = users.value.filter((item) => item.id !== user.id);
 }
 async function save(): Promise<void> {
     if (editing.value) {
-        await axios.put(`/api/user/${editing.value.id}`, form.value);
+        await axios.put(`/api/users/${editing.value.id}`, form.value);
     } else {
-        await axios.post('/api/user', {
+        await axios.post('/api/users', {
             ...form.value,
             password: 'ChangeMe123!',
             password_confirmation: 'ChangeMe123!',

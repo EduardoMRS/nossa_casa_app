@@ -79,7 +79,7 @@ const submit = () => {
     }
 
     if (props.privateEvent) {
-        const baseUrl = `/dashboard/eventos/${props.privateEvent.id}/conteudos/publicacoes`;
+        const baseUrl = `/dashboard/events/${props.privateEvent.id}/content/posts`;
 
         if (isEditing.value && props.post?.id) {
             form.put(`${baseUrl}/${props.post.id}`, { preserveScroll: true });

@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from '@/lib/i18n';
 import { home, login, register } from '@/routes';
+import { privacy } from '@/routes/legal';
 
 defineProps<{ userChurchUrl?: string | null }>();
 
@@ -60,6 +61,12 @@ const branding = computed(
                         >{{ t('portal.create_account') }}</Link
                     >
                 </template>
+                <a
+                    :href="privacy().url"
+                    class="hidden rounded-xl px-2 py-2.5 text-xs font-bold text-indigo-100 transition hover:bg-white/10 hover:text-white lg:inline-flex"
+                >
+                    {{ t('footer.privacy_terms') }}
+                </a>
             </div>
         </div>
     </header>

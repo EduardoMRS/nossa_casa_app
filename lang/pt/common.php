@@ -46,4 +46,5 @@ return [
         'password_updated' => 'Senha atualizada.',
         'form_response_saved' => 'Resposta do formulário salva com sucesso.',
     ],
+    'copyright' => '© 2026 Projeto Nossa Casa · Código aberto (MIT)',
 ];

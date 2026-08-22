@@ -45,9 +45,9 @@ function createAdminUserWithChurch(): User
 it('allows admin to open all admin workspace routes', function () {
     $admin = createAdminUserWithChurch();
 
-    expect(parse_url(route('admin.events.index'), PHP_URL_PATH))->toBe('/dashboard/eventos')
+    expect(parse_url(route('admin.events.index'), PHP_URL_PATH))->toBe('/dashboard/events')
         ->and(parse_url(route('posts.index'), PHP_URL_PATH))->toBe('/dashboard/posts')
-        ->and(parse_url(route('admin.branding.edit'), PHP_URL_PATH))->toBe('/dashboard/configuracoes-church');
+        ->and(parse_url(route('admin.branding.edit'), PHP_URL_PATH))->toBe('/dashboard/church-settings');
 
     $routes = [
         'admin.branding.edit',
@@ -69,8 +69,8 @@ it('allows admin to open all admin workspace routes', function () {
             ->assertSuccessful();
     }
 
-    $this->actingAs($admin)->get(route('admin.prayerRequests.index'))->assertRedirect('/dashboard/minhas-oracoes');
-    $this->actingAs($admin)->get(route('admin.myPrayers.index'))->assertRedirect('/minhas-oracoes');
+    $this->actingAs($admin)->get(route('admin.prayerRequests.index'))->assertRedirect('/my-prayers');
+    $this->actingAs($admin)->get(route('admin.myPrayers.index'))->assertRedirect('/my-prayers');
 });
 
 it('blocks members from admin workspace routes', function () {

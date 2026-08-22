@@ -371,7 +371,7 @@ async function submitAttendance(): Promise<void> {
 }
 function updateSeparation(value: boolean): void {
     router.put(
-        '/dashboard/salas-aula/configuracoes',
+        '/dashboard/classrooms/settings',
         { separate_kids_ministry: value },
         { preserveScroll: true },
     );

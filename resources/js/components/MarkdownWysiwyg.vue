@@ -171,11 +171,11 @@ onBeforeUnmount(() => {
         <Teleport to="body">
             <div
                 v-if="pickerOpen"
-                class="fixed inset-0 z-50 grid place-items-center bg-white p-4"
+                class="fixed inset-0 z-50 grid place-items-center bg-background/80 p-4 text-foreground backdrop-blur-sm"
                 @click.self="pickerOpen = false"
             >
                 <section
-                    class="max-h-[85vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+                    class="max-h-[85vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl"
                 >
                     <header
                         class="flex items-center justify-between border-b p-5"
@@ -188,15 +188,15 @@ onBeforeUnmount(() => {
                                 {{ t('editor.embeds.description') }}
                             </p>
                         </div>
-                                                
+
                         <button
-                            class="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
+                            class="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             @click="pickerOpen = false"
                         >
                             <X class="size-5" />
                         </button>
                     </header>
-                    <div class="border-b px-5 pt-4">
+                    <div class="border-b border-border px-5 pt-4">
                         <nav class="flex gap-2 overflow-x-auto">
                             <button
                                 v-for="type in [
@@ -208,11 +208,11 @@ onBeforeUnmount(() => {
                                 ] as const"
                                 :key="type"
                                 type="button"
-                                class="rounded-t-lg px-4 py-2 text-sm font-bold"
+                                class="rounded-t-lg px-4 py-2 text-sm font-bold transition-colors"
                                 :class="
                                     activeType === type
-                                        ? 'bg-slate-900 text-white'
-                                        : 'bg-slate-100 text-slate-700'
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                                 "
                                 @click="
                                     activeType = type;
@@ -223,17 +223,19 @@ onBeforeUnmount(() => {
                             </button>
                         </nav>
                     </div>
-                    <div class="grid gap-3 border-b p-5 sm:grid-cols-2">
+                    <div
+                        class="grid gap-3 border-b border-border bg-muted/30 p-5 sm:grid-cols-2"
+                    >
                         <input
                             v-model="search"
                             type="search"
                             :placeholder="t('editor.embeds.search')"
-                            class="rounded-lg border-slate-300"
+                            class="rounded-lg border-input bg-background text-foreground placeholder:text-muted-foreground"
                         />
                         <select
                             v-if="categories.length"
                             v-model="category"
-                            class="rounded-lg border-slate-300"
+                            class="rounded-lg border-input bg-background text-foreground"
                         >
                             <option value="">
                                 {{ t('editor.embeds.all_categories') }}
@@ -252,7 +254,7 @@ onBeforeUnmount(() => {
                     >
                         <p
                             v-if="loadingEmbeds"
-                            class="col-span-full text-sm text-slate-500"
+                            class="col-span-full text-sm text-muted-foreground"
                         >
                             {{ t('a11y.loading') }}
                         </p>
@@ -260,7 +262,7 @@ onBeforeUnmount(() => {
                             v-for="item in filteredItems"
                             :key="item.id"
                             type="button"
-                            class="flex gap-3 rounded-xl border p-3 text-left transition hover:border-teal-600 hover:bg-teal-50"
+                            class="flex gap-3 rounded-xl border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent"
                             @click="insertEmbed(item)"
                         >
                             <img
@@ -277,14 +279,14 @@ onBeforeUnmount(() => {
                                     item.title
                                 }}</strong
                                 ><span
-                                    class="mt-1 line-clamp-2 text-xs text-slate-500"
+                                    class="mt-1 line-clamp-2 text-xs text-muted-foreground"
                                     >{{ item.description }}</span
                                 ></span
                             >
                         </button>
                         <p
                             v-if="!loadingEmbeds && !filteredItems.length"
-                            class="col-span-full rounded-xl bg-slate-50 p-5 text-sm text-slate-500"
+                            class="col-span-full rounded-xl bg-muted p-5 text-sm text-muted-foreground"
                         >
                             {{ t('editor.embeds.empty') }}
                         </p>

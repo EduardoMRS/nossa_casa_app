@@ -43,6 +43,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
+$isWayfinderGeneration = in_array('wayfinder:generate', $_SERVER['argv'] ?? [], true);
+
 if (! function_exists('categoriesForChurchAndType')) {
     function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
     {
@@ -65,6 +67,7 @@ if (! function_exists('categoriesForChurchAndType')) {
 }
 
 Route::get('/', [PortalController::class, 'index'])->name('home');
+Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
 Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
 Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
@@ -90,7 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/church-membership/decline', [ChurchOnboardingController::class, 'declineMembership'])->name('church.membership.decline');
 });
 
-Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file_path) {
+Route::get('churches/{church_id}/library/{file_path}', function ($church_id, $file_path) {
     $domainChurchId = app(ChurchDomainContext::class)->churchId();
     abort_if($domainChurchId && $domainChurchId !== $church_id, 404);
     $filePathFull = "church/{$church_id}/library/{$file_path}";
@@ -136,8 +139,12 @@ Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public
 
 Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.public.show');
 
-Route::get('/biblioteca', [PublicLibraryController::class, 'index'])->name('library.index');
-Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible'])->name('library.bible');
+Route::get('/library', [PublicLibraryController::class, 'index'])->name('library.index');
+Route::get('/library/bible', [PublicLibraryController::class, 'bible'])->name('library.bible');
+if (! $isWayfinderGeneration) {
+    Route::get('/biblioteca', [PublicLibraryController::class, 'index']);
+    Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible']);
+}
 Route::get('/api/bible/{version}/offline', [BibleController::class, 'offline'])->name('bible.offline');
 Route::get('/api/bible/{version}/books', [BibleController::class, 'books'])->name('bible.books');
 Route::get('/api/bible/{version}/books/{book}/chapters', [BibleController::class, 'chapters'])->name('bible.chapters');
@@ -232,7 +239,10 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
 
 Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
 Route::get('/gallery/{media}/download', [PublicGalleryController::class, 'download'])->name('gallery.download');
-Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
+Route::get('/live-streams/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
+if (! $isWayfinderGeneration) {
+    Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show']);
+}
 
 Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrlGenerator $temporaryUrlGenerator) {
     try {
@@ -284,7 +294,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrl
     }, 200, $headers);
 })->middleware('signed')->name('secure-file');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGeneration) {
     Route::get('/dashboard', function (Request $request) {
         $user = $request->user();
         $role = $user?->role?->value ?? (string) $user?->role;
@@ -341,87 +351,91 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware('role:leader|media|church_leader|superadmin|system')->name('dashboard');
 
-    Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])
+    Route::get('/my-prayers', [AdminWorkspaceController::class, 'myPrayers'])
         ->middleware('role:member|leader|media|church_leader|superadmin|system')
         ->name('myPrayers.index');
+    if (! $isWayfinderGeneration) {
+        Route::get('/minhas-oracoes', [AdminWorkspaceController::class, 'myPrayers'])
+            ->middleware('role:member|leader|media|church_leader|superadmin|system');
+    }
 
     Route::get('/api/content-embeds', ContentEmbedController::class)
         ->middleware('role:leader|media|church_leader|superadmin|system')
         ->name('content-embeds.index');
 
-    Route::get('/dashboard/transmissoes', [LiveStreamControlController::class, 'index'])
+    Route::get('/dashboard/live-streams', [LiveStreamControlController::class, 'index'])
         ->middleware('role:media|church_leader|superadmin|system')
         ->name('admin.liveStreams.index');
 
-    Route::prefix('dashboard/eventos/{event}/conteudos')
+    Route::prefix('dashboard/events/{event}/content')
         ->name('admin.events.content.')
         ->middleware('role:leader|church_leader|superadmin|system')
         ->group(function () {
             Route::get('/', [EventContentController::class, 'index'])->name('index');
-            Route::get('/publicacoes/criar', [EventContentController::class, 'createPost'])->name('posts.create');
-            Route::post('/publicacoes', [EventContentController::class, 'storePost'])->name('posts.store');
-            Route::get('/publicacoes/{post}/editar', [EventContentController::class, 'editPost'])->name('posts.edit');
-            Route::put('/publicacoes/{post}', [EventContentController::class, 'updatePost'])->name('posts.update');
-            Route::delete('/publicacoes/{post}', [EventContentController::class, 'destroyPost'])->name('posts.destroy');
-            Route::post('/materiais', [EventContentController::class, 'storeMaterial'])->name('materials.store');
-            Route::delete('/materiais/{material}', [EventContentController::class, 'destroyMaterial'])->name('materials.destroy');
-            Route::put('/medias', [EventContentController::class, 'syncMedia'])->name('media.sync');
+            Route::get('/posts/create', [EventContentController::class, 'createPost'])->name('posts.create');
+            Route::post('/posts', [EventContentController::class, 'storePost'])->name('posts.store');
+            Route::get('/posts/{post}/edit', [EventContentController::class, 'editPost'])->name('posts.edit');
+            Route::put('/posts/{post}', [EventContentController::class, 'updatePost'])->name('posts.update');
+            Route::delete('/posts/{post}', [EventContentController::class, 'destroyPost'])->name('posts.destroy');
+            Route::post('/materials', [EventContentController::class, 'storeMaterial'])->name('materials.store');
+            Route::delete('/materials/{material}', [EventContentController::class, 'destroyMaterial'])->name('materials.destroy');
+            Route::put('/media', [EventContentController::class, 'syncMedia'])->name('media.sync');
         });
 
-    Route::prefix('dashboard/eventos/{event}')
+    Route::prefix('dashboard/events/{event}')
         ->name('admin.events.')
         ->middleware('role:leader|church_leader|superadmin|system')
         ->group(function () {
             Route::get('/', [EventRegistrationController::class, 'show'])->whereUlid('event')->name('show');
-            Route::post('/inscritos', [EventRegistrationController::class, 'store'])->whereUlid('event')->name('registrations.store');
-            Route::put('/inscritos/{registration}', [EventRegistrationController::class, 'update'])->whereUlid('event')->name('registrations.update');
-            Route::get('/inscritos/exportar/{format}', [EventRegistrationController::class, 'export'])->whereUlid('event')->name('registrations.export');
-            Route::get('/inscritos/{registration}/pdf', [EventRegistrationController::class, 'individualPdf'])->whereUlid('event')->name('registrations.pdf');
+            Route::post('/registrations', [EventRegistrationController::class, 'store'])->whereUlid('event')->name('registrations.store');
+            Route::put('/registrations/{registration}', [EventRegistrationController::class, 'update'])->whereUlid('event')->name('registrations.update');
+            Route::get('/registrations/export/{format}', [EventRegistrationController::class, 'export'])->whereUlid('event')->name('registrations.export');
+            Route::get('/registrations/{registration}/pdf', [EventRegistrationController::class, 'individualPdf'])->whereUlid('event')->name('registrations.pdf');
         });
 
     Route::prefix('dashboard')
         ->name('admin.')
         ->middleware('role:church_leader|superadmin|system')
         ->group(function () {
-            Route::redirect('/branding', '/dashboard/configuracoes-church');
-            Route::get('/configuracoes-church', [BrandingController::class, 'edit'])->name('branding.edit');
-            Route::put('/configuracoes-church', [BrandingController::class, 'update'])->name('branding.update');
-            Route::get('/categorias', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
+            Route::redirect('/branding', '/dashboard/church-settings');
+            Route::get('/church-settings', [BrandingController::class, 'edit'])->name('branding.edit');
+            Route::put('/church-settings', [BrandingController::class, 'update'])->name('branding.update');
+            Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
-            Route::get('/destaques', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');
-            Route::get('/eventos', [AdminWorkspaceController::class, 'events'])->name('events.index');
-            Route::get('/moderar-galeria', [AdminWorkspaceController::class, 'galleryModeration'])->name('galleryModeration.index');
-            Route::get('/moderar-mural', [AdminWorkspaceController::class, 'wallModeration'])->name('wallModeration.index');
-            Route::get('/biblioteca-versiculo', [LibraryVerseController::class, 'index'])->name('libraryVerse.index');
-            Route::post('/biblioteca-versiculo/library', [LibraryVerseController::class, 'storeLibrary'])->name('libraryVerse.library.store');
-            Route::put('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'updateLibrary'])->name('libraryVerse.library.update');
-            Route::delete('/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
-            Route::put('/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
-            Route::put('/biblioteca-versiculo/bible', [LibraryVerseController::class, 'updateBiblePreferences'])->name('libraryVerse.bible.update');
-            Route::get('/formularios', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
-            Route::get('/formularios/criar', [AdminWorkspaceController::class, 'formCreate'])->name('forms.create');
-            Route::get('/formularios/{form}/editar', [AdminWorkspaceController::class, 'formEdit'])->name('forms.edit');
-            Route::redirect('/pedidos-intercessao', '/dashboard/minhas-oracoes')->name('prayerRequests.index');
+            Route::get('/highlights', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');
+            Route::get('/events', [AdminWorkspaceController::class, 'events'])->name('events.index');
+            Route::get('/gallery-moderation', [AdminWorkspaceController::class, 'galleryModeration'])->name('galleryModeration.index');
+            Route::get('/wall-moderation', [AdminWorkspaceController::class, 'wallModeration'])->name('wallModeration.index');
+            Route::get('/library-verse', [LibraryVerseController::class, 'index'])->name('libraryVerse.index');
+            Route::post('/library-verse/library', [LibraryVerseController::class, 'storeLibrary'])->name('libraryVerse.library.store');
+            Route::put('/library-verse/library/{library}', [LibraryVerseController::class, 'updateLibrary'])->name('libraryVerse.library.update');
+            Route::delete('/library-verse/library/{library}', [LibraryVerseController::class, 'destroyLibrary'])->name('libraryVerse.library.destroy');
+            Route::put('/library-verse/verse', [LibraryVerseController::class, 'updateVerse'])->name('libraryVerse.verse.update');
+            Route::put('/library-verse/bible', [LibraryVerseController::class, 'updateBiblePreferences'])->name('libraryVerse.bible.update');
+            Route::get('/forms', [AdminWorkspaceController::class, 'forms'])->name('forms.index');
+            Route::get('/forms/create', [AdminWorkspaceController::class, 'formCreate'])->name('forms.create');
+            Route::get('/forms/{form}/edit', [AdminWorkspaceController::class, 'formEdit'])->name('forms.edit');
+            Route::redirect('/prayer-requests', '/my-prayers')->name('prayerRequests.index');
             Route::get('/ministerio-kids', [AdminWorkspaceController::class, 'kidsMinistry'])->name('kidsMinistry.index');
-            Route::redirect('/minhas-oracoes', '/minhas-oracoes')->name('myPrayers.index');
-            Route::get('/gestao-usuarios', [AdminWorkspaceController::class, 'userManagement'])->name('userManagement.index');
-            Route::get('/multicongregacoes', [AdminWorkspaceController::class, 'multiCongregation'])->name('multiCongregation.index');
-            Route::get('/salas-aula', [AdminWorkspaceController::class, 'classrooms'])->name('classrooms.index');
-            Route::put('/salas-aula/configuracoes', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
-            Route::post('/gestao-usuarios/{user}/redefinir-senha', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
-            Route::get('/logs-metricas', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:superadmin|system')->name('logsMetrics.index');
-            Route::get('/logs-metricas/backup/exportar', [AdminWorkspaceController::class, 'exportBackup'])
+            Route::redirect('/my-prayers', '/my-prayers')->name('myPrayers.index');
+            Route::get('/user-management', [AdminWorkspaceController::class, 'userManagement'])->name('userManagement.index');
+            Route::get('/multi-congregations', [AdminWorkspaceController::class, 'multiCongregation'])->name('multiCongregation.index');
+            Route::get('/classrooms', [AdminWorkspaceController::class, 'classrooms'])->name('classrooms.index');
+            Route::put('/classrooms/settings', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
+            Route::post('/user-management/{user}/password-reset', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
+            Route::get('/logs-metrics', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:superadmin|system')->name('logsMetrics.index');
+            Route::get('/logs-metrics/backup/export', [AdminWorkspaceController::class, 'exportBackup'])
                 ->middleware('role:superadmin|system')
                 ->name('logsMetrics.backup.export');
-            Route::post('/logs-metricas/backup/importar', [AdminWorkspaceController::class, 'importBackup'])
+            Route::post('/logs-metrics/backup/import', [AdminWorkspaceController::class, 'importBackup'])
                 ->middleware('role:superadmin|system')
                 ->name('logsMetrics.backup.import');
-            Route::post('/logs-metricas/transmissoes/{liveStream}/derrubar', StopLiveStreamController::class)
+            Route::post('/logs-metrics/live-streams/{liveStream}/stop', StopLiveStreamController::class)
                 ->middleware('role:system')
                 ->name('logsMetrics.liveStreams.stop');
         });
 
-    Route::get('/dashboard/salas-aula/presencas/{presence}/etiquetas', [ClassroomController::class, 'labels'])
+    Route::get('/dashboard/classrooms/attendances/{presence}/labels', [ClassroomController::class, 'labels'])
         ->middleware('role:leader|church_leader|superadmin|system')
         ->name('admin.classrooms.labels');
 
@@ -430,7 +444,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/churches/create', function () { return Inertia::render('Churches/Create'); })->name('churches.create');
     // Route::get('/churches/{id}/edit', function ($id) { return Inertia::render('Churches/Edit', ['id' => $id]); })->name('churches.edit');
 
-    Route::get('/dashboard/eventos/criar', function () {
+    Route::get('/dashboard/events/create', function () {
         $churchId = request()->user()?->church?->id;
 
         return Inertia::render('Events/Form', [
@@ -445,7 +459,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware('role:leader|church_leader|superadmin|system')->name('events.create');
 
-    Route::get('/dashboard/eventos/{event}/editar', function (string $event) {
+    Route::get('/dashboard/events/{event}/edit', function (string $event) {
         $resource = Event::query()->findOrFail($event);
         abort_unless($resource->church_id === request()->user()?->profile?->church_id, 403);
 
@@ -570,6 +584,58 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return Inertia::render('Posts/Show', $props);
     })->name('posts.show');
+
+    // Legacy Portuguese URLs remain available for existing bookmarks and integrations.
+    if (! $isWayfinderGeneration) {
+        Route::middleware('role:church_leader|superadmin|system')->group(function () {
+            Route::get('/dashboard/configuracoes-church', [BrandingController::class, 'edit']);
+            Route::put('/dashboard/configuracoes-church', [BrandingController::class, 'update']);
+            Route::get('/dashboard/categorias', [AdminWorkspaceController::class, 'categories']);
+            Route::get('/dashboard/destaques', [AdminWorkspaceController::class, 'highlights']);
+            Route::get('/dashboard/eventos', [AdminWorkspaceController::class, 'events']);
+            Route::get('/dashboard/moderar-galeria', [AdminWorkspaceController::class, 'galleryModeration']);
+            Route::get('/dashboard/moderar-mural', [AdminWorkspaceController::class, 'wallModeration']);
+            Route::get('/dashboard/formularios', [AdminWorkspaceController::class, 'forms']);
+            Route::get('/dashboard/formularios/criar', [AdminWorkspaceController::class, 'formCreate']);
+            Route::get('/dashboard/formularios/{form}/editar', [AdminWorkspaceController::class, 'formEdit']);
+            Route::get('/dashboard/gestao-usuarios', [AdminWorkspaceController::class, 'userManagement']);
+            Route::post('/dashboard/gestao-usuarios/{user}/redefinir-senha', [AdminWorkspaceController::class, 'sendPasswordReset']);
+            Route::get('/dashboard/multicongregacoes', [AdminWorkspaceController::class, 'multiCongregation']);
+            Route::get('/dashboard/salas-aula', [AdminWorkspaceController::class, 'classrooms']);
+            Route::put('/dashboard/salas-aula/configuracoes', [AdminWorkspaceController::class, 'updateClassroomSettings']);
+            Route::get('/dashboard/biblioteca-versiculo', [LibraryVerseController::class, 'index']);
+            Route::post('/dashboard/biblioteca-versiculo/library', [LibraryVerseController::class, 'storeLibrary']);
+            Route::put('/dashboard/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'updateLibrary']);
+            Route::delete('/dashboard/biblioteca-versiculo/library/{library}', [LibraryVerseController::class, 'destroyLibrary']);
+            Route::put('/dashboard/biblioteca-versiculo/verse', [LibraryVerseController::class, 'updateVerse']);
+            Route::put('/dashboard/biblioteca-versiculo/bible', [LibraryVerseController::class, 'updateBiblePreferences']);
+        });
+
+        Route::middleware('role:media|church_leader|superadmin|system')->group(function () {
+            Route::get('/dashboard/transmissoes', [LiveStreamControlController::class, 'index']);
+        });
+
+        Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
+            Route::prefix('dashboard/eventos/{event}/conteudos')->group(function () {
+                Route::get('/', [EventContentController::class, 'index']);
+                Route::get('/publicacoes/criar', [EventContentController::class, 'createPost']);
+                Route::post('/publicacoes', [EventContentController::class, 'storePost']);
+                Route::get('/publicacoes/{post}/editar', [EventContentController::class, 'editPost']);
+                Route::put('/publicacoes/{post}', [EventContentController::class, 'updatePost']);
+                Route::delete('/publicacoes/{post}', [EventContentController::class, 'destroyPost']);
+                Route::post('/materiais', [EventContentController::class, 'storeMaterial']);
+                Route::delete('/materiais/{material}', [EventContentController::class, 'destroyMaterial']);
+                Route::put('/medias', [EventContentController::class, 'syncMedia']);
+            });
+            Route::prefix('dashboard/eventos/{event}')->group(function () {
+                Route::get('/', [EventRegistrationController::class, 'show'])->whereUlid('event');
+                Route::post('/inscritos', [EventRegistrationController::class, 'store'])->whereUlid('event');
+                Route::put('/inscritos/{registration}', [EventRegistrationController::class, 'update'])->whereUlid('event');
+                Route::get('/inscritos/exportar/{format}', [EventRegistrationController::class, 'export'])->whereUlid('event');
+                Route::get('/inscritos/{registration}/pdf', [EventRegistrationController::class, 'individualPdf'])->whereUlid('event');
+            });
+        });
+    }
 
     // // Categories (Categorias - Baseado no api.json)
     // Route::get('/categories', function () { return Inertia::render('Categories/Index'); })->name('categories.index');

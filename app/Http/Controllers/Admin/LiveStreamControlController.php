@@ -77,7 +77,7 @@ class LiveStreamControlController extends Controller
             'ingest_server' => $token ? $ingestBaseUrl : null,
             'stream_key' => $streamKey,
             'ingest_url' => $streamKey ? $ingestBaseUrl.'/'.$streamKey : null,
-            'public_url' => $this->domainContext->churchUrl($church, '/transmissoes/'.$liveStream->id),
+            'public_url' => $this->domainContext->churchUrl($church, '/live-streams/'.$liveStream->id),
             'recordings' => $liveStream->recordings->map(fn ($recording): array => [
                 'id' => $recording->id,
                 'status' => $recording->status->value,

@@ -46,4 +46,5 @@ return [
         'password_updated' => 'Password updated.',
         'form_response_saved' => 'Form response saved successfully.',
     ],
+    'copyright' => '© 2026 Nossa Casa Project · Open Source (MIT)',
 ];

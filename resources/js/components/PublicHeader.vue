@@ -224,7 +224,7 @@ const navClass = (key: PublicNavKey): string =>
 
         <Link
             v-if="activeLiveStream"
-            :href="`/transmissoes/${activeLiveStream.id}`"
+            :href="`/live-streams/${activeLiveStream.id}`"
             class="flex items-center justify-center gap-2 border-t border-white/15 bg-rose-600 px-3 py-2 text-xs font-black text-white transition hover:bg-rose-700 sm:gap-3 sm:px-4 sm:text-sm"
         >
             <span class="relative flex size-3">

@@ -33,10 +33,10 @@ const material = ref<{
 const selectedMedia = ref([...props.linkedMediaIds]);
 const processing = ref(false);
 const refresh = () => router.reload();
-const baseUrl = `/dashboard/eventos/${props.event.id}/conteudos`;
+const baseUrl = `/dashboard/events/${props.event.id}/content`;
 const deletePost = async (id: string) => {
     if (window.confirm(t('admin.event_content.delete_confirm'))) {
-        await axios.delete(`${baseUrl}/publicacoes/${id}`);
+        await axios.delete(`${baseUrl}/posts/${id}`);
         refresh();
     }
 };
@@ -52,7 +52,7 @@ const createMaterial = async () => {
     }
 
     try {
-        await axios.post(`${baseUrl}/materiais`, data);
+        await axios.post(`${baseUrl}/materials`, data);
         material.value = { title: '', type: 'link', url: '', file: null };
         refresh();
     } finally {
@@ -61,7 +61,7 @@ const createMaterial = async () => {
 };
 const deleteMaterial = async (id: string) => {
     if (window.confirm(t('admin.event_content.delete_confirm'))) {
-        await axios.delete(`${baseUrl}/materiais/${id}`);
+        await axios.delete(`${baseUrl}/materials/${id}`);
         refresh();
     }
 };
@@ -69,7 +69,7 @@ const saveMedia = async () => {
     processing.value = true;
 
     try {
-        await axios.put(`${baseUrl}/medias`, {
+        await axios.put(`${baseUrl}/media`, {
             media_ids: selectedMedia.value,
         });
         refresh();
@@ -96,7 +96,7 @@ const saveMedia = async () => {
                     >{{ t('admin.event_content.registrations') }}</Link
                 >
                 <Link
-                    :href="`${baseUrl}/publicacoes/criar`"
+                    :href="`${baseUrl}/posts/create`"
                     class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-bold text-white"
                     >{{ t('admin.event_content.new_post') }}</Link
                 >
@@ -116,7 +116,7 @@ const saveMedia = async () => {
                         <h3 class="font-black">{{ item.title }}</h3>
                         <div class="mt-4 flex gap-2">
                             <Link
-                                :href="`${baseUrl}/publicacoes/${item.id}/editar`"
+                                :href="`${baseUrl}/posts/${item.id}/edit`"
                                 class="rounded-lg border bg-white px-3 py-2 text-xs font-bold"
                                 >{{ t('admin.common.edit') }}</Link
                             >

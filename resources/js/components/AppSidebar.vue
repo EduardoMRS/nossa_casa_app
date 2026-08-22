@@ -114,7 +114,7 @@ const mainNavItems = computed<NavItem[]>(() => [
         ? [
               {
                   title: 'Transmissões',
-                  href: '/dashboard/transmissoes',
+                  href: '/dashboard/live-streams',
                   icon: Radio,
               },
           ]

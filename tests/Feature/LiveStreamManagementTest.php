@@ -247,7 +247,7 @@ test('media user creates a protected publisher link and rotates its token', func
             ->where('streams.0.ingest_server', 'rtmp://publisher.test:1935')
             ->where('streams.0.stream_key', "{$liveStream->path}?token={$firstToken}")
             ->where('streams.0.ingest_url', "rtmp://publisher.test:1935/{$liveStream->path}?token={$firstToken}")
-            ->where('streams.0.public_url', "https://publisher.test/transmissoes/{$liveStream->id}"));
+            ->where('streams.0.public_url', "https://publisher.test/live-streams/{$liveStream->id}"));
 
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
         && $request->url() === 'http://mediamtx:9997/v3/config/paths/add/'.$liveStream->path

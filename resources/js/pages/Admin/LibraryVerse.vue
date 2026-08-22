@@ -221,7 +221,7 @@ const saveBiblePreferences = (scope: 'community' | 'church'): void => {
         scope === 'community' ? communityDefault.value : churchDefault.value;
 
     router.put(
-        '/dashboard/biblioteca-versiculo/bible',
+        '/dashboard/library-verse/bible',
         {
             scope,
             versions,
@@ -292,22 +292,18 @@ const saveLibrary = (): void => {
 
     if (editing.value) {
         router.put(
-            `/dashboard/biblioteca-versiculo/library/${editing.value.id}`,
+            `/dashboard/library-verse/library/${editing.value.id}`,
             payload,
             options,
         );
     } else {
-        router.post(
-            '/dashboard/biblioteca-versiculo/library',
-            payload,
-            options,
-        );
+        router.post('/dashboard/library-verse/library', payload, options);
     }
 };
 const saveVerse = (): void => {
     processing.value = true;
     router.put(
-        '/dashboard/biblioteca-versiculo/verse',
+        '/dashboard/library-verse/verse',
         {
             version: verseForm.version,
             book: verseForm.book,
@@ -330,7 +326,7 @@ const saveVerse = (): void => {
 };
 const remove = (item: LibraryItem): void => {
     if (confirm(t('admin.library.delete_confirm', { title: item.title }))) {
-        router.delete(`/dashboard/biblioteca-versiculo/library/${item.id}`, {
+        router.delete(`/dashboard/library-verse/library/${item.id}`, {
             preserveScroll: true,
         });
     }

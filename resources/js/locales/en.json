@@ -1598,6 +1598,7 @@
         }
     },
     "footer": {
+        "privacy_terms": "Privacy and terms",
         "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
     }
 }

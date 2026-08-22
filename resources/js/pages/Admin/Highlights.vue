@@ -68,7 +68,7 @@ async function save(): Promise<void> {
     saving.value = true;
 
     try {
-        await axios.put(`/api/church/${props.churchId}/highlights`, {
+        await axios.put(`/api/churches/${props.churchId}/highlights`, {
             highlights: items.value.map((item, order) => ({
                 id: item.id,
                 type: item.type,
