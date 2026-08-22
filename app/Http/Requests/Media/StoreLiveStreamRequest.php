@@ -44,6 +44,7 @@ class StoreLiveStreamRequest extends FormRequest
             'source_on_demand' => ['sometimes', 'boolean'],
             'record' => ['sometimes', 'boolean'],
             'is_public' => ['sometimes', 'boolean'],
+            'ends_on_disconnect' => ['sometimes', 'boolean'],
             'church_id' => [
                 Rule::requiredIf($isGlobalAdministrator),
                 'nullable',

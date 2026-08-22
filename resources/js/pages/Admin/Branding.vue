@@ -15,6 +15,7 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import InputError from '@/components/InputError.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import TemplateVariantPreview from '@/components/TemplateVariantPreview.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -98,12 +99,26 @@ type TerminologyOptions = {
     >;
 };
 
+type MailSettings = {
+    enabled: boolean;
+    allow_branches: boolean;
+    host: string;
+    port: string;
+    scheme: string;
+    username: string;
+    from_address: string;
+    from_name: string;
+    has_password: boolean;
+};
+
 const props = defineProps<{
     branding: BrandingData;
     templates: Record<TemplateSection, TemplateVariant>;
     terminology: TerminologySelections;
     terminologyOptions: TerminologyOptions;
+    currency: string;
     mainDomain: string;
+    mailSettings: MailSettings;
 }>();
 const colors = ref({
     primary_color: props.branding.primary_color,
@@ -233,6 +248,25 @@ const resolvedDomain = computed(() =>
             :description="t('admin.branding.description')"
         />
 
+        <nav
+            class="sticky top-16 z-20 flex gap-2 overflow-x-auto rounded-xl border border-border bg-background/95 p-2 shadow-sm backdrop-blur"
+        >
+            <a
+                v-for="section in [
+                    'identity',
+                    'domain',
+                    'communication',
+                    'location',
+                    'templates',
+                    'schedule',
+                ]"
+                :key="section"
+                :href="`#settings-${section}`"
+                class="rounded-lg px-3 py-2 text-xs font-bold whitespace-nowrap text-muted-foreground hover:bg-muted hover:text-foreground"
+                >{{ t(`admin.branding.groups.${section}`) }}</a
+            >
+        </nav>
+
         <Form
             v-bind="BrandingController.update.form()"
             :options="{ preserveScroll: true }"
@@ -240,6 +274,7 @@ const resolvedDomain = computed(() =>
             v-slot="{ errors, processing }"
         >
             <div
+                id="settings-identity"
                 class="grid gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm md:p-6"
             >
                 <div class="grid gap-4 md:grid-cols-2">
@@ -396,7 +431,10 @@ const resolvedDomain = computed(() =>
                     </div>
                 </section>
 
-                <section class="grid gap-3 border-t border-border pt-6">
+                <section
+                    id="settings-domain"
+                    class="grid scroll-mt-36 gap-3 border-t border-border pt-6"
+                >
                     <div class="flex items-start gap-3">
                         <Globe2 class="mt-0.5 size-5 text-primary" />
                         <div>
@@ -567,7 +605,33 @@ const resolvedDomain = computed(() =>
                     <InputError :message="errors.terminology" />
                 </section>
 
-                <div class="grid gap-4 md:grid-cols-3">
+                <div
+                    id="settings-communication"
+                    class="grid scroll-mt-36 gap-4 md:grid-cols-3"
+                >
+                    <div class="grid gap-2">
+                        <Label for="currency">{{
+                            t('admin.branding.currency')
+                        }}</Label>
+                        <select
+                            id="currency"
+                            name="currency"
+                            :value="props.currency"
+                            class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                            <option value="BRL">BRL</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="ARS">ARS</option>
+                            <option value="PYG">PYG</option>
+                            <option value="BOB">BOB</option>
+                            <option value="CLP">CLP</option>
+                            <option value="COP">COP</option>
+                            <option value="MXN">MXN</option>
+                        </select>
+                        <InputError :message="errors.currency" />
+                    </div>
                     <div class="grid gap-2">
                         <Label for="primary_color">{{
                             t('admin.branding.primary_color')
@@ -626,6 +690,122 @@ const resolvedDomain = computed(() =>
                         <InputError :message="errors.accent_color" />
                     </div>
                 </div>
+
+                <section
+                    class="grid gap-4 rounded-2xl border border-border bg-muted/30 p-5"
+                >
+                    <div>
+                        <h2 class="font-bold">
+                            {{ t('admin.branding.mail_title') }}
+                        </h2>
+                        <p class="text-sm text-muted-foreground">
+                            {{ t('admin.branding.mail_description') }}
+                        </p>
+                        <p
+                            class="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                        >
+                            {{ t('admin.branding.mail_encryption_notice') }}
+                        </p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <label
+                            class="flex items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                        >
+                            <input
+                                type="hidden"
+                                name="mail[enabled]"
+                                value="0"
+                            />
+                            <input
+                                name="mail[enabled]"
+                                value="1"
+                                type="checkbox"
+                                :checked="mailSettings.enabled"
+                            />
+                            {{ t('admin.branding.mail_enabled') }}
+                        </label>
+                        <label
+                            class="flex items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                        >
+                            <input
+                                type="hidden"
+                                name="mail[allow_branches]"
+                                value="0"
+                            />
+                            <input
+                                name="mail[allow_branches]"
+                                value="1"
+                                type="checkbox"
+                                :checked="mailSettings.allow_branches"
+                            />
+                            {{ t('admin.branding.mail_allow_branches') }}
+                        </label>
+                    </div>
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_host')
+                            }}<Input
+                                name="mail[host]"
+                                :default-value="mailSettings.host" /><InputError
+                                :message="errors['mail.host']"
+                        /></label>
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_port')
+                            }}<Input
+                                name="mail[port]"
+                                type="number"
+                                min="1"
+                                max="65535"
+                                :default-value="mailSettings.port" /><InputError
+                                :message="errors['mail.port']"
+                        /></label>
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_security')
+                            }}<select
+                                name="mail[scheme]"
+                                :value="mailSettings.scheme"
+                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option value="tls">TLS</option>
+                                <option value="ssl">SSL</option>
+                            </select></label
+                        >
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_username')
+                            }}<Input
+                                name="mail[username]"
+                                autocomplete="off"
+                                :default-value="mailSettings.username"
+                        /></label>
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_password')
+                            }}<Input
+                                name="mail[password]"
+                                type="password"
+                                autocomplete="new-password"
+                                :placeholder="
+                                    mailSettings.has_password
+                                        ? t(
+                                              'admin.branding.mail_password_saved',
+                                          )
+                                        : ''
+                                "
+                        /></label>
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_from_address')
+                            }}<Input
+                                name="mail[from_address]"
+                                type="email"
+                                :default-value="mailSettings.from_address"
+                        /></label>
+                        <label class="grid gap-2 text-sm font-bold"
+                            >{{ t('admin.branding.mail_from_name')
+                            }}<Input
+                                name="mail[from_name]"
+                                :default-value="mailSettings.from_name"
+                        /></label>
+                    </div>
+                </section>
 
                 <section class="grid gap-4 border-t border-border pt-6">
                     <div>
@@ -699,10 +879,10 @@ const resolvedDomain = computed(() =>
                         <Label for="contact_phone">{{
                             t('admin.branding.phone')
                         }}</Label>
-                        <Input
+                        <PhoneInput
                             id="contact_phone"
                             name="contact_phone"
-                            :default-value="props.branding.contact_phone"
+                            :model-value="props.branding.contact_phone"
                         />
                         <InputError :message="errors.contact_phone" />
                     </div>
@@ -710,16 +890,19 @@ const resolvedDomain = computed(() =>
                         <Label for="contact_whatsapp">{{
                             t('admin.branding.whatsapp')
                         }}</Label>
-                        <Input
+                        <PhoneInput
                             id="contact_whatsapp"
                             name="contact_whatsapp"
-                            :default-value="props.branding.contact_whatsapp"
+                            :model-value="props.branding.contact_whatsapp"
                         />
                         <InputError :message="errors.contact_whatsapp" />
                     </div>
                 </div>
 
-                <section class="grid gap-4 border-t border-border pt-6">
+                <section
+                    id="settings-location"
+                    class="grid scroll-mt-36 gap-4 border-t border-border pt-6"
+                >
                     <div class="flex items-start gap-3">
                         <MapPinned class="mt-0.5 size-5 text-primary" />
                         <div>
@@ -803,7 +986,10 @@ const resolvedDomain = computed(() =>
                     </p>
                 </section>
 
-                <section class="grid gap-4 border-t border-border pt-6">
+                <section
+                    id="settings-templates"
+                    class="grid scroll-mt-36 gap-4 border-t border-border pt-6"
+                >
                     <div class="flex items-start gap-3">
                         <LayoutTemplate class="mt-0.5 size-5 text-primary" />
                         <div>
@@ -887,7 +1073,10 @@ const resolvedDomain = computed(() =>
                     <InputError :message="errors.templates" />
                 </section>
 
-                <section class="grid gap-4 border-t border-border pt-6">
+                <section
+                    id="settings-schedule"
+                    class="grid scroll-mt-36 gap-4 border-t border-border pt-6"
+                >
                     <div
                         class="flex flex-wrap items-start justify-between gap-3"
                     >

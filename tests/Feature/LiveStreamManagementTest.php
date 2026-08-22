@@ -128,7 +128,7 @@ test('global administrators can create a transmission for any church', function 
     'system' => UserRole::SYSTEM,
 ]);
 
-test('a church cannot reserve more than one live stream at a time', function () {
+test('a church can reserve two live streams but not a third one', function () {
     $user = User::factory()->create(['role' => UserRole::MEDIA]);
     $church = Church::query()->create([
         'name' => 'Single Stream Church',
@@ -144,10 +144,14 @@ test('a church cannot reserve more than one live stream at a time', function () 
 
     $this->actingAs($user)->postJson('/api/live-streams', $payload)->assertCreated();
     $this->actingAs($user)->postJson('/api/live-streams', $payload)
+        ->assertCreated();
+    $this->actingAs($user)->postJson('/api/live-streams', $payload)
         ->assertUnprocessable()
         ->assertJsonValidationErrors('church');
 
-    expect(LiveStream::query()->where('church_id', $church->id)->count())->toBe(1);
+    expect(LiveStream::query()->where('church_id', $church->id)->count())->toBe(2)
+        ->and(LiveStream::query()->where('church_id', $church->id)->pluck('active_slot')->sort()->values()->all())
+        ->toBe([1, 2]);
 });
 
 test('only media administrators and system users can open transmission control', function () {
@@ -240,9 +244,9 @@ test('media user creates a protected publisher link and rotates its token', func
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('streams.0.token', $firstToken)
-            ->where('streams.0.ingest_server', 'rtmp://stream.test:1935')
+            ->where('streams.0.ingest_server', 'rtmp://publisher.test:1935')
             ->where('streams.0.stream_key', "{$liveStream->path}?token={$firstToken}")
-            ->where('streams.0.ingest_url', "rtmp://stream.test:1935/{$liveStream->path}?token={$firstToken}")
+            ->where('streams.0.ingest_url', "rtmp://publisher.test:1935/{$liveStream->path}?token={$firstToken}")
             ->where('streams.0.public_url', "https://publisher.test/transmissoes/{$liveStream->id}"));
 
     Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
@@ -317,3 +321,29 @@ test('media user can create a private transmission', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('streams.0.is_public', false));
 });
+
+test('only superadmin and system users can delete transmissions', function (UserRole $role, int $status) {
+    $user = User::factory()->create(['role' => $role]);
+    $church = Church::query()->create([
+        'name' => 'Deletion Church',
+        'slug' => 'deletion-church-'.$role->value,
+        'status' => 'active',
+    ]);
+    $church->assignMember($user);
+    $liveStream = LiveStream::factory()->create([
+        'church_id' => $church->id,
+        'status' => LiveStreamStatus::STOPPED,
+    ]);
+
+    $this->actingAs($user)
+        ->deleteJson("/api/live-streams/{$liveStream->id}")
+        ->assertStatus($status);
+
+    expect(LiveStream::query()->whereKey($liveStream->id)->exists())
+        ->toBe($status !== 204);
+})->with([
+    'media' => [UserRole::MEDIA, 403],
+    'church leader' => [UserRole::CHURCH_LEADER, 403],
+    'superadmin' => [UserRole::SUPERADMIN, 204],
+    'system' => [UserRole::SYSTEM, 204],
+]);

@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { store as storeResponse } from '@/actions/App/Http/Controllers/FormResponseController';
+import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
@@ -474,6 +475,17 @@ const formatDate = (value: string): string => {
                                         t('events.register.mark_option')
                                     }}
                                 </label>
+
+                                <PhoneInput
+                                    v-else-if="field.type === 'phone'"
+                                    :model-value="String(getFieldValue(field))"
+                                    :name="field.name"
+                                    :required="field.required"
+                                    :placeholder="field.placeholder"
+                                    @update:model-value="
+                                        updateFieldValue(field, $event)
+                                    "
+                                />
 
                                 <input
                                     v-else

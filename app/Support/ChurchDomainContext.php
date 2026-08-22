@@ -67,12 +67,6 @@ class ChurchDomainContext
         $devPrefix = ['localhost', '127.0.0.1'];
         $scheme = 'https';
 
-        /* TODO: ajustar para usar localhost e 127.0.0.1 como prefix, posteriormente verificar se há um certificado relacionado ao dominio em execução se não houver considere http
-            $scheme = in_array($church->domain, $devPrefix, true)
-                ? (string) parse_url((string) config('app.url'), PHP_URL_SCHEME)
-                : 'https';
-            ajuste temporario
-        */
         foreach ($devPrefix as $prefix) {
             if (str_contains($church->domain, $prefix)) {
                 $scheme = 'http';

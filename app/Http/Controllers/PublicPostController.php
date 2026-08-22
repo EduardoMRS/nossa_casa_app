@@ -6,6 +6,7 @@ use App\Enums\CategoryType;
 use App\Models\Category;
 use App\Models\Post;
 use App\Support\ChurchDomainContext;
+use App\Support\ContentEmbedRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -16,6 +17,8 @@ use Inertia\Response;
 
 class PublicPostController extends Controller
 {
+    public function __construct(private readonly ContentEmbedRenderer $embedRenderer) {}
+
     public function index(Request $request): Response
     {
         $filters = $request->validate([
@@ -128,10 +131,7 @@ class PublicPostController extends Controller
                 'id' => $post->id,
                 'title' => $post->title,
                 'slug' => $post->slug,
-                'contentHtml' => Str::markdown((string) $post->content, [
-                    'html_input' => 'strip',
-                    'allow_unsafe_links' => false,
-                ]),
+                'contentHtml' => $this->embedRenderer->render((string) $post->content, $post->church_id),
                 'published_at' => $post->published_at,
                 'church' => $post->church,
                 'author' => $post->author,
@@ -154,6 +154,7 @@ class PublicPostController extends Controller
     private function publishedPosts(?string $churchId): Builder
     {
         return Post::query()
+            ->where('is_event_private', false)
             ->published()
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
             ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
@@ -169,6 +170,7 @@ class PublicPostController extends Controller
             && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true);
 
         return Post::query()
+            ->where('is_event_private', false)
             ->when(
                 $canPreview,
                 fn (Builder $query): Builder => $query->visible(),

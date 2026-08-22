@@ -34,7 +34,9 @@ class MediaServerWebhookController extends Controller
 
         if ($liveStream->status !== LiveStreamStatus::STOPPED) {
             $liveStream->update([
-                'status' => LiveStreamStatus::OFFLINE,
+                'status' => $liveStream->ends_on_disconnect
+                    ? LiveStreamStatus::STOPPED
+                    : LiveStreamStatus::OFFLINE,
                 'ended_at' => now(),
                 'source_id' => null,
             ]);

@@ -33,7 +33,7 @@ class ReconcileMediaMtxPaths extends Command
         }
 
         LiveStream::query()
-            ->where('active_slot', 1)
+            ->whereNotNull('active_slot')
             ->orderBy('id')
             ->lazyById()
             ->each(function (LiveStream $liveStream) use (&$configuredPaths, &$synchronized, &$failed): void {

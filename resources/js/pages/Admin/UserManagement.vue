@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 type UserItem = {
@@ -285,10 +286,8 @@ async function save(): Promise<void> {
                         v-model="form.birth_date"
                         type="date"
                         class="rounded-lg border-slate-300"
-                    /><input
+                    /><PhoneInput
                         v-model="form.phone"
-                        type="tel"
-                        class="rounded-lg border-slate-300"
                         :placeholder="t('admin.branding.phone')"
                     /><select
                         v-model="form.gender"

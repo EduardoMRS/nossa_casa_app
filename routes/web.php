@@ -3,6 +3,8 @@
 use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
+use App\Http\Controllers\Admin\EventContentController;
+use App\Http\Controllers\Admin\EventRegistrationController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Admin\LiveStreamControlController;
 use App\Http\Controllers\Admin\StopLiveStreamController;
@@ -10,6 +12,8 @@ use App\Http\Controllers\BibleController;
 use App\Http\Controllers\BrandingAssetController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\ContentEmbedController;
+use App\Http\Controllers\EventPrivateAreaController;
 use App\Http\Controllers\PortalCommunityController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicGalleryController;
@@ -26,7 +30,10 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
+use App\Models\Setting;
+use App\Models\User;
 use App\Support\ChurchDomainContext;
+use App\Support\ContentEmbedRenderer;
 use App\Support\S3TemporaryUrlGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -162,10 +169,7 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
             'title' => $event->title,
             'slug' => $event->slug,
             'description' => $event->description,
-            'description_html' => Str::markdown($event->description ?? '', [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]),
+            'description_html' => app(ContentEmbedRenderer::class)->render($event->description ?? '', $event->church_id),
             'start_time' => $event->start_time,
             'end_time' => $event->end_time,
             'cover_path' => $event->cover_url,
@@ -184,13 +188,20 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
     ]);
 })->name('events.register');
 
+Route::get('/events/{event:slug}/area', EventPrivateAreaController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('events.private-area');
+
 Route::get('/events/{event:slug}', function (Event $event, Request $request) {
     abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
-    $event->load('church:id,name,slug', 'categories:id,name');
+    $event->load('church:id,name,slug', 'church.settings', 'categories:id,name', 'address');
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description'])->first();
 
     $event->localize(relations: ['church', 'categories']);
     $registrationForm?->localize();
+    $registrationRecord = $request->user()
+        ? $event->registrations()->where('user_id', $request->user()->id)->first()
+        : null;
 
     return Inertia::render('Events/Show', [
         'event' => [
@@ -198,23 +209,23 @@ Route::get('/events/{event:slug}', function (Event $event, Request $request) {
             'title' => $event->title,
             'slug' => $event->slug,
             'description' => $event->description,
-            'description_html' => Str::markdown($event->description ?? '', [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]),
+            'description_html' => app(ContentEmbedRenderer::class)->render($event->description ?? '', $event->church_id),
             'start_time' => $event->start_time,
             'end_time' => $event->end_time,
             'cover_path' => $event->cover_url,
             'church' => $event->church,
             'categories' => $event->categories,
+            'address' => $event->address,
+            'price' => $event->price,
+            'currency' => $event->church?->settings?->options['currency'] ?? 'BRL',
         ],
         'registration' => [
             'has_form' => (bool) $registrationForm,
             'form_id' => $registrationForm?->id,
             'form_title' => $registrationForm?->title,
-            'already_registered' => $request->user()
-                ? $event->users()->where('users.id', $request->user()->id)->exists()
-                : false,
+            'already_registered' => $registrationRecord !== null,
+            'status' => $registrationRecord?->status,
+            'can_access_private_area' => $registrationRecord?->status === 'confirmed',
         ],
     ]);
 })->name('events.show');
@@ -334,9 +345,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:member|leader|media|church_leader|superadmin|system')
         ->name('myPrayers.index');
 
+    Route::get('/api/content-embeds', ContentEmbedController::class)
+        ->middleware('role:leader|media|church_leader|superadmin|system')
+        ->name('content-embeds.index');
+
     Route::get('/dashboard/transmissoes', [LiveStreamControlController::class, 'index'])
         ->middleware('role:media|church_leader|superadmin|system')
         ->name('admin.liveStreams.index');
+
+    Route::prefix('dashboard/eventos/{event}/conteudos')
+        ->name('admin.events.content.')
+        ->middleware('role:leader|church_leader|superadmin|system')
+        ->group(function () {
+            Route::get('/', [EventContentController::class, 'index'])->name('index');
+            Route::get('/publicacoes/criar', [EventContentController::class, 'createPost'])->name('posts.create');
+            Route::post('/publicacoes', [EventContentController::class, 'storePost'])->name('posts.store');
+            Route::get('/publicacoes/{post}/editar', [EventContentController::class, 'editPost'])->name('posts.edit');
+            Route::put('/publicacoes/{post}', [EventContentController::class, 'updatePost'])->name('posts.update');
+            Route::delete('/publicacoes/{post}', [EventContentController::class, 'destroyPost'])->name('posts.destroy');
+            Route::post('/materiais', [EventContentController::class, 'storeMaterial'])->name('materials.store');
+            Route::delete('/materiais/{material}', [EventContentController::class, 'destroyMaterial'])->name('materials.destroy');
+            Route::put('/medias', [EventContentController::class, 'syncMedia'])->name('media.sync');
+        });
+
+    Route::prefix('dashboard/eventos/{event}')
+        ->name('admin.events.')
+        ->middleware('role:leader|church_leader|superadmin|system')
+        ->group(function () {
+            Route::get('/', [EventRegistrationController::class, 'show'])->whereUlid('event')->name('show');
+            Route::post('/inscritos', [EventRegistrationController::class, 'store'])->whereUlid('event')->name('registrations.store');
+            Route::put('/inscritos/{registration}', [EventRegistrationController::class, 'update'])->whereUlid('event')->name('registrations.update');
+            Route::get('/inscritos/exportar/{format}', [EventRegistrationController::class, 'export'])->whereUlid('event')->name('registrations.export');
+            Route::get('/inscritos/{registration}/pdf', [EventRegistrationController::class, 'individualPdf'])->whereUlid('event')->name('registrations.pdf');
+        });
 
     Route::prefix('dashboard')
         ->name('admin.')
@@ -390,9 +431,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/churches/{id}/edit', function ($id) { return Inertia::render('Churches/Edit', ['id' => $id]); })->name('churches.edit');
 
     Route::get('/dashboard/eventos/criar', function () {
+        $churchId = request()->user()?->church?->id;
+
         return Inertia::render('Events/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
             'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
+            'responsibleOptions' => User::query()
+                ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
+                ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER])
+                ->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
+            'currency' => Setting::query()->where('church_id', $churchId)->first()?->options['currency'] ?? 'BRL',
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
     })->middleware('role:leader|church_leader|superadmin|system')->name('events.create');
@@ -412,9 +460,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'cover_path' => $resource->cover_url,
                 'category_ids' => $resource->categories()->pluck('categories.id')->all(),
                 'form_id' => $resource->forms()->value('forms.id'),
+                'price' => $resource->price,
+                'responsible_ids' => $resource->responsibleUsers()->pluck('users.id')->all(),
+                'address' => $resource->address,
             ],
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
             'forms' => Form::query()->where('church_id', $resource->church_id)->orderBy('title')->get(['id', 'title', 'description']),
+            'responsibleOptions' => User::query()
+                ->whereHas('profile', fn ($query) => $query->where('church_id', $resource->church_id))
+                ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER])
+                ->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
+            'currency' => Setting::query()->where('church_id', $resource->church_id)->first()?->options['currency'] ?? 'BRL',
             'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
         ]);
     })->middleware('role:leader|church_leader|superadmin|system')->name('events.edit');
@@ -423,6 +479,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $churchId = request()->user()?->church?->id;
         $posts = Post::query()
             ->where('church_id', $churchId)
+            ->where('is_event_private', false)
             ->with('author:id,first_name,last_name,email')
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -462,7 +519,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('posts.create');
     Route::get('/dashboard/posts/{post}/edit', function ($post) {
-        $post = Post::query()->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $church = $post->church;
         $props = [
@@ -484,7 +541,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
     Route::get('/dashboard/posts/{post}', function () {
-        $post = Post::query()->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $post->localize(relations: ['church', 'categories']);
         $props = [
@@ -495,10 +552,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'react' => auth()->user()->can('react', $post),
             ],
             'post' => $post,
-            'contentHtml' => Str::markdown((string) $post->content, [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]),
+            'contentHtml' => app(ContentEmbedRenderer::class)->render((string) $post->content, $post->church_id),
             'author' => $post->author_details,
             'metrics' => $post->metrics,
             'translations' => $post->translations,

@@ -52,6 +52,7 @@ class BrandingController extends Controller
             );
         }
         $address = $church->address()->first();
+        $mailSetting = $church->mailSetting()->first();
 
         if ($address) {
             $branding['latitude'] ??= $address->latitude;
@@ -67,7 +68,21 @@ class BrandingController extends Controller
             'templates' => array_merge($this->defaultTemplates(), is_array($templates) ? $templates : []),
             'terminology' => $this->terminology->selections(is_array($savedTerminology) ? $savedTerminology : []),
             'terminologyOptions' => $this->terminology->options(),
+            'currency' => is_string($setting?->options['currency'] ?? null)
+                ? $setting->options['currency']
+                : 'BRL',
             'mainDomain' => $this->domainContext->mainHost(),
+            'mailSettings' => [
+                'enabled' => $mailSetting?->enabled ?? false,
+                'allow_branches' => $mailSetting?->allow_branches ?? false,
+                'host' => $mailSetting?->host ?? '',
+                'port' => $mailSetting?->port ?? '587',
+                'scheme' => $mailSetting?->scheme ?? 'tls',
+                'username' => $mailSetting?->username ?? '',
+                'from_address' => $mailSetting?->from_address ?? '',
+                'from_name' => $mailSetting?->from_name ?? $church->name,
+                'has_password' => filled($mailSetting?->password),
+            ],
         ]);
     }
 
@@ -79,6 +94,8 @@ class BrandingController extends Controller
         $domain = Arr::pull($validated, 'domain');
         $templates = Arr::pull($validated, 'templates', []);
         $terminology = Arr::pull($validated, 'terminology', []);
+        $currency = Arr::pull($validated, 'currency');
+        $mail = Arr::pull($validated, 'mail');
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
         Arr::forget($validated, 'logo');
         $validated['map_embed'] = $this->sanitizeMapEmbed($validated['map_embed'] ?? null);
@@ -112,6 +129,7 @@ class BrandingController extends Controller
         $options['branding'] = array_merge($currentBranding, $validated);
         $options['templates'] = array_merge($this->defaultTemplates(), $templates);
         $options['terminology'] = $this->terminology->selections($terminology);
+        $options['currency'] = $currency ?? $options['currency'] ?? 'BRL';
 
         $church->address()->first()?->update([
             'latitude' => $validated['latitude'] ?? null,
@@ -120,6 +138,17 @@ class BrandingController extends Controller
 
         $church->update(['domain' => $domain]);
         $setting->update(['options' => $options]);
+
+        if (is_array($mail)) {
+            $mailSetting = $church->mailSetting()->firstOrNew();
+            $mailSetting->fill(Arr::except($mail, ['password']));
+
+            if (filled($mail['password'] ?? null)) {
+                $mailSetting->password = $mail['password'];
+            }
+
+            $mailSetting->save();
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.church_settings_updated')]);
 

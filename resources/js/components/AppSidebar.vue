@@ -54,6 +54,8 @@ import { ui as apiDocs } from '@/routes/scramble/docs';
 import type { NavItem } from '@/types';
 
 const { t } = useI18n();
+const brandingSection = (section: string): string =>
+    `${brandingEdit().url}#settings-${section}`;
 
 const page = usePage<{
     auth?: {
@@ -151,6 +153,17 @@ const communicationNavItems = computed<NavItem[]>(() => [
                   title: t('admin.branding.title'),
                   href: brandingEdit(),
                   icon: Settings2,
+                  children: [
+                      'identity',
+                      'domain',
+                      'communication',
+                      'location',
+                      'templates',
+                      'schedule',
+                  ].map((section) => ({
+                      title: t(`admin.branding.groups.${section}`),
+                      href: brandingSection(section),
+                  })),
               },
           ]
         : []),

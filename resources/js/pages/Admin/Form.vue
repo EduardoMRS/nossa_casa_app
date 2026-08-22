@@ -4,6 +4,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import { store, update } from '@/actions/App/Http/Controllers/FormController';
 import CategorySelector from '@/components/CategorySelector.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import { useI18n } from '@/lib/i18n';
 import { index } from '@/routes/admin/forms';
 
@@ -57,6 +58,7 @@ const fieldTypes = computed(
         [
             ['text', t('admin.forms.types.text')],
             ['email', t('admin.forms.types.email')],
+            ['phone', t('admin.forms.types.phone')],
             ['number', t('admin.forms.types.number')],
             ['date', t('admin.forms.types.date')],
             ['textarea', t('admin.forms.types.textarea')],
@@ -71,6 +73,7 @@ const fieldTypes = computed(
 const inputTypes = new Set([
     'text',
     'email',
+    'phone',
     'number',
     'date',
     'textarea',
@@ -545,6 +548,11 @@ async function save(): Promise<void> {
                             >
                                 <option>{{ t('admin.common.select') }}</option>
                             </select>
+                            <PhoneInput
+                                v-else-if="field.type === 'phone'"
+                                disabled
+                                class="mt-1"
+                            />
                             <input
                                 v-else
                                 disabled

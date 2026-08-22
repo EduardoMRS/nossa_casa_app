@@ -18,6 +18,7 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import PortalHeader from '@/components/PortalHeader.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import { useI18n } from '@/lib/i18n';
@@ -907,9 +908,8 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         type="email"
                         class="rounded-xl border-slate-300"
                         :placeholder="t('portal.fields.contact_email')"
-                    /><input
+                    /><PhoneInput
                         v-model="churchForm.contact_phone"
-                        class="rounded-xl border-slate-300"
                         :placeholder="t('portal.fields.contact_phone')"
                     />
                 </div>

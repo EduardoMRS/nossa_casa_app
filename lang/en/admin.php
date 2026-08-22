@@ -46,6 +46,18 @@ return [
     'users' => [
         'stats' => ['Total users', 'Administrators', 'Members'],
     ],
+    'event_registrations' => [
+        'filename' => 'registrations',
+        'export_generated_at' => 'Generated at :date',
+        'individual_export' => 'Complete participant registration',
+        'columns' => [
+            'name' => 'Name',
+            'email' => 'Email',
+            'phone' => 'Phone',
+            'status' => 'Status',
+            'registered_at' => 'Registered at',
+        ],
+    ],
     'wall' => [
         'stats' => ['Total comments', 'Posts with comments', 'Events with comments'],
     ],

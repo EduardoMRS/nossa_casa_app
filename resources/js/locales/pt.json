@@ -11,6 +11,29 @@
         "hide_password": "Ocultar senha",
         "generic_error": "Algo deu errado."
     },
+    "phone": {
+        "country": "Código de chamada do país",
+        "placeholder": "Número de telefone"
+    },
+    "money": { "currency": "Moeda", "placeholder": "0,00" },
+    "editor": {        
+        "label": "Editor de conteúdo rico",
+        "embeds": {
+            "open": "Inserir conteúdo",
+            "title": "Inserir conteúdo",
+            "description": "Escolha um item para renderizar dentro deste conteúdo.",
+            "search": "Buscar conteúdo...",
+            "all_categories": "Todas as categorias",
+            "empty": "Nenhum conteúdo correspondente foi encontrado.",
+            "types": {
+                "form": "Formulário",
+                "media": "Mídia",
+                "post": "Publicação",
+                "event": "Evento",
+                "library": "Livro da biblioteca"
+            }
+        }
+    },
     "errors": {
         "status": {
             "401": {
@@ -106,6 +129,8 @@
         "edit": "Editar",
         "save": "Salvar",
         "cancel": "Cancelar",
+        "yes": "Sim",
+        "no": "Não",
         "update": "Atualizar",
         "upload": "Enviar",
         "delete": "Excluir"
@@ -390,6 +415,8 @@
             "items": "{count} itens",
             "saving": "Salvando...",
             "remove": "Remover",
+            "edit": "Editar",
+            "delete": "Excluir",
             "preview": "Pré-visualização",
             "select": "Selecionar",
             "close_editor": "Fechar editor",
@@ -431,6 +458,28 @@
             "secondary_color": "Cor secundária",
             "accent_color": "Cor de destaque",
             "surface_color": "Cor de fundo",
+            "currency": "Moeda",
+            "groups": {
+                "identity": "Identidade",
+                "domain": "Domínio",
+                "communication": "Comunicação",
+                "location": "Localização",
+                "templates": "Templates",
+                "schedule": "Programação"
+            },
+            "mail_title": "Servidor de e-mail personalizado",
+            "mail_description": "Use uma conta SMTP nas mensagens desta church. Sem configuração própria, será usado o padrão da aplicação.",
+            "mail_encryption_notice": "As credenciais do servidor são criptografadas em repouso. A senha não volta a ser exibida e só é descriptografada pelo processo de envio.",
+            "mail_enabled": "Usar este servidor de e-mail",
+            "mail_allow_branches": "Permitir que filiais sem servidor próprio o utilizem",
+            "mail_host": "Servidor SMTP",
+            "mail_port": "Porta",
+            "mail_security": "Segurança",
+            "mail_username": "Usuário",
+            "mail_password": "Senha",
+            "mail_password_saved": "Senha já armazenada — deixe vazio para mantê-la",
+            "mail_from_address": "E-mail do remetente",
+            "mail_from_name": "Nome do remetente",
             "phone": "Telefone",
             "email": "E-mail",
             "whatsapp": "WhatsApp",
@@ -625,7 +674,8 @@
             "delete_confirm": "Excluir formulário “{title}”?",
             "types": {
                 "text": "Texto curto",
-                "email": "E‑mail",
+                "email": "E-mail",
+                "phone": "Telefone",
                 "number": "Número",
                 "date": "Data",
                 "textarea": "Texto longo",
@@ -685,12 +735,14 @@
             "select_church": "Selecionar igreja",
             "new": "Nova transmissão",
             "create_error": "Não foi possível criar a transmissão.",
+            "delete_confirm": "Excluir permanentemente a transmissão “{name}”?",
             "stop_confirm": "Encerrar a transmissão “{name}”?",
             "rotate_confirm": "Renovar o token desconectará a transmissão atual. Continuar?",
             "recordings_count": "{count} gravação(ões)",
             "public": "Pública",
             "private": "Privada",
             "open_page": "Abrir página",
+            "delete": "Excluir",
             "stop": "Encerrar",
             "obs_server": "Servidor do OBS",
             "copy_link": "Copiar link",
@@ -721,6 +773,8 @@
             "record_stream": "Gravar transmissão",
             "public_stream": "Transmissão pública",
             "public_stream_hint": "Quando desmarcada, a transmissão não aparece no portal, na página inicial ou na galeria. A gravação poderá ser publicada depois.",
+            "end_on_disconnect": "Encerrar ao desconectar o OBS",
+            "end_on_disconnect_hint": "Marca a transmissão como finalizada automaticamente quando o publicador para de enviar vídeo.",
             "creating": "Criando…",
             "create": "Criar transmissão",
             "status": {
@@ -933,6 +987,42 @@
             "registration_summary": "{users} participantes · {forms} formulários",
             "delete_confirm": "Excluir evento \"{title}\"?",
             "empty": "Nenhum evento foi criado para esta igreja."
+        },
+        "event_content": {
+            "title": "Conteúdo privado do evento",
+            "kicker": "Área do participante",
+            "registrations": "Ver inscrições",
+            "posts": "Publicações privadas",
+            "materials": "Material de apoio",
+            "media": "Mídias do evento",
+            "media_hint": "A mídia vinculada aparece para participantes confirmados mesmo quando oculta na galeria da church.",
+            "link": "Link",
+            "file": "Arquivo",
+            "delete_confirm": "Excluir este item?",
+            "new_post": "Nova publicação privada",
+            "empty_posts": "Nenhuma publicação privada foi criada ainda."
+        },
+        "event_registrations": {
+            "title": "Inscrições do evento",
+            "total": "{count} inscrição(ões)",
+            "add": "Adicionar inscrição",
+            "columns": "Selecionar colunas",
+            "view": "Visualizar e editar inscrição",
+            "individual_pdf": "Exportar PDF individual",
+            "empty": "Nenhuma inscrição foi enviada ainda.",
+            "edit": "Dados da inscrição",
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "email": "Email",
+            "phone": "Telefone",
+            "status": "Status",
+            "statuses": {
+                "pending": "Pendente",
+                "approved": "Aprovada",
+                "rejected": "Rejeitada",
+                "canceled": "Cancelada",
+                "confirmed": "Confirmada"
+            }
         },
         "highlights": {
             "title": "Destaques",
@@ -1151,7 +1241,20 @@
             "about": "Sobre este evento",
             "registration": "Inscrição",
             "categories": "Categorias",
-            "form_not_configured": "O formulário principal ainda não foi configurado para este evento."
+            "form_not_configured": "O formulário principal ainda não foi configurado para este evento.",
+            "private_area": "Área do participante",
+            "awaiting_confirmation": "Sua inscrição aguarda a confirmação da equipe responsável pelo evento.",
+            "location": "Local",
+            "free": "Gratuito"
+        },
+        "private": {
+            "title": "Área do participante",
+            "back": "Voltar ao evento",
+            "sections": "Seções privadas do evento",
+            "posts": "Publicações",
+            "materials": "Material de apoio",
+            "media": "Mídias",
+            "empty": "Ainda não há conteúdo disponível nesta seção."
         },
         "register": {
             "title": "Inscrição de evento",
@@ -1181,6 +1284,18 @@
             "cover": "Imagem de capa",
             "cover_hint": "Recomendado: imagem landscape, pelo menos 1280x720.",
             "description_hint": "Use Markdown ou modo WYSIWYG para formatar o conteúdo do evento.",
+            "price": "Valor",
+            "price_hint": "Deixe zero ou vazio para um evento gratuito.",
+            "responsibles": "Responsáveis pelo evento",
+            "responsibles_hint": "Os responsáveis podem publicar conteúdo privado e confirmar inscrições pagas.",
+            "location": "Local",
+            "street": "Rua",
+            "number": "Número",
+            "complement": "Complemento",
+            "neighborhood": "Bairro",
+            "city": "Cidade",
+            "state": "Estado",
+            "zipcode": "CEP",
             "save": "Publicar evento",
             "update": "Atualizar evento",
             "category_title": "Categorias do evento",
@@ -1484,8 +1599,5 @@
     },
     "footer": {
         "copyright": "© 2026 Projeto Nossa Casa · Código aberto (MIT)"
-    },
-    "editor": {
-        "label": "Editor de conteúdo rico"
     }
 }

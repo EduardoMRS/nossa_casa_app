@@ -36,6 +36,14 @@ test('public and private live streams use the matching realtime channel', functi
         ->and($publicStream->playback_url)->not->toContain('.m3u8');
 });
 
+test('local mediamtx playback uses the same-origin WebRTC proxy', function () {
+    config(['media.mediamtx.public_webrtc_url' => 'http://localhost']);
+    $stream = LiveStream::factory()->create();
+
+    expect($stream->playback_url)->toBe('/webrtc/'.$stream->path)
+        ->and($stream->embed_url)->toStartWith('/webrtc/'.$stream->path.'?');
+});
+
 test('live stream updates are queued so realtime outages do not fail management requests', function () {
     $stream = LiveStream::factory()->make();
 

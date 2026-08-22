@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\UserRole;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchMailManager;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,7 +12,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResolveChurchDomain
 {
-    public function __construct(private readonly ChurchDomainContext $context) {}
+    public function __construct(
+        private readonly ChurchDomainContext $context,
+        private readonly ChurchMailManager $mailManager,
+    ) {}
 
     /**
      * Handle an incoming request.
@@ -26,6 +30,9 @@ class ResolveChurchDomain
 
         $this->context->resolve($request);
         $church = $this->context->church();
+        $church
+            ? $this->mailManager->configureFor($church)
+            : $this->mailManager->reset();
         $user = $request->user();
 
         $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);

@@ -17,7 +17,7 @@ Broadcast::channel('live-stream.{liveStreamId}', function (User $user, string $l
     $liveStream = LiveStream::query()->find($liveStreamId);
 
     return $liveStream !== null && (
-        $user->role === UserRole::SYSTEM
+        in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
         || $user->profile?->church_id === $liveStream->church_id
     );
 });

@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function () {
         Route::apiResource('live-streams', LiveStreamController::class)
             ->parameters(['live-streams' => 'liveStream'])
             ->only(['index', 'store', 'show', 'destroy']);
+        Route::post('live-streams/{liveStream}/stop', [LiveStreamController::class, 'stop']);
         Route::post('live-streams/{liveStream}/rotate-token', [LiveStreamController::class, 'rotateToken']);
     });
 

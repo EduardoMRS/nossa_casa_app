@@ -7,6 +7,7 @@ ARG GID=1000
 RUN apk add --no-cache \
     curl \
     libpng-dev \
+    libzip-dev \
     libxml2-dev \
     sqlite-dev \
     zip \
@@ -15,7 +16,7 @@ RUN apk add --no-cache \
     nodejs=~22 \
     npm
 
-RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl
+RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl zip
 
 # Run PHP-FPM with the project user so bind-mounted files remain editable on
 # the host without making storage world-writable.

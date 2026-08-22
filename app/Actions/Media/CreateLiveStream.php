@@ -19,7 +19,7 @@ class CreateLiveStream
     public function __construct(private MediaMtxClient $mediaMtx) {}
 
     /**
-     * @param  array{name: string, source_url: string, input_mode?: string, source_on_demand?: bool, record?: bool, is_public?: bool, church_id?: string|null}  $data
+     * @param  array{name: string, source_url: string, input_mode?: string, source_on_demand?: bool, record?: bool, is_public?: bool, ends_on_disconnect?: bool, church_id?: string|null}  $data
      */
     public function handle(User $user, array $data): LiveStream
     {
@@ -35,25 +35,42 @@ class CreateLiveStream
 
         try {
             $inputMode = $data['input_mode'] ?? 'pull';
-            $liveStream = DB::transaction(fn (): LiveStream => LiveStream::query()->create([
-                'name' => $data['name'],
-                'source_url' => $inputMode === 'publisher' ? 'publisher' : $data['source_url'],
-                'input_mode' => $inputMode,
-                'publish_token' => $inputMode === 'publisher' ? Str::random(64) : null,
-                'token_rotated_at' => $inputMode === 'publisher' ? now() : null,
-                'source_on_demand' => $data['source_on_demand'] ?? false,
-                'record' => $data['record'] ?? true,
-                'is_public' => $data['is_public'] ?? true,
-                'church_id' => $church->getKey(),
-                'created_by_id' => $user->id,
-                'path' => 'stream-'.Str::lower((string) Str::ulid()),
-                'status' => LiveStreamStatus::READY,
-                'active_slot' => 1,
-                'worker_id' => config('media.worker_id'),
-            ]));
+            $liveStream = DB::transaction(function () use ($church, $data, $inputMode, $user): LiveStream {
+                Church::query()->whereKey($church->getKey())->lockForUpdate()->firstOrFail();
+                $reservedSlots = LiveStream::query()
+                    ->where('church_id', $church->getKey())
+                    ->whereNotNull('active_slot')
+                    ->lockForUpdate()
+                    ->pluck('active_slot');
+                $activeSlot = collect([1, 2])->first(fn (int $slot): bool => ! $reservedSlots->contains($slot));
+
+                if ($activeSlot === null) {
+                    throw ValidationException::withMessages([
+                        'church' => __('livestream.active_limit_reached'),
+                    ]);
+                }
+
+                return LiveStream::query()->create([
+                    'name' => $data['name'],
+                    'source_url' => $inputMode === 'publisher' ? 'publisher' : $data['source_url'],
+                    'input_mode' => $inputMode,
+                    'publish_token' => $inputMode === 'publisher' ? Str::random(64) : null,
+                    'token_rotated_at' => $inputMode === 'publisher' ? now() : null,
+                    'source_on_demand' => $data['source_on_demand'] ?? false,
+                    'record' => $data['record'] ?? true,
+                    'is_public' => $data['is_public'] ?? true,
+                    'ends_on_disconnect' => $data['ends_on_disconnect'] ?? false,
+                    'church_id' => $church->getKey(),
+                    'created_by_id' => $user->id,
+                    'path' => 'stream-'.Str::lower((string) Str::ulid()),
+                    'status' => LiveStreamStatus::READY,
+                    'active_slot' => $activeSlot,
+                    'worker_id' => config('media.worker_id'),
+                ]);
+            });
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages([
-                'church' => __('livestream.active_exists'),
+                'church' => __('livestream.active_limit_reached'),
             ]);
         }
 

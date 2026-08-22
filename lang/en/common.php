@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'event_registration_user_mismatch' => 'The user does not match this event registration.',
     'edit' => 'Edit',
     'editing' => 'Editing',
     'edited' => 'Edited',

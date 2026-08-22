@@ -46,6 +46,7 @@ class LiveStreamController extends Controller
             'source_on_demand' => $request->boolean('source_on_demand'),
             'record' => $request->boolean('record', true),
             'is_public' => $request->boolean('is_public', true),
+            'ends_on_disconnect' => $request->boolean('ends_on_disconnect'),
             'church_id' => $request->validated('church_id'),
         ]);
 
@@ -66,6 +67,16 @@ class LiveStreamController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request, LiveStream $liveStream, StopLiveStream $stopLiveStream): Response
+    {
+        abort_unless(in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
+
+        $stopLiveStream->handle($liveStream);
+        $liveStream->delete();
+
+        return response()->noContent();
+    }
+
+    public function stop(Request $request, LiveStream $liveStream, StopLiveStream $stopLiveStream): Response
     {
         $this->ensureAccess($request, $liveStream);
         $stopLiveStream->handle($liveStream);

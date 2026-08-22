@@ -19,12 +19,14 @@ class Post extends Model
         'author_id',
         'church_id',
         'views_count',
+        'is_event_private',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'views_count' => 'integer',
+        'is_event_private' => 'boolean',
     ];
 
     protected $attributes = [
@@ -156,6 +158,11 @@ class Post extends Model
     public function classrooms()
     {
         return $this->morphedByMany(Classroom::class, 'postable');
+    }
+
+    public function privateEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_posts');
     }
 
     public function highlight()

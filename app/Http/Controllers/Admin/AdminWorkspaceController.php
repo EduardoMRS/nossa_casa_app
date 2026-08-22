@@ -72,7 +72,7 @@ class AdminWorkspaceController extends Controller
         $churchId = $request->user()?->profile?->church_id;
         $events = Event::query()
             ->where('church_id', $churchId)
-            ->withCount(['users', 'forms'])
+            ->withCount(['registrations as users_count', 'forms'])
             ->orderByDesc('start_time')
             ->paginate(20)
             ->through(fn (Event $event): Event => $event->localize());

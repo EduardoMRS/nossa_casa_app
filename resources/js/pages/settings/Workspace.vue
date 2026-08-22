@@ -17,6 +17,7 @@ import {
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
@@ -317,9 +318,9 @@ const personFor = (item: Relationship): Person | undefined =>
                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                     ><label class="text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.phone')
-                        }}<input
+                        }}<PhoneInput
                             v-model="profile.phone"
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
+                            class="mt-1" /></label
                     ><label class="text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.gender')
                         }}<select

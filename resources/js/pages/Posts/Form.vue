@@ -36,6 +36,8 @@ const props = defineProps<{
     post?: PostResource;
     categories: CategoryOption[];
     forms: FormOption[];
+    privateEvent?: { id: string; title: string } | null;
+    returnUrl?: string;
 }>();
 
 const { t } = useI18n();
@@ -74,6 +76,18 @@ const slugify = (value: string): string => {
 const submit = () => {
     if (!form.slug && form.title) {
         form.slug = slugify(form.title);
+    }
+
+    if (props.privateEvent) {
+        const baseUrl = `/dashboard/eventos/${props.privateEvent.id}/conteudos/publicacoes`;
+
+        if (isEditing.value && props.post?.id) {
+            form.put(`${baseUrl}/${props.post.id}`, { preserveScroll: true });
+        } else {
+            form.post(baseUrl, { preserveScroll: true });
+        }
+
+        return;
     }
 
     if (isEditing.value && props.post?.id) {
@@ -123,7 +137,7 @@ const submit = () => {
                 </div>
 
                 <Link
-                    :href="index()"
+                    :href="props.returnUrl ?? index()"
                     class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-bold text-card-foreground shadow-sm"
                 >
                     <ArrowLeft class="h-4 w-4" />

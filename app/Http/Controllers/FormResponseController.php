@@ -70,7 +70,9 @@ class FormResponseController extends Controller
                     'user_id' => $request->user()->id,
                 ],
                 [
-                    'status' => 'pending',
+                    'status' => (float) ($relatedEvent->price ?? 0) > 0
+                        ? 'pending'
+                        : 'confirmed',
                 ]
             );
         }
