@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\ApiTranslateCommand;
 use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Event;
@@ -238,5 +239,51 @@ test('translation command covers dynamic text and form schema fields', function 
         ->toBe([
             'content_original' => 'Updated Form',
             'content' => 'PT: Updated Form',
+        ]);
+});
+
+test('translation command extracts JSON returned in a reasoning response', function () {
+    $fakeProvider = new class extends AiProvider
+    {
+        private int $runCount = 0;
+
+        public function __construct()
+        {
+            $this->runCount = 0;
+        }
+
+        public function system(string $content): self
+        {
+            return $this;
+        }
+
+        public function run(): array
+        {
+            return [
+                'provider' => 'fake',
+                'model' => 'fake-model',
+                'content' => '',
+                'raw_response' => [
+                    'choices' => [[
+                        'message' => [
+                            'reasoning' => "I will return the requested JSON.\n```json\n{\"pt\":{\"admin.php\":{\"title\":\"Igreja\"}}}\n```",
+                        ],
+                    ]],
+                ],
+            ];
+        }
+    };
+
+    $this->app->instance(AiProvider::class, $fakeProvider);
+    $method = new ReflectionMethod(ApiTranslateCommand::class, 'runTranslationPrompt');
+    $method->setAccessible(true);
+
+    expect($method->invoke(app(ApiTranslateCommand::class), 'Translate this payload.'))
+        ->toBe([
+            'pt' => [
+                'admin.php' => [
+                    'title' => 'Igreja',
+                ],
+            ],
         ]);
 });

@@ -147,9 +147,14 @@ class LiveStream extends Model
     {
         $configuredUrl = rtrim((string) config('media.mediamtx.public_webrtc_url'), '/');
         $configuredHost = parse_url($configuredUrl, PHP_URL_HOST);
+        $configuredPath = parse_url($configuredUrl, PHP_URL_PATH);
 
         if ($configuredUrl === '' || in_array($configuredHost, ['localhost', '127.0.0.1'], true)) {
             return '/webrtc';
+        }
+
+        if ($configuredPath === null || $configuredPath === '' || $configuredPath === '/') {
+            return $configuredUrl.'/webrtc';
         }
 
         return $configuredUrl;
