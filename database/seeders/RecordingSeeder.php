@@ -12,6 +12,6 @@ class RecordingSeeder extends Seeder
      */
     public function run(): void
     {
-        Recording::factory()->count(3)->create();
+        Recording::factory()->count(10)->create();
     }
 }

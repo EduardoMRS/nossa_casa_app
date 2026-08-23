@@ -162,8 +162,16 @@ services:
     volumes:
       - .:/var/www
       - phpvendor:/var/www/vendor
+      - nodemodules:/var/www/node_modules
       - frameworkcache:/var/www/storage/framework
       - bootstrapcache:/var/www/bootstrap/cache
+    environment:
+      # Reverb only runs the Laravel WebSocket server; Node dependencies are
+      # installed by the app service and are not needed in this container.
+      SKIP_NODE_INSTALL: "true"
+      # Local church subdomains (for example pib-jipa.localhost) must be
+      # accepted by Reverb's origin validation.
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS:-localhost},*.localhost
     expose:
       - "8080"
     networks:

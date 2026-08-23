@@ -763,7 +763,7 @@
             "visibility": "Visibilidade ao vivo",
             "public_visibility": "Pública — exibida no portal e nas páginas da igreja",
             "private_visibility": "Privada — apenas membros desta igreja",
-            "obs_hint": "No OBS, selecione Custom Service e copie o servidor e a chave de stream mostrados acima. Não cole a URL completa no campo do servidor.",
+            "obs_hint": "No OBS, selecione Custom Service e copie o servidor e a chave de stream mostrados acima. Não cole a URL completa no campo do servidor. Para reprodução via WebRTC, desative os B-frames, use H.264 e defina intervalo de keyframe de 2 segundos.",
             "recordings_title": "Gravações deste stream",
             "recording_public": "Gravação pública",
             "recording_private": "Gravação privada",

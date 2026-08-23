@@ -760,7 +760,7 @@
             "visibility": "Live visibility",
             "public_visibility": "Public — shown in the portal and church pages",
             "private_visibility": "Private — only members of this church",
-            "obs_hint": "In OBS, select Custom Service and copy the server and stream key shown above. Do not paste the full URL into the server field.",
+            "obs_hint": "In OBS, select Custom Service and copy the server and stream key shown above. Do not paste the full URL into the server field. For WebRTC playback, disable B-frames, use H.264, and set a keyframe interval of 2 seconds.",
             "recordings_title": "Recordings from this stream",
             "recording_public": "Public recording",
             "recording_private": "Private recording",
