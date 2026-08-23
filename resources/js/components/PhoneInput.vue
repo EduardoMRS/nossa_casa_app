@@ -124,14 +124,12 @@ const changeCountry = (): void => {
 </script>
 
 <template>
-    <div
-        class="flex w-full rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring/40"
-    >
+    <div class="phone-input flex w-full rounded-lg">
         <select
             v-model="selectedCode"
             :disabled="disabled"
             :aria-label="t('phone.country')"
-            class="w-28 shrink-0 rounded-l-lg border-0 border-r border-input bg-muted px-2 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
+            class="phone-input__country w-28 shrink-0 rounded-l-lg border-0 px-2 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
             @change="changeCountry"
         >
             <option
@@ -152,8 +150,72 @@ const changeCountry = (): void => {
             :required="required"
             :disabled="disabled"
             :placeholder="placeholder ?? t('phone.placeholder')"
-            class="min-w-0 flex-1 rounded-r-lg border-0 bg-transparent px-3 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
+            class="phone-input__number min-w-0 flex-1 rounded-r-lg border-0 bg-transparent px-3 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
         />
         <input v-if="name" type="hidden" :name="name" :value="completeValue" />
     </div>
 </template>
+
+<style scoped>
+.phone-input {
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--church-primary, var(--primary, #342f87)) 25%,
+            var(--church-secondary, var(--input, #cbd5e1))
+        );
+    background-color: var(--church-surface, var(--background, #ffffff));
+    color: var(--church-primary, var(--foreground, #0f172a));
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.phone-input:focus-within {
+    border-color: var(--church-primary, var(--ring, #342f87));
+    box-shadow: 0 0 0 3px
+        color-mix(
+            in srgb,
+            var(--church-primary, var(--ring, #342f87)) 22%,
+            transparent
+        );
+}
+
+.phone-input__country {
+    border-right: 1px solid
+        color-mix(
+            in srgb,
+            var(--church-secondary, var(--input, #cbd5e1)) 65%,
+            transparent
+        );
+    background-color: color-mix(
+        in srgb,
+        var(--church-primary, var(--primary, #342f87)) 7%,
+        var(--church-surface, var(--muted, #f8fafc))
+    );
+    color: var(--church-primary, var(--foreground, #0f172a));
+}
+
+.phone-input__number {
+    color: var(--church-primary, var(--foreground, #0f172a));
+}
+
+.phone-input__number::placeholder {
+    color: color-mix(
+        in srgb,
+        var(--church-primary, var(--muted-foreground, #64748b)) 55%,
+        transparent
+    );
+}
+
+.phone-input__country:focus,
+.phone-input__number:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.phone-input__country:disabled,
+.phone-input__number:disabled {
+    cursor: not-allowed;
+}
+</style>

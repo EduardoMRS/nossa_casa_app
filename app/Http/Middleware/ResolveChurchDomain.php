@@ -73,6 +73,10 @@ class ResolveChurchDomain
 
     private function isPublicChurchRoute(Request $request): bool
     {
+        if ($request->is('settings', 'settings/*')) {
+            return true;
+        }
+
         $route = $request->route();
 
         if (! $route) {
@@ -88,6 +92,7 @@ class ResolveChurchDomain
             'events.index',
             'events.show',
             'events.register',
+            'events.private-area',
             'posts.public.index',
             'posts.public.show',
             'gallery.index',

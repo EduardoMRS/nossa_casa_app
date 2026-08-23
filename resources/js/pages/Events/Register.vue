@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { store as storeResponse } from '@/actions/App/Http/Controllers/FormResponseController';
+import MoneyInput from '@/components/MoneyInput.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -45,6 +46,7 @@ const props = defineProps<{
             name: string;
             slug: string;
         } | null;
+        currency: string;
     };
     form: {
         id: string;
@@ -482,6 +484,18 @@ const formatDate = (value: string): string => {
                                     :name="field.name"
                                     :required="field.required"
                                     :placeholder="field.placeholder"
+                                    @update:model-value="
+                                        updateFieldValue(field, $event)
+                                    "
+                                />
+
+                                <MoneyInput
+                                    v-else-if="field.type === 'money'"
+                                    :model-value="String(getFieldValue(field))"
+                                    :currency="event.currency"
+                                    lock-currency
+                                    :name="field.name"
+                                    :required="field.required"
                                     @update:model-value="
                                         updateFieldValue(field, $event)
                                     "

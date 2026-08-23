@@ -154,7 +154,7 @@ Route::get('/api/bible/{version}/books/{book}/chapters/{chapter}', [BibleControl
 
 Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
     abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
-    $event->load('church:id,name,slug');
+    $event->load('church:id,name,slug', 'church.settings');
     $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description', 'forms.schema'])->first();
 
     abort_if($registrationForm === null, 404);
@@ -181,6 +181,7 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
             'end_time' => $event->end_time,
             'cover_path' => $event->cover_url,
             'church' => $event->church,
+            'currency' => $event->church?->settings?->options['currency'] ?? 'BRL',
         ],
         'form' => [
             'id' => $registrationForm->id,

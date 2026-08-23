@@ -24,7 +24,7 @@ class StoreFormRequest extends FormRequest
             'schema.fields.*.id' => ['nullable', 'string', 'max:64', 'distinct'],
             'schema.fields.*.name' => ['nullable', 'string', 'alpha_dash:ascii', 'max:64', 'distinct'],
             'schema.fields.*.label' => ['nullable', 'string', 'max:255'],
-            'schema.fields.*.type' => ['required', 'in:text,email,textarea,select,radio,checkbox,date,number,heading,divider,line_break'],
+            'schema.fields.*.type' => ['required', 'in:text,email,phone,money,textarea,select,radio,checkbox,date,number,heading,divider,line_break'],
             'schema.fields.*.required' => ['nullable', 'boolean'],
             'schema.fields.*.options' => ['nullable', 'array'],
             'schema.fields.*.options.*' => ['string', 'max:255'],

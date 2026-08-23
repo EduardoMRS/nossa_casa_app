@@ -44,7 +44,14 @@ class EventPrivateAreaController extends Controller
                 'currency' => $currency,
                 'cover_path' => $event->cover_url,
                 'church' => $event->church,
-                'address' => $event->address,
+                'address' => $event->address?->only([
+                    'street',
+                    'number',
+                    'neighborhood',
+                    'city',
+                    'state',
+                    'zipcode',
+                ]),
             ],
             'posts' => $event->privatePosts()
                 ->where('is_event_private', true)

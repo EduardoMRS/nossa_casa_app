@@ -513,7 +513,7 @@ class RelationTesterSeeder extends Seeder
                     ['id' => 'heading', 'type' => 'heading', 'label' => 'Dados para inscrição'],
                     ['id' => 'name', 'type' => 'text', 'name' => 'full_name', 'label' => 'Nome completo', 'required' => true, 'width' => 'full', 'mobile_width' => 'full', 'size' => 'auto'],
                     ['id' => 'email', 'type' => 'email', 'name' => 'email', 'label' => 'E-mail', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
-                    ['id' => 'phone', 'type' => 'text', 'name' => 'phone', 'label' => 'Telefone / WhatsApp', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
+                    ['id' => 'phone', 'type' => 'phone', 'name' => 'phone', 'label' => 'Telefone / WhatsApp', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
                     ['id' => 'participants', 'type' => 'textarea', 'name' => 'participants', 'label' => 'Participantes e observações', 'required' => false, 'width' => 'full', 'mobile_width' => 'full', 'size' => 'fixed', 'height' => 3],
                 ]],
             ],

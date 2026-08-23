@@ -176,7 +176,7 @@ const transferMembership = (): void => {
                 {{ isDashboard ? t('nav.home') : t('nav.dashboard') }}
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem v-if="!isForeignChurch" :as-child="true">
+        <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <Settings class="mr-2 h-4 w-4" />
                 {{ t('settings.title') }}

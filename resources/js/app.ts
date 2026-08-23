@@ -31,6 +31,7 @@ createInertiaApp({
             'Events/Index',
             'Events/Show',
             'Events/Register',
+            'Events/PrivateArea',
             'Posts/PublicIndex',
             'Posts/PublicShow',
             'Admin/ClassroomLabels',
