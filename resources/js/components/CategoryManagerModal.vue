@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { Pencil, Plus, Tags, Trash2, X } from '@lucide/vue';
+import { Pencil, Plus, Tags, Trash2 } from '@lucide/vue';
 import { reactive, ref, watch } from 'vue';
+import AppModal from '@/components/AppModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
 export type ManagedCategory = {
@@ -19,6 +21,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ close: [] }>();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const editingId = ref<string | null>(null);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
@@ -87,11 +90,15 @@ const save = (): void => {
     router.post('/api/categories', payload, options);
 };
 
-const remove = (category: ManagedCategory): void => {
+const remove = async (category: ManagedCategory): Promise<void> => {
     if (
-        !window.confirm(
-            t('admin.categories.delete_confirm', { name: category.name }),
-        )
+        !(await confirm({
+            message: t('admin.categories.delete_confirm', {
+                name: category.name,
+            }),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -104,38 +111,17 @@ const remove = (category: ManagedCategory): void => {
 </script>
 
 <template>
-    <div
-        v-if="open"
-        class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/65 p-4 backdrop-blur-sm"
-        @click.self="emit('close')"
+    <AppModal
+        :open="open"
+        :title="title ?? t('admin.categories.church_categories')"
+        size="xl"
+        scrollable
+        @update:open="(value) => !value && emit('close')"
     >
-        <section
-            class="my-6 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-        >
-            <header
-                class="flex items-center justify-between border-b border-slate-200 px-5 py-4"
-            >
-                <div>
-                    <p
-                        class="font-mono text-[10px] font-bold tracking-wider text-indigo-500 uppercase"
-                    >
-                        {{ t('admin.categories.title') }}
-                    </p>
-                    <h2 class="text-xl font-black text-slate-950">
-                        {{ title ?? t('admin.categories.church_categories') }}
-                    </h2>
-                </div>
-                <button
-                    class="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
-                    @click="emit('close')"
-                >
-                    <X class="size-5" />
-                </button>
-            </header>
-            <div class="grid gap-6 p-5 lg:grid-cols-[1fr_0.72fr]">
-                <div class="overflow-hidden rounded-xl border border-slate-200">
-                    <table class="w-full text-left text-sm">
-                        <thead
+        <div class="grid gap-6 lg:grid-cols-[1fr_0.72fr]">
+            <div class="overflow-hidden rounded-xl border border-slate-200">
+                <table class="w-full text-left text-sm">
+                    <thead
                             class="bg-slate-50 text-[10px] font-bold tracking-wider text-slate-500 uppercase"
                         >
                             <tr>
@@ -148,16 +134,13 @@ const remove = (category: ManagedCategory): void => {
                                 <th class="px-4 py-3 text-right">
                                     {{ t('posts.index.actions') }}
                                 </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr
-                                v-for="category in categories"
-                                :key="category.id"
-                            >
-                                <td class="px-4 py-3 font-bold text-slate-800">
-                                    {{ category.name }}
-                                </td>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <tr v-for="category in categories" :key="category.id">
+                            <td class="px-4 py-3 font-bold text-slate-800">
+                                {{ category.name }}
+                            </td>
                                 <td
                                     class="px-4 py-3 font-mono text-xs text-slate-400"
                                 >
@@ -238,9 +221,8 @@ const remove = (category: ManagedCategory): void => {
                                 ? t('admin.categories.update')
                                 : t('admin.categories.create')
                         }}
-                    </button>
-                </form>
-            </div>
-        </section>
-    </div>
+                </button>
+            </form>
+        </div>
+    </AppModal>
 </template>

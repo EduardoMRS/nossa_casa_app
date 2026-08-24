@@ -18,6 +18,7 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { dashboard, home, logout } from '@/routes';
 import { switchMethod } from '@/routes/church/membership';
@@ -34,6 +35,7 @@ const handleLogout = () => {
 
 defineProps<Props>();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const page = usePage<{
     auth?: {
         notifications?: Array<{
@@ -67,13 +69,13 @@ const canAccessDashboard = computed(
 );
 const isDashboard = computed(() => page.url.startsWith('/dashboard'));
 
-const transferMembership = (): void => {
+const transferMembership = async (): Promise<void> => {
     if (
-        !window.confirm(
-            t('membership.confirm', {
+        !(await confirm({
+            message: t('membership.confirm', {
                 church: churchContext.value?.church?.name ?? '',
             }),
-        )
+        }))
     ) {
         return;
     }

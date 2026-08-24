@@ -8,12 +8,13 @@ import {
     Sparkles,
     Tags,
     Trash2,
-    X,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
 type VerseData = {
@@ -60,6 +61,7 @@ const props = defineProps<{
     bible: BibleSettings;
 }>();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const verseOpen = ref(false);
 const libraryOpen = ref(false);
 const categoriesOpen = ref(false);
@@ -328,8 +330,14 @@ const saveVerse = (): void => {
         },
     );
 };
-const remove = (item: LibraryItem): void => {
-    if (confirm(t('admin.library.delete_confirm', { title: item.title }))) {
+const remove = async (item: LibraryItem): Promise<void> => {
+    if (
+        await confirm({
+            message: t('admin.library.delete_confirm', { title: item.title }),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
+    ) {
         router.delete(`/dashboard/biblioteca-versiculo/library/${item.id}`, {
             preserveScroll: true,
         });
@@ -595,34 +603,18 @@ onBeforeUnmount(revokePreview);
             </button>
         </section>
 
-        <div
-            v-if="libraryOpen"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
-            @click.self="libraryOpen = false"
+        <AppModal
+            v-model:open="libraryOpen"
+            :title="
+                editing
+                    ? t('admin.library.edit_item')
+                    : t('admin.library.new_item')
+            "
+            size="xl"
+            scrollable
         >
-            <form
-                class="my-6 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-                @submit.prevent="saveLibrary"
-            >
-                <header
-                    class="flex items-center justify-between border-b px-5 py-4"
-                >
-                    <h2 class="text-xl font-black">
-                        {{
-                            editing
-                                ? t('admin.library.edit_item')
-                                : t('admin.library.new_item')
-                        }}
-                    </h2>
-                    <button
-                        type="button"
-                        class="p-2"
-                        @click="libraryOpen = false"
-                    >
-                        <X class="size-5" />
-                    </button>
-                </header>
-                <div class="grid gap-6 p-5 lg:grid-cols-2">
+            <form class="space-y-5" @submit.prevent="saveLibrary">
+                <div class="grid gap-6 lg:grid-cols-2">
                     <div
                         class="grid min-h-72 place-items-center overflow-hidden rounded-xl border bg-indigo-50"
                     >
@@ -703,32 +695,16 @@ onBeforeUnmount(revokePreview);
                     </div>
                 </div>
             </form>
-        </div>
+        </AppModal>
 
-        <div
-            v-if="verseOpen"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
-            @click.self="verseOpen = false"
+        <AppModal
+            v-model:open="verseOpen"
+            :title="t('admin.library.verse_of_day')"
+            :description="t('admin.library.devotional_home')"
+            size="lg"
+            scrollable
         >
-            <form
-                class="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
-                @submit.prevent="saveVerse"
-            >
-                <header class="mb-5 flex items-center justify-between">
-                    <div>
-                        <p
-                            class="text-[10px] font-bold tracking-wider text-emerald-600 uppercase"
-                        >
-                            {{ t('admin.library.devotional_home') }}
-                        </p>
-                        <h2 class="text-xl font-black">
-                            {{ t('admin.library.verse_of_day') }}
-                        </h2>
-                    </div>
-                    <button type="button" @click="verseOpen = false">
-                        <X class="size-5" />
-                    </button>
-                </header>
+            <form class="space-y-4" @submit.prevent="saveVerse">
                 <div class="space-y-4">
                     <label class="block text-xs font-bold">
                         {{ t('admin.library.version') }}
@@ -826,7 +802,7 @@ onBeforeUnmount(revokePreview);
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
         <CategoryManagerModal
             :open="categoriesOpen"
             category-type="library"

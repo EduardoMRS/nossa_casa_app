@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 type Prayer = {
@@ -110,17 +111,12 @@ async function submit(): Promise<void> {
                 {{ t('admin.prayers.empty') }}
             </div>
         </section>
-        <div
-            v-if="open"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
+        <AppModal
+            v-model:open="open"
+            :title="t('admin.prayers.new_title')"
+            scrollable
         >
-            <form
-                class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-xl"
-                @submit.prevent="submit"
-            >
-                <h2 class="text-xl font-black">
-                    {{ t('admin.prayers.new_title') }}
-                </h2>
+            <form class="space-y-4" @submit.prevent="submit">
                 <textarea
                     v-model="content"
                     required
@@ -149,6 +145,6 @@ async function submit(): Promise<void> {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
     </main>
 </template>

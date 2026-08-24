@@ -13,6 +13,7 @@ import { ref } from 'vue';
 import { destroy as destroyEvent } from '@/actions/App/Http/Controllers/EventController';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import {
     create as createEvent,
@@ -39,14 +40,19 @@ defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const { confirm } = useConfirmDialog();
 const categoriesOpen = ref(false);
 
 const formatDate = (value: string): string =>
     new Date(value).toLocaleString(locale.value === 'pt' ? 'pt-BR' : 'en-US');
 
-const remove = (event: EventItem): void => {
+const remove = async (event: EventItem): Promise<void> => {
     if (
-        window.confirm(t('admin.events.delete_confirm', { title: event.title }))
+        await confirm({
+            message: t('admin.events.delete_confirm', { title: event.title }),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
     ) {
         router.delete(destroyEvent.url({ event: event.id }));
     }

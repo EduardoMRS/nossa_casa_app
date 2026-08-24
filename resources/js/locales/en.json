@@ -110,6 +110,15 @@
         "upload": "Upload",
         "delete": "Delete"
     },
+    "dialogs": {
+        "confirm": {
+            "title": "Confirm action",
+            "action": "Confirm"
+        },
+        "prompt": {
+            "title": "Additional information"
+        }
+    },
     "gallery": {
         "meta_title": "Gallery",
         "kicker": "Visual memories",
@@ -138,6 +147,7 @@
         "upload_error": "The media could not be uploaded.",
         "item_alt": "Gallery media",
         "anonymous": "Anonymous",
+        "download": "Download file",
         "close": "Close preview",
         "no_comments": "No comments yet. Be the first person to interact.",
         "comment_placeholder": "Add a comment...",

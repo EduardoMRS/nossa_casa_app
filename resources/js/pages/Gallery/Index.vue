@@ -11,6 +11,7 @@ import {
     X,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -24,10 +25,7 @@ import type {
     PaginatedPayload,
     PaginationLink,
 } from '@shared/repositories/content/types';
-import {
-    createRequestState,
-    runRequest,
-} from '@shared/stores/RequestState';
+import { createRequestState, runRequest } from '@shared/stores/RequestState';
 
 interface Person {
     id: string;
@@ -634,14 +632,19 @@ onBeforeUnmount(() => {
             </section>
         </main>
 
-        <Teleport to="body">
-            <div
-                v-if="selectedMedia"
-                class="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/80 p-3 backdrop-blur-md sm:p-6"
-                @click.self="closeMedia"
+        <template v-if="selectedMedia">
+            <AppModal
+                :open="Boolean(selectedMedia)"
+                :title="selectedMedia.title"
+                size="full"
+                scrollable
+                :show-close-button="false"
+                header-class="sr-only"
+                content-class="gap-0 overflow-hidden border-0 p-0 sm:max-w-6xl"
+                @update:open="(value) => !value && closeMedia()"
             >
                 <section
-                    class="relative my-auto grid w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:max-h-[86vh] lg:grid-cols-[minmax(0,1.45fr)_minmax(22rem,0.7fr)]"
+                    class="relative grid w-full overflow-hidden bg-white lg:max-h-[86vh] lg:grid-cols-[minmax(0,1.45fr)_minmax(22rem,0.7fr)]"
                 >
                     <button
                         type="button"
@@ -711,7 +714,8 @@ onBeforeUnmount(() => {
                                 :href="selectedMedia.download_url"
                                 class="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-950 px-3 py-2 text-xs font-bold text-white"
                             >
-                                <Download class="size-4" /> Baixar arquivo
+                                <Download class="size-4" />
+                                {{ t('gallery.download') }}
                             </a>
                         </header>
 
@@ -884,39 +888,22 @@ onBeforeUnmount(() => {
                         </footer>
                     </div>
                 </section>
-            </div>
+            </AppModal>
+        </template>
 
-            <div
-                v-if="canUploadMedia && uploadOpen"
-                class="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
-                @click.self="uploadOpen = false"
-            >
-                <section
-                    class="relative my-6 w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl md:p-6"
-                >
-                    <button
-                        class="absolute top-4 right-4 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                        @click="uploadOpen = false"
-                    >
-                        <X class="size-4" />
-                    </button>
-                    <div
-                        class="flex flex-wrap items-center justify-between gap-3"
-                    >
-                        <div>
-                            <p
-                                class="text-xs font-semibold tracking-[0.18em] uppercase"
-                                :style="{ color: 'var(--church-primary)' }"
-                            >
-                                {{ t('gallery.upload_kicker') }}
-                            </p>
-                            <h2 class="text-xl font-black text-slate-950">
-                                {{ t('gallery.upload_title') }}
-                            </h2>
-                        </div>
-                        <select
-                            :value="uploadType"
-                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
+        <AppModal
+            v-if="canUploadMedia"
+            v-model:open="uploadOpen"
+            :title="t('gallery.upload_title')"
+            :description="t('gallery.upload_kicker')"
+            size="lg"
+            scrollable
+        >
+            <section class="relative">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <select
+                        :value="uploadType"
+                        class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
                             @change="handleUploadTypeChange"
                         >
                             <option value="url">
@@ -939,15 +926,13 @@ onBeforeUnmount(() => {
                                 :placeholder="t('gallery.title_placeholder')"
                             />
                             <textarea
-                                v-model="uploadDescription"
-                                rows="3"
-                                class="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                                :placeholder="
-                                    t('gallery.description_placeholder')
-                                "
-                            />
-                            <input
-                                v-if="uploadType === 'file'"
+                            v-model="uploadDescription"
+                            rows="3"
+                            class="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                            :placeholder="t('gallery.description_placeholder')"
+                        />
+                        <input
+                            v-if="uploadType === 'file'"
                                 type="file"
                                 accept="image/*,video/*,application/pdf"
                                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
@@ -1016,11 +1001,10 @@ onBeforeUnmount(() => {
                                     ? t('gallery.uploading')
                                     : t('gallery.upload')
                             }}
-                        </button>
-                    </div>
-                </section>
-            </div>
-        </Teleport>
+                    </button>
+                </div>
+            </section>
+        </AppModal>
 
         <PublicFooter show-locale />
     </div>

@@ -2,6 +2,8 @@
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import { computed, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 type UserItem = {
@@ -28,6 +30,7 @@ const props = defineProps<{
 }>();
 const users = ref([...props.users.data]);
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const { roleLabel } = useTerminology();
 const editing = ref<UserItem | null>(null);
 const open = ref(false);
@@ -90,11 +93,13 @@ function sendReset(user: UserItem): void {
 async function remove(user: UserItem): Promise<void> {
     if (
         ['system', 'superadmin'].includes(roleValue(user)) ||
-        !window.confirm(
-            t('admin.users.delete_confirm', {
+        !(await confirm({
+            message: t('admin.users.delete_confirm', {
                 name: `${user.first_name} ${user.last_name}`,
             }),
-        )
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -215,30 +220,13 @@ async function save(): Promise<void> {
                 </div>
             </article>
         </section>
-        <div
-            v-if="open"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4"
+        <AppModal
+            v-model:open="open"
+            :title="editing ? t('admin.users.edit') : t('admin.users.new')"
+            size="lg"
+            scrollable
         >
-            <form
-                class="w-full max-w-xl space-y-4 rounded-2xl bg-white p-6 shadow-xl"
-                @submit.prevent="save"
-            >
-                <div class="flex justify-between">
-                    <h2 class="text-xl font-black">
-                        {{
-                            editing
-                                ? t('admin.users.edit')
-                                : t('admin.users.new')
-                        }}
-                    </h2>
-                    <button
-                        type="button"
-                        class="text-slate-400"
-                        @click="open = false"
-                    >
-                        ×
-                    </button>
-                </div>
+            <form class="space-y-4" @submit.prevent="save">
                 <div class="grid gap-3 md:grid-cols-2">
                     <input
                         v-model="form.first_name"
@@ -255,7 +243,7 @@ async function save(): Promise<void> {
                         required
                         type="email"
                         class="rounded-lg border-slate-300 md:col-span-2"
-                        placeholder="E-mail"
+                        :placeholder="t('admin.branding.email')"
                     /><select
                         v-model="form.role"
                         class="rounded-lg border-slate-300"
@@ -323,6 +311,6 @@ async function save(): Promise<void> {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
     </main>
 </template>

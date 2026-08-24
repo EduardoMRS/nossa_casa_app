@@ -19,6 +19,7 @@ import { computed, reactive, ref } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
@@ -89,6 +90,7 @@ const props = defineProps<{
 }>();
 const { prayers } = useRepositories();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const activeTab = ref('profile');
 const saving = ref(false);
 const relationUserId = ref('');
@@ -220,7 +222,12 @@ const addRelationship = async (): Promise<void> => {
     }
 };
 const removeRelationship = async (item: Relationship): Promise<void> => {
-    if (!confirm(t('settings.workspace.remove_relationship_confirm'))) {
+    if (
+        !(await confirm({
+            message: t('settings.workspace.remove_relationship_confirm'),
+            intent: 'danger',
+        }))
+    ) {
         return;
     }
 

@@ -15,6 +15,7 @@ import { destroy } from '@/actions/App/Http/Controllers/PostController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { create, edit, show } from '@/routes/posts';
 
@@ -59,10 +60,17 @@ const props = defineProps<{
     categories: ManagedCategory[];
 }>();
 const { locale, t } = useI18n();
+const { confirm } = useConfirmDialog();
 const categoriesOpen = ref(false);
 
-const deletePost = (id: string) => {
-    if (confirm(t('posts.shared.delete_confirm'))) {
+const deletePost = async (id: string): Promise<void> => {
+    if (
+        await confirm({
+            message: t('posts.shared.delete_confirm'),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
+    ) {
         router.delete(destroy.url({ post: id }));
     }
 };

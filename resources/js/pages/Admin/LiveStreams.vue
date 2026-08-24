@@ -10,7 +10,6 @@ import {
     RefreshCw,
     Square,
     Video,
-    X,
 } from '@lucide/vue';
 import axios from 'axios';
 import { ref } from 'vue';
@@ -21,6 +20,8 @@ import {
     store as storeLiveStream,
 } from '@/actions/App/Http/Controllers/LiveStreamController';
 import { update as updateMedia } from '@/actions/App/Http/Controllers/MediaController';
+import AppModal from '@/components/AppModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
 type RecordingItem = {
@@ -59,6 +60,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const { confirm } = useConfirmDialog();
 
 usePoll(5000, { only: ['streams', 'canCreate'] });
 
@@ -112,9 +114,12 @@ const createStream = async (): Promise<void> => {
 
 const stopStream = async (stream: StreamItem): Promise<void> => {
     if (
-        !window.confirm(
-            t('admin.live_streams.stop_confirm', { name: stream.name }),
-        )
+        !(await confirm({
+            message: t('admin.live_streams.stop_confirm', {
+                name: stream.name,
+            }),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -124,7 +129,12 @@ const stopStream = async (stream: StreamItem): Promise<void> => {
 };
 
 const rotateToken = async (stream: StreamItem): Promise<void> => {
-    if (!window.confirm(t('admin.live_streams.rotate_confirm'))) {
+    if (
+        !(await confirm({
+            message: t('admin.live_streams.rotate_confirm'),
+            intent: 'danger',
+        }))
+    ) {
         return;
     }
 
@@ -526,33 +536,14 @@ const formatDate = (value: string | null): string =>
             </div>
         </section>
 
-        <div
-            v-if="createOpen"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm"
-            @click.self="createOpen = false"
+        <AppModal
+            v-model:open="createOpen"
+            :title="t('admin.live_streams.create_title')"
+            :description="t('admin.live_streams.create_kicker')"
+            scrollable
         >
-            <form
-                class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
-                @submit.prevent="createStream"
-            >
-                <header class="flex items-center justify-between border-b p-5">
-                    <div>
-                        <p class="text-xs font-black text-indigo-600 uppercase">
-                            {{ t('admin.live_streams.create_kicker') }}
-                        </p>
-                        <h2 class="mt-1 text-xl font-black">
-                            {{ t('admin.live_streams.create_title') }}
-                        </h2>
-                    </div>
-                    <button
-                        type="button"
-                        class="rounded-lg p-2 hover:bg-slate-100"
-                        @click="createOpen = false"
-                    >
-                        <X class="size-5" />
-                    </button>
-                </header>
-                <div class="space-y-4 p-5">
+            <form class="space-y-4" @submit.prevent="createStream">
+                <div class="space-y-4">
                     <label class="block text-sm font-bold"
                         >{{ t('admin.live_streams.name')
                         }}<input
@@ -593,7 +584,7 @@ const formatDate = (value: string | null): string =>
                         {{ error }}
                     </p>
                 </div>
-                <footer class="flex justify-end gap-2 border-t bg-slate-50 p-4">
+                <footer class="flex justify-end gap-2 pt-2">
                     <button
                         type="button"
                         class="rounded-lg border px-4 py-2 text-sm font-bold"
@@ -613,6 +604,6 @@ const formatDate = (value: string | null): string =>
                     </button>
                 </footer>
             </form>
-        </div>
+        </AppModal>
     </main>
 </template>

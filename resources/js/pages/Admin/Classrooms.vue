@@ -11,11 +11,11 @@ import {
     Tags,
     UserCheck,
     UserMinus,
-    X,
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onUnmounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
+import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import { useI18n } from '@/lib/i18n';
@@ -658,46 +658,17 @@ function updateSeparation(value: boolean): void {
             </p>
         </aside>
 
-        <div
-            v-if="attendanceOpen && attendanceRoom && attendanceMember"
-            class="fixed inset-0 z-[80] grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-md"
-            @click.self="closeAttendance"
+        <AppModal
+            v-if="attendanceRoom && attendanceMember"
+            :open="attendanceOpen"
+            :title="`${attendanceMember.first_name} ${attendanceMember.last_name}`"
+            :description="`${attendanceMode === 'checkin' ? t('admin.classrooms.checkin') : t('admin.classrooms.checkout')} — ${attendanceRoom.name}`"
+            size="lg"
+            scrollable
+            @update:open="(value) => !value && closeAttendance()"
         >
-            <form
-                class="my-8 w-full max-w-xl overflow-hidden rounded-3xl bg-white text-slate-900 shadow-2xl"
-                @submit.prevent="submitAttendance"
-            >
-                <header
-                    class="flex items-start justify-between bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white"
-                >
-                    <div>
-                        <p
-                            class="text-xs font-black tracking-[0.2em] text-cyan-200 uppercase"
-                        >
-                            {{
-                                attendanceMode === 'checkin'
-                                    ? t('admin.classrooms.checkin')
-                                    : t('admin.classrooms.checkout')
-                            }}
-                        </p>
-                        <h2 class="mt-1 text-2xl font-black">
-                            {{ attendanceMember.first_name }}
-                            {{ attendanceMember.last_name }}
-                        </h2>
-                        <p class="mt-1 text-sm text-indigo-100">
-                            {{ attendanceRoom.name }}
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        class="rounded-full border border-white/25 p-2"
-                        @click="closeAttendance"
-                    >
-                        <X class="size-4" />
-                    </button>
-                </header>
-
-                <div class="space-y-5 p-6">
+            <form class="space-y-5" @submit.prevent="submitAttendance">
+                <div class="space-y-5">
                     <p
                         v-if="attendanceError"
                         class="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700"
@@ -873,34 +844,17 @@ function updateSeparation(value: boolean): void {
                     </footer>
                 </div>
             </form>
-        </div>
+        </AppModal>
 
-        <div
+        <AppModal
             v-if="selectedMember"
-            class="fixed inset-0 z-[60] grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm"
-            @click.self="selectedMember = null"
+            :open="Boolean(selectedMember)"
+            :title="`${selectedMember.first_name} ${selectedMember.last_name}`"
+            :description="t('admin.classrooms.student_profile')"
+            @update:open="(value) => !value && (selectedMember = null)"
         >
-            <section
-                class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
-            >
-                <header class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-xs font-bold text-indigo-600 uppercase">
-                            {{ t('admin.classrooms.student_profile') }}
-                        </p>
-                        <h2 class="mt-1 text-2xl font-black">
-                            {{ selectedMember.first_name }}
-                            {{ selectedMember.last_name }}
-                        </h2>
-                    </div>
-                    <button
-                        class="rounded-lg border px-3 py-1.5 text-sm"
-                        @click="selectedMember = null"
-                    >
-                        {{ t('a11y.close') }}
-                    </button>
-                </header>
-                <dl class="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm">
+            <section>
+                <dl class="grid gap-3 rounded-xl bg-slate-50 p-4 text-sm">
                     <div>
                         <dt class="text-xs font-bold text-slate-400 uppercase">
                             {{ t('admin.classrooms.age') }}
@@ -955,32 +909,19 @@ function updateSeparation(value: boolean): void {
                     </div>
                 </section>
             </section>
-        </div>
+        </AppModal>
 
-        <div
-            v-if="editorOpen"
-            class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm"
+        <AppModal
+            v-model:open="editorOpen"
+            :title="
+                selected
+                    ? t('admin.classrooms.edit')
+                    : t('admin.classrooms.new')
+            "
+            size="lg"
+            scrollable
         >
-            <form
-                class="mx-auto max-w-2xl space-y-4 rounded-2xl bg-white p-6 text-slate-900 shadow-xl"
-                @submit.prevent="save"
-            >
-                <header class="flex items-center justify-between">
-                    <h2 class="text-xl font-black">
-                        {{
-                            selected
-                                ? t('admin.classrooms.edit')
-                                : t('admin.classrooms.new')
-                        }}
-                    </h2>
-                    <button
-                        type="button"
-                        class="rounded-lg border px-3 py-1.5 text-sm"
-                        @click="editorOpen = false"
-                    >
-                        {{ t('a11y.close') }}
-                    </button>
-                </header>
+            <form class="space-y-4" @submit.prevent="save">
                 <p
                     v-if="error"
                     class="rounded-lg bg-red-50 p-3 text-sm text-red-700"
@@ -1082,7 +1023,7 @@ function updateSeparation(value: boolean): void {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
         <CategoryManagerModal
             :open="categoriesOpen"
             category-type="classroom"

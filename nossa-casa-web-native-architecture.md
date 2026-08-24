@@ -1259,6 +1259,9 @@ Códigos iniciais reservados: `VALIDATION_ERROR` (422), `UNAUTHENTICATED` (401),
 - [x] Criar interfaces de plataforma.
 - [x] Remover APIs do navegador da camada compartilhada; usos restantes pertencem somente ao web/PWA.
 - [x] Criar testes unitários dos repositories e stores.
+- [x] Criar componente-base de modal web acessível e responsivo.
+- [x] Substituir confirmações e prompts nativos do navegador por diálogos reutilizáveis e traduzidos.
+- [x] Migrar os modais manuais das páginas web para o componente-base compartilhado.
 
 ### Fase 8 — Aplicação NativePHP mínima
 

@@ -1,19 +1,12 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import {
-    Check,
-    Image,
-    Pencil,
-    Plus,
-    Tags,
-    Trash2,
-    Upload,
-    X,
-} from '@lucide/vue';
+import { Check, Image, Pencil, Plus, Tags, Trash2, Upload } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
 type MediaItem = {
@@ -42,6 +35,7 @@ defineProps<{
     categories: ManagedCategory[];
 }>();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const editorOpen = ref(false);
 const categoriesOpen = ref(false);
 const selected = ref<MediaItem | null>(null);
@@ -161,8 +155,14 @@ const save = (): void => {
         router.post('/api/media', payload, options);
     }
 };
-const remove = (item: MediaItem): void => {
-    if (confirm(t('admin.media.delete_confirm'))) {
+const remove = async (item: MediaItem): Promise<void> => {
+    if (
+        await confirm({
+            message: t('admin.media.delete_confirm'),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
+    ) {
         router.delete(`/api/media/${item.id}`, { preserveScroll: true });
     }
 };
@@ -301,41 +301,17 @@ onBeforeUnmount(revokePreview);
             </section>
         </div>
 
-        <div
-            v-if="editorOpen"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/70 p-4 backdrop-blur-sm"
-            @click.self="editorOpen = false"
+        <AppModal
+            v-model:open="editorOpen"
+            :title="selected?.file_path ?? t('admin.media.crud')"
+            :description="
+                selected ? t('admin.media.edit') : t('admin.media.new')
+            "
+            size="xl"
+            scrollable
         >
-            <form
-                class="my-6 w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
-                @submit.prevent="save"
-            >
-                <header
-                    class="flex items-center justify-between border-b px-5 py-4"
-                >
-                    <div>
-                        <p
-                            class="text-[10px] font-bold tracking-wider text-indigo-600 uppercase"
-                        >
-                            {{
-                                selected
-                                    ? t('admin.media.edit')
-                                    : t('admin.media.new')
-                            }}
-                        </p>
-                        <h2 class="text-xl font-black">
-                            {{ selected?.file_path ?? t('admin.media.crud') }}
-                        </h2>
-                    </div>
-                    <button
-                        type="button"
-                        class="rounded-lg p-2 hover:bg-slate-100"
-                        @click="editorOpen = false"
-                    >
-                        <X class="size-5" />
-                    </button>
-                </header>
-                <div class="grid gap-6 p-5 lg:grid-cols-2">
+            <form class="space-y-5" @submit.prevent="save">
+                <div class="grid gap-6 lg:grid-cols-2">
                     <div
                         class="grid min-h-72 place-items-center overflow-hidden rounded-xl border bg-slate-100"
                     >
@@ -479,7 +455,7 @@ onBeforeUnmount(revokePreview);
                     </div>
                 </div>
             </form>
-        </div>
+        </AppModal>
         <CategoryManagerModal
             :open="categoriesOpen"
             category-type="media"

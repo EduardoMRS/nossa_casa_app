@@ -5,6 +5,7 @@ import { ArrowLeft, MessageCircle, Pin, Send, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 
@@ -37,6 +38,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const { confirm } = useConfirmDialog();
 const { interactions } = useRepositories();
 const page = usePage();
 const stream = ref({ ...props.liveStream });
@@ -108,7 +110,13 @@ const togglePin = async (comment: CommentItem): Promise<void> => {
 };
 
 const removeComment = async (comment: CommentItem): Promise<void> => {
-    if (!window.confirm(t('live_stream.remove_confirm'))) {
+    if (
+        !(await confirm({
+            message: t('live_stream.remove_confirm'),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
+    ) {
         return;
     }
 

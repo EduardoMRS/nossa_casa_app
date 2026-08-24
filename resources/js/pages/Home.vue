@@ -16,15 +16,9 @@ import {
     ExternalLink,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
@@ -907,20 +901,16 @@ const submitPrayer = async (): Promise<void> => {
                 </article>
             </section>
 
-            <Dialog v-model:open="calendarDialogOpen">
-                <DialogContent class="max-h-[85vh] overflow-y-auto sm:hidden">
-                    <DialogHeader class="pr-6 text-left">
-                        <DialogTitle>
-                            {{ t('home.calendar.selected_day') }}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {{ selectedDateKey }}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div v-if="selectedCalendarItems.length" class="grid gap-2">
-                        <component
-                            :is="item.slug ? Link : 'div'"
+            <AppModal
+                v-model:open="calendarDialogOpen"
+                :title="t('home.calendar.selected_day')"
+                :description="selectedDateKey"
+                content-class="max-h-[85vh] sm:hidden"
+                scrollable
+            >
+                <div v-if="selectedCalendarItems.length" class="grid gap-2">
+                    <component
+                        :is="item.slug ? Link : 'div'"
                             v-for="item in selectedCalendarItems"
                             :key="item.id"
                             :href="
@@ -937,23 +927,20 @@ const submitPrayer = async (): Promise<void> => {
                                 <small class="text-slate-500">{{
                                     item.recurring
                                         ? t('home.calendar.weekly')
-                                        : t('home.calendar.event')
-                                }}</small>
-                            </span>
-                            <span
-                                class="shrink-0 text-xs font-bold text-slate-500"
-                            >
-                                {{ formatScheduleTime(item.start_time) }}–{{
-                                    formatScheduleTime(item.end_time)
-                                }}
+                                    : t('home.calendar.event')
+                            }}</small>
+                        </span>
+                        <span class="shrink-0 text-xs font-bold text-slate-500">
+                            {{ formatScheduleTime(item.start_time) }}–{{
+                                formatScheduleTime(item.end_time)
+                            }}
                             </span>
                         </component>
                     </div>
-                    <p v-else class="text-sm text-slate-500">
-                        {{ t('home.calendar.empty') }}
-                    </p>
-                </DialogContent>
-            </Dialog>
+                <p v-else class="text-sm text-slate-500">
+                    {{ t('home.calendar.empty') }}
+                </p>
+            </AppModal>
 
             <section
                 class="grid gap-6 lg:grid-cols-[minmax(20rem,0.75fr)_minmax(0,1.25fr)]"
@@ -1072,17 +1059,19 @@ const submitPrayer = async (): Promise<void> => {
             </section>
         </main>
 
-        <Teleport to="body">
-            <div
-                v-if="selectedRecording"
-                class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
-                role="dialog"
-                aria-modal="true"
-                :aria-label="selectedRecording.title"
-                @click.self="closeRecording"
+        <template v-if="selectedRecording">
+            <AppModal
+                :open="Boolean(selectedRecording)"
+                :title="selectedRecording.title"
+                size="full"
+                scrollable
+                :show-close-button="false"
+                header-class="sr-only"
+                content-class="gap-0 overflow-hidden border-0 p-0 sm:max-w-6xl"
+                @update:open="(value) => !value && closeRecording()"
             >
                 <div
-                    class="grid max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl lg:grid-cols-[minmax(0,1fr)_20rem]"
+                    class="grid max-h-[92vh] w-full overflow-hidden bg-white lg:grid-cols-[minmax(0,1fr)_20rem]"
                 >
                     <section class="min-w-0 bg-slate-950">
                         <div
@@ -1167,8 +1156,8 @@ const submitPrayer = async (): Promise<void> => {
                         </div>
                     </aside>
                 </div>
-            </div>
-        </Teleport>
+            </AppModal>
+        </template>
 
         <PublicFooter show-locale />
     </div>

@@ -4,6 +4,7 @@ import { MessageSquare, Search, Trash2 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 type CommentItem = {
     id: string;
@@ -21,6 +22,7 @@ const comments = ref([...props.comments.data]);
 const query = ref('');
 const type = ref('');
 const { locale, t } = useI18n();
+const { confirm } = useConfirmDialog();
 const filtered = computed(() =>
     comments.value.filter(
         (comment) =>
@@ -31,7 +33,13 @@ const filtered = computed(() =>
     ),
 );
 async function remove(comment: CommentItem): Promise<void> {
-    if (!window.confirm(t('admin.wall.remove_confirm'))) {
+    if (
+        !(await confirm({
+            message: t('admin.wall.remove_confirm'),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
+    ) {
         return;
     }
 

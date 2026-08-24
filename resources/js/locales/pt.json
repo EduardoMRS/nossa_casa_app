@@ -110,6 +110,15 @@
         "upload": "Enviar",
         "delete": "Excluir"
     },
+    "dialogs": {
+        "confirm": {
+            "title": "Confirmar ação",
+            "action": "Confirmar"
+        },
+        "prompt": {
+            "title": "Informações adicionais"
+        }
+    },
     "gallery": {
         "meta_title": "Galeria",
         "kicker": "Memórias visuais",
@@ -138,6 +147,7 @@
         "upload_error": "A mídia não pôde ser enviada.",
         "item_alt": "Mídia da galeria",
         "anonymous": "Anônimo",
+        "download": "Baixar arquivo",
         "close": "Fechar visualização",
         "no_comments": "Nenhum comentário ainda. Seja a primeira pessoa a interagir.",
         "comment_placeholder": "Adicione um comentário...",

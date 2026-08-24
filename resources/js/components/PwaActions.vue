@@ -2,6 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { BellRing, Download } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import { useI18n } from '@/lib/i18n';
 import { usePwa } from '@/lib/pwa';
 
@@ -76,30 +77,21 @@ const enablePush = async (): Promise<void> => {
         >
             <BellRing class="size-3.5" /> {{ t('pwa.notifications') }}
         </button>
-        <div
-            v-if="showIosGuide"
-            class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-6 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            :aria-label="t('pwa.ios_title')"
+        <AppModal
+            v-model:open="showIosGuide"
+            :title="t('pwa.ios_title')"
+            :description="t('pwa.ios_instructions')"
+            size="sm"
         >
-            <div
-                class="w-full max-w-sm rounded-3xl bg-white p-6 text-left shadow-2xl"
-            >
-                <h2 class="text-lg font-black text-slate-900">
-                    {{ t('pwa.ios_title') }}
-                </h2>
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                    {{ t('pwa.ios_instructions') }}
-                </p>
+            <template #footer>
                 <button
                     type="button"
-                    class="mt-5 w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"
+                    class="w-full rounded-xl bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700"
                     @click="showIosGuide = false"
                 >
                     {{ t('a11y.close') }}
                 </button>
-            </div>
-        </div>
+            </template>
+        </AppModal>
     </div>
 </template>

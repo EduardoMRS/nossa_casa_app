@@ -17,6 +17,7 @@ import {
     Upload,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import {
     exportMethod as exportBackupRoute,
@@ -54,6 +55,7 @@ type MetricsSnapshot = {
 };
 
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const stats = ref([...props.stats]);
 const queue = ref({ ...props.queue });
 const logs = ref([...props.logs]);
@@ -130,14 +132,19 @@ const exportBackup = async (): Promise<void> => {
     }
 };
 
-const importBackup = (): void => {
+const importBackup = async (): Promise<void> => {
     if (operation.value || !selectedBackup.value) {
         errors.value = { backup: t('admin.logs.backup.choose_file') };
 
         return;
     }
 
-    if (!window.confirm(t('admin.logs.backup.import_confirm'))) {
+    if (
+        !(await confirm({
+            message: t('admin.logs.backup.import_confirm'),
+            intent: 'danger',
+        }))
+    ) {
         return;
     }
 

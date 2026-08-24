@@ -18,8 +18,10 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
 import PortalHeader from '@/components/PortalHeader.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { home, login, register } from '@/routes';
 
@@ -73,6 +75,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { confirm, prompt } = useConfirmDialog();
 const communityModalOpen = ref(false);
 const churchModalOpen = ref(false);
 const processing = ref(false);
@@ -278,9 +281,11 @@ const selectProofDocument = (event: Event): void => {
 
 const approveRequest = async (request: RegistrationRequest): Promise<void> => {
     if (
-        !window.confirm(
-            t('portal.review.approve_confirm', { name: request.name }),
-        )
+        !(await confirm({
+            message: t('portal.review.approve_confirm', {
+                name: request.name,
+            }),
+        }))
     ) {
         return;
     }
@@ -290,7 +295,11 @@ const approveRequest = async (request: RegistrationRequest): Promise<void> => {
 };
 
 const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
-    const notes = window.prompt(t('portal.review.reject_reason'));
+    const notes = await prompt({
+        message: t('portal.review.reject_reason'),
+        inputLabel: t('portal.review.reject_reason'),
+        intent: 'danger',
+    });
 
     if (!notes) {
         return;
@@ -730,28 +739,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
         <PublicFooter show-locale />
 
-        <div
-            v-if="communityModalOpen"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"
-            @click.self="communityModalOpen = false"
+        <AppModal
+            v-model:open="communityModalOpen"
+            :title="t('portal.onboarding.register_community')"
+            :description="t('portal.onboarding.community_kicker')"
+            size="lg"
+            scrollable
         >
-            <form
-                class="w-full max-w-xl space-y-4 rounded-3xl bg-white p-7 shadow-2xl"
-                @submit.prevent="saveCommunity"
-            >
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-indigo-600 uppercase">
-                            {{ t('portal.onboarding.community_kicker') }}
-                        </p>
-                        <h2 class="text-2xl font-black">
-                            {{ t('portal.onboarding.register_community') }}
-                        </h2>
-                    </div>
-                    <button type="button" @click="communityModalOpen = false">
-                        <X class="size-5" />
-                    </button>
-                </div>
+            <form class="space-y-4" @submit.prevent="saveCommunity">
                 <input
                     v-model="communityForm.name"
                     required
@@ -783,30 +778,16 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     {{ t('actions.save') }}
                 </button>
             </form>
-        </div>
+        </AppModal>
 
-        <div
-            v-if="churchModalOpen"
-            class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/60 p-4"
-            @click.self="churchModalOpen = false"
+        <AppModal
+            v-model:open="churchModalOpen"
+            :title="t('portal.onboarding.request_church')"
+            :description="t('portal.onboarding.church_kicker')"
+            size="lg"
+            scrollable
         >
-            <form
-                class="my-8 w-full max-w-2xl space-y-4 rounded-3xl bg-white p-7 shadow-2xl"
-                @submit.prevent="requestChurch"
-            >
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-indigo-600 uppercase">
-                            {{ t('portal.onboarding.church_kicker') }}
-                        </p>
-                        <h2 class="text-2xl font-black">
-                            {{ t('portal.onboarding.request_church') }}
-                        </h2>
-                    </div>
-                    <button type="button" @click="churchModalOpen = false">
-                        <X class="size-5" />
-                    </button>
-                </div>
+            <form class="space-y-4" @submit.prevent="requestChurch">
                 <select
                     v-model="churchForm.community_id"
                     required
@@ -957,6 +938,6 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     {{ t('portal.onboarding.send_request') }}
                 </button>
             </form>
-        </div>
+        </AppModal>
     </div>
 </template>

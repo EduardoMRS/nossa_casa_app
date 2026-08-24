@@ -5,6 +5,7 @@ import { computed } from 'vue';
 import { destroy } from '@/actions/App/Http/Controllers/PostController';
 import PostArticle from '@/components/PostArticle.vue';
 import type { CommentItem, ReactionItem } from '@/components/PostArticle.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { edit, index } from '@/routes/posts';
 
@@ -17,6 +18,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const article = computed(() => ({
     id: props.post.id,
     title: props.post.translations?.title || props.post.title,
@@ -32,8 +34,14 @@ const article = computed(() => ({
     },
 }));
 
-const deletePost = (): void => {
-    if (confirm(t('posts.shared.delete_confirm'))) {
+const deletePost = async (): Promise<void> => {
+    if (
+        await confirm({
+            message: t('posts.shared.delete_confirm'),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
+    ) {
         router.delete(destroy.url({ post: props.post.id }));
     }
 };

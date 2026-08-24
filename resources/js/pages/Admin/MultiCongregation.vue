@@ -13,6 +13,8 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { ref } from 'vue';
+import AppModal from '@/components/AppModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 
@@ -64,6 +66,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { confirm, prompt } = useConfirmDialog();
 const { unitLabel } = useTerminology();
 const churches = ref([...props.churches]);
 const communities = ref([...props.communities]);
@@ -181,11 +184,13 @@ const selectChurchIcon = (event: Event): void => {
 
 const removeChurch = async (church: Church): Promise<void> => {
     if (
-        !window.confirm(
-            t('admin.multicongregation.delete_church_confirm', {
+        !(await confirm({
+            message: t('admin.multicongregation.delete_church_confirm', {
                 name: church.name,
             }),
-        )
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -217,11 +222,13 @@ const saveCommunity = async (): Promise<void> => {
 
 const removeCommunity = async (community: Community): Promise<void> => {
     if (
-        !window.confirm(
-            t('admin.multicongregation.delete_community_confirm', {
+        !(await confirm({
+            message: t('admin.multicongregation.delete_community_confirm', {
                 name: community.name,
             }),
-        )
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -238,9 +245,11 @@ const removeCommunity = async (community: Community): Promise<void> => {
 
 const approveRequest = async (request: RegistrationRequest): Promise<void> => {
     if (
-        !window.confirm(
-            t('portal.review.approve_confirm', { name: request.name }),
-        )
+        !(await confirm({
+            message: t('portal.review.approve_confirm', {
+                name: request.name,
+            }),
+        }))
     ) {
         return;
     }
@@ -250,7 +259,11 @@ const approveRequest = async (request: RegistrationRequest): Promise<void> => {
 };
 
 const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
-    const notes = window.prompt(t('portal.review.reject_reason'));
+    const notes = await prompt({
+        message: t('portal.review.reject_reason'),
+        inputLabel: t('portal.review.reject_reason'),
+        intent: 'danger',
+    });
 
     if (!notes) {
         return;
@@ -577,26 +590,20 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </p>
         </section>
 
-        <div
-            v-if="churchModalOpen"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"
-            @click.self="churchModalOpen = false"
+        <AppModal
+            v-model:open="churchModalOpen"
+            :title="
+                editingChurch
+                    ? t('admin.multicongregation.edit_unit', {
+                          unit: unitLabel('branch'),
+                              })
+                    : t('admin.multicongregation.new_unit', {
+                          unit: unitLabel('branch'),
+                      })
+            "
+            scrollable
         >
-            <form
-                class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-xl"
-                @submit.prevent="saveChurch"
-            >
-                <h2 class="text-xl font-black">
-                    {{
-                        editingChurch
-                            ? t('admin.multicongregation.edit_unit', {
-                                  unit: unitLabel('branch'),
-                              })
-                            : t('admin.multicongregation.new_unit', {
-                                  unit: unitLabel('branch'),
-                              })
-                    }}
-                </h2>
+            <form class="space-y-4" @submit.prevent="saveChurch">
                 <input
                     v-model="churchForm.name"
                     required
@@ -696,24 +703,18 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
 
-        <div
-            v-if="communityModalOpen"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"
-            @click.self="communityModalOpen = false"
+        <AppModal
+            v-model:open="communityModalOpen"
+            :title="
+                editingCommunity
+                    ? t('admin.multicongregation.edit_community')
+                    : t('admin.multicongregation.new_community')
+            "
+            scrollable
         >
-            <form
-                class="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-xl"
-                @submit.prevent="saveCommunity"
-            >
-                <h2 class="text-xl font-black">
-                    {{
-                        editingCommunity
-                            ? t('admin.multicongregation.edit_community')
-                            : t('admin.multicongregation.new_community')
-                    }}
-                </h2>
+            <form class="space-y-4" @submit.prevent="saveCommunity">
                 <input
                     v-model="communityForm.name"
                     required
@@ -755,6 +756,6 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
     </main>
 </template>

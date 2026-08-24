@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Tags, Trash2, X } from '@lucide/vue';
+import { Pencil, Plus, Tags, Trash2 } from '@lucide/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
+import AppModal from '@/components/AppModal.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
 type CategoryTypeOption = { value: string; label: string };
@@ -15,6 +17,7 @@ const props = defineProps<{
     categories: CategoryItem[];
 }>();
 const { t } = useI18n();
+const { confirm } = useConfirmDialog();
 const modalOpen = ref(false);
 const editingId = ref<string | null>(null);
 const typeFilter = ref('');
@@ -84,11 +87,15 @@ const save = (): void => {
     router.post('/api/categories', payload, options);
 };
 
-const remove = (category: CategoryItem): void => {
+const remove = async (category: CategoryItem): Promise<void> => {
     if (
-        !window.confirm(
-            t('admin.categories.delete_confirm', { name: category.name }),
-        )
+        !(await confirm({
+            message: t('admin.categories.delete_confirm', {
+                name: category.name,
+            }),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        }))
     ) {
         return;
     }
@@ -216,31 +223,16 @@ const remove = (category: CategoryItem): void => {
             </p>
         </section>
 
-        <div
-            v-if="modalOpen"
-            class="fixed inset-0 z-50 grid place-items-center bg-slate-950/65 p-4 backdrop-blur-sm"
-            @click.self="modalOpen = false"
+        <AppModal
+            v-model:open="modalOpen"
+            :title="
+                editingId
+                    ? t('admin.categories.edit')
+                    : t('admin.categories.new')
+            "
+            scrollable
         >
-            <form
-                class="w-full max-w-lg space-y-4 rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl"
-                @submit.prevent="save"
-            >
-                <header class="flex items-center justify-between">
-                    <h2 class="text-xl font-black">
-                        {{
-                            editingId
-                                ? t('admin.categories.edit')
-                                : t('admin.categories.new')
-                        }}
-                    </h2>
-                    <button
-                        type="button"
-                        class="rounded-lg p-2 text-muted-foreground hover:bg-muted"
-                        @click="modalOpen = false"
-                    >
-                        <X class="size-5" />
-                    </button>
-                </header>
+            <form class="space-y-4" @submit.prevent="save">
                 <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.common.name')
                     }}<input
@@ -287,6 +279,6 @@ const remove = (category: CategoryItem): void => {
                     </button>
                 </div>
             </form>
-        </div>
+        </AppModal>
     </main>
 </template>
