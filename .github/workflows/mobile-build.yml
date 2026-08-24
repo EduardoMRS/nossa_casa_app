@@ -57,7 +57,7 @@ jobs:
 
       - name: Prepare application
         run: |
-          cp .env.example .env
+          cp .env.ci.example .env
           composer install --no-interaction --prefer-dist --no-progress
           npm ci
           php artisan key:generate --force
@@ -113,7 +113,7 @@ jobs:
 
       - name: Prepare application
         run: |
-          cp .env.example .env
+          cp .env.ci.example .env
           composer install --no-interaction --prefer-dist --no-progress
           npm ci
           php artisan key:generate --force
@@ -151,6 +151,7 @@ jobs:
   ios:
     name: Build signed IPA
     needs: validate
+    if: ${{ vars.MOBILE_BUILD_IOS_SIGNED == 'true' }}
     runs-on: macos-26
     defaults:
       run:
@@ -182,7 +183,7 @@ jobs:
 
       - name: Prepare application
         run: |
-          cp .env.example .env
+          cp .env.ci.example .env
           composer install --no-interaction --prefer-dist --no-progress
           npm ci
           php artisan key:generate --force
