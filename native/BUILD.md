@@ -1,35 +1,29 @@
-# Build, teste e publicação do aplicativo native
+# Build Android e iOS
 
-Este guia corresponde ao NativePHP Mobile 4 instalado neste diretório. Execute todos os comandos a partir de `native/`. O diretório gerado `nativephp/`, `vendor/`, `node_modules/`, caches, logs e artefatos de build são dinâmicos e não devem ser versionados; os lockfiles `composer.lock` e `package-lock.json` devem ser versionados.
+Este guia cobre preparação, execução local e builds manuais de teste do aplicativo NativePHP. Publicação na Play Store, TestFlight e App Store está documentada em [RELEASE.md](RELEASE.md).
 
-Documentação oficial de referência:
+O projeto usa NativePHP Mobile 4.2.0, PHP 8.4+, Node.js 22 e Vite 8. Execute os comandos locais a partir de `native/`, salvo quando o exemplo indicar a raiz do repositório.
 
-- [Ambiente](https://nativephp.com/docs/mobile/4/getting-started/environment-setup)
-- [Comandos](https://nativephp.com/docs/mobile/4/getting-started/commands)
-- [Fluxo de publicação](https://nativephp.com/docs/mobile/4/publishing/introduction)
-- [Publicação Android](https://nativephp.com/docs/mobile/4/publishing/android)
-- [Publicação iOS](https://nativephp.com/docs/mobile/4/publishing/ios)
-- [Push notifications](https://nativephp.com/docs/mobile/4/digging-deeper/push-notifications)
+## 1. Artefatos e ambientes
 
-## 1. Matriz de ambientes
+| Artefato                    | Linux atual               | Mac Apple silicon         | GitHub Actions |
+| --------------------------- | ------------------------- | ------------------------- | -------------- |
+| APK Android assinado        | Sim, via `native-builder` | Sim                       | Ubuntu         |
+| AAB Android assinado        | Sim, via `native-builder` | Sim                       | Ubuntu         |
+| App para simulador iOS      | Não                       | Sim                       | Não publicado  |
+| IPA development para iPhone | Não                       | Sim, com assinatura       | macOS 26       |
+| IPA App Store               | Não                       | Sim, com conta Apple paga | macOS 26       |
 
-| Objetivo | Linux | macOS Apple silicon |
-| --- | --- | --- |
-| Testes PHP/EDGE | Sim | Sim |
-| Build Android | Sim | Sim |
-| Build iOS | Não | Sim, com Xcode 16+ |
-| Publicar na Play Store | Sim | Sim |
-| Publicar na App Store/TestFlight | Não | Sim |
+Requisitos Android usados pelo projeto:
 
-Requisitos comuns:
+- Android SDK 36 e Build Tools 36.0.0;
+- JDK 17;
+- CMake 3.22.1;
+- NDK 27.0.12077973.
 
-- PHP CLI 8.4.1 ou superior, com extensões exigidas pelo Composer;
-- Composer 2;
-- Node.js e npm compatíveis com Vite 8;
-- `NATIVEPHP_APP_ID=br.org.nossacasa.app` definido antes de `native:install`;
-- acesso HTTPS ao servidor Nossa Casa ou à instalação independente que será testada.
+O container `native-builder` já contém esse ambiente. Para iOS são necessários Mac Apple silicon, macOS 15.6+, Xcode 26+, Command Line Tools, Homebrew e CocoaPods.
 
-Para Android, instale Android Studio, Android SDK, uma JDK compatível com o Gradle instalado e configure `JAVA_HOME` e `ANDROID_HOME`. Para iOS, use um Mac Apple silicon com Xcode 16+, Command Line Tools, Homebrew e CocoaPods. O simulador iOS não recebe push; esse cenário exige aparelho físico e conta Apple Developer.
+Nunca versione `nativephp/`, `vendor/`, `node_modules/`, caches, APK, AAB, IPA, `.p12`, `.p8`, `.mobileprovision`, keystores ou arquivos `.env`. Mantenha versionados `composer.lock`, `package-lock.json` e `nativephp.lock`.
 
 ## 2. Preparação do checkout
 
@@ -43,9 +37,17 @@ php artisan migrate --force
 npm run build
 ```
 
-Durante desenvolvimento, mantenha `NATIVEPHP_APP_VERSION=DEBUG` se quiser que o bundle PHP seja sempre reextraído. Para builds distribuíveis, use uma versão semântica e incremente sempre `NATIVEPHP_APP_VERSION_CODE`.
+Confirme no `.env`:
 
-Antes de qualquer build, execute a validação rápida:
+```dotenv
+NATIVEPHP_APP_ID=br.org.nossacasa.app
+NATIVEPHP_APP_VERSION=DEBUG
+NATIVEPHP_APP_VERSION_CODE=1
+```
+
+Use `DEBUG` durante desenvolvimento. Para artefatos distribuíveis, informe uma versão semântica e um version code superior a todos os builds anteriores.
+
+Validação mínima antes de qualquer build:
 
 ```bash
 php artisan test
@@ -54,85 +56,91 @@ php artisan native:validate
 php artisan native:plugin:list
 ```
 
-## 3. Android para desenvolvimento e homologação
+## 3. Android local
 
-Instale ou regenere o shell Android após a configuração inicial ou mudanças nativas:
+### Executar em emulador ou aparelho
+
+Com o SDK Android instalado, emulador aberto ou aparelho com depuração USB autorizada:
 
 ```bash
 php artisan native:install android
-```
-
-Com emulador aberto ou aparelho com depuração USB autorizado:
-
-```bash
 php artisan native:run android --watch
 ```
 
-Use `--vite` somente se a alteração realmente depender do servidor Vite. As telas atuais são PHP/EDGE, então o fluxo normal não precisa dele:
+Use `--vite` somente quando precisar do servidor Vite durante o desenvolvimento:
 
 ```bash
 php artisan native:run android --watch --vite
 ```
 
-Antes de publicar, valide a variante otimizada em aparelho físico:
-
-```bash
-php artisan native:run android --build=release
-```
-
-Critérios mínimos de homologação Android:
-
-- discovery manual e por QR Code;
-- login, refresh, troca de igreja, logout e troca de servidor;
-- portal, posts, eventos, Bíblia, galeria e transmissão;
-- retomada após background e reconexão realtime;
-- cache offline e bloqueio de operações privadas sem conexão;
-- deep links `nossacasa://posts/...`, `nossacasa://events/...` e `nossacasa://live-streams/...`;
-- push em foreground, background e app encerrado, quando o plugin e as credenciais estiverem instalados.
-
-## 4. Android para publicação
-
-Na primeira publicação, gere e guarde o keystore fora do Git:
+### Criar o keystore de teste
 
 ```bash
 php artisan native:credentials android
 ```
 
-O comando grava as variáveis abaixo no `.env` e cria o keystore em `nativephp/credentials/android/`:
+O checkout atual usa:
 
 ```dotenv
-ANDROID_KEYSTORE_FILE=/caminho/seguro/upload-keystore.jks
+ANDROID_KEYSTORE_FILE=credentials/app-release-key.jks
 ANDROID_KEYSTORE_PASSWORD=
 ANDROID_KEY_ALIAS=
 ANDROID_KEY_PASSWORD=
 ```
 
-Nunca perca o keystore ou suas senhas. Faça backup cifrado e restrinja o acesso.
+O diretório `credentials/` precisa pertencer ao usuário que executa o comando e deve permanecer ignorado pelo Git. Faça backup cifrado do keystore e das senhas. Para publicação, use uma chave de upload duradoura, conforme [RELEASE.md](RELEASE.md).
 
-Fluxo de release:
+### Gerar APK assinado no Linux com Docker
 
-```bash
-php artisan native:release patch
-php artisan test
-npm run build
-php artisan native:run android --build=release
-php artisan native:package android --build-type=bundle
-```
-
-O AAB assinado fica em `nativephp/android/app/build/outputs/`. Suba primeiro no track de teste interno do Google Play Console. O upload também pode ser automatizado com uma service account restrita:
+A partir da raiz do repositório:
 
 ```bash
-php artisan native:package android --build-type=bundle \
-  --upload-to-play-store \
-  --play-store-track=internal \
-  --google-service-key=/caminho/seguro/play-service-account.json
+docker compose --profile native build native-builder
+docker compose --profile native run --rm native-builder \
+  native:package android \
+  --build-type=release \
+  --no-tty \
+  --no-interaction
 ```
 
-Promova de `internal` para `alpha`, `beta` e `production` somente após a homologação. Não use `--skip-prepare` depois de alterações em plugins, manifesto, Gradle ou código nativo.
+Saída padrão:
 
-## 5. iOS para desenvolvimento e homologação
+```text
+native/nativephp/android/app/build/outputs/apk/release/app-release.apk
+```
 
-Esta etapa precisa ser executada em macOS Apple silicon; não é possível validar iOS em host Linux ou Windows.
+Valide a assinatura com o `apksigner` do SDK antes de instalar:
+
+```bash
+docker compose --profile native run --rm --no-deps \
+  --entrypoint /opt/android-sdk/build-tools/36.0.0/apksigner \
+  native-builder verify --verbose \
+  /var/www/native/nativephp/android/app/build/outputs/apk/release/app-release.apk
+```
+
+O resultado deve começar com `Verifies` e ter ao menos um esquema de assinatura válido.
+
+### Gerar AAB local
+
+```bash
+docker compose --profile native run --rm native-builder \
+  native:package android \
+  --build-type=bundle \
+  --no-tty \
+  --no-interaction
+```
+
+Saída padrão:
+
+```text
+native/nativephp/android/app/build/outputs/bundle/release/app-release.aab
+```
+
+O APK é usado para instalação direta. O AAB é o artefato destinado à Play Store.
+
+## 4. iOS local
+
+Não é possível compilar iOS no host Linux. Em um Mac compatível:
 
 ```bash
 cd native
@@ -140,91 +148,186 @@ php artisan native:install ios
 php artisan native:run ios --watch
 ```
 
-Para selecionar simulador ou aparelho, informe o UDID como segundo argumento ou use o seletor interativo. Para abrir o projeto gerado no Xcode:
+Para abrir o projeto gerado:
 
 ```bash
 php artisan native:open ios
 ```
 
-Antes de publicar, teste a variante otimizada em aparelho físico registrado:
+### Simulador
+
+Selecione um simulador no Xcode ou no seletor do NativePHP. O simulador não comprova assinatura, push notification nem instalação em aparelho físico.
+
+### iPhone próprio com Apple Personal Team
+
+1. Adicione sua Apple Account em **Xcode > Settings > Accounts**.
+2. Conecte o iPhone, ative Developer Mode e copie o UDID em **Window > Devices and Simulators**.
+3. Abra o projeto com `php artisan native:open ios`.
+4. Em **Signing & Capabilities**, escolha seu `Personal Team` e confirme o bundle ID `br.org.nossacasa.app`.
+5. Execute uma vez pelo Xcode no aparelho para gerar certificado e provisioning profile.
+6. Teste também a variante otimizada:
 
 ```bash
 php artisan native:run ios --build=release
 ```
 
-Repita os critérios funcionais do Android e valide também permissões, safe areas, retorno de links universais, suspensão/retomada, assinatura e entitlement `aps-environment`.
+No Personal Team, App ID, aparelhos e profiles expiram em 7 dias. Após o vencimento, gere novamente pelo Xcode, recompile e reinstale o aplicativo. Essa conta não permite TestFlight nem App Store.
 
-## 6. iOS para TestFlight e App Store
+## 5. Workflow manual de teste no GitHub
 
-Pré-requisitos:
+O workflow [.github/workflows/mobile-build.yml](../.github/workflows/mobile-build.yml) usa somente `workflow_dispatch`. Pushes e merges não o executam automaticamente nesta fase.
 
-- app criado no App Store Connect com bundle ID `br.org.nossacasa.app`;
-- certificado de distribuição `.p12` e senha;
-- provisioning profile de distribuição `.mobileprovision` correspondente ao bundle ID e ao certificado;
+Ele sempre executa a validação e, conforme os inputs, produz:
+
+- `build_android=true`: APK Android release assinado;
+- `build_ios=true`: IPA development assinado para o iPhone registrado.
+
+O workflow precisa estar na branch padrão `main` para aparecer em **Actions > Mobile build**.
+
+### Secrets Android obrigatórios
+
+| Secret                      | Conteúdo                                               |
+| --------------------------- | ------------------------------------------------------ |
+| `ANDROID_KEYSTORE_BASE64`   | `credentials/app-release-key.jks` codificado em Base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | Senha do keystore                                      |
+| `ANDROID_KEY_ALIAS`         | Alias existente dentro do keystore                     |
+| `ANDROID_KEY_PASSWORD`      | Senha da chave                                         |
+
+No Linux, a partir de `native/`:
+
+```bash
+base64 -w 0 credentials/app-release-key.jks | gh secret set ANDROID_KEYSTORE_BASE64
+gh secret set ANDROID_KEYSTORE_PASSWORD
+gh secret set ANDROID_KEY_ALIAS
+gh secret set ANDROID_KEY_PASSWORD
+```
+
+No macOS, substitua o primeiro comando por:
+
+```bash
+base64 -i credentials/app-release-key.jks | tr -d '\n' | gh secret set ANDROID_KEYSTORE_BASE64
+```
+
+Os comandos sem pipe solicitam o valor interativamente. Não informe senhas diretamente na linha de comando nem no histórico do shell.
+
+### Secrets iOS development obrigatórios
+
+| Configuração                            | Conteúdo                                                   |
+| --------------------------------------- | ---------------------------------------------------------- |
+| `IOS_SIGNING_CERTIFICATE_BASE64`        | Certificado `Apple Development` exportado como `.p12`      |
+| `IOS_SIGNING_CERTIFICATE_PASSWORD`      | Senha usada ao exportar o `.p12`                           |
+| `IOS_PROVISIONING_PROFILE_BASE64`       | Profile development com o bundle ID e o iPhone registrados |
+| `IOS_TEAM_ID`                           | Team ID do Personal Team                                   |
+| `IOS_DEVICE_UDID`                       | UDID do mesmo iPhone incluído no profile                   |
+| Variable `MOBILE_BUILD_IOS_SIGNED=true` | Habilita o job macOS                                       |
+
+Prepare os arquivos no Mac:
+
+1. Depois de executar o app no iPhone pelo Xcode, abra **Keychain Access > My Certificates**.
+2. Exporte o certificado `Apple Development` junto com sua chave privada como `development.p12`.
+3. Localize o profile gerado pelo Xcode em `~/Library/Developer/Xcode/UserData/Provisioning Profiles/` ou `~/Library/MobileDevice/Provisioning Profiles/`.
+4. Confirme que o profile ainda está válido, usa `br.org.nossacasa.app` e contém o UDID do aparelho.
+
+Configure no GitHub:
+
+```bash
+base64 -i development.p12 | tr -d '\n' | gh secret set IOS_SIGNING_CERTIFICATE_BASE64
+gh secret set IOS_SIGNING_CERTIFICATE_PASSWORD
+base64 -i development.mobileprovision | tr -d '\n' | gh secret set IOS_PROVISIONING_PROFILE_BASE64
+gh secret set IOS_TEAM_ID
+gh secret set IOS_DEVICE_UDID
+gh variable set MOBILE_BUILD_IOS_SIGNED --body true
+```
+
+O runner valida antes do build:
+
+- expiração do profile;
 - Team ID;
-- chave da API do App Store Connect `.p8`, Key ID e Issuer ID.
+- bundle ID;
+- UDID autorizado;
+- entitlement de desenvolvimento;
+- assinatura final do IPA com `codesign`.
 
-As credenciais podem ser preparadas interativamente:
+O artifact iOS é retido por 7 dias, mas deixa de ser instalável assim que o profile expira.
 
-```bash
-php artisan native:credentials ios
-```
+### Executar manualmente
 
-Ou fornecidas no `.env` local/secret store da CI:
-
-```dotenv
-NATIVEPHP_DEVELOPMENT_TEAM=
-IOS_TEAM_ID=
-IOS_DISTRIBUTION_CERTIFICATE_PATH=/caminho/seguro/distribution.p12
-IOS_DISTRIBUTION_CERTIFICATE_PASSWORD=
-IOS_DISTRIBUTION_PROVISIONING_PROFILE_PATH=/caminho/seguro/profile.mobileprovision
-APP_STORE_API_KEY_PATH=/caminho/seguro/AuthKey_KEYID.p8
-APP_STORE_API_KEY_ID=
-APP_STORE_API_ISSUER_ID=
-```
-
-Valide perfil e entitlements antes de exportar:
+Somente Android:
 
 ```bash
-php artisan native:package ios --export-method=app-store --validate-profile
+gh workflow run mobile-build.yml \
+  --ref main \
+  -f build_android=true \
+  -f build_ios=false
 ```
 
-Fluxo de release e upload:
+Somente iOS:
 
 ```bash
-php artisan native:release patch
-php artisan test
-npm run build
-php artisan native:run ios --build=release
-php artisan native:package ios --export-method=app-store --upload-to-app-store
+gh workflow run mobile-build.yml \
+  --ref main \
+  -f build_android=false \
+  -f build_ios=true
 ```
 
-Após o upload, aguarde o processamento no App Store Connect, distribua primeiro pelo TestFlight, resolva avisos de privacidade/entitlements e só então envie para revisão. Para Ad Hoc ou enterprise, altere `--export-method` e use o provisioning profile correspondente.
+Android e iOS no mesmo run:
 
-## 7. Push antes da publicação
+```bash
+gh workflow run mobile-build.yml \
+  --ref main \
+  -f build_android=true \
+  -f build_ios=true
+```
 
-O backend, o cadastro/remoção de tokens, as preferências, os deep links e o Push Gateway já estão implementados. Porém, o checkout atual não contém o plugin `nativephp/mobile-firebase` nem os arquivos Firebase. Portanto, não considere push em aparelho físico validado até concluir esta integração.
+Acompanhe e baixe os artifacts:
 
-Para habilitar o transporte do aplicativo:
+```bash
+gh run list --workflow mobile-build.yml --limit 5
+gh run watch RUN_ID --exit-status
+gh run download RUN_ID --dir artifacts/mobile-build
+```
 
-1. adquirir/instalar e registrar o plugin Firebase compatível com NativePHP Mobile 4;
-2. colocar `google-services.json` e `GoogleService-Info.plist` na raiz de `native/`, conforme a documentação do plugin;
-3. manter a service account FCM somente no servidor ou no Push Gateway — nunca dentro do app;
-4. configurar APNs/FCM server-side sem distribuir chaves às instalações independentes;
-5. regenerar o shell com `native:install` e executar os testes em aparelhos físicos;
-6. confirmar foreground, background, app encerrado, rotação de token e remoção no logout.
+Não ative `build_ios=true` antes de configurar todos os Secrets iOS e renovar o profile vencido.
 
-Os arquivos de configuração móveis não devem ser confundidos com a service account do servidor. Revise se eles podem ser versionados conforme a política da organização; credenciais privadas, `.p8`, `.p12`, keystores, senhas e service accounts nunca entram no Git.
+## 6. Instalação e homologação
 
-## 8. Checklist de publicação
+### Android
 
-- [ ] `git status` não contém `vendor/`, `node_modules/`, `nativephp/`, Gradle cache, logs ou artefatos de build.
-- [ ] Testes PHP/EDGE e build Vite passaram no mesmo commit.
-- [ ] Versão e version code foram incrementados.
-- [ ] Build `release` foi testado em aparelho físico.
-- [ ] Login, multi-tenant, refresh/revogação e offline foram retestados.
-- [ ] Push e deep links foram testados nos três estados do app, se push estiver habilitado.
-- [ ] APK/AAB/IPA não contém `.env`, tokens, service accounts ou credenciais do backend.
-- [ ] Política de privacidade, exclusão de conta, suporte, permissões e dados da loja foram revisados.
-- [ ] AAB foi homologado no track interno antes de produção.
-- [ ] IPA foi homologado no TestFlight antes da revisão da App Store.
+```bash
+adb install -r app-release.apk
+```
+
+### iOS
+
+Baixe o artifact `nossa-casa-main-ios-*`, conecte o mesmo iPhone ao Mac e instale pelo **Xcode > Window > Devices and Simulators** ou pelo Apple Configurator. O aparelho precisa estar em Developer Mode e o UDID deve constar no profile.
+
+Critérios mínimos para os dois sistemas:
+
+- discovery manual e QR Code;
+- login, refresh, troca de igreja, logout e troca de servidor;
+- portal, posts, eventos, Bíblia, galeria e transmissão;
+- background, retomada e reconexão realtime;
+- cache offline e bloqueio de operações privadas sem conexão;
+- deep links `nossacasa://posts/...`, `nossacasa://events/...` e `nossacasa://live-streams/...`;
+- permissões, safe areas e rotação;
+- push nos três estados do app quando o plugin Firebase estiver habilitado.
+
+## 7. Checklist do primeiro run manual
+
+- [ ] `mobile-build.yml` está versionado na `main`.
+- [x] O keystore Android local existe e está ignorado pelo Git.
+- [ ] Os quatro Secrets Android estão configurados.
+- [x] Testes, Vite, `native:validate` e `native:plugin:list` passaram localmente.
+- [ ] O primeiro run Android foi executado com `build_ios=false`.
+- [ ] O APK do artifact foi instalado e homologado em aparelho físico.
+- [ ] Há acesso a um Mac Apple silicon com Xcode 26+.
+- [ ] O `.p12`, profile, Team ID e UDID iOS estão configurados e válidos.
+- [ ] O IPA foi gerado e instalado no mesmo iPhone registrado.
+- [ ] Credenciais e artefatos continuam fora do Git.
+
+## Referências
+
+- [NativePHP: ambiente](https://nativephp.com/docs/mobile/4/getting-started/environment-setup)
+- [NativePHP: Android](https://nativephp.com/docs/mobile/4/publishing/android)
+- [NativePHP: iOS](https://nativephp.com/docs/mobile/4/publishing/ios)
+- [Apple: Personal Team](https://developer.apple.com/help/account/basics/about-your-developer-account)
