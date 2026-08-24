@@ -1,0 +1,227 @@
+name: Mobile build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "native/**"
+      - ".github/workflows/mobile-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NATIVEPHP_APP_ID: br.org.nossacasa.app
+  NATIVEPHP_APP_VERSION: 0.0.${{ github.run_number }}
+  NATIVEPHP_APP_VERSION_CODE: ${{ github.run_number }}
+  CI: "true"
+
+jobs:
+  validate:
+    name: Validate native app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ runner.os }}-${{ hashFiles('native/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+
+      - name: Test and validate
+        run: |
+          php artisan test
+          npm run build
+          php artisan native:validate
+          php artisan native:plugin:list
+
+  android:
+    name: Build signed APK
+    needs: validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native
+    env:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+          npm run build
+
+      - name: Restore Android signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing ANDROID_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing ANDROID_KEY_PASSWORD"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-upload.jks"
+
+      - name: Package signed APK
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/android-upload.jks
+        run: |
+          export NATIVEPHP_GRADLE_PATH="$JAVA_HOME"
+          export NATIVEPHP_ANDROID_SDK_LOCATION="$ANDROID_SDK_ROOT"
+          php artisan native:package android \
+            --build-type=release \
+            --output="$GITHUB_WORKSPACE/dist/android" \
+            --no-tty
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nossa-casa-main-android-${{ github.run_number }}
+          path: dist/android/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: Build signed IPA
+    needs: validate
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: native
+    env:
+      APP_STORE_API_KEY_ID: ${{ secrets.APP_STORE_API_KEY_ID }}
+      APP_STORE_API_ISSUER_ID: ${{ secrets.APP_STORE_API_ISSUER_ID }}
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      NATIVEPHP_DEVELOPMENT_TEAM: ${{ secrets.IOS_TEAM_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+          npm run build
+
+      - name: Restore Apple signing credentials
+        env:
+          APP_STORE_API_KEY_BASE64: ${{ secrets.APP_STORE_API_KEY_BASE64 }}
+          IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+          IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          test -n "$APP_STORE_API_KEY_BASE64" || { echo "Missing APP_STORE_API_KEY_BASE64"; exit 1; }
+          test -n "$APP_STORE_API_KEY_ID" || { echo "Missing APP_STORE_API_KEY_ID"; exit 1; }
+          test -n "$APP_STORE_API_ISSUER_ID" || { echo "Missing APP_STORE_API_ISSUER_ID"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" || { echo "Missing IOS_DISTRIBUTION_CERTIFICATE_BASE64"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" || { echo "Missing IOS_DISTRIBUTION_CERTIFICATE_PASSWORD"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64" || { echo "Missing IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64"; exit 1; }
+          test -n "$IOS_TEAM_ID" || { echo "Missing IOS_TEAM_ID"; exit 1; }
+          printf '%s' "$APP_STORE_API_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          printf '%s' "$IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.mobileprovision"
+
+      - name: Package signed IPA
+        env:
+          APP_STORE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          IOS_DISTRIBUTION_CERTIFICATE_PATH: ${{ runner.temp }}/distribution.p12
+          IOS_DISTRIBUTION_PROVISIONING_PROFILE_PATH: ${{ runner.temp }}/distribution.mobileprovision
+        run: |
+          php artisan native:package ios \
+            --export-method=app-store \
+            --validate-profile \
+            --rebuild \
+            --output="$GITHUB_WORKSPACE/dist/ios" \
+            --no-tty
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nossa-casa-main-ios-${{ github.run_number }}
+          path: dist/ios/**/*.ipa
+          if-no-files-found: error
+          retention-days: 14
