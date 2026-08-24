@@ -13,6 +13,7 @@ import { initializePwa } from '@/lib/pwa';
 
 configureEcho({
     broadcaster: 'reverb',
+    authEndpoint: '/api/broadcasting/auth',
 });
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';

@@ -17,9 +17,11 @@
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
         "laravel/reverb": "^1.0",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "league/flysystem-aws-s3-v3": "~3.35.0",
+        "minishlink/web-push": "^11.0",
         "staudenmeir/eloquent-has-many-deep": "^1.22"
     },
     "require-dev": {

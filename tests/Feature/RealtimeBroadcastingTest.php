@@ -4,6 +4,7 @@ use App\Enums\LiveStreamStatus;
 use App\Events\LiveStreamCommentsUpdated;
 use App\Events\LiveStreamUpdated;
 use App\Events\SystemMetricsUpdated;
+use App\Models\Church;
 use App\Models\Comment;
 use App\Models\LiveStream;
 use App\Models\User;
@@ -94,4 +95,35 @@ test('system logs and metrics are broadcast on an authenticated private channel'
         ->and($channel->name)->toBe('private-system.metrics')
         ->and($event->broadcastAs())->toBe('system.metrics.updated')
         ->and($event->broadcastWith()['logs'])->toBe(['example']);
+});
+
+test('broadcast authentication accepts Sanctum and enforces live stream church membership', function () {
+    $church = Church::factory()->create();
+    $stream = LiveStream::factory()->create([
+        'church_id' => $church->id,
+        'is_public' => false,
+    ]);
+    $member = User::factory()->create();
+    $outsider = User::factory()->create();
+    $church->assignMember($member);
+    expect($member->churches()->whereKey($church->id)->exists())->toBeTrue();
+    config([
+        'broadcasting.default' => 'reverb',
+        'broadcasting.connections.reverb.key' => 'test-key',
+        'broadcasting.connections.reverb.secret' => 'test-secret',
+        'broadcasting.connections.reverb.app_id' => 'test-app',
+    ]);
+
+    $memberToken = $member->createToken('realtime-test')->plainTextToken;
+    $this->withToken($memberToken)->postJson('/api/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => 'private-live-stream.'.$stream->id,
+    ])->assertSuccessful()->assertJsonStructure(['auth']);
+
+    auth()->forgetGuards();
+    $outsiderToken = $outsider->createToken('realtime-test')->plainTextToken;
+    $this->withToken($outsiderToken)->postJson('/api/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => 'private-live-stream.'.$stream->id,
+    ])->assertForbidden();
 });

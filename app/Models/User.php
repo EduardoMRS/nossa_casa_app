@@ -5,8 +5,11 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRelationships;
 use App\Enums\UserRole;
+use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
@@ -15,10 +18,12 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
+#[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements PasskeyUser
 {
-    use HasFactory, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasFactory, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     protected $fillable = [
         'first_name',
@@ -51,6 +56,7 @@ class User extends Authenticatable implements PasskeyUser
         'two_factor_confirmed_at' => 'datetime',
         'birth_date' => 'date',
         'role' => UserRole::class, // Cast automático para o Enum
+        'blocked_at' => 'immutable_datetime',
     ];
 
     /** @return HasOneThrough<Church, UserProfile, $this> */
@@ -108,6 +114,26 @@ class User extends Authenticatable implements PasskeyUser
     public function pushSubscriptions(): HasMany
     {
         return $this->hasMany(PushSubscription::class);
+    }
+
+    /** @return HasMany<MobileSession, $this> */
+    public function mobileSessions(): HasMany
+    {
+        return $this->hasMany(MobileSession::class);
+    }
+
+    /** @return HasMany<DevicePushToken, $this> */
+    public function devicePushTokens(): HasMany
+    {
+        return $this->hasMany(DevicePushToken::class);
+    }
+
+    /** @return BelongsToMany<Church, $this> */
+    public function churches(): BelongsToMany
+    {
+        return $this->belongsToMany(Church::class)
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function scopeFamily($query)

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
-import axios from 'axios';
 import { computed, ref } from 'vue';
-import { store as storeResponse } from '@/actions/App/Http/Controllers/FormResponseController';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { login } from '@/routes';
 import { show as showEvent } from '@/routes/events';
+import { ApiError } from '@shared/http/FetchHttpClient';
 
 interface SchemaOption {
     label: string;
@@ -54,6 +54,7 @@ const props = defineProps<{
     existingAnswers: Record<string, unknown> | null;
     alreadyRegistered: boolean;
 }>();
+const { forms } = useRepositories();
 
 const page = usePage();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
@@ -221,19 +222,15 @@ const submit = async () => {
     flashMessage.value = '';
 
     try {
-        await axios.post(storeResponse.url({ form: props.form.id }), {
-            answers: answers.value,
-        });
+        await forms.submit(props.form.id, answers.value);
 
         flashMessage.value = t('events.register.success');
     } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response?.status === 422) {
-            const payload = error.response.data as {
-                errors?: Record<string, string[]>;
-            };
+        if (error instanceof ApiError && error.status === 422) {
+            const payload = error.details as Record<string, string[]> | undefined;
             const mappedErrors: Record<string, string> = {};
 
-            Object.entries(payload.errors ?? {}).forEach(([key, value]) => {
+            Object.entries(payload ?? {}).forEach(([key, value]) => {
                 mappedErrors[key] =
                     value[0] ?? t('events.register.invalid_field');
             });

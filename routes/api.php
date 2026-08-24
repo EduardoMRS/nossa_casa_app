@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\DevicePushTokenController;
+use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\PublicContentController;
+use App\Http\Controllers\Api\PushGatewayController;
+use App\Http\Controllers\BibleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChurchController;
 use App\Http\Controllers\ClassroomController;
@@ -24,6 +29,24 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRelationshipController;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('auth')->group(function () {
+    Route::post('login', [MobileAuthController::class, 'login'])
+        ->middleware('throttle:mobile-login')
+        ->name('api.auth.login');
+    Route::post('refresh', [MobileAuthController::class, 'refresh'])
+        ->middleware('throttle:mobile-refresh')
+        ->name('api.auth.refresh');
+
+    Route::middleware(['auth:sanctum', 'church.context:optional', 'throttle:mobile-authenticated'])->group(function () {
+        Route::get('me', [MobileAuthController::class, 'me'])->name('api.auth.me');
+        Route::post('logout', [MobileAuthController::class, 'logout'])->name('api.auth.logout');
+        Route::post('logout-all', [MobileAuthController::class, 'logoutAll'])->name('api.auth.logout_all');
+        Route::get('sessions', [MobileAuthController::class, 'sessions'])->name('api.auth.sessions');
+        Route::delete('sessions/{mobileSession}', [MobileAuthController::class, 'destroySession'])
+            ->name('api.auth.sessions.destroy');
+    });
+});
+
 Route::prefix('internal/media')
     ->middleware(['media.worker', 'throttle:120,1'])
     ->group(function () {
@@ -36,59 +59,87 @@ Route::prefix('internal/media')
 Route::post('internal/media/auth', MediaAuthController::class)
     ->middleware('throttle:300,1');
 
+Route::post('push/gateway', PushGatewayController::class)
+    ->middleware(['push.gateway', 'throttle:push-gateway'])
+    ->name('api.push.gateway');
+
 /*
 |--------------------------------------------------------------------------
 | Rotas Públicas
 |--------------------------------------------------------------------------
 */
-Route::get('community', [CommunityController::class, 'index']);
-Route::get('community/{slug}', [CommunityController::class, 'show']);
-Route::get('church', [ChurchController::class, 'index']);
-Route::get('church/{slug}', [ChurchController::class, 'show']);
-Route::get('posts', [PostController::class, 'index']);
-Route::get('posts/{post}', [PostController::class, 'show']);
-Route::get('event', [EventController::class, 'index']);
-Route::get('event/{slug}', [EventController::class, 'show']);
-Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
-Route::apiResource('media', MediaController::class)
-    ->parameters(['media' => 'media'])
-    ->only(['index', 'show']);
-Route::get('comments', [CommentController::class, 'index']);
+Route::middleware('church.context:public')->group(function () {
+    Route::get('portal', [PublicContentController::class, 'portal'])->name('api.portal');
+    Route::get('content/posts', [PublicContentController::class, 'posts'])->name('api.content.posts');
+    Route::get('content/posts/{slug}', [PublicContentController::class, 'post'])->name('api.content.posts.show');
+    Route::get('content/events', [PublicContentController::class, 'events'])->name('api.content.events');
+    Route::get('content/events/{slug}', [PublicContentController::class, 'event'])->name('api.content.events.show');
+    Route::get('content/gallery', [PublicContentController::class, 'gallery'])->name('api.content.gallery');
+    Route::get('content/library', [PublicContentController::class, 'library'])->name('api.content.library');
+    Route::get('content/library/bible', [PublicContentController::class, 'bible'])->name('api.content.library.bible');
+    Route::get('content/live-streams/{liveStream}', [PublicContentController::class, 'liveStream'])->name('api.content.live-streams.show');
+    Route::get('bible/{version}/offline', [BibleController::class, 'offline'])->name('bible.offline');
+    Route::get('bible/{version}/books', [BibleController::class, 'books'])->name('bible.books');
+    Route::get('bible/{version}/books/{book}/chapters', [BibleController::class, 'chapters'])->name('bible.chapters');
+    Route::get('bible/{version}/books/{book}/chapters/{chapter}', [BibleController::class, 'chapter'])
+        ->whereNumber('chapter')
+        ->name('bible.chapter');
+    Route::get('community', [CommunityController::class, 'index']);
+    Route::get('community/{slug}', [CommunityController::class, 'show']);
+    Route::get('church', [ChurchController::class, 'index']);
+    Route::get('church/{slug}', [ChurchController::class, 'show']);
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{post}', [PostController::class, 'show']);
+    Route::get('event', [EventController::class, 'index']);
+    Route::get('event/{slug}', [EventController::class, 'show']);
+    Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+    Route::apiResource('media', MediaController::class)
+        ->parameters(['media' => 'media'])
+        ->only(['index', 'show']);
+    Route::get('comments', [CommentController::class, 'index']);
 
-// Formulário de pedido de oração (Aberto ao público)
-Route::post('prayer-requests', [PrayerRequestController::class, 'store'])
-    ->middleware('throttle:10,1');
+    Route::post('prayer-requests', [PrayerRequestController::class, 'store'])
+        ->middleware('throttle:10,1');
+});
 
 /*
 |--------------------------------------------------------------------------
 | Rotas Autenticadas
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
-
-    // Acesso Geral (Membro e superiores)
+Route::middleware(['auth:sanctum', 'church.context:public'])->group(function () {
     Route::middleware('role:member|leader|media|church_leader|superadmin|system')->group(function () {
         Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy']);
         Route::post('reactions', [ReactionController::class, 'store']);
         Route::delete('reactions/{reaction}', [ReactionController::class, 'destroy']);
-
         Route::post('event/{event}/checkin', [EventController::class, 'checkin']);
+        Route::post('forms/{form}/responses', [FormResponseController::class, 'store']);
+    });
 
+    Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
+        Route::post('classrooms/{classroom}/check-in', [ClassroomController::class, 'checkIn']);
+        Route::post('classrooms/{classroom}/check-out', [ClassroomController::class, 'checkOut']);
+    });
+});
+
+Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function () {
+    Route::post('push/devices', [DevicePushTokenController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('api.push.devices.store');
+    Route::delete('push/devices/{deviceId}', [DevicePushTokenController::class, 'destroy'])
+        ->middleware('throttle:30,1')
+        ->name('api.push.devices.destroy');
+
+    // Acesso Geral (Membro e superiores)
+    Route::middleware('role:member|leader|media|church_leader|superadmin|system')->group(function () {
         // Histórico de pedidos de oração do usuário logado
         Route::get('prayer-requests', [PrayerRequestController::class, 'index']);
-
-        // Envio de formulário de inscrição para eventos
-        Route::post('forms/{form}/responses', [FormResponseController::class, 'store']);
     });
 
     // Acesso de Liderança (Líder ou superior)
     Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
         // Relacionamentos Pessoais
         Route::post('users/{user}/family-relationship', [UserRelationshipController::class, 'store']);
-
-        // Gestão de Aulas e Presenças
-        Route::post('classrooms/{classroom}/check-in', [ClassroomController::class, 'checkIn']);
-        Route::post('classrooms/{classroom}/check-out', [ClassroomController::class, 'checkOut']);
 
         // Categorização Genérica
         Route::post('items/{item_type}/{item}/categorize', [CategoryController::class, 'categorizeItem']);

@@ -32,9 +32,15 @@
         "module": "ESNext" /* Specify what module code is generated. */,
         // "rootDir": "./",                                  /* Specify the root folder within your source files. */
         "moduleResolution": "bundler" /* Specify how TypeScript looks up a file from a given module specifier. */,
+        "allowImportingTsExtensions": true,
         // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
         "paths": {
-            /* Specify a set of entries that re-map imports to additional lookup locations. */ "@/*": ["./resources/js/*"],
+            /* Specify a set of entries that re-map imports to additional lookup locations. */ "@/*": [
+                "./resources/js/*"
+            ],
+            "@shared/*": [
+                "./resources/js/shared/*"
+            ]
         },
         // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
         // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
@@ -120,8 +126,12 @@
         "resources/js/**/*.js",
         "resources/js/**/*.ts",
         "resources/js/**/*.d.ts",
-        "resources/js/**/*.tsx", 
+        "resources/js/**/*.tsx",
         "resources/js/**/*.vue",
-        "resources/js/auto-imports.d.ts"
+        "resources/js/auto-imports.d.ts",
+        "tests/Frontend/**/*.ts",
+        "native/resources/js/**/*.js",
+        "native/resources/js/**/*.ts",
+        "native/vite.config.js"
     ]
 }

@@ -37,7 +37,32 @@ return [
 
     'webpush' => [
         'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
         'subject' => env('VAPID_SUBJECT', env('APP_URL')),
+    ],
+
+    'native_push' => [
+        'default' => env('NATIVE_PUSH_PROVIDER', 'null'),
+        'fcm' => [
+            'project_id' => env('FCM_PROJECT_ID'),
+            'access_token' => env('FCM_ACCESS_TOKEN'),
+        ],
+        'apns' => [
+            'endpoint' => env('APNS_ENDPOINT', 'https://api.push.apple.com'),
+            'bundle_id' => env('APNS_BUNDLE_ID'),
+            'bearer_token' => env('APNS_BEARER_TOKEN'),
+        ],
+        'unified' => [
+            'enabled' => env('UNIFIED_PUSH_ENABLED', false),
+            'allowed_hosts' => array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) env('UNIFIED_PUSH_ALLOWED_HOSTS', '')),
+            ))),
+        ],
+        'gateway' => [
+            'enabled' => env('PUSH_GATEWAY_ENABLED', false),
+            'secret' => env('PUSH_GATEWAY_SECRET'),
+        ],
     ],
 
     'ia' => [

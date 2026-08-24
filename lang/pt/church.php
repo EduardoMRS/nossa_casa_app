@@ -2,6 +2,12 @@
 
 return [
     'context_required' => 'É necessário selecionar uma igreja.',
+    'context' => [
+        'required' => 'Selecione uma igreja para continuar.',
+        'invalid' => 'O identificador da igreja selecionada é inválido.',
+        'not_found' => 'A igreja selecionada não está disponível nesta instalação.',
+        'membership_required' => 'Você não possui vínculo ativo com a igreja selecionada.',
+    ],
     'membership_category_manage_required' => 'É necessário pertencer a uma igreja para gerenciar categorias.',
     'membership_classroom_create_required' => 'É necessário pertencer a uma igreja para criar salas de aula.',
     'membership_classroom_list_required' => 'É necessário pertencer a uma igreja para listar salas de aula.',

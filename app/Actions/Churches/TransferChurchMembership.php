@@ -23,6 +23,10 @@ class TransferChurchMembership
             if ($user->role !== UserRole::SYSTEM && $user->role !== UserRole::MEMBER) {
                 $user->update(['role' => UserRole::MEMBER]);
             }
+
+            $church->members()->syncWithoutDetaching([
+                $user->id => ['role' => $user->role->value],
+            ]);
         });
     }
 }

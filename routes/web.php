@@ -6,10 +6,10 @@ use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Admin\LiveStreamControlController;
 use App\Http\Controllers\Admin\StopLiveStreamController;
-use App\Http\Controllers\BibleController;
 use App\Http\Controllers\BrandingAssetController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\PortalCommunityController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicGalleryController;
@@ -26,6 +26,7 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
+use App\Queries\EventQuery;
 use App\Support\ChurchDomainContext;
 use App\Support\S3TemporaryUrlGenerator;
 use Illuminate\Http\Request;
@@ -35,6 +36,10 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+
+Route::get('/.well-known/nossa-casa.json', DiscoveryController::class)
+    ->middleware('throttle:discovery')
+    ->name('discovery');
 
 if (! function_exists('categoriesForChurchAndType')) {
     function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
@@ -95,34 +100,10 @@ Route::get('church/{church_id}/library/{file_path}', function ($church_id, $file
     return redirect()->to(genUrl($library->getRawOriginal('file_path')));
 })->name('library.show');
 
-Route::get('/events', function () {
-    $churchId = app(ChurchDomainContext::class)->churchId();
-    $events = Event::query()
-        ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
-        ->with('church:id,name,slug')
-        ->orderBy('start_time', 'asc')
-        ->paginate(18)
-        ->through(function (Event $event) {
-            $event->localize(relations: ['church']);
-
-            return [
-                'id' => $event->id,
-                'title' => $event->title,
-                'slug' => $event->slug,
-                'description' => $event->description
-                    ? (string) preg_replace('/\s+/', ' ', trim(strip_tags(Str::markdown($event->description, [
-                        'html_input' => 'strip',
-                        'allow_unsafe_links' => false,
-                    ]))))
-                    : null,
-                'cover_path' => $event->cover_url,
-                'start_time' => $event->start_time,
-                'end_time' => $event->end_time,
-                'church' => $event->church,
-            ];
-        });
-
-    return Inertia::render('Events/Index', ['events' => $events]);
+Route::get('/events', function (EventQuery $events) {
+    return Inertia::render('Events/Index', $events->index(
+        app(ChurchDomainContext::class)->churchId(),
+    )->toArray());
 })->name('events.index');
 
 Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public.index');
@@ -131,12 +112,6 @@ Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.
 
 Route::get('/biblioteca', [PublicLibraryController::class, 'index'])->name('library.index');
 Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible'])->name('library.bible');
-Route::get('/api/bible/{version}/offline', [BibleController::class, 'offline'])->name('bible.offline');
-Route::get('/api/bible/{version}/books', [BibleController::class, 'books'])->name('bible.books');
-Route::get('/api/bible/{version}/books/{book}/chapters', [BibleController::class, 'chapters'])->name('bible.chapters');
-Route::get('/api/bible/{version}/books/{book}/chapters/{chapter}', [BibleController::class, 'chapter'])
-    ->whereNumber('chapter')
-    ->name('bible.chapter');
 
 Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
     abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
@@ -184,39 +159,12 @@ Route::get('/events/{event:slug}/register', function (Event $event, Request $req
     ]);
 })->name('events.register');
 
-Route::get('/events/{event:slug}', function (Event $event, Request $request) {
-    abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
-    $event->load('church:id,name,slug', 'categories:id,name');
-    $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description'])->first();
-
-    $event->localize(relations: ['church', 'categories']);
-    $registrationForm?->localize();
-
-    return Inertia::render('Events/Show', [
-        'event' => [
-            'id' => $event->id,
-            'title' => $event->title,
-            'slug' => $event->slug,
-            'description' => $event->description,
-            'description_html' => Str::markdown($event->description ?? '', [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]),
-            'start_time' => $event->start_time,
-            'end_time' => $event->end_time,
-            'cover_path' => $event->cover_url,
-            'church' => $event->church,
-            'categories' => $event->categories,
-        ],
-        'registration' => [
-            'has_form' => (bool) $registrationForm,
-            'form_id' => $registrationForm?->id,
-            'form_title' => $registrationForm?->title,
-            'already_registered' => $request->user()
-                ? $event->users()->where('users.id', $request->user()->id)->exists()
-                : false,
-        ],
-    ]);
+Route::get('/events/{event:slug}', function (Event $event, Request $request, EventQuery $events) {
+    return Inertia::render('Events/Show', $events->show(
+        $event->slug,
+        app(ChurchDomainContext::class)->churchId(),
+        $request->user(),
+    )->toArray());
 })->name('events.show');
 
 Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
@@ -522,6 +470,3 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
-Route::group(['prefix' => 'api'], function () {
-    require __DIR__.'/api.php';
-});

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import axios from 'axios';
 import { computed, ref } from 'vue';
-import { store, update } from '@/actions/App/Http/Controllers/FormController';
 import CategorySelector from '@/components/CategorySelector.vue';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { index } from '@/routes/admin/forms';
+import { ApiError } from '@shared/http/FetchHttpClient';
 
 type Linkable = { id: string; title: string };
 type Category = { id: string; name: string; slug: string; type: string };
@@ -41,6 +41,7 @@ const props = defineProps<{
     categories: Category[];
 }>();
 const { t } = useI18n();
+const { forms } = useRepositories();
 const saving = ref(false);
 const error = ref('');
 const fields = ref<FormElement[]>([]);
@@ -195,15 +196,17 @@ async function save(): Promise<void> {
         };
 
         if (props.form) {
-            await axios.put(update.url({ form: props.form.id }), payload);
+            await forms.update(props.form.id, payload);
         } else {
-            await axios.post(store.url(), payload);
+            await forms.create(payload);
         }
 
         router.visit(index());
     } catch (caught) {
-        error.value = axios.isAxiosError(caught)
-            ? Object.values(caught.response?.data?.errors ?? {})
+        error.value = caught instanceof ApiError
+            ? Object.values(
+                  (caught.details as Record<string, string[]> | undefined) ?? {},
+              )
                   .flat()
                   .join(' ') || t('admin.forms.save_error')
             : t('admin.forms.save_error');

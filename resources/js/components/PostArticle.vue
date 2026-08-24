@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { CalendarDays, Eye, Heart, MessageCircle, Send } from '@lucide/vue';
-import axios from 'axios';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 
 export type Person = {
     id: string;
@@ -44,6 +44,7 @@ const props = defineProps<{
     canInteract: boolean;
 }>();
 const { locale, t } = useI18n();
+const { interactions } = useRepositories();
 const page = usePage();
 const comment = ref('');
 const processing = ref(false);
@@ -81,12 +82,12 @@ const submitComment = async (): Promise<void> => {
     processing.value = true;
 
     try {
-        const response = await axios.post<CommentItem>('/api/comments', {
-            commentable_type: 'post',
-            commentable_id: props.post.id,
+        const response = await interactions.createComment<CommentItem>({
+            commentableType: 'post',
+            commentableId: props.post.id,
             content: comment.value,
         });
-        commentItems.value.unshift({ ...response.data, reactions: [] });
+        commentItems.value.unshift({ ...response, reactions: [] });
         comment.value = '';
     } finally {
         processing.value = false;
@@ -102,7 +103,7 @@ const react = async (content: string): Promise<void> => {
 
     try {
         if (ownPostReaction.value?.content === content) {
-            await axios.delete(`/api/reactions/${ownPostReaction.value.id}`);
+            await interactions.deleteReaction(ownPostReaction.value.id);
             reactionItems.value = reactionItems.value.filter(
                 (item) => item.id !== ownPostReaction.value?.id,
             );
@@ -110,17 +111,17 @@ const react = async (content: string): Promise<void> => {
             return;
         }
 
-        const response = await axios.post<ReactionItem>('/api/reactions', {
-            reactionable_type: 'post',
-            reactionable_id: props.post.id,
+        const response = await interactions.createReaction<ReactionItem>({
+            reactionableType: 'post',
+            reactionableId: props.post.id,
             content,
             type: 'emoji',
         });
         reactionItems.value = [
             ...reactionItems.value.filter(
-                (item) => item.user_id !== response.data.user_id,
+                (item) => item.user_id !== response.user_id,
             ),
-            response.data,
+            response,
         ];
     } finally {
         reacting.value = '';
@@ -139,7 +140,7 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
 
     try {
         if (ownReaction) {
-            await axios.delete(`/api/reactions/${ownReaction.id}`);
+            await interactions.deleteReaction(ownReaction.id);
             commentItem.reactions = (commentItem.reactions ?? []).filter(
                 (item) => item.id !== ownReaction.id,
             );
@@ -147,17 +148,17 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
             return;
         }
 
-        const response = await axios.post<ReactionItem>('/api/reactions', {
-            reactionable_type: 'comment',
-            reactionable_id: commentItem.id,
+        const response = await interactions.createReaction<ReactionItem>({
+            reactionableType: 'comment',
+            reactionableId: commentItem.id,
             content: '❤️',
             type: 'emoji',
         });
         commentItem.reactions = [
             ...(commentItem.reactions ?? []).filter(
-                (item) => item.user_id !== response.data.user_id,
+                (item) => item.user_id !== response.user_id,
             ),
-            response.data,
+            response,
         ];
     } finally {
         reacting.value = '';

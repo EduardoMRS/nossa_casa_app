@@ -49,9 +49,9 @@ it('allows only users above admin to access the backup screen during maintenance
 });
 
 it('exports the database and configured media without changing database rows', function () {
-    Storage::fake('media');
-    Storage::fake('recordings');
-    Storage::disk('media')->put('church/example.txt', 'example media');
+    Storage::fake((string) config('media.disk'));
+    Storage::fake((string) config('media.archive_disk'));
+    Storage::disk((string) config('media.disk'))->put('church/example.txt', 'example media');
     $user = User::factory()->create(['role' => UserRole::SYSTEM]);
     $count = User::query()->count();
 
@@ -63,13 +63,13 @@ it('exports the database and configured media without changing database rows', f
 });
 
 it('imports a backup and restores its media', function () {
-    Storage::fake('media');
-    Storage::fake('recordings');
-    Storage::disk('media')->put('church/example.txt', 'example media');
+    Storage::fake((string) config('media.disk'));
+    Storage::fake((string) config('media.archive_disk'));
+    Storage::disk((string) config('media.disk'))->put('church/example.txt', 'example media');
     User::factory()->create(['role' => UserRole::SYSTEM]);
 
     $archive = app(SystemBackupService::class)->export();
-    Storage::disk('media')->delete('church/example.txt');
+    Storage::disk((string) config('media.disk'))->delete('church/example.txt');
 
     $upload = UploadedFile::fake()->createWithContent(
         'backup.zip',
@@ -78,7 +78,7 @@ it('imports a backup and restores its media', function () {
 
     app(SystemBackupService::class)->import($upload);
 
-    expect(Storage::disk('media')->get('church/example.txt'))->toBe('example media');
+    expect(Storage::disk((string) config('media.disk'))->get('church/example.txt'))->toBe('example media');
     File::delete($archive);
 });
 test('example', function () {

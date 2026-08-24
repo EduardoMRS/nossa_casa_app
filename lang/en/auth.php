@@ -19,4 +19,13 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    'mobile' => [
+        'account_blocked' => 'This account is blocked.',
+        'invalid_refresh_token' => 'The mobile session is no longer valid. Sign in again.',
+        'refresh_reused' => 'This mobile session was revoked because a refresh token was reused.',
+        'two_factor_required' => 'Enter your two-factor authentication code.',
+        'two_factor_invalid' => 'The two-factor authentication code is invalid.',
+        'rate_limited' => 'Too many requests. Please try again shortly.',
+    ],
+
 ];

@@ -20,6 +20,7 @@ import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 
 type Person = {
@@ -86,6 +87,7 @@ const props = defineProps<{
     communities: CommunityOption[];
     pendingChildCheckouts: PendingCheckout[];
 }>();
+const { prayers } = useRepositories();
 const { t } = useI18n();
 const activeTab = ref('profile');
 const saving = ref(false);
@@ -177,9 +179,9 @@ const submitPrayer = async (): Promise<void> => {
     prayerSaving.value = true;
 
     try {
-        await axios.post('/api/prayer-requests', {
+        await prayers.create({
             content: prayerContent.value,
-            is_anonymous: false,
+            isAnonymous: false,
         });
         window.location.reload();
     } finally {

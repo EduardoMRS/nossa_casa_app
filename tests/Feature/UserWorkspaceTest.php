@@ -68,7 +68,7 @@ test('adding a child creates the reciprocal guardian relationship', function () 
 
 test('member can update user and profile fields including avatar', function () {
     Storage::fake('public');
-    Storage::fake('media');
+    Storage::fake((string) config('media.disk'));
     $user = User::factory()->create();
     $community = Community::query()->create([
         'name' => 'Selected Community',
@@ -97,7 +97,7 @@ test('member can update user and profile fields including avatar', function () {
         ->and($user->profile?->gender)->toBe('female')
         ->and($user->profile?->community_id)->toBe($community->id)
         ->and($user->profile?->church_id)->toBe($church->id);
-    Storage::disk('media')->assertExists($user->profile->avatar_path);
+    Storage::disk((string) config('media.disk'))->assertExists($user->profile->avatar_path);
 });
 
 test('profile church selection requires its matching community', function () {

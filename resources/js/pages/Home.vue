@@ -15,7 +15,6 @@ import {
     X,
     ExternalLink,
 } from '@lucide/vue';
-import axios from 'axios';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -28,9 +27,11 @@ import {
 } from '@/components/ui/dialog';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 import { show as publicPostShow } from '@/routes/posts/public';
+import { createWebHydratedStore } from '@shared/platform/web';
 
 type EventCard = {
     id: string;
@@ -120,6 +121,8 @@ const props = defineProps<{
     calendarEvents: CalendarEvent[];
     dailyVerse: DailyVerse | null;
 }>();
+const { prayers } = useRepositories();
+const homeStore = createWebHydratedStore('home', 15 * 60 * 1000);
 
 const { locale, t } = useI18n();
 const publicTemplate = usePublicTemplate('home');
@@ -192,6 +195,14 @@ const handleEscape = (event: KeyboardEvent): void => {
 };
 
 onMounted(() => {
+    void homeStore.hydrate({
+        stats: props.stats,
+        featuredEvents: props.featuredEvents,
+        latestPosts: props.latestPosts,
+        latestRecordings: props.latestRecordings,
+        calendarEvents: props.calendarEvents,
+        dailyVerse: props.dailyVerse,
+    });
     restoreDarkMode = document.documentElement.classList.contains('dark');
     document.documentElement.classList.remove('dark');
     document.documentElement.style.colorScheme = 'light';
@@ -326,9 +337,9 @@ const submitPrayer = async (): Promise<void> => {
     prayerStatus.value = 'idle';
 
     try {
-        await axios.post('/api/prayer-requests', {
+        await prayers.create({
             content: prayerContent.value,
-            is_anonymous: !authenticatedUser.value || prayerAnonymous.value,
+            isAnonymous: !authenticatedUser.value || prayerAnonymous.value,
         });
         prayerContent.value = '';
         prayerAnonymous.value = false;

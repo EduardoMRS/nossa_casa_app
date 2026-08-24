@@ -12,6 +12,7 @@ use App\Models\Event;
 use App\Models\Highlight;
 use App\Models\Media;
 use App\Models\Post;
+use App\Queries\PortalQuery;
 use App\Services\Bible\BibleAccessResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\GeoDistance;
@@ -26,6 +27,7 @@ class PortalController extends Controller
         private readonly ChurchDomainContext $context,
         private readonly GeoDistance $geoDistance,
         private readonly BibleAccessResolver $bibleAccess,
+        private readonly PortalQuery $portal,
     ) {}
 
     public function index(Request $request): Response
@@ -144,6 +146,17 @@ class PortalController extends Controller
     }
 
     private function churchHome(): Response
+    {
+        $church = $this->context->church();
+        abort_unless($church, 404);
+
+        return Inertia::render('Home', $this->portal->churchHome(
+            $church,
+            request()->user(),
+        )->toArray());
+    }
+
+    private function legacyChurchHome(): Response
     {
         $church = $this->context->church();
         abort_unless($church, 404);

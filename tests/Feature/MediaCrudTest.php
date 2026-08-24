@@ -9,8 +9,16 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
+    $this->originalFilesystemDisks = config('filesystems.disks');
+    $this->originalMetadataDisks = config('filesystems.metadata_disks');
     Storage::fake('public');
     Storage::fake('media');
+    Storage::fake((string) config('media.disk'));
+});
+
+afterEach(function () {
+    config()->set('filesystems.disks', $this->originalFilesystemDisks);
+    config()->set('filesystems.metadata_disks', $this->originalMetadataDisks);
 });
 
 test('file metadata skips unavailable filesystem adapters', function () {
@@ -50,7 +58,7 @@ test('file metadata ignores disks that are not configured for metadata lookup', 
 test('stored files are served only through encrypted temporary signed urls', function () {
     Storage::disk('media')->put('gallery/private.txt', 'private content');
 
-    $url = genUrl('gallery/private.txt');
+    $url = genUrl('gallery/private.txt', 'media');
 
     expect($url)->toContain('signature=')
         ->and($url)->toContain('expires=');
@@ -87,7 +95,7 @@ test('leader can upload media from a stored file path string', function () {
         expect($media->description)->toBe('A resource shared with the gallery.');
         expect($media->status)->toBe(MediaStatus::PENDING);
         expect($media->file_path)->toStartWith('church/'.$church->id.'/media/');
-        expect(Storage::disk('media')->exists($media->file_path))->toBeTrue();
+        expect(Storage::disk((string) config('media.disk'))->exists($media->file_path))->toBeTrue();
     } finally {
         @unlink($sourcePath);
     }
@@ -116,7 +124,7 @@ test('admin can approve and delete pending media', function () {
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($admin);
 
-    Storage::disk('media')->put('church/'.$church->id.'/media/sample.pdf', 'sample');
+    Storage::disk((string) config('media.disk'))->put('church/'.$church->id.'/media/sample.pdf', 'sample');
 
     $media = Media::query()->create([
         'church_id' => $church->id,
@@ -136,7 +144,7 @@ test('admin can approve and delete pending media', function () {
 
     $this->actingAs($admin)->deleteJson('/api/media/'.$media->id)->assertNoContent();
 
-    expect(Storage::disk('media')->exists('church/'.$church->id.'/media/sample.pdf'))->toBeFalse();
+    expect(Storage::disk((string) config('media.disk'))->exists('church/'.$church->id.'/media/sample.pdf'))->toBeFalse();
     expect(Media::query()->whereKey($media->id)->exists())->toBeFalse();
 });
 
@@ -146,7 +154,7 @@ test('registered media source cannot be replaced while record data can be edited
     $church->assignMember($admin);
 
     $originalPath = 'church/'.$church->id.'/media/original.jpg';
-    Storage::disk('media')->put($originalPath, 'original-media');
+    Storage::disk((string) config('media.disk'))->put($originalPath, 'original-media');
 
     $media = Media::query()->create([
         'church_id' => $church->id,
@@ -189,5 +197,5 @@ test('registered media source cannot be replaced while record data can be edited
         ->file_path->toBe($originalPath)
         ->mimetype->toBe('image/jpeg')
         ->size->toBe(14);
-    expect(Storage::disk('media')->exists($originalPath))->toBeTrue();
+    expect(Storage::disk((string) config('media.disk'))->exists($originalPath))->toBeTrue();
 });

@@ -17,7 +17,7 @@ Broadcast::channel('live-stream.{liveStreamId}', function (User $user, string $l
     $liveStream = LiveStream::query()->find($liveStreamId);
 
     return $liveStream !== null && (
-        $user->role === UserRole::SYSTEM
-        || $user->profile?->church_id === $liveStream->church_id
+        in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
+        || $user->churches()->where('churches.id', $liveStream->church_id)->exists()
     );
-});
+}, ['guards' => ['sanctum']]);

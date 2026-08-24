@@ -10,14 +10,24 @@ import {
     Download,
     X,
 } from '@lucide/vue';
-import axios from 'axios';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { index as galleryIndex } from '@/routes/gallery';
+import { replaceWebQuery } from '@shared/platform/web';
+import { queryFromPaginationLink } from '@shared/repositories/content/types';
+import type {
+    PaginatedPayload,
+    PaginationLink,
+} from '@shared/repositories/content/types';
+import {
+    createRequestState,
+    runRequest,
+} from '@shared/stores/RequestState';
 
 interface Person {
     id: string;
@@ -56,12 +66,6 @@ interface MediaItem {
     uploader?: Person | null;
 }
 
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
 type CategoryOption = {
     id: string;
     name: string;
@@ -70,27 +74,25 @@ type CategoryOption = {
 };
 
 const props = defineProps<{
-    media: {
-        data: MediaItem[];
-        links: PaginationLink[];
-        from: number | null;
-        to: number | null;
-        total: number;
-    };
+    media: PaginatedPayload<MediaItem>;
     categories: CategoryOption[];
     canInteract: boolean;
     view: 'gallery' | 'transmissions';
 }>();
 const { locale, t } = useI18n();
+const { gallery: galleryRepository, interactions } = useRepositories();
 const publicTemplate = usePublicTemplate('gallery');
 const page = usePage();
 const mediaItems = ref<MediaItem[]>(
     props.media.data.map((item) => ({ ...item })),
 );
+const mediaPage = ref(props.media);
+const requestState = reactive(createRequestState());
 watch(
-    () => props.media.data,
-    (items) => {
-        mediaItems.value = items.map((item) => ({ ...item }));
+    () => props.media,
+    (media) => {
+        mediaPage.value = media;
+        mediaItems.value = media.data.map((item) => ({ ...item }));
         selectedMedia.value = null;
     },
 );
@@ -99,6 +101,36 @@ const galleryComment = ref('');
 const interactionProcessing = ref(false);
 const interactionError = ref('');
 const emojis = ['👍', '❤️', '🙏', '🎉'];
+
+interface GalleryPayload {
+    media: PaginatedPayload<MediaItem>;
+    categories: CategoryOption[];
+    canInteract: boolean;
+    view: 'gallery' | 'transmissions';
+    [key: string]: unknown;
+}
+
+const loadPage = async (link: PaginationLink): Promise<void> => {
+    if (!link.url || link.active) {
+        return;
+    }
+
+    const query = queryFromPaginationLink(link.url);
+    const succeeded = await runRequest(
+        requestState,
+        () => galleryRepository.list<GalleryPayload>(query),
+        (payload) => {
+            mediaPage.value = payload.media;
+            mediaItems.value = payload.media.data.map((item) => ({ ...item }));
+            selectedMedia.value = null;
+        },
+        t('a11y.generic_error'),
+    );
+
+    if (succeeded) {
+        replaceWebQuery(query);
+    }
+};
 
 const formatDate = (value: string): string =>
     new Intl.DateTimeFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
@@ -192,7 +224,7 @@ const reactToMedia = async (content: string): Promise<void> => {
 
     try {
         if (ownMediaReaction.value?.content === content) {
-            await axios.delete(`/api/reactions/${ownMediaReaction.value.id}`);
+            await interactions.deleteReaction(ownMediaReaction.value.id);
             selectedMedia.value.reactions =
                 selectedMedia.value.reactions.filter(
                     (reaction) => reaction.id !== ownMediaReaction.value?.id,
@@ -201,17 +233,17 @@ const reactToMedia = async (content: string): Promise<void> => {
             return;
         }
 
-        const response = await axios.post<ReactionItem>('/api/reactions', {
-            reactionable_type: 'media',
-            reactionable_id: selectedMedia.value.id,
+        const response = await interactions.createReaction<ReactionItem>({
+            reactionableType: 'media',
+            reactionableId: selectedMedia.value.id,
             content,
             type: 'emoji',
         });
         selectedMedia.value.reactions = [
             ...selectedMedia.value.reactions.filter(
-                (reaction) => reaction.user_id !== response.data.user_id,
+                (reaction) => reaction.user_id !== response.user_id,
             ),
-            response.data,
+            response,
         ];
     } catch {
         interactionError.value = t('gallery.interaction_error');
@@ -229,14 +261,14 @@ const submitComment = async (): Promise<void> => {
     interactionError.value = '';
 
     try {
-        const response = await axios.post<GalleryComment>('/api/comments', {
-            commentable_type: 'media',
-            commentable_id: selectedMedia.value.id,
+        const response = await interactions.createComment<GalleryComment>({
+            commentableType: 'media',
+            commentableId: selectedMedia.value.id,
             content: galleryComment.value,
         });
         selectedMedia.value.comments.unshift({
-            ...response.data,
-            user_details: response.data.user_details ?? currentUser.value,
+            ...response,
+            user_details: response.user_details ?? currentUser.value,
             reactions: [],
         });
         galleryComment.value = '';
@@ -262,7 +294,7 @@ const reactToComment = async (comment: GalleryComment): Promise<void> => {
         );
 
         if (ownReaction) {
-            await axios.delete(`/api/reactions/${ownReaction.id}`);
+            await interactions.deleteReaction(ownReaction.id);
             comment.reactions = comment.reactions.filter(
                 (reaction) => reaction.id !== ownReaction.id,
             );
@@ -270,17 +302,17 @@ const reactToComment = async (comment: GalleryComment): Promise<void> => {
             return;
         }
 
-        const response = await axios.post<ReactionItem>('/api/reactions', {
-            reactionable_type: 'comment',
-            reactionable_id: comment.id,
+        const response = await interactions.createReaction<ReactionItem>({
+            reactionableType: 'comment',
+            reactionableId: comment.id,
             content: '❤️',
             type: 'emoji',
         });
         comment.reactions = [
             ...comment.reactions.filter(
-                (reaction) => reaction.user_id !== response.data.user_id,
+                (reaction) => reaction.user_id !== response.user_id,
             ),
-            response.data,
+            response,
         ];
     } catch {
         interactionError.value = t('gallery.interaction_error');
@@ -462,6 +494,14 @@ onBeforeUnmount(() => {
             </nav>
 
             <section
+                v-if="requestState.error"
+                role="alert"
+                class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+                {{ requestState.error }}
+            </section>
+
+            <section
                 class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4"
             >
                 <button
@@ -545,21 +585,21 @@ onBeforeUnmount(() => {
             </p>
 
             <section
-                v-if="props.media.links.length > 3"
+                v-if="mediaPage.links.length > 3"
                 class="mt-8 flex flex-wrap items-center justify-between gap-3"
             >
                 <p class="text-sm text-slate-500">
                     {{
                         t('gallery.pagination', {
-                            from: props.media.from ?? 0,
-                            to: props.media.to ?? 0,
-                            total: props.media.total,
+                            from: mediaPage.from ?? 0,
+                            to: mediaPage.to ?? 0,
+                            total: mediaPage.total,
                         })
                     }}
                 </p>
                 <div class="flex flex-wrap gap-2">
                     <template
-                        v-for="(link, index) in props.media.links"
+                        v-for="(link, index) in mediaPage.links"
                         :key="index"
                     >
                         <span
@@ -567,9 +607,9 @@ onBeforeUnmount(() => {
                             class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-400"
                             v-html="link.label"
                         />
-                        <Link
+                        <button
                             v-else
-                            :href="link.url"
+                            type="button"
                             class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
                             :class="
                                 link.active
@@ -584,9 +624,11 @@ onBeforeUnmount(() => {
                                       }
                                     : undefined
                             "
+                            :disabled="requestState.loading"
+                            @click="loadPage(link)"
                         >
                             <span v-html="link.label" />
-                        </Link>
+                        </button>
                     </template>
                 </div>
             </section>

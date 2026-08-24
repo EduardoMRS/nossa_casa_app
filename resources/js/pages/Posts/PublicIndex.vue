@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import {
     CalendarRange,
     Eye,
@@ -10,15 +10,26 @@ import {
     SlidersHorizontal,
     X,
 } from '@lucide/vue';
-import { reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
+import { show as publicPostShow } from '@/routes/posts/public';
 import {
-    index as publicPostsIndex,
-    show as publicPostShow,
-} from '@/routes/posts/public';
+    createWebHydratedStore,
+    replaceWebQuery,
+} from '@shared/platform/web';
+import { queryFromPaginationLink } from '@shared/repositories/content/types';
+import type {
+    PaginatedPayload,
+    PaginationLink,
+} from '@shared/repositories/content/types';
+import {
+    createRequestState,
+    runRequest,
+} from '@shared/stores/RequestState';
 
 type PublicPost = {
     id: string;
@@ -36,7 +47,6 @@ type PublicPost = {
 };
 
 type CategoryOption = { id: string; name: string; slug: string };
-type PaginationLink = { url: string | null; label: string; active: boolean };
 type Filters = {
     search: string;
     category: string;
@@ -46,18 +56,21 @@ type Filters = {
 };
 
 const props = defineProps<{
-    posts: {
-        data: PublicPost[];
-        links: PaginationLink[];
-    };
+    posts: PaginatedPayload<PublicPost>;
     categories: CategoryOption[];
     filters: Filters;
     mostViewed: PublicPost[];
 }>();
 
 const { locale, t } = useI18n();
+const { posts: postRepository } = useRepositories();
 const publicTemplate = usePublicTemplate('posts_index');
+const postsStore = createWebHydratedStore('posts', 15 * 60 * 1000);
 const filterForm = reactive<Filters>({ ...props.filters });
+const posts = ref(props.posts);
+const categories = ref(props.categories);
+const mostViewed = ref(props.mostViewed);
+const requestState = reactive(createRequestState());
 const formatDate = (value: string | null): string =>
     value
         ? new Intl.DateTimeFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
@@ -65,14 +78,47 @@ const formatDate = (value: string | null): string =>
           }).format(new Date(value))
         : t('posts.index.draft');
 
-const applyFilters = (): void => {
-    router.get(
-        publicPostsIndex.url(),
-        Object.fromEntries(
-            Object.entries(filterForm).filter(([, value]) => value !== ''),
-        ),
-        { preserveState: true, preserveScroll: true, replace: true },
+interface PostsPayload {
+    posts: PaginatedPayload<PublicPost>;
+    categories: CategoryOption[];
+    filters: Filters;
+    mostViewed: PublicPost[];
+    [key: string]: unknown;
+}
+
+const loadPosts = async (query: URLSearchParams): Promise<void> => {
+    const succeeded = await runRequest(
+        requestState,
+        () => postRepository.list<PostsPayload>(query),
+        (payload) => {
+            posts.value = payload.posts;
+            categories.value = payload.categories;
+            mostViewed.value = payload.mostViewed;
+            Object.assign(filterForm, payload.filters);
+            void postsStore.hydrate(payload);
+        },
+        t('a11y.generic_error'),
     );
+
+    if (succeeded) {
+        replaceWebQuery(query);
+    }
+};
+
+const applyFilters = (): void => {
+    const query = new URLSearchParams(
+        Object.entries(filterForm).flatMap(([key, value]) =>
+            value === '' ? [] : [[key, value]],
+        ),
+    );
+
+    void loadPosts(query);
+};
+
+const loadPage = (link: PaginationLink): void => {
+    if (link.url && !link.active) {
+        void loadPosts(queryFromPaginationLink(link.url));
+    }
 };
 
 const clearFilters = (): void => {
@@ -85,6 +131,15 @@ const clearFilters = (): void => {
     });
     applyFilters();
 };
+
+onMounted(() => {
+    void postsStore.hydrate({
+        posts: props.posts,
+        categories: props.categories,
+        filters: props.filters,
+        mostViewed: props.mostViewed,
+    });
+});
 </script>
 
 <template>
@@ -118,6 +173,13 @@ const clearFilters = (): void => {
 
             <div class="grid gap-7 lg:grid-cols-[minmax(0,1fr)_20rem]">
                 <section class="space-y-5">
+                    <p
+                        v-if="requestState.error"
+                        role="alert"
+                        class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                    >
+                        {{ requestState.error }}
+                    </p>
                     <article
                         v-for="post in posts.data"
                         :key="post.id"
@@ -210,10 +272,9 @@ const clearFilters = (): void => {
                                 class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400"
                                 v-html="link.label"
                             />
-                            <Link
+                            <button
                                 v-else
-                                :href="link.url"
-                                preserve-scroll
+                                type="button"
                                 class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold"
                                 :class="
                                     link.active
@@ -228,9 +289,11 @@ const clearFilters = (): void => {
                                           }
                                         : undefined
                                 "
+                                :disabled="requestState.loading"
+                                @click="loadPage(link)"
                             >
                                 <span v-html="link.label" />
-                            </Link>
+                            </button>
                         </template>
                     </nav>
                 </section>
@@ -328,12 +391,17 @@ const clearFilters = (): void => {
 
                         <div class="mt-5 grid grid-cols-[1fr_auto] gap-2">
                             <button
+                                :disabled="requestState.loading"
                                 class="rounded-xl px-4 py-2.5 text-sm font-bold text-white"
                                 :style="{
                                     backgroundColor: 'var(--church-primary)',
                                 }"
                             >
-                                {{ t('posts.public.apply_filters') }}
+                                {{
+                                    requestState.loading
+                                        ? t('a11y.loading')
+                                        : t('posts.public.apply_filters')
+                                }}
                             </button>
                             <button
                                 type="button"

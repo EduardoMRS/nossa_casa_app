@@ -23,7 +23,7 @@ abstract class Controller
     {
         $domainChurchId = app(ChurchDomainContext::class)->churchId();
 
-        if ($domainChurchId !== null) {
+        if ($domainChurchId !== null && app(ChurchDomainContext::class)->source() !== 'membership') {
             abort_if($domainChurchId !== $churchId, 404);
 
             return;

@@ -2,6 +2,12 @@
 
 return [
     'context_required' => 'A church context is required.',
+    'context' => [
+        'required' => 'Select a church to continue.',
+        'invalid' => 'The selected church identifier is invalid.',
+        'not_found' => 'The selected church is not available on this installation.',
+        'membership_required' => 'You do not have an active membership in the selected church.',
+    ],
     'membership_category_manage_required' => 'A church membership is required to manage categories.',
     'membership_classroom_create_required' => 'A church membership is required to create classrooms.',
     'membership_classroom_list_required' => 'A church membership is required to list classrooms.',

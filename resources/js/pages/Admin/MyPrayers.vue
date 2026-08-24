@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import axios from 'axios';
 import { ref } from 'vue';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 type Prayer = {
     id: string;
     content: string;
@@ -17,15 +17,16 @@ const props = defineProps<{
 }>();
 const requests = ref([...props.requests.data]);
 const { locale, t } = useI18n();
+const { prayers } = useRepositories();
 const content = ref('');
 const open = ref(false);
 const sending = ref(false);
 const isAnonymous = ref(false);
 async function submit(): Promise<void> {
     sending.value = true;
-    const { data } = await axios.post('/api/prayer-requests', {
+    const data = await prayers.create<Prayer>({
         content: content.value,
-        is_anonymous: isAnonymous.value,
+        isAnonymous: isAnonymous.value,
     });
     requests.value.unshift(data);
     content.value = '';

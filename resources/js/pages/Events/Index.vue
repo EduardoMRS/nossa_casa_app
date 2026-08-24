@@ -1,12 +1,26 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarDays, ChevronRight, Clock3 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 import { show as showEvent } from '@/routes/events';
+import {
+    createWebHydratedStore,
+    replaceWebQuery,
+} from '@shared/platform/web';
+import { queryFromPaginationLink } from '@shared/repositories/content/types';
+import type {
+    PaginatedPayload,
+    PaginationLink,
+} from '@shared/repositories/content/types';
+import {
+    createRequestState,
+    runRequest,
+} from '@shared/stores/RequestState';
 
 interface EventItem {
     id: string;
@@ -19,30 +33,27 @@ interface EventItem {
     church?: { id: string; name: string; slug: string } | null;
 }
 
-interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
 const props = defineProps<{
-    events: {
-        data: EventItem[];
-        links: PaginationLink[];
-        from: number | null;
-        to: number | null;
-        total: number;
-    };
+    events: PaginatedPayload<EventItem>;
 }>();
 
 const { locale, t } = useI18n();
+const { events: eventRepository } = useRepositories();
 const publicTemplate = usePublicTemplate('events_index');
+const eventsStore = createWebHydratedStore('events', 15 * 60 * 1000);
 const activeTab = ref<'future' | 'ongoing' | 'past'>('future');
+const events = ref(props.events);
+const requestState = reactive(createRequestState());
+
+interface EventsPayload {
+    events: PaginatedPayload<EventItem>;
+    [key: string]: unknown;
+}
 
 const filteredEvents = computed(() => {
     const now = Date.now();
 
-    return props.events.data.filter((event) => {
+    return events.value.data.filter((event) => {
         const startsAt = new Date(event.start_time).getTime();
         const endsAt = new Date(event.end_time).getTime();
 
@@ -58,12 +69,37 @@ const filteredEvents = computed(() => {
     });
 });
 
+const loadPage = async (link: PaginationLink): Promise<void> => {
+    if (!link.url || link.active) {
+        return;
+    }
+
+    const query = queryFromPaginationLink(link.url);
+    const succeeded = await runRequest(
+        requestState,
+        () => eventRepository.list<EventsPayload>(query),
+        (payload) => {
+            events.value = payload.events;
+            void eventsStore.hydrate(payload.events);
+        },
+        t('a11y.generic_error'),
+    );
+
+    if (succeeded) {
+        replaceWebQuery(query);
+    }
+};
+
 const formatDate = (date: string): string =>
     new Intl.DateTimeFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
     }).format(new Date(date));
+
+onMounted(() => {
+    void eventsStore.hydrate(props.events);
+});
 </script>
 
 <template>
@@ -106,6 +142,14 @@ const formatDate = (date: string): string =>
                     {{ t(`events.index.tabs.${tab}`) }}
                 </button>
             </div>
+
+            <section
+                v-if="requestState.error"
+                role="alert"
+                class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+                {{ requestState.error }}
+            </section>
 
             <section
                 v-if="filteredEvents.length"
@@ -187,22 +231,24 @@ const formatDate = (date: string): string =>
             </section>
 
             <nav
-                v-if="props.events.links.length > 3"
+                v-if="events.links.length > 3"
                 class="mt-8 flex flex-wrap gap-2"
             >
-                <Link
-                    v-for="link in props.events.links"
+                <button
+                    v-for="link in events.links"
                     :key="link.label"
-                    :href="link.url ?? '#'"
+                    type="button"
+                    :disabled="!link.url || link.active || requestState.loading"
                     :class="[
                         'rounded-lg border px-3 py-1.5 text-xs',
                         link.active
                             ? 'border-indigo-600 bg-indigo-600 text-white'
                             : 'border-slate-200 bg-white text-slate-600',
-                        !link.url && 'pointer-events-none opacity-40',
+                        (!link.url || requestState.loading) && 'opacity-40',
                     ]"
+                    @click="loadPage(link)"
                     ><span v-html="link.label"
-                /></Link>
+                /></button>
             </nav>
         </main>
         <PublicFooter show-locale />

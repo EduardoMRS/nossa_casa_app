@@ -74,9 +74,13 @@ export default defineConfigWithVueTs(
     },
     {
         ignores: [
-            'vendor',
-            'node_modules',
-            'public',
+            '**/vendor/**',
+            '**/node_modules/**',
+            'native/nativephp/**',
+            'native/public/**',
+            'native/storage/**',
+            'native/bootstrap/cache/**',
+            'public/**',
             'storage/**',
             'bootstrap/ssr',
             'tailwind.config.js',

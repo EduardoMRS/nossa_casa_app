@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ChurchStatus;
+use App\Enums\UserRole;
 use App\Observers\ChurchObserver;
 use App\Traits\HasTranslations;
 use Database\Factories\ChurchFactory;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy(ChurchObserver::class)]
@@ -44,13 +46,19 @@ class Church extends Model
         return $this->morphMany(Address::class, 'addressable');
     }
 
-    public function members()
+    /** @return BelongsToMany<User, $this> */
+    public function members(): BelongsToMany
     {
-        return $this->hasManyThrough(User::class, UserProfile::class, 'church_id', 'id', 'id', 'user_id');
+        return $this->belongsToMany(User::class)
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function assignMember(User $user): void
     {
+        $this->members()->syncWithoutDetaching([
+            $user->id => ['role' => $user->role?->value ?? UserRole::GUEST->value],
+        ]);
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
             ['church_id' => $this->id]

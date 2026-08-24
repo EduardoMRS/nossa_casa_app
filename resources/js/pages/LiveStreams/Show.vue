@@ -2,11 +2,11 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { ArrowLeft, MessageCircle, Pin, Send, Trash2 } from '@lucide/vue';
-import axios from 'axios';
 import { computed, ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { useRepositories } from '@/lib/repositories';
 
 type Person = {
     id: string;
@@ -37,6 +37,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const { interactions } = useRepositories();
 const page = usePage();
 const stream = ref({ ...props.liveStream });
 const comments = ref([...props.comments]);
@@ -89,9 +90,9 @@ const submitComment = async (): Promise<void> => {
     error.value = '';
 
     try {
-        await axios.post('/api/comments', {
-            commentable_type: 'live_stream',
-            commentable_id: props.liveStream.id,
+        await interactions.createComment({
+            commentableType: 'live_stream',
+            commentableId: props.liveStream.id,
             content: content.value,
         });
         content.value = '';
@@ -103,9 +104,7 @@ const submitComment = async (): Promise<void> => {
 };
 
 const togglePin = async (comment: CommentItem): Promise<void> => {
-    await axios.put(`/api/comments/${comment.id}/pin`, {
-        is_pinned: !comment.is_pinned,
-    });
+    await interactions.updateCommentPin(comment.id, !comment.is_pinned);
 };
 
 const removeComment = async (comment: CommentItem): Promise<void> => {
@@ -113,7 +112,7 @@ const removeComment = async (comment: CommentItem): Promise<void> => {
         return;
     }
 
-    await axios.delete(`/api/comments/${comment.id}`);
+    await interactions.deleteComment(comment.id);
 };
 
 const formatDate = (value: string): string =>

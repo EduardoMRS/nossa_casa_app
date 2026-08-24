@@ -22,6 +22,8 @@ Homestead.json
 /resources/js/wayfinder
 composer.lock
 package-lock.json
+!/native/composer.lock
+!/native/package-lock.json
 
 # IDEs
 .idea/
