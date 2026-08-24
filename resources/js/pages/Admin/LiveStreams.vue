@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, router, usePoll } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import {
     Check,
     Clipboard,
@@ -9,14 +10,16 @@ import {
     Radio,
     RefreshCw,
     Square,
+    Trash2,
     Video,
 } from '@lucide/vue';
 import axios from 'axios';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { index as liveStreamControlIndex } from '@/actions/App/Http/Controllers/Admin/LiveStreamControlController';
 import {
     destroy as destroyLiveStream,
     rotateToken as rotateLiveStreamToken,
+    stop as stopLiveStream,
     store as storeLiveStream,
 } from '@/actions/App/Http/Controllers/LiveStreamController';
 import { update as updateMedia } from '@/actions/App/Http/Controllers/MediaController';
@@ -30,6 +33,7 @@ type RecordingItem = {
     uploaded_at: string | null;
     media_id: string | null;
     is_public: boolean;
+    ends_on_disconnect: boolean;
 };
 
 type StreamItem = {
@@ -57,17 +61,51 @@ const props = defineProps<{
     churches: Array<{ id: string; name: string }>;
     streams: StreamItem[];
     canCreate: boolean;
+    canDelete: boolean;
 }>();
 
 const { locale, t } = useI18n();
 const { confirm } = useConfirmDialog();
 
-usePoll(5000, { only: ['streams', 'canCreate'] });
+const streams = ref([...props.streams]);
+const canCreateStream = computed(
+    () => streams.value.filter((stream) => stream.active).length < 2,
+);
+
+type StreamUpdatedPayload = {
+    id: string;
+    status: string;
+    started_at: string | null;
+    ended_at: string | null;
+};
+
+props.streams.forEach((stream) => {
+    useEcho<StreamUpdatedPayload, 'reverb', 'private' | 'public'>(
+        `live-stream.${stream.id}`,
+        '.live-stream.updated',
+        (payload) => {
+            const index = streams.value.findIndex(
+                (item) => item.id === payload.id,
+            );
+
+            if (index >= 0) {
+                streams.value[index] = {
+                    ...streams.value[index],
+                    ...payload,
+                    active: !['stopped', 'failed'].includes(payload.status),
+                };
+            }
+        },
+        [],
+        stream.is_public ? 'public' : 'private',
+    );
+});
 
 const createOpen = ref(false);
 const name = ref('');
 const record = ref(true);
 const isPublic = ref(true);
+const endsOnDisconnect = ref(false);
 const processing = ref(false);
 const error = ref('');
 const copied = ref('');
@@ -91,11 +129,13 @@ const createStream = async (): Promise<void> => {
             mode: 'publisher',
             record: record.value,
             is_public: isPublic.value,
+            ends_on_disconnect: endsOnDisconnect.value,
             church_id: props.church.id,
         });
         createOpen.value = false;
         name.value = '';
         isPublic.value = true;
+        endsOnDisconnect.value = false;
         refresh();
     } catch (exception: unknown) {
         const responseErrors = axios.isAxiosError<{
@@ -116,6 +156,22 @@ const stopStream = async (stream: StreamItem): Promise<void> => {
     if (
         !(await confirm({
             message: t('admin.live_streams.stop_confirm', {
+                name: stream.name,
+            }),
+            intent: 'danger',
+        }))
+    ) {
+        return;
+    }
+
+    await axios.post(stopLiveStream.url(stream.id));
+    refresh();
+};
+
+const deleteStream = async (stream: StreamItem): Promise<void> => {
+    if (
+        !(await confirm({
+            message: t('admin.live_streams.delete_confirm', {
                 name: stream.name,
             }),
             intent: 'danger',
@@ -228,7 +284,7 @@ const formatDate = (value: string | null): string =>
                     </option>
                 </select>
                 <button
-                    v-if="canCreate"
+                    v-if="canCreateStream"
                     type="button"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-indigo-950"
                     @click="createOpen = true"
@@ -302,6 +358,15 @@ const formatDate = (value: string | null): string =>
                         >
                             <Square class="size-3.5 fill-current" />
                             {{ t('admin.live_streams.stop') }}
+                        </button>
+                        <button
+                            v-if="canDelete"
+                            type="button"
+                            class="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700"
+                            @click="deleteStream(stream)"
+                        >
+                            <Trash2 class="size-3.5" />
+                            {{ t('admin.live_streams.delete') }}
                         </button>
                     </div>
                 </header>
@@ -583,6 +648,22 @@ const formatDate = (value: string | null): string =>
                     <p v-if="error" class="text-sm font-bold text-rose-600">
                         {{ error }}
                     </p>
+                    <label
+                        class="flex items-start gap-3 rounded-xl border p-4 text-sm"
+                        ><input
+                            v-model="endsOnDisconnect"
+                            type="checkbox"
+                            class="mt-0.5 rounded border-slate-300"
+                        />
+                        <span
+                            ><strong class="block">{{
+                                t('admin.live_streams.end_on_disconnect')
+                            }}</strong
+                            ><small class="mt-1 block text-slate-500">{{
+                                t('admin.live_streams.end_on_disconnect_hint')
+                            }}</small></span
+                        ></label
+                    >
                 </div>
                 <footer class="flex justify-end gap-2 pt-2">
                     <button

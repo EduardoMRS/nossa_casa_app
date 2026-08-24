@@ -5,11 +5,14 @@ namespace App\Queries;
 use App\Data\CanonicalData;
 use App\Models\Event;
 use App\Models\User;
+use App\Support\ContentEmbedRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 final class EventQuery
 {
+    public function __construct(private readonly ContentEmbedRenderer $embedRenderer) {}
+
     public function index(?string $churchId, int $perPage = 18): CanonicalData
     {
         $events = Event::query()
@@ -27,7 +30,7 @@ final class EventQuery
     {
         $event = Event::query()
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
-            ->with(['church:id,name,slug', 'categories:id,name'])
+            ->with(['church:id,name,slug', 'church.settings', 'categories:id,name', 'address'])
             ->where('slug', $slug)
             ->firstOrFail();
         $registrationForm = $event->forms()
@@ -35,23 +38,26 @@ final class EventQuery
             ->first();
         $event->localize(relations: ['church', 'categories']);
         $registrationForm?->localize();
+        $registrationRecord = $user
+            ? $event->registrations()->where('user_id', $user->id)->first()
+            : null;
 
         return new CanonicalData([
             'event' => [
                 ...$this->item($event),
-                'description_html' => Str::markdown($event->description ?? '', [
-                    'html_input' => 'strip',
-                    'allow_unsafe_links' => false,
-                ]),
+                'description_html' => $this->embedRenderer->render($event->description ?? '', $event->church_id),
                 'categories' => $event->categories->pluck('name')->values()->all(),
+                'address' => $event->address,
+                'price' => $event->price,
+                'currency' => $event->church?->settings?->options['currency'] ?? 'BRL',
             ],
             'registration' => [
                 'has_form' => $registrationForm !== null,
                 'form_id' => $registrationForm?->id,
                 'form_title' => $registrationForm?->title,
-                'already_registered' => $user
-                    ? $event->users()->where('users.id', $user->id)->exists()
-                    : false,
+                'already_registered' => $registrationRecord !== null,
+                'status' => $registrationRecord?->status,
+                'can_access_private_area' => $registrationRecord?->status === 'confirmed',
             ],
         ]);
     }

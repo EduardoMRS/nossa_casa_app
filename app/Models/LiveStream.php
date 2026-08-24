@@ -38,6 +38,7 @@ class LiveStream extends Model
         'source_on_demand',
         'record',
         'is_public',
+        'ends_on_disconnect',
         'status',
         'worker_id',
         'source_type',
@@ -74,7 +75,9 @@ class LiveStream extends Model
                 ? $liveStream->status
                 : LiveStreamStatus::from((string) $liveStream->status);
 
-            $liveStream->active_slot = $status->reservesChurchSlot() ? 1 : null;
+            if (! $status->reservesChurchSlot()) {
+                $liveStream->active_slot = null;
+            }
         });
     }
 
@@ -85,6 +88,7 @@ class LiveStream extends Model
             'source_on_demand' => 'boolean',
             'record' => 'boolean',
             'is_public' => 'boolean',
+            'ends_on_disconnect' => 'boolean',
             'status' => LiveStreamStatus::class,
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
@@ -129,13 +133,30 @@ class LiveStream extends Model
 
     public function getPlaybackUrlAttribute(): string
     {
-        return rtrim((string) config('media.mediamtx.public_webrtc_url'), '/')
+        return $this->playbackBaseUrl()
             .'/'.$this->path;
     }
 
     public function getEmbedUrlAttribute(): string
     {
-        return rtrim((string) config('media.mediamtx.public_webrtc_url'), '/')
+        return $this->playbackBaseUrl()
             .'/'.$this->path.'?controls=true&muted=false&autoplay=true&playsInline=true';
+    }
+
+    private function playbackBaseUrl(): string
+    {
+        $configuredUrl = rtrim((string) config('media.mediamtx.public_webrtc_url'), '/');
+        $configuredHost = parse_url($configuredUrl, PHP_URL_HOST);
+        $configuredPath = parse_url($configuredUrl, PHP_URL_PATH);
+
+        if ($configuredUrl === '' || in_array($configuredHost, ['localhost', '127.0.0.1'], true)) {
+            return '/webrtc';
+        }
+
+        if ($configuredPath === null || $configuredPath === '' || $configuredPath === '/') {
+            return $configuredUrl.'/webrtc';
+        }
+
+        return $configuredUrl;
     }
 }

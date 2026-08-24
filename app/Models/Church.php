@@ -119,6 +119,12 @@ class Church extends Model
         return $this->hasOne(Setting::class);
     }
 
+    /** @return HasOne<ChurchMailSetting, $this> */
+    public function mailSetting(): HasOne
+    {
+        return $this->hasOne(ChurchMailSetting::class);
+    }
+
     public function parentChurch()
     {
         return $this->hasOne(Church::class, 'id', 'parent_church_id');
@@ -143,5 +149,18 @@ class Church extends Model
     public function library()
     {
         return $this->hasMany(Library::class);
+    }
+
+    public function getRtmpUrlAttribute(): ?string
+    {
+        $configuredUrl = rtrim((string) config('media.mediamtx.public_rtmp_url'), '/');
+
+        if (! $this->domain) {
+            return $configuredUrl !== '' ? $configuredUrl : null;
+        }
+
+        $rtmpPort = parse_url($configuredUrl, PHP_URL_PORT);
+
+        return "rtmp://{$this->domain}".($rtmpPort ? ":{$rtmpPort}" : '');
     }
 }

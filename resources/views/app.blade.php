@@ -105,9 +105,9 @@
             <script type="application/ld+json">{!! json_encode($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
         @endif
 
-        @unless(app()->environment('testing'))
+        @if (! app()->environment('testing') && str_contains(strtolower($fontFamily), 'instrument sans'))
             @fonts
-        @endunless
+        @endif
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>

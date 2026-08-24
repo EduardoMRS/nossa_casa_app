@@ -11,6 +11,29 @@
         "hide_password": "Hide password",
         "generic_error": "Something went wrong."
     },
+    "phone": {
+        "country": "Country calling code",
+        "placeholder": "Phone number"
+    },
+    "money": { "currency": "Currency", "placeholder": "0.00" },
+    "editor": {
+        "label": "Rich content editor",
+        "embeds": {
+            "open": "Insert content",
+            "title": "Insert content",
+            "description": "Choose an item to render inside this content.",
+            "search": "Search content...",
+            "all_categories": "All categories",
+            "empty": "No matching content was found.",
+            "types": {
+                "form": "Form",
+                "media": "Media",
+                "post": "Post",
+                "event": "Event",
+                "library": "Library book"
+            }
+        }
+    },
     "errors": {
         "status": {
             "401": {
@@ -106,6 +129,8 @@
         "edit": "Edit",
         "save": "Save",
         "cancel": "Cancel",
+        "yes": "Yes",
+        "no": "No",
         "update": "Update",
         "upload": "Upload",
         "delete": "Delete"
@@ -400,6 +425,8 @@
             "items": "{count} items",
             "saving": "Saving...",
             "remove": "Remove",
+            "edit": "Edit",
+            "delete": "Delete",
             "preview": "Preview",
             "select": "Select",
             "close_editor": "Close editor",
@@ -441,6 +468,28 @@
             "secondary_color": "Secondary color",
             "accent_color": "Accent color",
             "surface_color": "Surface color",
+            "currency": "Currency",
+            "groups": {
+                "identity": "Identity",
+                "domain": "Domain",
+                "communication": "Communication",
+                "location": "Location",
+                "templates": "Templates",
+                "schedule": "Schedule"
+            },
+            "mail_title": "Custom email server",
+            "mail_description": "Use an SMTP account for messages sent in this church. Without one, the application default is used.",
+            "mail_encryption_notice": "Server credentials are encrypted at rest. The password is never displayed again and is decrypted only by the mail delivery process.",
+            "mail_enabled": "Use this email server",
+            "mail_allow_branches": "Allow branches without their own server to inherit it",
+            "mail_host": "SMTP host",
+            "mail_port": "Port",
+            "mail_security": "Security",
+            "mail_username": "Username",
+            "mail_password": "Password",
+            "mail_password_saved": "Password already stored — leave blank to keep it",
+            "mail_from_address": "Sender email",
+            "mail_from_name": "Sender name",
             "phone": "Phone",
             "email": "Email",
             "whatsapp": "WhatsApp",
@@ -636,6 +685,8 @@
             "types": {
                 "text": "Short text",
                 "email": "Email",
+                "phone": "Phone",
+                "money": "Currency amount",
                 "number": "Number",
                 "date": "Date",
                 "textarea": "Long text",
@@ -695,12 +746,14 @@
             "select_church": "Select church",
             "new": "New stream",
             "create_error": "The live stream could not be created.",
+            "delete_confirm": "Permanently delete the live stream “{name}”?",
             "stop_confirm": "Stop the live stream “{name}”?",
             "rotate_confirm": "Rotating the token will disconnect the current stream. Continue?",
             "recordings_count": "{count} recording(s)",
             "public": "Public",
             "private": "Private",
             "open_page": "Open page",
+            "delete": "Delete",
             "stop": "Stop",
             "obs_server": "OBS server",
             "copy_link": "Copy link",
@@ -717,7 +770,7 @@
             "visibility": "Live visibility",
             "public_visibility": "Public — shown in the portal and church pages",
             "private_visibility": "Private — only members of this church",
-            "obs_hint": "In OBS, select Custom Service and copy the server and stream key shown above. Do not paste the full URL into the server field.",
+            "obs_hint": "In OBS, select Custom Service and copy the server and stream key shown above. Do not paste the full URL into the server field. For WebRTC playback, disable B-frames, use H.264, and set a keyframe interval of 2 seconds.",
             "recordings_title": "Recordings from this stream",
             "recording_public": "Public recording",
             "recording_private": "Private recording",
@@ -731,6 +784,8 @@
             "record_stream": "Record stream",
             "public_stream": "Public stream",
             "public_stream_hint": "When disabled, the live stream is not shown in the portal, home page, or gallery. Its recording can be published later.",
+            "end_on_disconnect": "End when OBS disconnects",
+            "end_on_disconnect_hint": "Marks the live stream as finished automatically when the publisher stops sending video.",
             "creating": "Creating…",
             "create": "Create stream",
             "status": {
@@ -943,6 +998,42 @@
             "registration_summary": "{users} participants · {forms} forms",
             "delete_confirm": "Delete event \"{title}\"?",
             "empty": "No events have been created for this church."
+        },
+        "event_content": {
+            "title": "Private event content",
+            "kicker": "Participant area",
+            "registrations": "View registrations",
+            "posts": "Private posts",
+            "materials": "Support materials",
+            "media": "Event media",
+            "media_hint": "Linked media is shown to confirmed participants even when hidden from the church gallery.",
+            "link": "Link",
+            "file": "File",
+            "delete_confirm": "Delete this item?",
+            "new_post": "New private post",
+            "empty_posts": "No private posts have been created yet."
+        },
+        "event_registrations": {
+            "title": "Event registrations",
+            "total": "{count} registration(s)",
+            "add": "Add registration",
+            "columns": "Choose columns",
+            "view": "View and edit registration",
+            "individual_pdf": "Export individual PDF",
+            "empty": "No registrations have been submitted yet.",
+            "edit": "Registration details",
+            "first_name": "First name",
+            "last_name": "Last name",
+            "email": "Email",
+            "phone": "Phone",
+            "status": "Status",
+            "statuses": {
+                "pending": "Pending",
+                "approved": "Approved",
+                "rejected": "Rejected",
+                "canceled": "Canceled",
+                "confirmed": "Confirmed"
+            }
         },
         "highlights": {
             "title": "Highlights",
@@ -1161,7 +1252,27 @@
             "about": "About this event",
             "registration": "Registration",
             "categories": "Categories",
-            "form_not_configured": "The main form is not configured for this event yet."
+            "form_not_configured": "The main form is not configured for this event yet.",
+            "private_area": "Participant area",
+            "awaiting_confirmation": "Your registration is awaiting confirmation from the event team.",
+            "location": "Location",
+            "free": "Free"
+        },
+        "private": {
+            "title": "Participant area",
+            "back": "Back to event",
+            "back_to_events": "Back to events",
+            "navigation": "Participant area navigation",
+            "participant_intro": "You are confirmed for this event. Here you can follow updates and access materials shared by the team.",
+            "details": "Event details",
+            "access_title": "Your participant access",
+            "access_description": "This space is available to confirmed participants and is updated by the event team.",
+            "download": "Download material",
+            "sections": "Event private sections",
+            "posts": "Posts",
+            "materials": "Support materials",
+            "media": "Media",
+            "empty": "No content is available in this section yet."
         },
         "register": {
             "title": "Event registration",
@@ -1191,6 +1302,18 @@
             "cover": "Cover image",
             "cover_hint": "Recommended: landscape image, at least 1280x720.",
             "description_hint": "Use Markdown or WYSIWYG mode to format the event content.",
+            "price": "Price",
+            "price_hint": "Leave zero or blank for a free event.",
+            "responsibles": "Event managers",
+            "responsibles_hint": "Managers can publish private content and confirm paid registrations.",
+            "location": "Location",
+            "street": "Street",
+            "number": "Number",
+            "complement": "Complement",
+            "neighborhood": "Neighborhood",
+            "city": "City",
+            "state": "State",
+            "zipcode": "Postal code",
             "save": "Publish event",
             "update": "Update event",
             "category_title": "Event categories",
@@ -1493,9 +1616,7 @@
         }
     },
     "footer": {
+        "privacy_terms": "Privacy and terms",
         "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
-    },
-    "editor": {
-        "label": "Rich content editor"
     }
 }

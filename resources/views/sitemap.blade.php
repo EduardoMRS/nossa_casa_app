@@ -3,9 +3,9 @@
 @foreach ($urls as $url)
     <url>
         <loc>{{ $url['location'] }}</loc>
-@if ($url['last_modified'])
-        <lastmod>{{ $url['last_modified'] }}</lastmod>
-@endif
+        @if ($url['last_modified'])
+                <lastmod>{{ $url['last_modified'] }}</lastmod>
+        @endif
     </url>
 @endforeach
 </urlset>

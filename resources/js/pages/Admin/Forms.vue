@@ -107,7 +107,7 @@ const remove = async (form: ManagedForm): Promise<void> => {
                         <tr
                             v-for="form in props.forms.data"
                             :key="form.id"
-                            class="hover:bg-slate-50"
+                            class="transition hover:bg-muted/60"
                         >
                             <td class="px-5 py-4">
                                 <p class="font-bold text-slate-900">

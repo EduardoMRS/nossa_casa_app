@@ -80,6 +80,28 @@
 }
 
 @layer components {
+    .content-embed {
+        @apply my-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm;
+    }
+    .content-embed-card {
+        @apply flex flex-col gap-1 p-5 no-underline transition hover:border-teal-500 hover:bg-teal-50;
+    }
+    .content-embed-card strong {
+        @apply text-base font-black text-slate-900;
+    }
+    .content-embed-card span {
+        @apply text-sm text-slate-600;
+    }
+    .content-embed-media img,
+    .content-embed-media video {
+        @apply max-h-[36rem] w-full object-contain;
+    }
+    .content-embed-media figcaption {
+        @apply px-4 py-3 text-sm font-bold text-slate-700;
+    }
+}
+
+@layer components {
     .public-template-page[data-public-template='editorial'] {
         --public-content-width: 88rem;
         background-image: linear-gradient(

@@ -44,7 +44,7 @@ class PwaController extends Controller
                 [
                     'name' => __('pwa.bible_shortcut'),
                     'short_name' => __('pwa.bible_shortcut_short'),
-                    'url' => route('library.bible', absolute: false),
+                    'url' => '/biblioteca/biblia',
                     'icons' => [
                         [
                             'src' => route('branding.icon', absolute: false),

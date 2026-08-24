@@ -29,6 +29,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRelationshipController;
 use Illuminate\Support\Facades\Route;
 
+$isWayfinderGeneration = in_array('wayfinder:generate', $_SERVER['argv'] ?? [], true);
+
 Route::prefix('auth')->group(function () {
     Route::post('login', [MobileAuthController::class, 'login'])
         ->middleware('throttle:mobile-login')
@@ -84,14 +86,14 @@ Route::middleware('church.context:public')->group(function () {
     Route::get('bible/{version}/books/{book}/chapters/{chapter}', [BibleController::class, 'chapter'])
         ->whereNumber('chapter')
         ->name('bible.chapter');
-    Route::get('community', [CommunityController::class, 'index']);
-    Route::get('community/{slug}', [CommunityController::class, 'show']);
-    Route::get('church', [ChurchController::class, 'index']);
-    Route::get('church/{slug}', [ChurchController::class, 'show']);
+    Route::get('communities', [CommunityController::class, 'index']);
+    Route::get('communities/{slug}', [CommunityController::class, 'show']);
+    Route::get('churches', [ChurchController::class, 'index']);
+    Route::get('churches/{slug}', [ChurchController::class, 'show']);
     Route::get('posts', [PostController::class, 'index']);
     Route::get('posts/{post}', [PostController::class, 'show']);
-    Route::get('event', [EventController::class, 'index']);
-    Route::get('event/{slug}', [EventController::class, 'show']);
+    Route::get('events', [EventController::class, 'index']);
+    Route::get('events/{slug}', [EventController::class, 'show']);
     Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
     Route::apiResource('media', MediaController::class)
         ->parameters(['media' => 'media'])
@@ -112,7 +114,7 @@ Route::middleware(['auth:sanctum', 'church.context:public'])->group(function () 
         Route::apiResource('comments', CommentController::class)->only(['store', 'update', 'destroy']);
         Route::post('reactions', [ReactionController::class, 'store']);
         Route::delete('reactions/{reaction}', [ReactionController::class, 'destroy']);
-        Route::post('event/{event}/checkin', [EventController::class, 'checkin']);
+        Route::post('events/{event}/checkin', [EventController::class, 'checkin']);
         Route::post('forms/{form}/responses', [FormResponseController::class, 'store']);
     });
 
@@ -152,9 +154,9 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
     Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
         Route::apiResource('forms', FormController::class);
         Route::apiResource('classrooms', ClassroomController::class);
-        Route::post('event', [EventController::class, 'store']);
-        Route::put('event/{event}', [EventController::class, 'update']);
-        Route::delete('event/{event}', [EventController::class, 'destroy']);
+        Route::post('events', [EventController::class, 'store']);
+        Route::put('events/{event}', [EventController::class, 'update']);
+        Route::delete('events/{event}', [EventController::class, 'destroy']);
     });
 
     // Acesso de Mídia / Comunicação
@@ -163,15 +165,16 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
         Route::apiResource('media', MediaController::class)
             ->parameters(['media' => 'media'])
             ->only(['store', 'update', 'destroy']);
-        Route::post('post', [PostController::class, 'store']);
-        Route::put('post/{post}', [PostController::class, 'update']);
-        Route::delete('post/{post}', [PostController::class, 'destroy']);
+        Route::post('posts', [PostController::class, 'store']);
+        Route::put('posts/{post}', [PostController::class, 'update']);
+        Route::delete('posts/{post}', [PostController::class, 'destroy']);
     });
 
     Route::middleware('role:media|church_leader|superadmin|system')->group(function () {
         Route::apiResource('live-streams', LiveStreamController::class)
             ->parameters(['live-streams' => 'liveStream'])
             ->only(['index', 'store', 'show', 'destroy']);
+        Route::post('live-streams/{liveStream}/stop', [LiveStreamController::class, 'stop']);
         Route::post('live-streams/{liveStream}/rotate-token', [LiveStreamController::class, 'rotateToken']);
     });
 
@@ -184,10 +187,53 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
 
     // Acesso Administrativo Global
     Route::middleware('role:church_leader|superadmin|system')->group(function () {
-        Route::apiResource('church', ChurchController::class)->except(['index', 'show']);
-        Route::apiResource('community', CommunityController::class)->except(['index', 'show']);
-        Route::apiResource('user', UserController::class);
+        Route::apiResource('churches', ChurchController::class)->except(['index', 'show']);
+        Route::apiResource('communities', CommunityController::class)->except(['index', 'show']);
+        Route::apiResource('users', UserController::class);
         Route::apiResource('settings', SettingController::class);
         Route::apiResource('networks', NetworkController::class);
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Legacy URI aliases
+|--------------------------------------------------------------------------
+|
+| These aliases keep existing clients working while all generated links and
+| new integrations use the plural English resource names above.
+|--------------------------------------------------------------------------
+*/
+if (! $isWayfinderGeneration) {
+    Route::middleware('church.context:public')->group(function () {
+        Route::get('community', [CommunityController::class, 'index']);
+        Route::get('community/{slug}', [CommunityController::class, 'show']);
+        Route::get('church', [ChurchController::class, 'index']);
+        Route::get('church/{slug}', [ChurchController::class, 'show']);
+        Route::get('event', [EventController::class, 'index']);
+        Route::get('event/{slug}', [EventController::class, 'show']);
+    });
+
+    Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function () {
+        Route::middleware('role:member|leader|media|church_leader|superadmin|system')
+            ->post('event/{event}/checkin', [EventController::class, 'checkin']);
+
+        Route::middleware('role:leader|church_leader|superadmin|system')->group(function () {
+            Route::post('event', [EventController::class, 'store']);
+            Route::put('event/{event}', [EventController::class, 'update']);
+            Route::delete('event/{event}', [EventController::class, 'destroy']);
+        });
+
+        Route::middleware('role:media|leader|church_leader|superadmin|system')->group(function () {
+            Route::post('post', [PostController::class, 'store']);
+            Route::put('post/{post}', [PostController::class, 'update']);
+            Route::delete('post/{post}', [PostController::class, 'destroy']);
+        });
+
+        Route::middleware('role:church_leader|superadmin|system')->group(function () {
+            Route::apiResource('church', ChurchController::class)->except(['index', 'show']);
+            Route::apiResource('community', CommunityController::class)->except(['index', 'show']);
+            Route::apiResource('user', UserController::class);
+        });
+    });
+}

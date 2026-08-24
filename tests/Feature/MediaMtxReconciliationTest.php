@@ -17,6 +17,7 @@ test('active live stream paths are restored after mediamtx restarts', function (
         'status' => LiveStreamStatus::READY,
         'input_mode' => 'publisher',
         'source_url' => 'publisher',
+        'active_slot' => 2,
     ]);
     $existingPath = LiveStream::factory()->create([
         'status' => LiveStreamStatus::OFFLINE,

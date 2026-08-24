@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
@@ -17,6 +19,7 @@ class Event extends Model
         'description',
         'start_time',
         'end_time',
+        'price',
         'cover_path',
         'church_id',
         'author_id',
@@ -26,6 +29,7 @@ class Event extends Model
         'start_time' => 'datetime',
         'end_time' => 'datetime',
         'tags' => 'array',
+        'price' => 'decimal:2',
     ];
 
     protected $appends = [
@@ -78,6 +82,30 @@ class Event extends Model
     {
         return $this->belongsToMany(User::class, 'event_users')
             ->using(EventUser::class);
+    }
+
+    /** @return HasMany<EventUser, $this> */
+    public function registrations(): HasMany
+    {
+        return $this->hasMany(EventUser::class);
+    }
+
+    /** @return BelongsToMany<Post, $this> */
+    public function privatePosts(): BelongsToMany
+    {
+        return $this->belongsToMany(Post::class, 'event_posts');
+    }
+
+    /** @return BelongsToMany<User, $this> */
+    public function responsibleUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'event_responsibles');
+    }
+
+    /** @return HasMany<EventMaterial, $this> */
+    public function materials(): HasMany
+    {
+        return $this->hasMany(EventMaterial::class);
     }
 
     public function confirmations()

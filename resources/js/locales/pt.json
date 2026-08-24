@@ -11,39 +11,65 @@
         "hide_password": "Ocultar senha",
         "generic_error": "Algo deu errado."
     },
+    "phone": {
+        "country": "Código de discagem do país",
+        "placeholder": "Número de telefone"
+    },
+    "money": {
+        "currency": "Moeda",
+        "placeholder": "0.00"
+    },
+    "editor": {
+        "label": "Editor de conteúdo rico",
+        "embeds": {
+            "open": "Inserir conteúdo",
+            "title": "Inserir conteúdo",
+            "description": "Escolha um item para renderizar dentro deste conteúdo.",
+            "search": "Pesquisar conteúdo...",
+            "all_categories": "Todas as categorias",
+            "empty": "Nenhum conteúdo correspondente foi encontrado.",
+            "types": {
+                "form": "Formulário",
+                "media": "Mídia",
+                "post": "Postagem",
+                "event": "Evento",
+                "library": "Livro da biblioteca"
+            }
+        }
+    },
     "errors": {
         "status": {
             "401": {
                 "title": "Autenticação necessária",
-                "description": "Entre com uma conta autorizada para continuar."
+                "description": "Faça login com uma conta autorizada para continuar."
             },
             "403": {
                 "title": "Acesso negado",
-                "description": "Você não possui permissão para acessar esta área na church atual."
+                "description": "Você não tem permissão para acessar esta área na igreja atual."
             },
             "404": {
                 "title": "Página não encontrada",
-                "description": "O endereço pode ter mudado ou o conteúdo solicitado não está mais disponível."
+                "description": "O endereço pode ter mudado, ou o conteúdo solicitado não está mais disponível."
             },
             "500": {
-                "title": "Erro inesperado no servidor",
-                "description": "Não foi possível concluir esta solicitação. Tente novamente em instantes."
+                "title": "Erro inesperado do servidor",
+                "description": "Não pudemos concluir esta solicitação. Por favor, tente novamente em breve."
             },
             "503": {
                 "title": "Serviço temporariamente indisponível",
-                "description": "Este serviço está em manutenção. Tente novamente em instantes."
+                "description": "Este serviço está em manutenção. Por favor, tente novamente em breve."
             },
             "505": {
                 "title": "Versão HTTP não suportada",
-                "description": "Seu navegador utilizou uma versão de protocolo que este serviço não consegue processar."
+                "description": "Seu navegador usou uma versão de protocolo que este serviço não pode processar."
             },
             "generic": {
-                "title": "Erro {status} na solicitação",
-                "description": "Não foi possível concluir esta solicitação. Volte à página anterior ou acesse o início."
+                "title": "Erro de solicitação {status}",
+                "description": "Esta solicitação não pôde ser concluída. Volte para a página anterior ou vá para a página inicial."
             }
         },
         "actions": {
-            "home": "Ir para o início",
+            "home": "Ir para a página inicial",
             "back": "Voltar"
         }
     },
@@ -66,14 +92,14 @@
     },
     "notifications": {
         "title": "Avisos",
-        "child_checked_in": "{child} fez check-in na sala {classroom}.",
-        "child_released": "{child} saiu da sala {classroom} com {person}."
+        "child_checked_in": "{child} checkou para a sala de aula {classroom}.",
+        "child_released": "{child} saiu da sala de aula {classroom} com {person}."
     },
     "pwa": {
-        "install": "Instalar aplicativo",
+        "install": "Instalar app",
         "notifications": "Ativar notificações",
         "ios_title": "Instalar no iPhone ou iPad",
-        "ios_instructions": "Abra o menu de compartilhamento do navegador e escolha Adicionar à Tela de Início."
+        "ios_instructions": "Abra o menu de compartilhamento do navegador e escolha Adicionar à Tela inicial."
     },
     "nav": {
         "posts": "Publicações",
@@ -87,7 +113,7 @@
         "watch": "Assistir",
         "menu": "Abrir menu",
         "faith_community": "Comunidade de fé",
-        "live_now": "Ao vivo: {name}"
+        "live_now": "Ao vivo agora: {name}"
     },
     "navigation": {
         "menu": "Menu de navegação",
@@ -106,6 +132,8 @@
         "edit": "Editar",
         "save": "Salvar",
         "cancel": "Cancelar",
+        "yes": "Sim",
+        "no": "Não",
         "update": "Atualizar",
         "upload": "Enviar",
         "delete": "Excluir"
@@ -128,12 +156,12 @@
         "transmissions": "Últimas transmissões",
         "transmissions_title": "Últimas transmissões gravadas",
         "transmissions_description": "Assista às gravações públicas mais recentes desta igreja.",
-        "transmissions_empty": "Ainda não há transmissões públicas gravadas.",
-        "empty": "Ainda não há itens públicos na galeria.",
+        "transmissions_empty": "Não há transmissões públicas gravadas ainda.",
+        "empty": "Não há itens de galeria pública ainda.",
         "upload_kicker": "Envio de mídia",
         "upload_title": "Adicionar um novo item à galeria",
-        "title_placeholder": "Título da mídia",
-        "description_placeholder": "Conte a história por trás desta mídia...",
+        "title_placeholder": "Título",
+        "description_placeholder": "Contar a história por trás deste meio...",
         "file": "Arquivo",
         "file_placeholder": "https://... ou caminho do arquivo",
         "upload_hint": "Perfis autorizados podem enviar arquivos à galeria; a moderação continua disponível no painel privado.",
@@ -148,12 +176,12 @@
         "item_alt": "Mídia da galeria",
         "anonymous": "Anônimo",
         "download": "Baixar arquivo",
-        "close": "Fechar visualização",
-        "no_comments": "Nenhum comentário ainda. Seja a primeira pessoa a interagir.",
-        "comment_placeholder": "Adicione um comentário...",
+        "close": "Fechar pré-visualização",
+        "no_comments": "Ainda não há comentários. Seja a primeira pessoa a interagir.",
+        "comment_placeholder": "Adicionar um comentário...",
         "comment_submit": "Publicar comentário",
-        "login_to_interact": "Entre com uma conta vinculada a esta igreja para comentar e reagir.",
-        "interaction_error": "Não foi possível concluir a interação. Tente novamente.",
+        "login_to_interact": "Faça login com uma conta vinculada a esta igreja para comentar e reagir.",
+        "interaction_error": "A interação não pôde ser concluída. Por favor, tente novamente.",
         "pagination": "Mostrando {from} - {to} de {total} itens"
     },
     "auth": {
@@ -174,7 +202,7 @@
             "submit": "Entrar",
             "no_account": "Não tem conta?",
             "sign_up": "Criar conta",
-            "church_context": "Você está entrando em {church}. Se seu perfil pertencer a outra congregação, será necessário confirmar a mudança de vínculo."
+            "church_context": "Você está entrando em {church}. Se o seu perfil pertence a outra congregação, será necessário confirmar a mudança de filiação."
         },
         "register": {
             "meta_title": "Registrar",
@@ -353,7 +381,7 @@
             "register": "Registrar chave de acesso",
             "authenticating": "Autenticando...",
             "verify": "Entrar com uma chave de acesso",
-            "email_separator": "Ou continue com o e-mail"
+            "email_separator": "Ou continue com o e‑mail"
         },
         "two_factor": {
             "title": "Autenticação de dois fatores",
@@ -363,9 +391,9 @@
             "continue_setup": "Continuar configuração",
             "enable": "Habilitar 2FA",
             "disable": "Desabilitar 2FA",
-            "qr_error": "Não foi possível obter o QR Code.",
-            "setup_key_error": "Não foi possível obter a chave de configuração.",
-            "recovery_codes_error": "Não foi possível obter os códigos de recuperação.",
+            "qr_error": "Falha ao obter o código QR.",
+            "setup_key_error": "Falha ao obter a chave de configuração.",
+            "recovery_codes_error": "Falha ao obter os códigos de recuperação.",
             "recovery_codes": "Códigos de recuperação de 2FA",
             "recovery_description": "Códigos de recuperação permitem que você recupere o acesso se perder seu dispositivo de 2FA. Armazene-os em um gerenciador de senhas seguro.",
             "hide_codes": "Ocultar códigos de recuperação",
@@ -400,6 +428,8 @@
             "items": "{count} itens",
             "saving": "Salvando...",
             "remove": "Remover",
+            "edit": "Editar",
+            "delete": "Excluir",
             "preview": "Pré-visualização",
             "select": "Selecionar",
             "close_editor": "Fechar editor",
@@ -407,45 +437,67 @@
             "no_recent_records": "Sem registros recentes para este módulo."
         },
         "branding": {
-            "title": "Configurações da church",
-            "heading": "Configurações da church",
-            "description": "Configure domínio, logotipo, identidade visual, contatos, localização e programação semanal.",
+            "title": "Configurações da igreja",
+            "heading": "Configurações da igreja",
+            "description": "Configure o domínio, logo, identidade visual, informações de contato, localização e cronograma semanal.",
             "brand_name": "Nome da marca",
             "tagline": "Slogan",
             "banner_title": "Título do banner",
             "banner_subtitle": "Legenda do banner",
             "font_family": "Família de fontes",
             "icon_name": "Ícone principal",
-            "logo_file": "Logotipo da church",
-            "logo_preview": "Pré-visualização do logotipo da church",
-            "logo_hint": "Envie uma imagem JPG, PNG ou WebP de até 4 MB.",
-            "logo_inherited": "Usando o logotipo herdado de {church}. Envie um logotipo aqui para substituí-lo nesta church.",
-            "logo_project_fallback": "Usando o logotipo padrão do Nossa Casa. Envie um logotipo aqui para personalizar esta church.",
-            "remove_logo": "Remover logotipo atual",
-            "keep_logo": "Manter logotipo atual",
-            "domain_title": "Domínio de acesso da church",
-            "domain_description": "Defina o endereço que os membros usarão para acessar esta church.",
+            "logo_file": "Logo da igreja",
+            "logo_preview": "Pré-visualização do logo da igreja",
+            "logo_hint": "Faça upload de uma imagem JPG, PNG ou WebP até 4 MB.",
+            "logo_inherited": "Usando o logo herdado de {church}. Faça upload de um logo aqui para sobrescrevê‑lo para esta igreja.",
+            "logo_project_fallback": "Usando o logo padrão Nossa Casa. Faça upload de um logo aqui para personalizar esta igreja.",
+            "remove_logo": "Remover logo atual",
+            "keep_logo": "Manter logo atual",
+            "domain_title": "Domínio de acesso à igreja",
+            "domain_description": "Defina o endereço que os membros usarão para acessar esta igreja.",
             "domain": "Domínio",
-            "domain_placeholder": "igreja.exemplo.com",
-            "domain_hint": "Informe somente o domínio, sem protocolo ou caminhos. Se o campo ficar vazio, será usado o domínio atual.",
+            "domain_placeholder": "church.example.com",
+            "domain_hint": "Insira apenas o domínio, sem protocolo ou caminhos. O domínio atual será usado se este campo ficar vazio.",
             "domain_internal": "Subdomínio da plataforma",
             "domain_internal_hint": "Use um endereço gerenciado abaixo do domínio principal da plataforma.",
             "domain_external": "Domínio externo",
-            "domain_external_hint": "Use um domínio próprio configurado pela church.",
+            "domain_external_hint": "Use um domínio que sua igreja possui e configura.",
             "terminology_title": "Terminologia da comunidade",
-            "terminology_description": "Escolha como as unidades organizacionais e os níveis de acesso serão apresentados sem alterar suas permissões.",
-            "headquarters_term": "Nome usado para a matriz",
+            "terminology_description": "Escolha como as unidades organizacionais e os níveis de acesso são apresentados sem alterar suas permissões.",
+            "headquarters_term": "Nome usado para a sede",
             "branch_term": "Nome usado para as filiais",
-            "terminology_hint": "Estes são nomes de exibição. As regras técnicas de acesso permanecem inalteradas.",
+            "terminology_hint": "Estes são nomes de exibição. As regras de acesso técnico permanecem inalteradas.",
             "primary_color": "Cor principal",
             "secondary_color": "Cor secundária",
             "accent_color": "Cor de destaque",
             "surface_color": "Cor de fundo",
+            "currency": "Moeda",
+            "groups": {
+                "identity": "Identidade",
+                "domain": "Domínio",
+                "communication": "Comunicação",
+                "location": "Localização",
+                "templates": "Modelos",
+                "schedule": "Agenda"
+            },
+            "mail_title": "Servidor de email personalizado",
+            "mail_description": "Use uma conta SMTP para mensagens enviadas nesta igreja. Sem uma, o padrão do aplicativo é usado.",
+            "mail_encryption_notice": "As credenciais do servidor são criptografadas em repouso. A senha nunca é exibida novamente e é descriptografada apenas no processo de entrega de correio.",
+            "mail_enabled": "Use este servidor de email",
+            "mail_allow_branches": "Permita que ramificações sem seu próprio servidor herdem-no",
+            "mail_host": "Host SMTP",
+            "mail_port": "Porta",
+            "mail_security": "Segurança",
+            "mail_username": "Nome de usuário",
+            "mail_password": "Senha",
+            "mail_password_saved": "Senha já armazenada — deixe em branco para mantê-la",
+            "mail_from_address": "E‑mail do remetente",
+            "mail_from_name": "Nome do remetente",
             "phone": "Telefone",
-            "email": "E-mail",
+            "email": "E‑mail",
             "whatsapp": "WhatsApp",
-            "social_links_title": "Links de redes sociais",
-            "social_links_description": "Adicione os perfis oficiais da church que aparecerão na página inicial pública.",
+            "social_links_title": "Links de mídia social",
+            "social_links_description": "Adicione os perfis oficiais da igreja que devem aparecer na página inicial pública.",
             "social_networks": {
                 "instagram": "Instagram",
                 "facebook": "Facebook",
@@ -457,21 +509,21 @@
                 "linkedin": "LinkedIn"
             },
             "location_title": "Localização e endereço",
-            "location_description": "Informe como os visitantes chegam à igreja e, se desejar, incorpore um mapa seguro.",
+            "location_description": "Informe os visitantes como chegar à igreja e opcionalmente incruste um mapa seguro.",
             "address": "Endereço completo",
             "latitude": "Latitude",
             "longitude": "Longitude",
-            "coordinates_hint": "As coordenadas permitem que o portal principal destaque comunidades próximas. Use a localização da entrada da congregação.",
-            "templates_title": "Templates das páginas públicas",
+            "coordinates_hint": "As coordenadas permitem que o portal principal destaque comunidades próximas. Use a localização da entrada da igreja.",
+            "templates_title": "Modelos de página pública",
             "templates_description": "Escolha a composição visual usada por cada experiência pública sem alterar seu conteúdo.",
-            "templates_preview_hint": "Selecione uma prévia para aplicar esse estilo visual à página. A prévia acompanha as cores escolhidas acima.",
+            "templates_preview_hint": "Selecione uma prévia para aplicar esse estilo visual à página. A prévia segue as cores escolhidas acima.",
             "template_sections": {
-                "home": "Home da congregação",
-                "posts_index": "Listagem de publicações",
-                "posts_show": "Leitura de publicação",
-                "events_index": "Listagem de eventos",
+                "home": "Casa da igreja",
+                "posts_index": "Lista de posts",
+                "posts_show": "Leitura de post",
+                "events_index": "Lista de eventos",
                 "events_show": "Detalhes do evento",
-                "form": "Formulários de inscrição",
+                "form": "Formulários de registro",
                 "library": "Biblioteca",
                 "gallery": "Galeria"
             },
@@ -481,18 +533,18 @@
                 "minimal": "Minimalista"
             },
             "map_embed": "Mapa incorporado",
-            "map_embed_placeholder": "Cole a URL ou o iframe do Google Maps/OpenStreetMap",
-            "map_embed_hint": "São aceitos embeds HTTPS do Google Maps e OpenStreetMap.",
-            "schedule_title": "Programação semanal",
-            "schedule_description": "Cadastre cultos e atividades recorrentes; itens com o mesmo título serão agrupados na página inicial.",
+            "map_embed_placeholder": "Cole um URL ou iframe do Google Maps/OpenStreetMap",
+            "map_embed_hint": "HTTPS embeds do Google Maps e OpenStreetMap são aceitos.",
+            "schedule_title": "Horário semanal",
+            "schedule_description": "Inscreva-se em serviços e atividades recorrentes; entradas com o mesmo título são agrupadas na página inicial.",
             "schedule_add": "Adicionar horário",
             "schedule_name": "Título",
             "schedule_day": "Dia da semana",
             "schedule_start": "Início",
             "schedule_end": "Fim",
             "schedule_remove": "Remover horário",
-            "schedule_empty": "Nenhuma programação semanal cadastrada.",
-            "save": "Salvar configurações da church"
+            "schedule_empty": "Nenhum horário semanal foi registrado.",
+            "save": "Salvar configurações da igreja"
         },
         "categories": {
             "all_types": "Todos os tipos",
@@ -524,7 +576,7 @@
             "guardians": "Guardians e família",
             "title": "Salas de aula",
             "kids_title": "Ministério Kids",
-            "kids": "Kids",
+            "kids": "Crianças",
             "description": "Gerencie grupos de idade, elegibilidade por gênero, alunos e presença.",
             "new": "Nova sala de aula",
             "edit": "Editar sala de aula",
@@ -553,19 +605,19 @@
             "checkout_error": "Saída não pôde ser concluída.",
             "checkout_success": "Finalização do checkout concluída.",
             "checkout_pin": "PIN de retirada",
-            "scan_qr": "Ler QR Code com a câmera",
-            "stop_scanner": "Parar câmera",
-            "scanner_unavailable": "Este navegador não oferece leitura nativa de QR Code. Digite o PIN manualmente.",
-            "camera_error": "Não foi possível acessar a câmera. Verifique a permissão e use o PIN manual.",
+            "scan_qr": "Escaneie o código QR com a câmera",
+            "stop_scanner": "Parar a câmera",
+            "scanner_unavailable": "Este navegador não suporta a varredura nativa de QR. Digite o PIN manualmente.",
+            "camera_error": "A câmera não pôde ser acessada. Verifique as permissões e use o PIN manualmente.",
             "who_is_dropping_off": "Quem está deixando a criança?",
-            "who_is_picking_up": "Quem está retirando a criança?",
-            "handoff_hint": "Selecione um responsável vinculado ou informe os dados da outra pessoa.",
+            "who_is_picking_up": "Quem está buscando a criança?",
+            "handoff_hint": "Selecione um responsável vinculado ou informe os detalhes da outra pessoa.",
             "other_person": "Outra pessoa",
             "handoff_name": "Nome completo",
-            "handoff_phone": "Telefone para contato",
-            "outsider_notification": "Os responsáveis vinculados receberão um aviso sobre esta retirada.",
-            "confirm_regular_checkin": "Confirme a entrada deste aluno na sala.",
-            "confirm_regular_checkout": "Confirme a saída deste aluno da sala.",
+            "handoff_phone": "Telefone de contato",
+            "outsider_notification": "Os responsáveis vinculados receberão um aviso sobre esta coleta.",
+            "confirm_regular_checkin": "Confirme a entrada da sala de aula deste aluno.",
+            "confirm_regular_checkout": "Confirme a saída da sala de aula deste aluno.",
             "filters": "Filtros",
             "age": "Idade do estudante",
             "all_rooms": "Todas as salas de aula",
@@ -577,18 +629,18 @@
             "no_students": "Nenhum estudante vinculado a esta sala.",
             "manage_students": "Adicionar ou remover estudantes",
             "labels_title": "Etiquetas de check-in",
-            "labels_description": "Imprima as duas etiquetas antes de fechar esta página.",
+            "labels_description": "Imprima ambas as etiquetas antes de fechar esta página.",
             "print_labels": "Imprimir etiquetas",
-            "child_label": "Etiqueta da criança",
-            "guardian_label": "Etiqueta do responsável",
-            "room": "Sala",
-            "dropoff_person": "Quem deixou",
+            "child_label": "Etiqueta de criança",
+            "guardian_label": "Etiqueta de responsável",
+            "room": "Sala de aula",
+            "dropoff_person": "Deixado por",
             "contact": "Contato",
-            "not_provided": "Não informado",
+            "not_provided": "Não fornecido",
             "secure_checkin": "Nossa Casa · Check-in seguro",
             "pickup_pin": "PIN de retirada",
-            "pickup_qr_alt": "QR Code para retirada",
-            "present_at_checkout": "Apresente no checkout",
+            "pickup_qr_alt": "Código QR de retirada",
+            "present_at_checkout": "Presente ao checkout",
             "gender": {
                 "none": "Sem restrição",
                 "all": "Todos os gêneros",
@@ -600,15 +652,15 @@
             "registered": "Formulários registrados",
             "category_hint": "Selecione categorias da igreja atual",
             "title": "Formulários",
-            "none": "Nenhum formulário",
-            "content_hint": "Opcional: vincule um formulário de inscrição a este conteúdo.",
+            "none": "Sem formulário",
+            "content_hint": "Opcional: vincule um formulário de registro a este conteúdo.",
             "description": "Construtor visual e links de conteúdo.",
             "new": "Novo formulário",
             "edit": "Editar formulário",
             "create": "Criar formulário",
             "save_changes": "Salvar alterações",
             "card_summary": "{responses} respostas · {links} links",
-            "links": "Vínculos",
+            "links": "Links",
             "responses": "Respostas",
             "no_description": "Sem descrição",
             "empty": "Nenhum formulário foi criado para esta igreja.",
@@ -635,7 +687,9 @@
             "delete_confirm": "Excluir formulário “{title}”?",
             "types": {
                 "text": "Texto curto",
-                "email": "E‑mail",
+                "email": "E-mail",
+                "phone": "Telefone",
+                "money": "Valor monetário",
                 "number": "Número",
                 "date": "Data",
                 "textarea": "Texto longo",
@@ -652,92 +706,96 @@
             "kicker": "Visão geral operacional",
             "description": "Um resumo ao vivo da atividade da plataforma.",
             "system": "Sistema",
-            "runtime": "Ambiente Laravel / PHP",
-            "log_file": "Log da aplicação",
+            "runtime": "Tempo de execução Laravel / PHP",
+            "log_file": "Registro de aplicativo",
             "empty": "Nenhuma atividade recente.",
             "environment": "Ambiente",
             "pending_jobs": "Tarefas pendentes",
             "failed_jobs": "Tarefas falhas",
             "search": "Filtrar entradas de log",
-            "live_streams": "Transmissões em andamento",
+            "live_streams": "Transmissões ao vivo",
             "live_streams_description": "Conexões RTSP ativas nos workers de mídia.",
             "unknown_worker": "worker desconhecido",
             "recordings": "gravações",
-            "open_stream": "Abrir transmissão",
-            "stop_stream": "Derrubar conexão",
-            "no_live_streams": "Nenhuma transmissão ativa agora.",
+            "open_stream": "Fluxo aberto",
+            "stop_stream": "Desconectar",
+            "no_live_streams": "Não há streams ativos.",
             "backup": {
-                "title": "Backups para migração",
-                "description": "O sistema entrará em manutenção e bloqueará os demais usuários durante a exportação ou importação.",
+                "title": "Backups de migração",
+                "description": "O sistema entrará em modo de manutenção e bloqueará todos os outros usuários durante a exportação ou importação.",
                 "export_title": "Exportar backup",
                 "export_description": "Baixa o banco de dados e os discos de mídia configurados em um único arquivo ZIP.",
-                "export_action": "Exportar banco e mídias",
+                "export_action": "Exportar banco de dados e mídia",
                 "import_title": "Importar backup",
-                "import_description": "Use um ZIP gerado por esta tela. Mídias existentes com conflito nunca são sobrescritas.",
-                "import_action": "Importar banco e mídias",
-                "import_confirm": "A importação substituirá os dados atuais do banco. Deseja continuar?",
-                "choose_file": "Escolha primeiro um backup ZIP.",
+                "import_description": "Use um ZIP gerado nesta tela. Mídia conflitante existente nunca será sobrescrita.",
+                "import_action": "Importar banco de dados e mídia",
+                "import_confirm": "A importação substitui os dados atuais do banco de dados. Continuar?",
+                "choose_file": "Escolha um backup ZIP primeiro.",
                 "processing": "Modo de manutenção ativo...",
-                "error": "Não foi possível concluir a operação de backup."
+                "error": "A operação de backup não pôde ser concluída."
             },
-            "stats": {
-                "0": "Usuários",
-                "1": "Eventos",
-                "2": "Publicações",
-                "3": "Comentários",
-                "4": "Mídia",
-                "5": "Formulários"
-            }
+            "stats": [
+                "Usuários",
+                "Eventos",
+                "Publicações",
+                "Comentários",
+                "Mídia",
+                "Formulários"
+            ]
         },
         "live_streams": {
-            "title": "Controle de transmissões",
-            "description": "Crie a transmissão, copie as credenciais para o OBS e acompanhe o estado da conexão.",
-            "select_church": "Selecionar igreja",
-            "new": "Nova transmissão",
-            "create_error": "Não foi possível criar a transmissão.",
-            "stop_confirm": "Encerrar a transmissão “{name}”?",
-            "rotate_confirm": "Renovar o token desconectará a transmissão atual. Continuar?",
+            "title": "Controle de stream ao vivo",
+            "description": "Crie um stream, copie suas credenciais OBS e monitore o status da conexão.",
+            "select_church": "Selecione a igreja",
+            "new": "Novo stream",
+            "create_error": "O stream ao vivo não pôde ser criado.",
+            "delete_confirm": "Excluir permanentemente o stream ao vivo “{name}”?",
+            "stop_confirm": "Parar o stream ao vivo “{name}”?",
+            "rotate_confirm": "Rotacionar o token desconectará o stream atual. Continuar?",
             "recordings_count": "{count} gravação(ões)",
             "public": "Pública",
             "private": "Privada",
-            "open_page": "Abrir página",
-            "stop": "Encerrar",
-            "obs_server": "Servidor do OBS",
+            "open_page": "Página aberta",
+            "delete": "Excluir",
+            "stop": "Parar",
+            "obs_server": "Servidor OBS",
             "copy_link": "Copiar link",
-            "obs_stream_key": "Chave de transmissão do OBS",
-            "copy_stream_key": "Copiar chave de transmissão",
+            "obs_stream_key": "Chave de stream OBS",
+            "copy_stream_key": "Copiar chave de stream",
             "token": "Token",
             "copy_token": "Copiar token",
-            "rotate": "Renovar",
-            "last_rotation": "Última renovação:",
-            "started_at": "Início",
+            "rotate": "Rotacionar",
+            "last_rotation": "Última rotação:",
+            "started_at": "Iniciado em",
             "recording": "Gravação",
-            "enabled": "Ativada",
-            "disabled": "Desativada",
+            "enabled": "Habilitada",
+            "disabled": "Desabilitada",
             "visibility": "Visibilidade ao vivo",
-            "public_visibility": "Pública — aparece no portal e na igreja",
-            "private_visibility": "Privada — somente membros desta igreja",
-            "obs_hint": "No OBS, selecione Serviço personalizado e copie o servidor e a chave de transmissão exibidos acima. Não cole o link completo no campo servidor.",
-            "recordings_title": "Gravações desta transmissão",
+            "public_visibility": "Pública — exibida no portal e nas páginas da igreja",
+            "private_visibility": "Privada — apenas membros desta igreja",
+            "obs_hint": "No OBS, selecione Custom Service e copie o servidor e a chave de stream mostrados acima. Não cole a URL completa no campo do servidor. Para reprodução via WebRTC, desative os B-frames, use H.264 e defina intervalo de keyframe de 2 segundos.",
+            "recordings_title": "Gravações deste stream",
             "recording_public": "Gravação pública",
             "recording_private": "Gravação privada",
-            "make_private": "Tornar privada",
+            "make_private": "Tornar privado",
             "publish_recording": "Publicar gravação",
-            "empty": "Nenhuma transmissão cadastrada.",
+            "empty": "Nenhuma transmissão ao vivo foi registrada.",
             "create_kicker": "Nova transmissão",
             "create_title": "Gerar link e token",
             "name": "Nome",
-            "name_placeholder": "Culto de domingo",
+            "name_placeholder": "Serviço de domingo",
             "record_stream": "Gravar transmissão",
             "public_stream": "Transmissão pública",
-            "public_stream_hint": "Quando desmarcada, a transmissão não aparece no portal, na página inicial ou na galeria. A gravação poderá ser publicada depois.",
+            "public_stream_hint": "Quando desabilitado, a transmissão ao vivo não é exibida no portal, página inicial ou galeria. Sua gravação pode ser publicada depois.",
+            "end_on_disconnect": "Terminar ao desconectar OBS",
+            "end_on_disconnect_hint": "Marca a transmissão ao vivo como concluída automaticamente quando o publicador para de enviar vídeo.",
             "creating": "Criando…",
             "create": "Criar transmissão",
             "status": {
-                "ready": "Pronta",
+                "ready": "Pronto",
                 "live": "Ao vivo",
                 "offline": "Offline",
-                "stopped": "Encerrada",
+                "stopped": "Parado",
                 "failed": "Falhou"
             }
         },
@@ -754,10 +812,10 @@
             "anonymous": "Pedido anônimo",
             "mine": "Meu pedido",
             "send_anonymously": "Enviar anonimamente",
-            "stats": {
-                "0": "Pedidos enviados",
-                "1": "Pedidos da igreja"
-            }
+            "stats": [
+                "Pedidos enviados",
+                "Pedidos da igreja"
+            ]
         },
         "wall": {
             "title": "Moderar parede",
@@ -771,11 +829,11 @@
             "all_types": "Todos os tipos de conteúdo",
             "removed": "Comentário removido.",
             "empty": "Nenhum comentário para revisar.",
-            "stats": {
-                "0": "Total de comentários",
-                "1": "Publicações com comentários",
-                "2": "Eventos com comentários"
-            }
+            "stats": [
+                "Total de comentários",
+                "Publicações com comentários",
+                "Eventos com comentários"
+            ]
         },
         "multicongregation": {
             "title": "Multicongregações",
@@ -783,7 +841,7 @@
             "description": "Visão unificada de escritórios, filiais e comunidades.",
             "new_church": "Nova igreja",
             "edit_church": "Editar igreja",
-            "new_unit": "Adicionar {unit}",
+            "new_unit": "Novo {unit}",
             "edit_unit": "Editar {unit}",
             "new_community": "Nova comunidade",
             "edit_community": "Editar comunidade",
@@ -791,27 +849,27 @@
             "community_description": "Descrição da comunidade",
             "church_count": "{count} congregações",
             "empty_churches": "Não há congregações registradas nesta comunidade.",
-            "empty_units": "Não há registros de {units} nesta comunidade.",
+            "empty_units": "Nenhum {units} está registrado nesta comunidade.",
             "delete_church_confirm": "Excluir a congregação \"{name}\"?",
             "delete_community_confirm": "Excluir a comunidade \"{name}\"? As congregações vinculadas não terão mais comunidade.",
             "save_error": "A alteração não pôde ser salva.",
             "churches": "Igrejas",
             "networks": "Escritórios e filiais",
             "requests": "Solicitações",
-            "empty_requests": "Nenhuma solicitação de congregação encontrada.",
-            "domain": "Domínio personalizado (ex.: igreja.exemplo.com)",
-            "logo": "Logo da church",
-            "logo_preview": "Logo atual da church",
+            "empty_requests": "Nenhuma solicitação de congregação foi encontrada.",
+            "domain": "Domínio personalizado (ex.: church.example.com)",
+            "logo": "Logo da igreja",
+            "logo_preview": "Logo da igreja atual",
             "icon": "Ícone do site e PWA",
-            "icon_preview": "Ícone atual do site",
+            "icon_preview": "Ícone do site atual",
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
-            "stats": {
-                "0": "Igrejas",
-                "1": "Comunidades",
-                "2": "Vínculos de sede/filial"
-            },
+            "stats": [
+                "Igrejas",
+                "Comunidades",
+                "Vínculos de sede/filial"
+            ],
             "status": {
                 "active": "Ativo",
                 "inactive": "Inativo",
@@ -833,11 +891,11 @@
             "reset_password": "Enviar redefinição de senha",
             "protected": "Conta protegida",
             "delete_confirm": "Excluir usuário \"{name}\"?",
-            "stats": {
-                "0": "Total de usuários",
-                "1": "Administradores",
-                "2": "Membros"
-            }
+            "stats": [
+                "Total de usuários",
+                "Administradores",
+                "Membros"
+            ]
         },
         "media": {
             "title": "Moderar galeria",
@@ -851,8 +909,8 @@
             "delete_confirm": "Excluir esta mídia?",
             "source": "Origem",
             "file_url": "Arquivo / URL",
-            "original_source": "Origem original",
-            "source_locked": "O arquivo original e sua origem não podem ser substituídos após o cadastro.",
+            "original_source": "Fonte original",
+            "source_locked": "O arquivo original e sua fonte não podem ser substituídos após o registro.",
             "record_title": "Título",
             "record_description": "Descrição",
             "public_gallery": "Visível na galeria pública",
@@ -866,16 +924,16 @@
             "approve": "Aprovar",
             "reject": "Rejeitar",
             "empty": "Nenhuma mídia registrada ainda.",
-            "actions": {
-                "0": "Abrir galeria pública",
-                "1": "Ir para o painel"
-            },
-            "stats": {
-                "0": "Mídia submetida",
-                "1": "Pendente",
-                "2": "Aprovado",
-                "3": "Rejeitado"
-            },
+            "actions": [
+                "Abrir galeria pública",
+                "Ir para o painel"
+            ],
+            "stats": [
+                "Mídia submetida",
+                "Pendente",
+                "Aprovado",
+                "Rejeitado"
+            ],
             "status": {
                 "pending": "Pendente",
                 "approved": "Aprovado",
@@ -894,7 +952,7 @@
             "book": "Livro",
             "chapter": "Capítulo",
             "navigation": "Navegação da Bíblia",
-            "copyright_notice": "Aviso de direitos da edição",
+            "copyright_notice": "Aviso de direitos de edição",
             "verse": "Versículo",
             "version": "Versão / tradução",
             "categories": "Categorias da biblioteca",
@@ -921,15 +979,15 @@
             "empty": "Nenhum trabalho registrado ainda.",
             "delete_confirm": "Excluir “{title}”?",
             "bible": {
-                "community_title": "Versões bíblicas da comunidade",
-                "community_description": "Escolha as edições em seu idioma original que as igrejas desta comunidade poderão disponibilizar.",
+                "community_title": "Versões da Bíblia comunitária",
+                "community_description": "Escolha as edições de idioma original que as igrejas nesta comunidade podem oferecer.",
                 "church_title": "Versões disponíveis nesta igreja",
                 "church_description": "Selecione um subconjunto das versões aprovadas pela comunidade.",
                 "default_version": "Versão padrão",
                 "search_versions": "Buscar por versão ou idioma",
                 "save_community": "Salvar versões da comunidade",
                 "save_church": "Salvar versões da igreja",
-                "load_error": "Não foi possível carregar os dados bíblicos. Tente novamente em instantes."
+                "load_error": "Os dados da Bíblia não puderam ser carregados. Tente novamente em breve."
             }
         },
         "events": {
@@ -943,6 +1001,42 @@
             "registration_summary": "{users} participantes · {forms} formulários",
             "delete_confirm": "Excluir evento \"{title}\"?",
             "empty": "Nenhum evento foi criado para esta igreja."
+        },
+        "event_content": {
+            "title": "Conteúdo de evento privado",
+            "kicker": "Área do participante",
+            "registrations": "Ver inscrições",
+            "posts": "Postagens privadas",
+            "materials": "Materiais de apoio",
+            "media": "Mídia do evento",
+            "media_hint": "Mídia vinculada é exibida para participantes confirmados mesmo quando ocultada da galeria da igreja.",
+            "link": "Link",
+            "file": "Arquivo",
+            "delete_confirm": "Excluir este item?",
+            "new_post": "Novo post privado",
+            "empty_posts": "Nenhum post privado foi criado ainda."
+        },
+        "event_registrations": {
+            "title": "Inscrições no evento",
+            "total": "{count} inscrição(ões)",
+            "add": "Adicionar inscrição",
+            "columns": "Escolher colunas",
+            "view": "Ver e editar inscrição",
+            "individual_pdf": "Exportar PDF individual",
+            "empty": "Nenhuma inscrição foi submetida ainda.",
+            "edit": "Detalhes da inscrição",
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "email": "E‑mail",
+            "phone": "Telefone",
+            "status": "Status",
+            "statuses": {
+                "pending": "Pendente",
+                "approved": "Aprovado",
+                "rejected": "Rejeitado",
+                "canceled": "Cancelado",
+                "confirmed": "Confirmado"
+            }
         },
         "highlights": {
             "title": "Destaques",
@@ -960,44 +1054,44 @@
                 "title": "Destaques",
                 "subtitle": "Comunicação e conteúdo",
                 "description": "Gerencie os destaques visuais exibidos à comunidade nas principais canais.",
-                "stats": {
-                    "0": "Destaques ativos",
-                    "1": "Publicações publicadas",
-                    "2": "Eventos publicados"
-                },
-                "actions": {
-                    "0": "Gerenciar publicações",
-                    "1": "Abrir eventos",
-                    "2": "Configurações da igreja"
-                }
+                "stats": [
+                    "Destaques ativos",
+                    "Publicações publicadas",
+                    "Eventos publicados"
+                ],
+                "actions": [
+                    "Gerenciar publicações",
+                    "Abrir eventos",
+                    "Configurações da igreja"
+                ]
             },
             "library": {
                 "title": "Biblioteca e versículo",
                 "subtitle": "Comunicação e conteúdo",
                 "description": "Gerencie materiais devocionais, a coleção digital e os versículos destacados.",
-                "stats": {
-                    "0": "Materiais da biblioteca",
-                    "1": "Versículos registrados",
-                    "2": "Categorias de conteúdo"
-                },
-                "actions": {
-                    "0": "Abrir página pública",
-                    "1": "Revisar destaques"
-                }
+                "stats": [
+                    "Materiais da biblioteca",
+                    "Versículos registrados",
+                    "Categorias de conteúdo"
+                ],
+                "actions": [
+                    "Abrir página pública",
+                    "Revisar destaques"
+                ]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercessão",
                 "subtitle": "Ministérios e membros",
                 "description": "Revise solicitações recebidas e organize o acompanhamento pastoral.",
-                "stats": {
-                    "0": "Solicitações recebidas",
-                    "1": "Solicitações anônimas",
-                    "2": "Solicitações identificadas"
-                },
-                "actions": {
-                    "0": "Abrir minhas orações",
-                    "1": "Ir para o painel"
-                }
+                "stats": [
+                    "Solicitações recebidas",
+                    "Solicitações anônimas",
+                    "Solicitações identificadas"
+                ],
+                "actions": [
+                    "Abrir minhas orações",
+                    "Ir para o painel"
+                ]
             }
         }
     },
@@ -1008,52 +1102,52 @@
         "open": "Abrir material",
         "empty": "Ainda não há materiais disponíveis.",
         "bible": {
-            "title": "Bíblia Sagrada",
-            "description": "Navegue por livros, capítulos e versículos sem tradução automática das Escrituras.",
-            "type": "Escrituras",
+            "title": "Sagrada Bíblia",
+            "description": "Navegue pelos livros, capítulos e versículos sem tradução automática da Escritura.",
+            "type": "Escritura",
             "read": "Ler a Bíblia",
             "versions_available": "{count} versões disponíveis",
             "version": "Versão",
             "book": "Livro",
             "chapter": "Capítulo",
-            "copyright_notice": "Aviso de direitos da edição",
+            "copyright_notice": "Aviso de direitos de edição",
             "previous_chapter": "Capítulo anterior",
             "next_chapter": "Próximo capítulo",
-            "no_versions": "Nenhuma versão bíblica foi habilitada para esta igreja.",
-            "load_error": "Não foi possível carregar os dados bíblicos. Tente novamente em instantes.",
+            "no_versions": "Nenhuma versão da Bíblia foi habilitada para esta igreja.",
+            "load_error": "Os dados da Bíblia não puderam ser carregados. Tente novamente em breve.",
             "offline_download": "Baixar novamente",
-            "offline_download_description": "Baixe as versões bíblicas abertas habilitadas por esta igreja para ler sem conexão com a internet.",
-            "offline_downloading": "Preparando automaticamente as Bíblias com licença aberta para leitura offline…",
+            "offline_download_description": "Baixe as versões abertas da Bíblia habilitadas por esta igreja para leitura sem conexão com a internet.",
+            "offline_downloading": "Preparando automaticamente as Bíblias de licença aberta para leitura offline…",
             "offline_ready": "Disponível offline",
-            "offline_error": "Não foi possível concluir o download offline. Verifique a conexão e tente novamente.",
+            "offline_error": "O download offline não pôde ser concluído. Verifique sua conexão e tente novamente.",
             "offline_missing": "Este capítulo ainda não foi baixado para leitura offline.",
-            "offline_open_versions": "{count} versões abertas habilitadas por esta igreja são baixadas automaticamente. Versões com licença restrita permanecem apenas online."
+            "offline_open_versions": "{count} versões abertas habilitadas por esta igreja podem ser baixadas. Versões com licenças restritas permanecem apenas online."
         }
     },
     "reader": {
-        "appearance": "Aparência da leitura",
+        "appearance": "Aparência de leitura",
         "close": "Fechar leitor",
         "themes": {
             "light": "Fundo claro",
-            "paper": "Fundo papel",
+            "paper": "Fundo de papel",
             "sepia": "Fundo sépia",
             "dark": "Fundo escuro"
         }
     },
     "live_stream": {
-        "ended": "Esta transmissão foi encerrada.",
-        "connecting": "A transmissão está se conectando. Esta página será atualizada automaticamente.",
+        "ended": "Esta transmissão ao vivo terminou. Esta página será atualizada automaticamente.",
+        "connecting": "Esta transmissão ao vivo está conectando. Esta página será atualizada automaticamente.",
         "kicker": "Transmissão ao vivo",
         "live": "Ao vivo",
         "comments": "Comentários",
-        "comment_error": "Não foi possível enviar o comentário.",
+        "comment_error": "O comentário não pôde ser enviado.",
         "remove_confirm": "Remover este comentário?",
-        "pin": "Destacar",
-        "unpin": "Remover destaque",
+        "pin": "Fixar",
+        "unpin": "Desfixar",
         "remove_comment": "Remover comentário",
         "first_comment": "Seja a primeira pessoa a comentar.",
         "comment_placeholder": "Escreva um comentário",
-        "login_to_comment": "Entre para comentar"
+        "login_to_comment": "Faça login para comentar"
     },
     "home": {
         "meta_title": "Casa",
@@ -1084,33 +1178,33 @@
             "title": "Últimas atualizações"
         },
         "latest_recordings": {
-            "kicker": "Assista novamente",
+            "kicker": "Assistir novamente",
             "title": "Últimas transmissões",
-            "view_all": "Ver todas",
-            "close": "Fechar reproduÃ§Ã£o",
+            "view_all": "Ver todos",
+            "close": "Fechar player",
             "playlist_kicker": "Continue assistindo",
-            "playlist_title": "TransmissÃµes recentes"
+            "playlist_title": "Transmissões recentes"
         },
         "calendar": {
-            "kicker": "Agenda da comunidade",
+            "kicker": "Calendário da comunidade",
             "title": "Calendário da igreja",
             "previous": "Mês anterior",
-            "next": "Próximo mês",
-            "selected_day": "Programação do dia",
-            "weekly": "Programação semanal",
+            "next": "Mês seguinte",
+            "selected_day": "Agenda para este dia",
+            "weekly": "Calendário semanal",
             "event": "Evento",
-            "empty": "Não há eventos ou programações para este dia."
+            "empty": "Não há eventos ou atividades agendadas para este dia."
         },
         "prayer": {
             "title": "Pedido de oração",
             "description": "Compartilhe seu pedido com o ministério de intercessão. Não é necessário fazer login.",
             "sending_as": "Seu pedido será enviado como {name}.",
-            "placeholder": "Escreva aqui seu pedido de oração...",
-            "anonymous": "Enviar de forma anônima",
+            "placeholder": "Escreva seu pedido de oração aqui...",
+            "anonymous": "Enviar anonimamente",
             "submit": "Enviar pedido",
             "sending": "Enviando...",
-            "success": "Seu pedido foi enviado. Estaremos orando por você.",
-            "error": "Não foi possível enviar o pedido. Tente novamente."
+            "success": "Seu pedido foi enviado. Vamos orar por você.",
+            "error": "O pedido não pôde ser enviado. Por favor, tente novamente."
         },
         "visit": {
             "kicker": "Venha nos visitar",
@@ -1118,7 +1212,7 @@
             "map_title": "Mapa de localização da igreja"
         },
         "schedule": {
-            "title": "Programação semanal"
+            "title": "Calendário semanal"
         }
     },
     "weekdays": {
@@ -1161,7 +1255,27 @@
             "about": "Sobre este evento",
             "registration": "Inscrição",
             "categories": "Categorias",
-            "form_not_configured": "O formulário principal ainda não foi configurado para este evento."
+            "form_not_configured": "O formulário principal ainda não foi configurado para este evento.",
+            "private_area": "Área do participante",
+            "awaiting_confirmation": "Sua inscrição está aguardando confirmação da equipe do evento.",
+            "location": "Localização",
+            "free": "Grátis"
+        },
+        "private": {
+            "title": "Área do participante",
+            "back": "Voltar para o evento",
+            "back_to_events": "Voltar para os eventos",
+            "navigation": "Navegação da área do participante",
+            "participant_intro": "Você está confirmado para este evento. Aqui você pode acompanhar atualizações e acessar materiais compartilhados pela equipe.",
+            "details": "Detalhes do evento",
+            "access_title": "Seu acesso de participante",
+            "access_description": "Este espaço está disponível para participantes confirmados e é atualizado pela equipe do evento.",
+            "download": "Baixar material",
+            "sections": "Seções privadas do evento",
+            "posts": "Publicações",
+            "materials": "Materiais de apoio",
+            "media": "Mídia",
+            "empty": "Nenhum conteúdo está disponível nesta seção ainda."
         },
         "register": {
             "title": "Inscrição de evento",
@@ -1191,9 +1305,21 @@
             "cover": "Imagem de capa",
             "cover_hint": "Recomendado: imagem landscape, pelo menos 1280x720.",
             "description_hint": "Use Markdown ou modo WYSIWYG para formatar o conteúdo do evento.",
+            "price": "Preço",
+            "price_hint": "Deixe zero ou em branco para um evento gratuito.",
+            "responsibles": "Gerentes do evento",
+            "responsibles_hint": "Os gerentes podem publicar conteúdo privado e confirmar inscrições pagas.",
+            "location": "Localização",
+            "street": "Rua",
+            "number": "Número",
+            "complement": "Complemento",
+            "neighborhood": "Bairro",
+            "city": "Cidade",
+            "state": "Estado",
+            "zipcode": "Código postal",
             "save": "Publicar evento",
             "update": "Atualizar evento",
-            "category_title": "Categorias do evento",
+            "category_title": "Categorias de evento",
             "category_hint": "Selecione as categorias disponíveis para sua igreja"
         }
     },
@@ -1205,21 +1331,21 @@
             "back_home": "Voltar para a página inicial",
             "kicker": "Notícias da comunidade",
             "title": "Publicações",
-            "description": "Acompanhe mensagens, avisos e histórias compartilhadas pela sua comunidade.",
-            "empty": "Nenhuma publicação está disponível neste momento.",
-            "about_title": "Sobre este mural",
-            "about_description": "Este espaço reúne conteúdos publicados pela liderança e pelos ministérios da igreja.",
+            "description": "Acompanhe mensagens, anúncios e histórias compartilhadas por sua comunidade.",
+            "empty": "Não há publicações disponíveis agora.",
+            "about_title": "Sobre este quadro",
+            "about_description": "Este espaço reúne conteúdo publicado pela liderança da igreja e ministérios.",
             "filters_title": "Encontre uma publicação",
             "search": "Buscar",
             "search_placeholder": "Título ou conteúdo...",
             "category": "Categoria",
             "all_categories": "Todas as categorias",
             "period": "Período de publicação",
-            "date_from": "Data inicial",
+            "date_from": "Data de início",
             "date_to": "Data final",
-            "order": "Ordenação",
-            "latest": "Mais recentes",
-            "most_accessed": "Mais acessados",
+            "order": "Ordem de ordenação",
+            "latest": "Mais recente",
+            "most_accessed": "Mais acessado",
             "apply_filters": "Aplicar filtros",
             "clear_filters": "Limpar filtros"
         },
@@ -1254,7 +1380,7 @@
             "summary": "Resumo",
             "summary_text": "{comments} comentários carregados e {reactions} reações registradas para este post.",
             "recent_comments": "Comentários recentes",
-            "reaction_count": "{count} reações",
+            "reaction_count": "{count} reacções",
             "comment_count": "{count} comentários",
             "related": "Posts relacionados",
             "latest": "Publicações recentes"
@@ -1272,8 +1398,8 @@
             "content_hint": "Use modo de texto rico ou Markdown para melhor formatação.",
             "save": "Publicar post",
             "update": "Atualizar post",
-            "category_title": "Categorias da publicação",
-            "category_hint": "Selecione as categorias desta igreja"
+            "category_title": "Categorias de posts",
+            "category_hint": "Selecione categorias desta igreja"
         }
     },
     "dashboard": {
@@ -1352,8 +1478,8 @@
                 "description": "Leia os recentes avisos e notícias da igreja."
             },
             "visual_identity": {
-                "title": "Configurações da church",
-                "description": "Ajuste domínio, logotipo, cores, contatos, localização e programação semanal."
+                "title": "Configurações da igreja",
+                "description": "Ajuste domínio, logotipo, cores, contatos, localização e cronograma semanal."
             },
             "user_management": {
                 "title": "Gerenciamento de usuários",
@@ -1375,106 +1501,106 @@
         }
     },
     "membership": {
-        "title": "Você ainda não faz parte desta congregação",
-        "description": "Seu acesso foi autenticado, mas seu perfil pertence a outra igreja. Deseja mudar seu vínculo para {church}?",
+        "title": "Você ainda não é membro desta congregação",
+        "description": "Seu acesso foi autenticado, mas seu perfil pertence a outra igreja. Deseja mudar sua filiação para {church}?",
         "switch": "Mudar de congregação",
-        "leave": "Agora não",
+        "leave": "Não agora",
         "foreign_indicator": "Você está visitando outra congregação",
         "visiting_title": "Visitando outra congregação",
-        "visiting_description": "Você congrega em {current} e está acessando {church}. As interações públicas continuam disponíveis.",
+        "visiting_description": "Você pertence a {current} e está visualizando {church}. Interações públicas permanecem disponíveis.",
         "transfer": "Transferir para esta congregação",
         "return_to_own_church": "Retornar à minha congregação",
-        "confirm": "Deseja realmente transferir seu vínculo para {church}? Cargos locais de liderança e mídia serão alterados para membro."
+        "confirm": "Você realmente deseja transferir sua filiação para {church}? Liderança local e papéis de mídia serão alterados para membro."
     },
     "portal": {
         "meta_title": "Nossa Casa — comunidades de fé",
         "brand_initials": "NC",
         "brand_name": "Nossa Casa",
-        "network_label": "Rede de comunidades",
+        "network_label": "Rede comunitária",
         "open_my_church": "Abrir minha igreja",
         "create_account": "Criar conta",
         "hero": {
-            "badge": "Tecnologia aberta para comunidades de fé",
-            "title": "Uma casa digital para cada comunidade.",
-            "description": "Conecte congregações, membros, eventos e ministérios em uma plataforma segura, personalizada e preparada para crescer junto com sua comunidade.",
-            "explore": "Conhecer comunidades",
-            "join": "Começar agora",
-            "domains_title": "Identidade própria",
-            "domains_description": "Cada igreja pode usar seu próprio domínio e oferecer conteúdo relevante para seus membros.",
-            "governance_title": "Vínculos protegidos",
-            "governance_description": "Novas congregações são analisadas pelos responsáveis da comunidade antes da ativação."
+            "badge": "Abra a tecnologia para comunidades de fé",
+            "title": "Um lar digital para cada comunidade.",
+            "description": "Conecte congregações, membros, eventos e ministérios por meio de uma plataforma segura e personalizada pronta para crescer com sua comunidade.",
+            "explore": "Explorar comunidades",
+            "join": "Começar",
+            "domains_title": "Sua própria identidade",
+            "domains_description": "Cada igreja pode usar seu próprio domínio e fornecer conteúdo relevante aos seus membros.",
+            "governance_title": "Relações protegidas",
+            "governance_description": "Novas congregações são revisadas pelos líderes da comunidade antes da ativação."
         },
         "communities": {
             "kicker": "Comunidades participantes",
             "title": "Encontre uma comunidade perto de você",
-            "description": "Conheça as comunidades cadastradas e acesse diretamente a experiência de cada congregação.",
+            "description": "Conheça as comunidades registradas e acesse a experiência de cada congregação diretamente.",
             "church_count": "{count} congregações",
             "main_domain": "Domínio principal",
             "domain_pending": "Domínio ainda não configurado",
             "live": "Ao vivo",
-            "view": "Ver detalhes e rede da comunidade",
-            "empty": "Ainda não há comunidades públicas cadastradas."
+            "view": "Ver detalhes da comunidade e rede",
+            "empty": "Não há comunidades públicas registradas ainda."
         },
         "community": {
-            "meta_title": "Comunidade {name}",
+            "meta_title": "{name} comunidade",
             "badge": "Perfil da comunidade",
             "founded": "Fundada em {date}",
             "stats": {
                 "churches": "Unidades organizacionais ativas",
                 "members": "Membros conectados",
-                "upcoming_events": "Próximos eventos"
+                "upcoming_events": "Eventos futuros"
             },
             "churches_kicker": "Presença local",
             "churches_title": "Igrejas e congregações",
-            "churches_description": "Conheça cada unidade ativa vinculada a esta comunidade.",
-            "local_priority": "As unidades com coordenadas conhecidas estão ordenadas pela distância da sua localização.",
+            "churches_description": "Explore cada unidade ativa conectada a esta comunidade.",
+            "local_priority": "Unidades com coordenadas conhecidas são ordenadas pela distância da sua localização.",
             "members_count": "{count} membros",
-            "events_count": "{count} próximos eventos",
+            "events_count": "{count} eventos futuros",
             "open_church": "Abrir {name}",
             "tree_kicker": "Rede organizacional",
-            "tree_title": "Árvore de matrizes e filiais",
-            "tree_description": "Veja como matrizes, filiais, campus e congregações estão conectados."
+            "tree_title": "Árvore de sede e ramal",
+            "tree_description": "Veja como sede, ramais, campas e congregações estão conectados."
         },
         "nearby": {
             "kicker": "Perto de você",
-            "title": "Comunidades e congregações locais",
-            "locating": "Buscando comunidades próximas..."
+            "title": "Comunidades e igrejas locais",
+            "locating": "Encontrando comunidades perto de você..."
         },
         "onboarding": {
-            "register_community": "Cadastrar comunidade",
+            "register_community": "Registrar comunidade",
             "request_church": "Solicitar nova congregação",
             "community_kicker": "Nova rede",
             "church_kicker": "Nova congregação",
-            "approval_notice": "A solicitação será enviada aos responsáveis da comunidade. O domínio somente será ativado após a aprovação.",
+            "approval_notice": "O pedido será enviado aos líderes da comunidade. O domínio será ativado apenas após aprovação.",
             "send_request": "Enviar para aprovação",
-            "request_sent": "Solicitação enviada com sucesso.",
-            "my_requests": "Minhas solicitações"
+            "request_sent": "Pedido enviado com sucesso.",
+            "my_requests": "Meus pedidos"
         },
         "domain": {
             "subdomain": "Subdomínio da plataforma",
             "external": "Domínio externo",
-            "subdomain_placeholder": "minha-igreja",
-            "external_hint": "Informe o domínio completo, sem protocolo ou caminho.",
-            "subdomain_description": "Crie um endereço abaixo do domínio da plataforma.",
-            "external_description": "Use um domínio próprio da congregação.",
-            "preview_empty": "Informe o subdomínio desejado",
-            "required": "Informe um domínio.",
-            "invalid": "Informe um domínio válido, sem espaços ou caminhos.",
+            "subdomain_placeholder": "my-church",
+            "external_hint": "Insira o domínio completo sem o protocolo ou caminho.",
+            "subdomain_description": "Crie um endereço sob o domínio da plataforma.",
+            "external_description": "Use um domínio pertencente à congregação.",
+            "preview_empty": "Insira o subdomínio desejado",
+            "required": "Insira um domínio.",
+            "invalid": "Insira um domínio válido sem espaços ou caminhos.",
             "main_forbidden": "O domínio principal da plataforma não pode ser usado."
         },
         "review": {
-            "title": "Solicitações aguardando sua análise",
-            "description": "Confira os dados cadastrais antes de aprovar o vínculo com a comunidade.",
+            "title": "Solicitações aguardando sua revisão",
+            "description": "Revise os detalhes de registro antes de aprovar a relação com a comunidade.",
             "approve": "Aprovar",
-            "reject": "Recusar",
-            "approve_confirm": "Aprovar a congregação {name}?",
-            "reject_reason": "Informe o motivo da recusa:",
-            "view_document": "Ver documento comprobatório"
+            "reject": "Rejeitar",
+            "approve_confirm": "Aprovar congregação {name}?",
+            "reject_reason": "Insira o motivo da rejeição:",
+            "view_document": "Ver documento de comprovação"
         },
         "status": {
             "pending": "Pendente",
-            "approved": "Aprovada",
-            "rejected": "Recusada"
+            "approved": "Aprovado",
+            "rejected": "Rejeitado"
         },
         "fields": {
             "name": "Nome",
@@ -1482,20 +1608,18 @@
             "description": "Descrição",
             "community": "Comunidade",
             "domain": "Domínio (ex.: igreja.exemplo.com)",
-            "contact_email": "E-mail de contato",
+            "contact_email": "E‑mail de contato",
             "contact_phone": "Telefone de contato",
             "address": "Endereço completo",
-            "proof_document": "Comprovante de existência da church ou autorização",
-            "proof_document_hint": "PDF, JPG, PNG ou WebP de até 10 MB (opcional)"
+            "proof_document": "Comprovante de existência da igreja ou autorização",
+            "proof_document_hint": "PDF, JPG, PNG ou WebP até 10 MB (opcional)"
         },
         "errors": {
-            "generic": "Não foi possível concluir a operação."
+            "generic": "A operação não pôde ser concluída."
         }
     },
     "footer": {
-        "copyright": "© 2026 Projeto Nossa Casa · Código aberto (MIT)"
-    },
-    "editor": {
-        "label": "Editor de conteúdo rico"
+        "privacy_terms": "Privacidade e termos",
+        "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
     }
 }

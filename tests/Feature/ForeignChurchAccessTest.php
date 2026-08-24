@@ -2,9 +2,12 @@
 
 use App\Enums\UserRelationships;
 use App\Enums\UserRole;
+use App\Models\Address;
 use App\Models\Church;
 use App\Models\Classroom;
 use App\Models\Community;
+use App\Models\Event;
+use App\Models\EventUser;
 use App\Models\Post;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -103,7 +106,52 @@ test('a foreign church visitor can use public interactions but not private route
 
     $this->get('http://visited-church.test/dashboard')
         ->assertForbidden();
+    $this->get('http://visited-church.test/settings/profile')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page->component('settings/Workspace'));
     $this->postJson('http://visited-church.test/api/event', [])->assertForbidden();
+});
+
+test('a confirmed participant from another church can access the event participant area', function () {
+    $homeChurch = createForeignAccessChurch('Participant Home Church', 'participant-home.test');
+    $visitedChurch = createForeignAccessChurch('Participant Event Church', 'participant-event.test');
+    $visitor = User::factory()->create(['role' => UserRole::MEMBER]);
+    $leader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $homeChurch->assignMember($visitor);
+    $visitedChurch->assignMember($leader);
+    $event = Event::query()->create([
+        'church_id' => $visitedChurch->id,
+        'author_id' => $leader->id,
+        'title' => 'Event for visitors',
+        'slug' => 'event-for-visitors',
+        'description' => 'A public event with a confirmed participant area.',
+        'start_time' => now()->addDay(),
+        'end_time' => now()->addDays(2),
+    ]);
+    Address::query()->create([
+        'addressable_type' => Event::class,
+        'addressable_id' => $event->id,
+        'country' => 'Brasil',
+        'state' => 'RO',
+        'city' => 'Ji-Parana',
+        'street' => 'Rua do Evento',
+        'number' => '42',
+        'zipcode' => '76900-000',
+    ]);
+    EventUser::query()->create([
+        'event_id' => $event->id,
+        'user_id' => $visitor->id,
+        'status' => 'confirmed',
+    ]);
+
+    $this->actingAs($visitor)
+        ->get("http://participant-event.test/events/{$event->slug}/area")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Events/PrivateArea')
+            ->where('event.slug', $event->slug)
+            ->where('event.address.city', 'Ji-Parana')
+            ->missing('event.address.id'));
 });
 
 test('membership transfer requires confirmation and downgrades local elevated roles', function () {

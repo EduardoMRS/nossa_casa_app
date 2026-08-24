@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { store, update } from '@/actions/App/Http/Controllers/EventController';
 import CategorySelector from '@/components/CategorySelector.vue';
 import MarkdownWysiwyg from '@/components/MarkdownWysiwyg.vue';
+import MoneyInput from '@/components/MoneyInput.vue';
 import { useI18n } from '@/lib/i18n';
 
 type EventResource = {
@@ -17,6 +18,18 @@ type EventResource = {
     cover_path?: string | null;
     category_ids?: string[];
     form_id?: string | null;
+    price?: string | null;
+    responsible_ids?: string[];
+    address?: {
+        country?: string;
+        state?: string;
+        city?: string;
+        neighborhood?: string;
+        street?: string;
+        number?: string;
+        complement?: string;
+        zipcode?: string;
+    } | null;
 };
 
 type CategoryOption = {
@@ -32,10 +45,18 @@ type FormOption = {
     description: string | null;
 };
 
+type ResponsibleOption = {
+    id: string;
+    first_name: string;
+    last_name: string;
+};
+
 const props = defineProps<{
     event?: EventResource;
     categories: CategoryOption[];
     forms: FormOption[];
+    responsibleOptions: ResponsibleOption[];
+    currency: string;
     returnUrl: string;
 }>();
 
@@ -71,6 +92,20 @@ const form = useForm({
         ? [...props.event.category_ids]
         : [],
     form_id: props.event?.form_id ?? '',
+    price: props.event?.price ?? '',
+    responsible_ids: props.event?.responsible_ids
+        ? [...props.event.responsible_ids]
+        : [],
+    address: {
+        country: props.event?.address?.country ?? 'Brasil',
+        state: props.event?.address?.state ?? '',
+        city: props.event?.address?.city ?? '',
+        neighborhood: props.event?.address?.neighborhood ?? '',
+        street: props.event?.address?.street ?? '',
+        number: props.event?.address?.number ?? '',
+        complement: props.event?.address?.complement ?? '',
+        zipcode: props.event?.address?.zipcode ?? '',
+    },
 });
 
 const slugify = (value: string): string => {
@@ -261,6 +296,107 @@ onBeforeUnmount(() => {
                         {{ form.errors.description }}
                     </p>
                 </div>
+
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-foreground">
+                            {{ t('events.form.price') }} ({{ currency }})
+                        </label>
+                        <MoneyInput
+                            v-model="form.price"
+                            :currency="currency"
+                            lock-currency
+                        />
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('events.form.price_hint') }}
+                        </p>
+                        <p
+                            v-if="form.errors.price"
+                            class="text-xs text-red-600"
+                        >
+                            {{ form.errors.price }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-foreground">
+                            {{ t('events.form.responsibles') }}
+                        </label>
+                        <select
+                            v-model="form.responsible_ids"
+                            multiple
+                            class="h-32 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                        >
+                            <option
+                                v-for="responsible in responsibleOptions"
+                                :key="responsible.id"
+                                :value="responsible.id"
+                            >
+                                {{ responsible.first_name }}
+                                {{ responsible.last_name }}
+                            </option>
+                        </select>
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('events.form.responsibles_hint') }}
+                        </p>
+                    </div>
+                </div>
+
+                <fieldset class="space-y-4 rounded-xl border border-border p-4">
+                    <legend class="px-2 text-sm font-black">
+                        {{ t('events.form.location') }}
+                    </legend>
+                    <div class="grid gap-4 md:grid-cols-4">
+                        <label class="text-sm md:col-span-2">
+                            {{ t('events.form.street') }}
+                            <input
+                                v-model="form.address.street"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.number') }}
+                            <input
+                                v-model="form.address.number"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.complement') }}
+                            <input
+                                v-model="form.address.complement"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.neighborhood') }}
+                            <input
+                                v-model="form.address.neighborhood"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.city') }}
+                            <input
+                                v-model="form.address.city"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.state') }}
+                            <input
+                                v-model="form.address.state"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                        <label class="text-sm">
+                            {{ t('events.form.zipcode') }}
+                            <input
+                                v-model="form.address.zipcode"
+                                class="mt-1 w-full rounded-lg border-input"
+                            />
+                        </label>
+                    </div>
+                </fieldset>
 
                 <CategorySelector
                     v-model="form.category_ids"

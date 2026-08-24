@@ -15,11 +15,8 @@ import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
-import {
-    create as createEvent,
-    edit as editEvent,
-    show as showEvent,
-} from '@/routes/events';
+import { show as showAdminEvent } from '@/routes/admin/events';
+import { create as createEvent, edit as editEvent } from '@/routes/events';
 
 type EventItem = {
     id: string;
@@ -122,7 +119,7 @@ const remove = async (event: EventItem): Promise<void> => {
                         <tr
                             v-for="event in events.data"
                             :key="event.id"
-                            class="hover:bg-slate-50"
+                            class="transition hover:bg-muted/60"
                         >
                             <td class="px-5 py-4">
                                 <p class="font-bold text-slate-900">
@@ -152,7 +149,7 @@ const remove = async (event: EventItem): Promise<void> => {
                             <td class="px-5 py-4">
                                 <div class="flex justify-end gap-2">
                                     <Link
-                                        :href="showEvent({ event: event.slug })"
+                                        :href="showAdminEvent(event.id)"
                                         class="rounded-lg border p-2 text-slate-600"
                                         ><Eye class="size-4"
                                     /></Link>

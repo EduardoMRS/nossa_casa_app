@@ -7,6 +7,7 @@ import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
     index as eventsIndex,
+    privateArea as eventPrivateArea,
     register as registerEvent,
 } from '@/routes/events';
 
@@ -19,6 +20,9 @@ type EventDetail = {
     start_time: string;
     end_time: string;
     cover_path: string | null;
+    price: string | null;
+    currency: string;
+    address: Record<string, string | null> | null;
     church?: {
         id: string;
         name: string;
@@ -34,6 +38,8 @@ const props = defineProps<{
         form_id: string | null;
         form_title: string | null;
         already_registered: boolean;
+        status: string | null;
+        can_access_private_area: boolean;
     };
 }>();
 
@@ -54,6 +60,31 @@ const formatter = computed(
 const dateRange = computed(() => {
     return `${formatter.value.format(new Date(props.event.start_time))} - ${formatter.value.format(new Date(props.event.end_time))}`;
 });
+
+const priceLabel = computed(() => {
+    if (!props.event.price || Number(props.event.price) <= 0) {
+        return t('events.show.free');
+    }
+
+    return new Intl.NumberFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
+        style: 'currency',
+        currency: props.event.currency,
+    }).format(Number(props.event.price));
+});
+
+const addressLabel = computed(() =>
+    props.event.address
+        ? [
+              props.event.address.street,
+              props.event.address.number,
+              props.event.address.neighborhood,
+              props.event.address.city,
+              props.event.address.state,
+          ]
+              .filter(Boolean)
+              .join(', ')
+        : '',
+);
 
 const coverStyle = computed(() => {
     if (props.event.cover_path) {
@@ -95,6 +126,13 @@ const coverStyle = computed(() => {
                 </p>
 
                 <div class="mt-6 flex flex-wrap gap-3">
+                    <Link
+                        v-if="registration.can_access_private_area"
+                        :href="eventPrivateArea({ event: event.slug })"
+                        class="rounded-full bg-[#a9f4e3] px-5 py-2.5 text-sm font-extrabold text-[#0b3d44]"
+                    >
+                        {{ t('events.show.private_area') }}
+                    </Link>
                     <Link
                         v-if="registration.has_form"
                         :href="registerEvent({ event: event.slug })"
@@ -150,6 +188,29 @@ const coverStyle = computed(() => {
                                 registration.form_title ??
                                 t('events.show.form_not_configured')
                             }}
+                        </p>
+                        <p class="mt-3 text-lg font-black text-[#20374f]">
+                            {{ priceLabel }}
+                        </p>
+                        <p
+                            v-if="registration.status === 'pending'"
+                            class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800"
+                        >
+                            {{ t('events.show.awaiting_confirmation') }}
+                        </p>
+                    </section>
+
+                    <section
+                        v-if="addressLabel"
+                        class="rounded-2xl border border-[#d8e2ec] bg-white p-5"
+                    >
+                        <p
+                            class="text-xs tracking-[0.14em] text-[#5b7388] uppercase"
+                        >
+                            {{ t('events.show.location') }}
+                        </p>
+                        <p class="mt-2 text-sm text-[#3f566c]">
+                            {{ addressLabel }}
                         </p>
                     </section>
 

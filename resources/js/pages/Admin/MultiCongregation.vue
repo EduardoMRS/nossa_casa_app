@@ -163,9 +163,12 @@ const saveChurch = async (): Promise<void> => {
 
         if (editingChurch.value) {
             payload.append('_method', 'PUT');
-            await axios.post(`/api/church/${editingChurch.value.id}`, payload);
+            await axios.post(
+                `/api/churches/${editingChurch.value.id}`,
+                payload,
+            );
         } else {
-            await axios.post('/api/church', payload);
+            await axios.post('/api/churches', payload);
         }
 
         window.location.reload();
@@ -196,7 +199,7 @@ const removeChurch = async (church: Church): Promise<void> => {
     }
 
     try {
-        await axios.delete(`/api/church/${church.id}`);
+        await axios.delete(`/api/churches/${church.id}`);
         churches.value = churches.value.filter((item) => item.id !== church.id);
     } catch (error) {
         errorMessage.value = requestError(error);
@@ -207,11 +210,11 @@ const saveCommunity = async (): Promise<void> => {
     try {
         if (editingCommunity.value) {
             await axios.put(
-                `/api/community/${editingCommunity.value.id}`,
+                `/api/communities/${editingCommunity.value.id}`,
                 communityForm.value,
             );
         } else {
-            await axios.post('/api/community', communityForm.value);
+            await axios.post('/api/communities', communityForm.value);
         }
 
         window.location.reload();
@@ -234,7 +237,7 @@ const removeCommunity = async (community: Community): Promise<void> => {
     }
 
     try {
-        await axios.delete(`/api/community/${community.id}`);
+        await axios.delete(`/api/communities/${community.id}`);
         communities.value = communities.value.filter(
             (item) => item.id !== community.id,
         );

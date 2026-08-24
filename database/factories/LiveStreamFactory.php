@@ -31,6 +31,7 @@ class LiveStreamFactory extends Factory
             'source_on_demand' => false,
             'record' => true,
             'is_public' => true,
+            'ends_on_disconnect' => false,
             'status' => LiveStreamStatus::READY,
             'active_slot' => 1,
         ];

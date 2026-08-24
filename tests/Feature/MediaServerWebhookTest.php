@@ -54,6 +54,22 @@ test('worker hooks update stream lifecycle', function () {
         ->ended_at->not->toBeNull();
 });
 
+test('publisher disconnect automatically finishes a configured stream', function () {
+    $liveStream = LiveStream::factory()->create([
+        'status' => LiveStreamStatus::LIVE,
+        'ends_on_disconnect' => true,
+    ]);
+
+    $this->withHeader('X-Media-Worker-Token', 'test-worker-token')
+        ->postJson('/api/internal/media/offline', ['path' => $liveStream->path])
+        ->assertNoContent();
+
+    expect($liveStream->refresh())
+        ->status->toBe(LiveStreamStatus::STOPPED)
+        ->active_slot->toBeNull()
+        ->ended_at->not->toBeNull();
+});
+
 test('completed segments are queued for shared archive storage', function () {
     Queue::fake();
 

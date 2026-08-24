@@ -17,7 +17,7 @@ class PostController extends Controller
     public function index()
     {
         // Utilizando o local scope "visible" criado no seu model
-        $posts = Post::visible()->with(['church', 'categories'])->paginate(15)->map(function ($post) {
+        $posts = Post::visible()->where('is_event_private', false)->with(['church', 'categories'])->paginate(15)->map(function ($post) {
             $post->localize(relations: ['church', 'categories']);
 
             return [
@@ -71,7 +71,7 @@ class PostController extends Controller
 
     public function show(string $id)
     {
-        $post = Post::with(['author', 'church', 'categories', 'medias', 'comments'])->findOrFail($id);
+        $post = Post::where('is_event_private', false)->with(['author', 'church', 'categories', 'medias', 'comments'])->findOrFail($id);
         $post->localize(relations: ['church', 'categories']);
 
         return response()->json($post);
@@ -79,7 +79,7 @@ class PostController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $post = Post::findOrFail($id);
+        $post = Post::where('is_event_private', false)->findOrFail($id);
         $this->ensureChurchAccess($request, $post->church_id);
 
         $validated = $request->validate([
@@ -110,7 +110,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, string $id)
     {
-        $post = Post::findOrFail($id);
+        $post = Post::where('is_event_private', false)->findOrFail($id);
         $this->ensureChurchAccess($request, $post->church_id);
         $post->delete();
 

@@ -15,6 +15,7 @@ use App\Models\Classroom;
 use App\Models\ClassroomPresence;
 use App\Models\Community;
 use App\Models\Event;
+use App\Models\EventMaterial;
 use App\Models\Form;
 use App\Models\FormResponse;
 use App\Models\Highlight;
@@ -312,6 +313,121 @@ class RelationTesterSeeder extends Seeder
         $kids->members()->syncWithoutDetaching([$this->users['pib_child']->id]);
         $youth->members()->syncWithoutDetaching([$this->users['pib_member']->id]);
         ClassroomPresence::query()->updateOrCreate(['classroom_id' => $kids->id, 'user_id' => $this->users['pib_child']->id, 'check_out' => null], ['check_in' => now(), 'checkout_pin' => Hash::make('654321'), 'pin_generated_at' => now()]);
+        $this->seedPibShowcase($church, $kidsEvent);
+    }
+
+    private function seedPibShowcase(Church $church, Event $kidsEvent): void
+    {
+        $familiesMedia = $this->seedMedia($church, 'familias-em-missao', 'Familias em Missao', 'Conteudos e encontros para fortalecer os lares.', 'pib_media', '#402064', '#D99B38');
+        $worshipMedia = $this->seedMedia($church, 'celebracao-pib', 'Celebracao PIB', 'Registros das celebracoes e da vida comunitaria.', 'pib_media', '#2E174A', '#E8B557');
+        $kidsMedia = $kidsEvent->medias()->firstOrFail();
+
+        $showcasePosts = [
+            ['agenda-de-fevereiro-pib', 'Agenda de fevereiro da PIB', 'Confira os cultos, pequenos grupos, encontros de discipulado e oportunidades de servir neste mes.', $this->users['pib_leader'], $worshipMedia, 1],
+            ['pequenos-grupos-nos-lares-pib', 'Pequenos grupos: uma mesa para pertencer', 'Os pequenos grupos da PIB estao recebendo novas familias. Encontre uma casa perto de voce e venha caminhar conosco.', $this->users['pib_leader'], $familiesMedia, 4],
+            ['voluntarios-pib-kids', 'Voluntarios PIB Kids: treinamento concluido', 'Nossa equipe concluiu o treinamento de acolhimento, primeiros socorros e protocolos de retirada segura das criancas.', $this->users['pib_media'], $kidsMedia, 7],
+            ['devocional-semanal-pib', 'Devocional da semana: esperanca que permanece', 'Uma leitura curta para fazer em familia, conversar no pequeno grupo e praticar durante a semana.', $this->users['pib_leader'], $familiesMedia, 9],
+            ['acao-social-pib-ji-parana', 'Acao social: cestas e escuta', 'Neste sabado vamos reunir alimentos, roupas e voluntarios para servir familias de Ji-Parana.', $this->users['pib_media'], $familiesMedia, 11],
+            ['musica-e-liturgia-pib', 'Musica e liturgia: preparando a celebracao', 'Conheca a cancao da semana e ore pela equipe que conduz cada celebracao.', $this->users['pib_media'], $worshipMedia, 13],
+            ['boas-vindas-a-novos-membros-pib', 'Boas-vindas aos novos membros', 'Celebramos cada pessoa que decidiu caminhar com a PIB. Fale com nossa equipe de integracao para conhecer os proximos passos.', $this->users['pib_leader'], $familiesMedia, 15],
+        ];
+
+        $posts = [];
+        foreach ($showcasePosts as [$slug, $title, $content, $author, $media, $publishedDaysAgo]) {
+            $posts[] = $this->seedPost($church, $slug, $title, $content, $author, $media, $publishedDaysAgo);
+        }
+
+        $conference = $this->seedEvent($church, 'conferencia-familias-pib-2026', 'Conferencia Familias PIB 2026', 'Um sabado inteiro de cuidado, conversas praticas, louvor e espaco para todas as geracoes.', now()->addDays(24)->setTime(9, 0), now()->addDays(24)->setTime(18, 0), $this->users['pib_leader'], ['familia', 'formacao', 'comunhao'], $familiesMedia);
+        $retreat = $this->seedEvent($church, 'retiro-pib-2026', 'Retiro PIB: Presenca e Proposito', 'Um fim de semana para desacelerar, ouvir a Deus e renovar os relacionamentos.', now()->addDays(42)->setTime(18, 0), now()->addDays(44)->setTime(12, 0), $this->users['pib_leader'], ['retiro', 'discipulado'], $worshipMedia);
+
+        $form = Form::query()->updateOrCreate(
+            ['church_id' => $church->id, 'title' => 'Inscricao - Conferencia Familias PIB 2026'],
+            [
+                'description' => 'Conte para nossa equipe quem participara, quais oficinas deseja fazer e como podemos acolher melhor sua familia.',
+                'schema' => ['fields' => [
+                    ['id' => 'heading', 'type' => 'heading', 'label' => 'Dados do participante'],
+                    ['id' => 'name', 'type' => 'text', 'name' => 'full_name', 'label' => 'Nome completo', 'required' => true, 'placeholder' => 'Como devemos chamar voce?', 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'email', 'type' => 'email', 'name' => 'email', 'label' => 'E-mail', 'required' => true, 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'phone', 'type' => 'phone', 'name' => 'phone', 'label' => 'WhatsApp', 'required' => true, 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'city', 'type' => 'text', 'name' => 'city', 'label' => 'Cidade / bairro', 'required' => true, 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'family-heading', 'type' => 'heading', 'label' => 'Organizacao da familia'],
+                    ['id' => 'participants', 'type' => 'select', 'name' => 'participants', 'label' => 'Quantas pessoas participarao?', 'required' => true, 'options' => [['label' => '1 pessoa', 'value' => '1'], ['label' => '2 pessoas', 'value' => '2'], ['label' => '3 a 4 pessoas', 'value' => '3-4'], ['label' => '5 ou mais', 'value' => '5+']], 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'children', 'type' => 'text', 'name' => 'children', 'label' => 'Criancas e idades', 'placeholder' => 'Ex.: Miguel, 6 anos', 'width' => 'half', 'mobile_width' => 'full'],
+                    ['id' => 'workshop', 'type' => 'radio', 'name' => 'workshop', 'label' => 'Oficina de interesse', 'required' => true, 'options' => [['label' => 'Casamento e dialogo', 'value' => 'casamento'], ['label' => 'Parentalidade', 'value' => 'parentalidade'], ['label' => 'Financas no lar', 'value' => 'financas']], 'width' => 'full', 'mobile_width' => 'full'],
+                    ['id' => 'accessibility', 'type' => 'textarea', 'name' => 'accessibility', 'label' => 'Necessidade de acessibilidade ou alimentacao?', 'width' => 'full', 'mobile_width' => 'full', 'size' => 'fixed', 'height' => 3],
+                    ['id' => 'consent', 'type' => 'checkbox', 'name' => 'consent', 'label' => 'Autorizacao', 'required' => true, 'placeholder' => 'Li e concordo com o uso dos dados para este evento.', 'width' => 'full', 'mobile_width' => 'full'],
+                ]],
+            ],
+        );
+        $form->categories()->syncWithoutDetaching($this->categoryIds($church, CategoryType::FORM));
+        $form->events()->syncWithoutDetaching([$conference->id]);
+        $form->posts()->syncWithoutDetaching([$posts[0]->id]);
+        FormResponse::query()->updateOrCreate(
+            ['form_id' => $form->id, 'user_id' => $this->users['pib_member']->id],
+            ['answers' => ['full_name' => 'Juliana Costa', 'email' => 'membro.pib@nossacasa.test', 'phone' => '+55 69 98402-2003', 'city' => 'Ji-Parana - Centro', 'participants' => '3-4', 'children' => 'Miguel, 6 anos', 'workshop' => 'parentalidade', 'accessibility' => 'Nenhuma', 'consent' => true]],
+        );
+
+        $conference->users()->syncWithoutDetaching([$this->users['pib_member']->id]);
+        $retreat->users()->syncWithoutDetaching([$this->users['pib_member']->id => ['status' => 'confirmed']]);
+        foreach ([
+            ['Mapa e horarios do retiro', 'mapa-horarios', $this->users['pib_leader']],
+            ['Lista do que levar', 'lista-do-que-levar', $this->users['pib_media']],
+            ['Playlist de preparacao', 'playlist-preparacao', $this->users['pib_media']],
+        ] as [$title, $slug, $addedBy]) {
+            $path = "seeders/demo/{$church->slug}/events/retiro/{$slug}.svg";
+            $contents = $this->posterSvg($title, $church->name, '#3B1F5E', '#E0A43A');
+            Storage::disk((string) config('media.disk'))->put($path, $contents);
+            EventMaterial::query()->updateOrCreate(
+                ['event_id' => $retreat->id, 'title' => $title],
+                ['added_by_id' => $addedBy->id, 'type' => 'file', 'file_path' => $path, 'disk' => (string) config('media.disk'), 'mimetype' => 'image/svg+xml', 'size' => strlen($contents)],
+            );
+        }
+
+        $privatePost = $this->seedPost($church, 'retiro-pib-orientacoes', 'Retiro PIB: orientacoes para participantes', 'Confira a lista de itens, horarios de chegada e o mapa do local do retiro.', $this->users['pib_leader'], $worshipMedia, 1);
+        $privatePost->update(['is_event_private' => true]);
+        $retreat->privatePosts()->syncWithoutDetaching([$privatePost->id]);
+
+        $this->seedPibLibrary($church);
+        $this->seedPostInteractions($posts[0], [$this->users['pib_member'], $this->users['pib_leader'], $this->users['pib_child']], ['A equipe preparou tudo com muito carinho.', 'Que alegria ver a salinha crescendo!', 'Miguel esta contando os dias.']);
+        $this->seedPostInteractions($posts[1], [$this->users['pib_member'], $this->users['pib_media']], ['Ja confirmei minha presenca!', 'Vamos levar mais amigos.']);
+        $this->seedPostInteractions($privatePost, [$this->users['pib_member'], $this->users['pib_leader']], ['Tudo pronto para o retiro.', 'Nos vemos la!']);
+    }
+
+    private function seedPibLibrary(Church $church): void
+    {
+        $items = [
+            ['manual-acolhimento-pib', 'Manual de acolhimento PIB', 'Guia pratico para equipes de recepcao.', 'guide'],
+            ['devocionais-familia', 'Devocionais para fazer em familia', 'Leituras curtas para sete encontros em casa.', 'devotional'],
+            ['trilha-novos-membros', 'Trilha de novos membros', 'Material de integracao, batismo e vida comunitaria.', 'course'],
+            ['guia-pequenos-grupos', 'Guia dos pequenos grupos', 'Roteiros de conversa e oracao para os lares.', 'guide'],
+            ['caderno-pib-kids', 'Caderno PIB Kids', 'Atividades para acompanhar as historias biblicas.', 'kids'],
+            ['roteiro-musica-liturgia', 'Roteiro de musica e liturgia', 'Orientacoes para equipes de celebracao.', 'worship'],
+            ['cartilha-acao-social', 'Cartilha de acao social', 'Como servir com dignidade e responsabilidade.', 'social'],
+            ['estudo-presenca-proposito', 'Estudo Presenca e Proposito', 'Preparacao para o retiro PIB 2026.', 'study'],
+        ];
+
+        foreach ($items as [$slug, $title, $description, $type]) {
+            $path = "seeders/demo/{$church->slug}/library/{$slug}.svg";
+            $contents = $this->posterSvg($title, $church->name, '#3B1F5E', '#E0A43A');
+            Storage::disk((string) config('media.disk'))->put($path, $contents);
+            $library = Library::query()->updateOrCreate(
+                ['church_id' => $church->id, 'title' => $title],
+                ['description' => $description, 'type' => $type, 'file_path' => $path],
+            );
+            $library->categories()->syncWithoutDetaching($this->categoryIds($church, CategoryType::LIBRARY));
+        }
+    }
+
+    /** @param list<User> $users  @param list<string> $comments */
+    private function seedPostInteractions(Post $post, array $users, array $comments): void
+    {
+        foreach ($users as $index => $user) {
+            $comment = $post->comments()->updateOrCreate(
+                ['user_id' => $user->id, 'content' => $comments[$index] ?? 'Que bom fazer parte desta comunidade!'],
+            );
+            $comment->reactions()->updateOrCreate(['user_id' => $user->id], ['content' => $index % 2 === 0 ? 'heart' : 'like', 'type' => 'emoji']);
+            $post->reactions()->updateOrCreate(['user_id' => $user->id], ['content' => $index % 2 === 0 ? 'heart' : 'celebrate', 'type' => 'emoji']);
+        }
     }
 
     private function seedAriquemesContent(): void
@@ -397,7 +513,7 @@ class RelationTesterSeeder extends Seeder
                     ['id' => 'heading', 'type' => 'heading', 'label' => 'Dados para inscrição'],
                     ['id' => 'name', 'type' => 'text', 'name' => 'full_name', 'label' => 'Nome completo', 'required' => true, 'width' => 'full', 'mobile_width' => 'full', 'size' => 'auto'],
                     ['id' => 'email', 'type' => 'email', 'name' => 'email', 'label' => 'E-mail', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
-                    ['id' => 'phone', 'type' => 'text', 'name' => 'phone', 'label' => 'Telefone / WhatsApp', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
+                    ['id' => 'phone', 'type' => 'phone', 'name' => 'phone', 'label' => 'Telefone / WhatsApp', 'required' => true, 'width' => 'half', 'mobile_width' => 'full', 'size' => 'auto'],
                     ['id' => 'participants', 'type' => 'textarea', 'name' => 'participants', 'label' => 'Participantes e observações', 'required' => false, 'width' => 'full', 'mobile_width' => 'full', 'size' => 'fixed', 'height' => 3],
                 ]],
             ],

@@ -13,6 +13,7 @@ use App\Models\Church;
 use App\Models\Classroom;
 use App\Models\ClassroomPresence;
 use App\Models\Event;
+use App\Models\EventMaterial;
 use App\Models\Form;
 use App\Models\FormResponse;
 use App\Models\Highlight;
@@ -39,6 +40,10 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
     $church = Church::query()->where('slug', 'assembleia-de-deus-machadinho-doeste')->firstOrFail();
     $event = Event::query()->where('slug', 'conferencia-da-familia-machadinho')->firstOrFail();
     $post = Post::query()->where('slug', 'familias-firmes-em-cristo-machadinho')->firstOrFail();
+    $pib = Church::query()->where('slug', 'primeira-igreja-batista-ji-parana')->firstOrFail();
+    $pibForm = Form::query()->where('title', 'Inscricao - Conferencia Familias PIB 2026')->firstOrFail();
+    $pibRetreat = Event::query()->where('slug', 'retiro-pib-2026')->firstOrFail();
+    $pibAgenda = Post::query()->where('slug', 'agenda-de-fevereiro-pib')->firstOrFail();
     $form = Form::query()->where('church_id', $church->id)->firstOrFail();
     $kidsClassroom = Classroom::query()->where('church_id', $church->id)->where('is_kids', true)->firstOrFail();
     $kidsPresence = ClassroomPresence::query()->where('classroom_id', $kidsClassroom->id)->whereNull('check_out')->firstOrFail();
@@ -92,6 +97,17 @@ test('relation tester seeder creates a complete and repeatable demonstration gra
         ->and(Classroom::query()->whereHas('church', fn ($query) => $query->where('slug', 'primeira-igreja-batista-ji-parana'))->where('name', 'Salinha Sementinhas - 4 a 7 anos')->exists())->toBeTrue()
         ->and(Form::query()->whereHas('events', fn ($query) => $query->where('slug', 'tarde-divertida-pib-kids'))->exists())->toBeTrue()
         ->and(Post::query()->where('slug', 'cafe-com-esperanca-ariquemes')->exists())->toBeTrue()
+        ->and(Post::query()->where('church_id', $pib->id)->count())->toBeGreaterThanOrEqual(10)
+        ->and(Post::query()->where('church_id', $church->id)->count())->toBeLessThan(5)
+        ->and(Event::query()->where('church_id', $pib->id)->count())->toBeGreaterThanOrEqual(4)
+        ->and(Library::query()->where('church_id', $pib->id)->count())->toBeGreaterThanOrEqual(8)
+        ->and(EventMaterial::query()->where('event_id', $pibRetreat->id)->count())->toBe(3)
+        ->and(Storage::disk((string) config('media.disk'))->exists(EventMaterial::query()->where('event_id', $pibRetreat->id)->value('file_path')))->toBeTrue()
+        ->and($pibForm->events()->whereKey(Event::query()->where('slug', 'conferencia-familias-pib-2026')->value('id'))->exists())->toBeTrue()
+        ->and(count($pibForm->schema['fields'] ?? []))->toBeGreaterThanOrEqual(9)
+        ->and(collect($pibForm->schema['fields'] ?? [])->contains(fn (array $field): bool => ($field['name'] ?? null) === 'workshop'))->toBeTrue()
+        ->and($pibAgenda->comments()->count())->toBeGreaterThanOrEqual(3)
+        ->and($pibAgenda->reactions()->count())->toBeGreaterThanOrEqual(3)
         ->and(Category::query()->where('church_id', $church->id)->where('type', 'form')->exists())->toBeTrue()
         ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue()
         ->and(AiQuery::query()->where('church_id', $church->id)->exists())->toBeTrue();

@@ -46,7 +46,8 @@ class LiveStreamControlController extends Controller
                 ? Church::query()->orderBy('name')->get(['id', 'name'])
                 : [],
             'streams' => $streams,
-            'canCreate' => ! $streams->contains(fn (array $stream): bool => $stream['active']),
+            'canCreate' => $streams->where('active', true)->count() < 2,
+            'canDelete' => $isGlobalAdministrator,
         ]);
     }
 
@@ -54,7 +55,7 @@ class LiveStreamControlController extends Controller
     private function streamItem(Church $church, LiveStream $liveStream): array
     {
         $token = $liveStream->input_mode === 'publisher' ? (string) $liveStream->publish_token : null;
-        $ingestBaseUrl = rtrim((string) config('media.mediamtx.public_rtmp_url'), '/');
+        $ingestBaseUrl = $church->rtmp_url;
         $streamKey = $token
             ? $liveStream->path.'?token='.rawurlencode($token)
             : null;
@@ -63,10 +64,11 @@ class LiveStreamControlController extends Controller
             'id' => $liveStream->id,
             'name' => $liveStream->name,
             'status' => $liveStream->status->value,
-            'active' => $liveStream->active_slot === 1,
+            'active' => $liveStream->active_slot !== null,
             'input_mode' => $liveStream->input_mode,
             'record' => $liveStream->record,
             'is_public' => $liveStream->is_public,
+            'ends_on_disconnect' => $liveStream->ends_on_disconnect,
             'started_at' => $liveStream->started_at,
             'ended_at' => $liveStream->ended_at,
             'recordings_count' => $liveStream->recordings_count,
@@ -75,7 +77,7 @@ class LiveStreamControlController extends Controller
             'ingest_server' => $token ? $ingestBaseUrl : null,
             'stream_key' => $streamKey,
             'ingest_url' => $streamKey ? $ingestBaseUrl.'/'.$streamKey : null,
-            'public_url' => $this->domainContext->churchUrl($church, '/transmissoes/'.$liveStream->id),
+            'public_url' => $this->domainContext->churchUrl($church, '/live-streams/'.$liveStream->id),
             'recordings' => $liveStream->recordings->map(fn ($recording): array => [
                 'id' => $recording->id,
                 'status' => $recording->status->value,

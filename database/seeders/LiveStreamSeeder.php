@@ -12,6 +12,6 @@ class LiveStreamSeeder extends Seeder
      */
     public function run(): void
     {
-        LiveStream::factory()->count(3)->create();
+        LiveStream::factory()->count(10)->create();
     }
 }

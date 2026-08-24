@@ -9,11 +9,14 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Reaction;
 use App\Models\User;
+use App\Support\ContentEmbedRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 final class PostQuery
 {
+    public function __construct(private readonly ContentEmbedRenderer $embedRenderer) {}
+
     /** @param array{search?: string, category?: string, date_from?: string, date_to?: string, sort?: string} $filters */
     public function index(array $filters, ?string $churchId): CanonicalData
     {
@@ -107,10 +110,7 @@ final class PostQuery
                 'id' => $post->id,
                 'title' => $post->title,
                 'slug' => $post->slug,
-                'contentHtml' => Str::markdown((string) $post->content, [
-                    'html_input' => 'strip',
-                    'allow_unsafe_links' => false,
-                ]),
+                'contentHtml' => $this->embedRenderer->render((string) $post->content, $post->church_id),
                 'published_at' => $post->published_at?->toISOString(),
                 'church' => $this->personOrChurch($post->church),
                 'author' => $this->personOrChurch($post->author),
@@ -133,6 +133,7 @@ final class PostQuery
     private function publishedPosts(?string $churchId): Builder
     {
         return Post::query()
+            ->where('is_event_private', false)
             ->published()
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
             ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
@@ -147,6 +148,7 @@ final class PostQuery
             && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true);
 
         return Post::query()
+            ->where('is_event_private', false)
             ->when($canPreview, fn (Builder $query): Builder => $query->visible(), fn (Builder $query): Builder => $query->published())
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
             ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])

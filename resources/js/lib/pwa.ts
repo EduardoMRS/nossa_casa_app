@@ -18,7 +18,6 @@ export const initializePwa = (): void => {
     }
 
     window.addEventListener('beforeinstallprompt', (event) => {
-        event.preventDefault();
         installPrompt.value = event as BeforeInstallPromptEvent;
     });
     window.addEventListener('appinstalled', () => {
@@ -39,18 +38,22 @@ export const usePwa = () => {
     );
 
     const install = async (): Promise<boolean> => {
-        if (!installPrompt.value) {
+        const deferredPrompt = installPrompt.value;
+
+        if (!deferredPrompt) {
             return false;
         }
 
-        await installPrompt.value.prompt();
-        const choice = await installPrompt.value.userChoice;
+        try {
+            await deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
 
-        if (choice.outcome === 'accepted') {
+            return choice.outcome === 'accepted';
+        } catch {
+            return false;
+        } finally {
             installPrompt.value = null;
         }
-
-        return choice.outcome === 'accepted';
     };
 
     const subscribeToPush = async (publicKey: string): Promise<boolean> => {

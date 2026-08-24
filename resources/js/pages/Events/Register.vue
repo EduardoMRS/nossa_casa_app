@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import MoneyInput from '@/components/MoneyInput.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
@@ -44,6 +46,7 @@ const props = defineProps<{
             name: string;
             slug: string;
         } | null;
+        currency: string;
     };
     form: {
         id: string;
@@ -471,6 +474,29 @@ const formatDate = (value: string): string => {
                                         t('events.register.mark_option')
                                     }}
                                 </label>
+
+                                <PhoneInput
+                                    v-else-if="field.type === 'phone'"
+                                    :model-value="String(getFieldValue(field))"
+                                    :name="field.name"
+                                    :required="field.required"
+                                    :placeholder="field.placeholder"
+                                    @update:model-value="
+                                        updateFieldValue(field, $event)
+                                    "
+                                />
+
+                                <MoneyInput
+                                    v-else-if="field.type === 'money'"
+                                    :model-value="String(getFieldValue(field))"
+                                    :currency="event.currency"
+                                    lock-currency
+                                    :name="field.name"
+                                    :required="field.required"
+                                    @update:model-value="
+                                        updateFieldValue(field, $event)
+                                    "
+                                />
 
                                 <input
                                     v-else

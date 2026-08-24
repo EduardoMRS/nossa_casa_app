@@ -13,9 +13,28 @@ import { initializeFlashToast } from '@/lib/flashToast';
 import { installI18n } from '@/lib/i18n';
 import { initializePwa } from '@/lib/pwa';
 
+const browserLocation =
+    typeof window !== 'undefined' ? window.location : undefined;
+const echoUsesTls =
+    browserLocation?.protocol === 'https:' ||
+    (!browserLocation && import.meta.env.VITE_REVERB_SCHEME === 'https');
+const echoHost = browserLocation?.hostname || import.meta.env.VITE_REVERB_HOST;
+const echoPort = echoUsesTls
+    ? 443
+    : Number(
+          browserLocation?.port ||
+              (browserLocation ? 80 : import.meta.env.VITE_REVERB_PORT || 8080),
+      );
+const echoTransports: ('ws' | 'wss')[] = echoUsesTls ? ['wss'] : ['ws'];
+
 configureEcho({
     broadcaster: 'reverb',
     authEndpoint: '/api/broadcasting/auth',
+    wsHost: echoHost,
+    wsPort: echoPort,
+    wssPort: 443,
+    forceTLS: echoUsesTls,
+    enabledTransports: echoTransports,
 });
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
@@ -34,6 +53,7 @@ createInertiaApp({
             'Events/Index',
             'Events/Show',
             'Events/Register',
+            'Events/PrivateArea',
             'Posts/PublicIndex',
             'Posts/PublicShow',
             'Admin/ClassroomLabels',

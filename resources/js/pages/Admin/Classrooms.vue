@@ -18,6 +18,7 @@ import { toast } from 'vue-sonner';
 import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import type { ManagedCategory } from '@/components/CategoryManagerModal.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import { useI18n } from '@/lib/i18n';
 
 type MemberRelationship = {
@@ -370,7 +371,7 @@ async function submitAttendance(): Promise<void> {
 }
 function updateSeparation(value: boolean): void {
     router.put(
-        '/dashboard/salas-aula/configuracoes',
+        '/dashboard/classrooms/settings',
         { separate_kids_ministry: value },
         { preserveScroll: true },
     );
@@ -786,11 +787,10 @@ function updateSeparation(value: boolean): void {
                                 </label>
                                 <label class="text-xs font-bold text-slate-600"
                                     >{{ t('admin.classrooms.handoff_phone') }}
-                                    <input
+                                    <PhoneInput
                                         v-model="handoffPhone"
                                         required
-                                        type="tel"
-                                        class="mt-1 w-full rounded-xl border-slate-300"
+                                        class="mt-1"
                                     />
                                 </label>
                             </div>

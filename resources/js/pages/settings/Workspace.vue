@@ -17,6 +17,7 @@ import {
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
+import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -99,10 +100,12 @@ const relationSaving = ref(false);
 const prayerContent = ref('');
 const prayerSaving = ref(false);
 const childSaving = ref(false);
+const dateInputValue = (value?: string | null): string =>
+    value ? value.slice(0, 10) : '';
 const profile = reactive({
     name: props.workspaceUser.name,
     email: props.workspaceUser.email,
-    birth_date: props.workspaceUser.birth_date ?? '',
+    birth_date: dateInputValue(props.workspaceUser.birth_date),
     phone: props.workspaceUser.profile?.phone ?? '',
     gender: props.workspaceUser.profile?.gender ?? '',
     avatar: null as File | null,
@@ -326,9 +329,9 @@ const personFor = (item: Relationship): Person | undefined =>
                             class="mt-1 w-full rounded-lg border-slate-300" /></label
                     ><label class="text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.phone')
-                        }}<input
+                        }}<PhoneInput
                             v-model="profile.phone"
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
+                            class="mt-1" /></label
                     ><label class="text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.gender')
                         }}<select

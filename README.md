@@ -1,108 +1,115 @@
 # Nossa Casa
 
-Aplicação Laravel com Inertia/Vue, MySQL, MinIO e MediaMTX executada com Docker Compose.
+O Nossa Casa é uma plataforma open source para igrejas e comunidades de fé.
+Ela reúne site, comunicação, eventos, formulários, biblioteca bíblica,
+transmissões ao vivo e ferramentas administrativas em um único ambiente.
 
-## Requisitos
+Repositório: <https://github.com/EduardoMRS/nossa_casa_app>
 
-- Docker Engine com Docker Compose v2;
-- CPU `x86-64-v2` ou superior em hosts `amd64`;
-- portas disponíveis para HTTP, transmissão e armazenamento;
-- arquivo `.env` opcional; se estiver ausente, o container o cria a partir do `.env.example`.
+## Por que este projeto existe
 
-Em uma VM Proxmox, use o tipo de CPU `host` quando todos os nós tiverem processadores compatíveis. Para clusters com CPUs diferentes, use um perfil genérico `x86-64-v2-AES`.
+O projeto nasceu de uma ideia que Deus colocou em meu coração depois de uma
+visita a uma célula. Naquele momento surgiu a visão da estrutura completa de
+uma aplicação com seus módulos e funcionalidades — não para atender apenas
+uma igreja específica, mas para criar uma ferramenta que pudesse ajudar até a
+igreja mais humilde a ter seu próprio site, publicar conteúdos e organizar
+eventos.
 
-## Configuração local ou produção
+Desde o início, uma das prioridades foi ajudar a cuidar das crianças com mais
+segurança. Por isso o projeto inclui um fluxo de check-in e check-out para
+salinhas, permitindo que os pais tenham mais tranquilidade, inclusive quando
+visitam uma igreja pela primeira vez e ainda não conhecem a equipe.
 
-Você pode criar o ambiente antes de iniciar:
+Parti de um levantamento de requisitos funcionais e não funcionais, desenhei
+a estrutura inicial do banco de dados e criei mocks das principais telas com
+cenários para diferentes níveis de usuário. Com o apoio de um agente de IA,
+estruturei a primeira versão de testes e continuo desenvolvendo, testando e
+melhorando a plataforma para disponibilizá-la gratuitamente à comunidade,
+sem intenção de obter lucro com o projeto.
+
+## O que a plataforma oferece
+
+- páginas públicas para igrejas, comunidades e congregações;
+- postagens, categorias, destaques, galeria e mídias privadas;
+- criação de eventos, inscrições, confirmações e exportação de dados;
+- formulários dinâmicos para inscrições e coleta de informações;
+- gestão de usuários, permissões, igrejas filiais e responsáveis;
+- check-in e check-out seguro para salinhas e aulas infantis;
+- comentários, reações, pedidos de oração e notificações;
+- biblioteca bíblica, leituras e conteúdos que podem funcionar offline;
+- instalação como PWA em computadores, tablets e celulares;
+- transmissão ao vivo via RTMP, sem depender de uma conta no YouTube;
+- comentários durante a transmissão e reprodução após o encerramento;
+- armazenamento de mídias com URLs temporárias e controle de acesso;
+- suporte a MediaMTX, MinIO, worker de mídia e nós de transmissão separados.
+
+## Bíblia e conteúdo offline
+
+A aplicação possui um catálogo de Bíblias com licenças de uso gratuito e os
+direitos preservados de seus autores. A PWA permite instalar o Nossa Casa nos
+dispositivos e utilizar algumas ferramentas sem conexão, incluindo a própria
+biblioteca bíblica quando os dados já tiverem sido armazenados no dispositivo.
+
+## Transmissões ao vivo
+
+O Nossa Casa recebe transmissões diretamente por RTMP. A igreja pode publicar
+sem criar uma conta em plataformas externas, como o YouTube. O MediaMTX
+distribui o vídeo para o player da aplicação, enquanto os espectadores podem
+acompanhar comentários em tempo real. Depois que a transmissão termina, a
+gravação pode continuar sendo processada e ficar disponível para reprodução e
+publicação na galeria.
+
+## Hospedagem comunitária
+
+No futuro, pretendo disponibilizar um domínio principal para que comunidades
+sem condições de manter servidor ou domínio próprios possam utilizar a
+plataforma gratuitamente. Inicialmente haverá uma limitação de espaço em disco
+para preservar a sustentabilidade do serviço; conforme o projeto crescer,
+essa limitação poderá ser revisada.
+
+## Tecnologia
+
+- Laravel 13 e PHP 8.5;
+- Vue 3, Inertia.js, TypeScript e Vite;
+- MySQL;
+- MinIO ou outro storage compatível com S3;
+- MediaMTX para ingestão RTMP, HLS e gravações;
+- Docker Compose para desenvolvimento e produção;
+- PWA, internacionalização e tradução de conteúdo com apoio de IA.
+
+## Como executar
+
+Requisitos: Docker Engine ou Docker Desktop com Compose v2 e Git.
 
 ```bash
+git clone https://github.com/EduardoMRS/nossa_casa_app.git
+cd nossa_casa_app
 cp .env.example .env
-```
-
-Se o arquivo `.env` não existir, o entrypoint usa a cópia do `.env.example` embutida na imagem, gera `APP_KEY` automaticamente e continua a inicialização. Para produção, é recomendado fornecer um `.env` próprio com credenciais fortes antes de subir os serviços.
-
-Edite pelo menos `APP_KEY`, `APP_URL`, `APP_ENV`, `APP_DEBUG`, `DOCKER_DB_PASSWORD`, `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`.
-
-O Compose unificado carrega o `.env` nos containers `app` e `media-worker`. A única diferença esperada entre o ambiente local e o aaPanel é a configuração do ambiente, por exemplo:
-
-```dotenv
-APP_ENV=local
-```
-
-ou:
-
-```dotenv
-APP_ENV=production
-APP_DEBUG=false
-```
-
-Não copie o `.env` para o repositório. Ele contém chaves e credenciais.
-
-## Inicialização
-
-Suba os serviços em segundo plano:
-
-```bash
 docker compose up -d --build
-```
-
-Verifique o estado:
-
-```bash
-docker compose ps
-docker compose logs -f app db minio media-worker
-```
-
-Na primeira inicialização, execute as migrações dentro do container da aplicação:
-
-```bash
 docker compose exec app php artisan migrate --force
 ```
 
-Para gerar os assets frontend:
+Verifique os serviços com `docker compose ps` e os logs com
+`docker compose logs -f app db minio media-worker`. Para produção, use um
+arquivo `.env` próprio, credenciais fortes, HTTPS e backups. Nunca publique
+arquivos `.env`, tokens ou credenciais no repositório.
 
-```bash
-docker compose exec app npm run build
-```
+## Documentação
 
-O serviço web usa a porta 80. Em instalações com Nginx ou Apache do aaPanel ocupando essa porta, altere o mapeamento do serviço `webserver` para uma porta interna do host, como `8080:80`, e configure o domínio do aaPanel como proxy reverso para essa porta.
+A documentação detalhada está em [docs/README.md](docs/README.md), com versões
+em inglês e português. Ela cobre desenvolvimento em Windows, Linux e macOS,
+configuração do core e do media-node, componentes personalizados, rotas,
+tradução, arquitetura e operação das transmissões.
 
-## Banco de dados
+## Contribuição
 
-O ambiente padrão usa MySQL 8.0.45 no serviço Docker `db`. A conexão entre containers usa `DB_HOST=db`; não use `127.0.0.1` dentro do container da aplicação.
+Sugestões, correções, testes e novas funcionalidades são bem-vindos. Antes de
+abrir uma alteração, consulte as orientações em `docs/` e mantenha o padrão de
+idioma do projeto: identificadores, rotas e nova documentação técnica usam
+inglês; textos apresentados ao usuário devem passar pelo sistema de tradução.
 
-Para preservar dados, não execute `docker compose down -v`. O volume `dbdata` contém o banco MySQL e o volume `miniodata` contém os objetos armazenados no MinIO.
+## Propósito
 
-Faça backup antes de trocar a versão do banco ou remover volumes.
-
-## Imagens fixadas
-
-As imagens externas possuem versões explícitas no Compose e nos Dockerfiles:
-
-- PHP `8.5.5-fpm-alpine3.22`;
-- Composer `2.8.12`;
-- Alpine `3.22.5`;
-- Node.js `22.x` via Alpine;
-- Nginx `1.29.8-alpine`;
-- MySQL `8.0.45`;
-- MediaMTX `1.19.3`;
-- MinIO `RELEASE.2025-09-07T16-13-09Z`;
-- MinIO Client `RELEASE.2025-08-13T08-35-41Z`.
-
-Ao atualizar uma imagem, teste primeiro em um ambiente separado e confirme a compatibilidade dos volumes existentes.
-
-## Diagnóstico rápido
-
-Se aparecer `CPU does not support x86-64-v2`, confira as flags dentro da VM:
-
-```bash
-lscpu | grep -E 'Model name|Flags'
-```
-
-Em Proxmox, ajuste a CPU da VM no host físico:
-
-```bash
-qm set ID_DA_VM --cpu host
-```
-
-Se a aplicação reclamar de `.env.example`, confirme que o build foi executado depois da atualização do Dockerfile e que o arquivo `.env.example` existe no contexto de build.
+O Nossa Casa é desenvolvido para servir. A intenção é oferecer uma base segura,
+acessível e gratuita para igrejas e comunidades, respeitando as licenças dos
+conteúdos utilizados e mantendo os dados de cada comunidade sob seu controle.

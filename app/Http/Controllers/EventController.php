@@ -9,9 +9,11 @@ use App\Http\Requests\Event\StoreEventRequest;
 use App\Http\Requests\Event\UpdateEventRequest;
 use App\Models\Event;
 use App\Models\Form;
+use App\Models\User;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -34,6 +36,8 @@ class EventController extends Controller
     {
         $user = auth()->user();
         $data = $request->validated();
+        $responsibleIds = Arr::pull($data, 'responsible_ids', []);
+        $address = Arr::pull($data, 'address', []);
 
         $data['church_id'] = $user->church->id ?? null;
         $data['author_id'] = $user->id;
@@ -47,6 +51,8 @@ class EventController extends Controller
         $event = Event::create($data);
         $event->categories()->sync($this->syncChurchCategories($request, CategoryType::EVENT->value, $data['church_id']));
         $this->syncRegistrationForm($event, $request->input('form_id'), $data['church_id']);
+        $this->syncResponsibleUsers($event, $responsibleIds, $data['church_id']);
+        $this->syncAddress($event, $address);
 
         if ($request->header('X-Inertia')) {
             Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.event_created')]);
@@ -71,6 +77,8 @@ class EventController extends Controller
         $this->ensureChurchAccess($request, $event->church_id);
 
         $validated = $request->validated();
+        $responsibleIds = Arr::pull($validated, 'responsible_ids', null);
+        $address = Arr::pull($validated, 'address', null);
 
         if (array_key_exists('cover_path', $validated)) {
             $file = $request->file('cover_path') ?? $request->input('cover_path');
@@ -83,6 +91,12 @@ class EventController extends Controller
         }
         if ($request->has('form_id')) {
             $this->syncRegistrationForm($event, $request->input('form_id'), $event->church_id);
+        }
+        if ($responsibleIds !== null) {
+            $this->syncResponsibleUsers($event, $responsibleIds, $event->church_id);
+        }
+        if ($address !== null) {
+            $this->syncAddress($event, $address);
         }
 
         if ($request->header('X-Inertia')) {
@@ -155,5 +169,42 @@ class EventController extends Controller
         );
 
         $event->forms()->sync([$formId]);
+    }
+
+    /** @param array<int, string> $responsibleIds */
+    private function syncResponsibleUsers(Event $event, array $responsibleIds, string $churchId): void
+    {
+        $validIds = User::query()
+            ->whereIn('id', $responsibleIds)
+            ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
+            ->pluck('id');
+
+        $event->responsibleUsers()->sync($validIds);
+    }
+
+    /** @param array<string, mixed> $address */
+    private function syncAddress(Event $event, array $address): void
+    {
+        $address = collect($address)
+            ->map(fn (mixed $value): mixed => is_string($value) ? trim($value) : $value)
+            ->filter(fn (mixed $value): bool => $value !== null && $value !== '')
+            ->all();
+
+        if ($address === []) {
+            $event->address()->delete();
+
+            return;
+        }
+
+        $event->address()->updateOrCreate([], [
+            'country' => $address['country'] ?? 'Brasil',
+            'state' => $address['state'] ?? '',
+            'city' => $address['city'] ?? '',
+            'neighborhood' => $address['neighborhood'] ?? null,
+            'street' => $address['street'] ?? '',
+            'number' => $address['number'] ?? null,
+            'complement' => $address['complement'] ?? null,
+            'zipcode' => $address['zipcode'] ?? '',
+        ]);
     }
 }
