@@ -335,14 +335,14 @@ jobs:
 
     steps:
       - name: Download Android artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nossa-casa-${{ github.event.release.tag_name }}-android
           path: release-assets/android
 
       - name: Download iOS artifacts
         if: ${{ needs.ios.result == 'success' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: nossa-casa-${{ github.event.release.tag_name }}-ios
           path: release-assets/ios
