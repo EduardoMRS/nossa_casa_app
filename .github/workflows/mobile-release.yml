@@ -1,0 +1,298 @@
+name: Mobile release
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NATIVEPHP_APP_ID: br.org.nossacasa.app
+  NATIVEPHP_APP_VERSION_CODE: ${{ github.run_number }}
+  CI: "true"
+
+jobs:
+  validate:
+    name: Validate release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate semantic release tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] || {
+            echo "Release tag must be semantic, for example v1.0.0"
+            exit 1
+          }
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Prepare and validate application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+          php artisan test
+          npm run build
+          php artisan native:validate
+          php artisan native:plugin:list
+
+  android:
+    name: Package Android release
+    needs: validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: native
+    env:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      MOBILE_UPLOAD_ANDROID_TO_PLAY: ${{ vars.MOBILE_UPLOAD_ANDROID_TO_PLAY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        run: echo "NATIVEPHP_APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+          npm run build
+
+      - name: Restore Android credentials
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing ANDROID_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing ANDROID_KEY_PASSWORD"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-upload.jks"
+
+          if [[ "$MOBILE_UPLOAD_ANDROID_TO_PLAY" == "true" ]]; then
+            test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64" || {
+              echo "MOBILE_UPLOAD_ANDROID_TO_PLAY=true but GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64 is missing"
+              exit 1
+            }
+            printf '%s' "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64" | base64 --decode > "$RUNNER_TEMP/google-play-service-account.json"
+          fi
+
+      - name: Package signed APK
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/android-upload.jks
+        run: |
+          export NATIVEPHP_GRADLE_PATH="$JAVA_HOME"
+          export NATIVEPHP_ANDROID_SDK_LOCATION="$ANDROID_SDK_ROOT"
+          php artisan native:package android \
+            --build-type=release \
+            --output="$GITHUB_WORKSPACE/dist/android/apk" \
+            --no-tty
+
+      - name: Package signed AAB
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/android-upload.jks
+        run: |
+          export NATIVEPHP_GRADLE_PATH="$JAVA_HOME"
+          export NATIVEPHP_ANDROID_SDK_LOCATION="$ANDROID_SDK_ROOT"
+          package_args=(
+            android
+            --build-type=bundle
+            --output="$GITHUB_WORKSPACE/dist/android/aab"
+            --no-tty
+          )
+
+          if [[ "$MOBILE_UPLOAD_ANDROID_TO_PLAY" == "true" ]]; then
+            package_args+=(
+              --upload-to-play-store
+              --play-store-track=internal
+              --google-service-key="$RUNNER_TEMP/google-play-service-account.json"
+            )
+          fi
+
+          php artisan native:package "${package_args[@]}"
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nossa-casa-${{ github.event.release.tag_name }}-android
+          path: |
+            dist/android/**/*.apk
+            dist/android/**/*.aab
+          if-no-files-found: error
+          retention-days: 30
+
+  ios:
+    name: Package iOS release
+    needs: validate
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: native
+    env:
+      APP_STORE_API_KEY_ID: ${{ secrets.APP_STORE_API_KEY_ID }}
+      APP_STORE_API_ISSUER_ID: ${{ secrets.APP_STORE_API_ISSUER_ID }}
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      NATIVEPHP_DEVELOPMENT_TEAM: ${{ secrets.IOS_TEAM_ID }}
+      MOBILE_UPLOAD_IOS_TO_APP_STORE: ${{ vars.MOBILE_UPLOAD_IOS_TO_APP_STORE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        run: echo "NATIVEPHP_APP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: curl, dom, fileinfo, iconv, mbstring, pdo_sqlite, sqlite3, zip
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: native/package-lock.json
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci
+          php artisan key:generate --force
+          npm run build
+
+      - name: Restore Apple credentials
+        env:
+          APP_STORE_API_KEY_BASE64: ${{ secrets.APP_STORE_API_KEY_BASE64 }}
+          IOS_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+          IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          test -n "$APP_STORE_API_KEY_BASE64" || { echo "Missing APP_STORE_API_KEY_BASE64"; exit 1; }
+          test -n "$APP_STORE_API_KEY_ID" || { echo "Missing APP_STORE_API_KEY_ID"; exit 1; }
+          test -n "$APP_STORE_API_ISSUER_ID" || { echo "Missing APP_STORE_API_ISSUER_ID"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" || { echo "Missing IOS_DISTRIBUTION_CERTIFICATE_BASE64"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" || { echo "Missing IOS_DISTRIBUTION_CERTIFICATE_PASSWORD"; exit 1; }
+          test -n "$IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64" || { echo "Missing IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64"; exit 1; }
+          test -n "$IOS_TEAM_ID" || { echo "Missing IOS_TEAM_ID"; exit 1; }
+          printf '%s' "$APP_STORE_API_KEY_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+          printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          printf '%s' "$IOS_DISTRIBUTION_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.mobileprovision"
+
+      - name: Package signed IPA
+        env:
+          APP_STORE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          IOS_DISTRIBUTION_CERTIFICATE_PATH: ${{ runner.temp }}/distribution.p12
+          IOS_DISTRIBUTION_PROVISIONING_PROFILE_PATH: ${{ runner.temp }}/distribution.mobileprovision
+        run: |
+          package_args=(
+            ios
+            --export-method=app-store
+            --validate-profile
+            --rebuild
+            --output="$GITHUB_WORKSPACE/dist/ios"
+            --no-tty
+          )
+
+          if [[ "$MOBILE_UPLOAD_IOS_TO_APP_STORE" == "true" ]]; then
+            package_args+=(--upload-to-app-store)
+          fi
+
+          php artisan native:package "${package_args[@]}"
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nossa-casa-${{ github.event.release.tag_name }}-ios
+          path: dist/ios/**/*.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+  attach:
+    name: Attach packages to GitHub Release
+    needs:
+      - android
+      - ios
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nossa-casa-${{ github.event.release.tag_name }}-android
+          path: release-assets/android
+
+      - name: Download iOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nossa-casa-${{ github.event.release.tag_name }}-ios
+          path: release-assets/ios
+
+      - name: Attach packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mapfile -d '' packages < <(find release-assets -type f \( -name '*.apk' -o -name '*.aab' -o -name '*.ipa' \) -print0)
+          test "${#packages[@]}" -gt 0 || { echo "No mobile packages found"; exit 1; }
+          gh release upload "$GITHUB_REF_NAME" "${packages[@]}" --clobber
