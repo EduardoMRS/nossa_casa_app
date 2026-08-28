@@ -1,0 +1,65 @@
+name: Deploy NossaCasaApp to Arcane
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: arcane-nossacasa-app-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Update and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      ARCANE_UPDATE_WEBHOOK_URL: ${{ secrets.ARCANE_NOSSACASA_APP_UPDATE_WEBHOOK_URL }}
+      ARCANE_DEPLOY_WEBHOOK_URL: ${{ secrets.ARCANE_NOSSACASA_APP_DEPLOY_WEBHOOK_URL }}
+
+    steps:
+      - name: Validate webhook secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+
+          if [[ -z "${ARCANE_UPDATE_WEBHOOK_URL}" ]]; then
+            echo "::error::Repository secret ARCANE_NOSSACASA_APP_UPDATE_WEBHOOK_URL is not available."
+            missing=1
+          fi
+
+          if [[ -z "${ARCANE_DEPLOY_WEBHOOK_URL}" ]]; then
+            echo "::error::Repository secret ARCANE_NOSSACASA_APP_DEPLOY_WEBHOOK_URL is not available."
+            missing=1
+          fi
+
+          exit "${missing}"
+
+      - name: Update NossaCasaApp in Arcane
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --max-time 120 \
+            "${ARCANE_UPDATE_WEBHOOK_URL}"
+
+      - name: Deploy NossaCasaApp in Arcane
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --max-time 120 \
+            "${ARCANE_DEPLOY_WEBHOOK_URL}"
