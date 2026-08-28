@@ -109,3 +109,17 @@ test('authenticated users can persist a browser push subscription', function () 
     expect($subscription->user_id)->toBe($user->id)
         ->and($subscription->endpoint_hash)->toBe(hash('sha256', $endpoint));
 });
+
+test('application shell prevents zoom on mobile viewports and form controls', function () {
+    $this->get('http://platform.test/')
+        ->assertOk()
+        ->assertSee(
+            '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">',
+            escape: false,
+        );
+
+    expect(file_get_contents(resource_path('css/app.css')))
+        ->toContain('@media (max-width: 767px)')
+        ->toContain("input:not([type='checkbox'])")
+        ->toContain('font-size: 16px;');
+});
