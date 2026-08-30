@@ -68,6 +68,7 @@ const offlineState = ref<
 >('checking');
 const offlineProgress = ref({ completed: 0, total: 0 });
 const readyOfflineVersions = ref<string[]>([]);
+const isOnline = ref(true);
 const selectorsExpanded = ref(false);
 const automaticDownloadStarted = ref(false);
 let lastScrollPosition = 0;
@@ -76,6 +77,22 @@ const currentChapterIndex = computed(() =>
 );
 const selectedVersion = computed(() =>
     props.versions.find((item) => item.id === version.value),
+);
+const selectableVersions = computed(() =>
+    isOnline.value
+        ? props.versions
+        : props.versions.filter((item) =>
+              readyOfflineVersions.value.includes(item.id),
+          ),
+);
+const selectedVersionCanBeDownloaded = computed(() =>
+    Boolean(
+        selectedVersion.value?.offline_available &&
+            selectedVersion.value.offline_url,
+    ),
+);
+const selectedVersionOfflineReady = computed(() =>
+    readyOfflineVersions.value.includes(version.value),
 );
 const downloadableVersions = computed(() =>
     props.versions.filter((item) => item.offline_available && item.offline_url),
@@ -148,7 +165,7 @@ const runLoad = async (callback: () => Promise<void>): Promise<void> => {
     try {
         await callback();
     } catch {
-        error.value = navigator.onLine
+        error.value = isOnline.value
             ? t('library.bible.load_error')
             : t('library.bible.offline_missing');
     } finally {
@@ -207,7 +224,13 @@ const checkOfflineStatus = async (): Promise<void> => {
     });
 };
 
-const downloadForOffline = async (): Promise<void> => {
+const downloadForOffline = async (
+    targetVersions: BibleVersion[],
+): Promise<void> => {
+    if (!targetVersions.length) {
+        return;
+    }
+
     const worker = await serviceWorker();
 
     if (!worker) {
@@ -221,24 +244,42 @@ const downloadForOffline = async (): Promise<void> => {
     worker.postMessage({
         type: 'CACHE_BIBLES',
         readerUrl: window.location.pathname,
-        versions: downloadableVersions.value.map((item) => ({
+        versions: targetVersions.map((item) => ({
             id: item.id,
             url: item.offline_url,
         })),
     });
 };
 
+const downloadSelectedVersionForOffline = async (): Promise<void> => {
+    const selected = selectedVersion.value;
+
+    if (
+        !selected?.offline_available ||
+        !selected.offline_url ||
+        !isOnline.value
+    ) {
+        return;
+    }
+
+    await downloadForOffline([selected]);
+};
+
 const downloadMissingOpenVersions = async (): Promise<void> => {
+    const missingVersions = downloadableVersions.value.filter(
+        (item) => !readyOfflineVersions.value.includes(item.id),
+    );
+
     if (
         automaticDownloadStarted.value ||
-        !navigator.onLine ||
-        offlineReadyCount.value === downloadableVersions.value.length
+        !isOnline.value ||
+        !missingVersions.length
     ) {
         return;
     }
 
     automaticDownloadStarted.value = true;
-    await downloadForOffline();
+    await downloadForOffline(missingVersions);
 };
 
 const handleScroll = (): void => {
@@ -253,6 +294,50 @@ const handleScroll = (): void => {
     }
 
     lastScrollPosition = currentScrollPosition;
+};
+
+const ensureSelectableVersion = async (): Promise<void> => {
+    if (isOnline.value) {
+        if (!version.value && props.versions.length) {
+            version.value =
+                props.versions.find(
+                    (item) => item.id === props.defaultVersion,
+                )?.id ??
+                props.versions[0]?.id ??
+                '';
+            await loadBooks();
+        }
+
+        return;
+    }
+
+    const availableVersions = selectableVersions.value;
+
+    if (!availableVersions.length) {
+        version.value = '';
+        book.value = '';
+        chapter.value = null;
+        books.value = [];
+        chapters.value = [];
+        verses.value = [];
+        error.value = t('library.bible.offline_no_versions');
+
+        return;
+    }
+
+    const nextVersion = availableVersions.some(
+        (item) => item.id === version.value,
+    )
+        ? version.value
+        : availableVersions[0].id;
+    const shouldLoad = nextVersion !== version.value || !books.value.length;
+
+    version.value = nextVersion;
+    error.value = '';
+
+    if (shouldLoad) {
+        await loadBooks();
+    }
 };
 
 const handleServiceWorkerMessage = (event: MessageEvent): void => {
@@ -270,6 +355,10 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
                 ? 'ready'
                 : 'idle';
         void downloadMissingOpenVersions();
+
+        if (!isOnline.value) {
+            void ensureSelectableVersion();
+        }
     }
 
     if (message.type === 'BIBLE_CACHE_PROGRESS') {
@@ -286,6 +375,10 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
             offlineReadyCount.value === downloadableVersions.value.length
                 ? 'ready'
                 : 'idle';
+
+        if (!isOnline.value) {
+            void ensureSelectableVersion();
+        }
     }
 
     if (message.type === 'BIBLE_CACHE_ERROR') {
@@ -294,11 +387,21 @@ const handleServiceWorkerMessage = (event: MessageEvent): void => {
 };
 
 const handleOnline = (): void => {
+    isOnline.value = true;
     automaticDownloadStarted.value = false;
+    error.value = '';
+    void ensureSelectableVersion();
+    void checkOfflineStatus();
+};
+
+const handleOffline = (): void => {
+    isOnline.value = false;
+    void ensureSelectableVersion();
     void checkOfflineStatus();
 };
 
 onMounted(() => {
+    isOnline.value = navigator.onLine;
     selectorsExpanded.value = window.matchMedia('(min-width: 640px)').matches;
     lastScrollPosition = window.scrollY;
     navigator.serviceWorker?.addEventListener(
@@ -307,9 +410,12 @@ onMounted(() => {
     );
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
-    if (version.value) {
+    if (version.value && isOnline.value) {
         void loadBooks();
+    } else if (!isOnline.value) {
+        void ensureSelectableVersion();
     }
 
     void checkOfflineStatus();
@@ -322,6 +428,7 @@ onBeforeUnmount(() => {
     );
     window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
 });
 </script>
 
@@ -385,11 +492,19 @@ onBeforeUnmount(() => {
                     {{ t('library.bible.version') }}
                     <select
                         v-model="version"
-                        class="h-10 rounded-lg border border-[var(--reader-border)] bg-[var(--reader-bg)] px-3 text-sm text-[var(--reader-text)]"
+                        :disabled="!selectableVersions.length"
+                        class="h-10 rounded-lg border border-[var(--reader-border)] bg-[var(--reader-bg)] px-3 text-sm text-[var(--reader-text)] disabled:opacity-50"
                         @change="loadBooks"
                     >
                         <option
-                            v-for="item in versions"
+                            v-if="!selectableVersions.length"
+                            disabled
+                            value=""
+                        >
+                            {{ t('library.bible.offline_no_versions') }}
+                        </option>
+                        <option
+                            v-for="item in selectableVersions"
                             :key="item.id"
                             :value="item.id"
                         >
@@ -437,25 +552,29 @@ onBeforeUnmount(() => {
                 </label>
 
                 <button
-                    v-if="downloadableVersions.length"
+                    v-if="selectedVersionCanBeDownloaded"
                     type="button"
                     class="mt-auto inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--church-primary,#6750a4)] px-3 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-default disabled:opacity-70"
-                    :disabled="offlineState === 'downloading'"
+                    :disabled="
+                        offlineState === 'downloading' ||
+                        !isOnline ||
+                        selectedVersionOfflineReady
+                    "
                     :title="t('library.bible.offline_download_description')"
-                    @click="downloadForOffline"
+                    @click="downloadSelectedVersionForOffline"
                 >
                     <LoaderCircle
                         v-if="offlineState === 'downloading'"
                         class="size-4 animate-spin"
                     />
                     <CheckCircle2
-                        v-else-if="offlineState === 'ready'"
+                        v-else-if="selectedVersionOfflineReady"
                         class="size-4"
                     />
                     <CloudDownload v-else class="size-4" />
                     <span>
                         {{
-                            offlineState === 'ready'
+                            selectedVersionOfflineReady
                                 ? t('library.bible.offline_ready')
                                 : t('library.bible.offline_download')
                         }}
