@@ -7,19 +7,23 @@ const readSource = (path: string): string =>
 
 const workflow = readSource('.github/workflows/deploy-web.yml');
 
-test('web deployment waits for the Arcane project update before deploying', () => {
+test('web deployment builds the frontend before updating Arcane', () => {
+    const sourceStep = workflow.indexOf('Download repository source');
+    const buildStep = workflow.indexOf('Build production frontend image stage');
     const updateStep = workflow.indexOf('Update NossaCasaApp in Arcane');
     const waitStep = workflow.indexOf('Wait for Arcane project update');
     const deployStep = workflow.indexOf('Deploy NossaCasaApp in Arcane');
 
-    assert.ok(updateStep >= 0);
+    assert.ok(sourceStep >= 0);
+    assert.ok(sourceStep < buildStep);
+    assert.ok(buildStep < updateStep);
     assert.ok(updateStep < waitStep);
     assert.ok(waitStep < deployStep);
     assert.match(workflow, /sleep 45/);
     assert.match(workflow, /--target frontend-builder/);
-    assert.ok(
-        workflow.indexOf('Build production frontend image stage') < updateStep,
-    );
+    assert.match(workflow, /tarball\/\$\{GITHUB_SHA\}/);
+    assert.match(workflow, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
+    assert.doesNotMatch(workflow, /uses:\s+actions\/checkout/);
     assert.equal(
         workflow.match(/jq -e '.success == true and .data.status == "accepted"'/g)
             ?.length,
