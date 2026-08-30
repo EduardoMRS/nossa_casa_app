@@ -124,7 +124,7 @@ const changeCountry = (): void => {
 </script>
 
 <template>
-    <div class="phone-input flex w-full rounded-lg">
+    <div class="phone-input flex w-full min-w-0 max-w-full rounded-lg">
         <select
             v-model="selectedCode"
             :disabled="disabled"

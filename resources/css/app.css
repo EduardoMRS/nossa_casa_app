@@ -373,6 +373,11 @@
         position: relative;
     }
 
+    :where(input, select, textarea) {
+        min-width: 0;
+        max-width: 100%;
+    }
+
     @supports (overflow: clip) {
         html,
         body {

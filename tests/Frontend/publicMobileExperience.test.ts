@@ -40,3 +40,26 @@ test('portal nearby results stay inside the iOS viewport', () => {
     assert.match(styles, /overflow-x: clip/);
     assert.match(styles, /#app \{/);
 });
+
+test('shared form controls cannot expand the mobile viewport', () => {
+    const styles = readSource('resources/css/app.css');
+    const input = readSource('resources/js/components/ui/input/Input.vue');
+    const select = readSource(
+        'resources/js/components/ui/select/SelectTrigger.vue',
+    );
+    const phone = readSource('resources/js/components/PhoneInput.vue');
+    const money = readSource('resources/js/components/MoneyInput.vue');
+    const password = readSource('resources/js/components/PasswordInput.vue');
+    const scrollDialog = readSource(
+        'resources/js/components/ui/dialog/DialogScrollContent.vue',
+    );
+
+    assert.match(styles, /:where\(input, select, textarea\)/);
+    assert.match(styles, /max-width: 100%/);
+    assert.match(input, /w-full min-w-0 max-w-full/);
+    assert.match(select, /w-full min-w-0 max-w-full/);
+    assert.match(phone, /w-full min-w-0 max-w-full/);
+    assert.match(money, /w-full min-w-0 max-w-full/);
+    assert.match(password, /w-full min-w-0 max-w-full/);
+    assert.match(scrollDialog, /max-w-\[calc\(100%-2rem\)\]/);
+});

@@ -88,7 +88,7 @@ watch(selectedCode, (value) => {
 
 <template>
     <div
-        class="flex w-full rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring/40"
+        class="flex w-full min-w-0 max-w-full rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring/40"
     >
         <select
             v-model="selectedCode"

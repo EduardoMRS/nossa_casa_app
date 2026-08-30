@@ -71,11 +71,17 @@ fi
 
 app_environment="$(printf '%s' "$app_environment" | tr -d "\"'")"
 composer_install_mode="development"
+prebuilt_frontend_dir="/opt/nossa-casa/public-build"
+use_prebuilt_frontend=false
 
 if [ "$app_environment" = "production" ]; then
     composer_install_mode="production"
     export BOOST_ENABLED=false
     export BOOST_BROWSER_LOGS_WATCHER=false
+
+    if [ -f "$prebuilt_frontend_dir/manifest.json" ] && [ -f "$prebuilt_frontend_dir/.production" ]; then
+        use_prebuilt_frontend=true
+    fi
 fi
 
 composer_state_hash="${composer_manifest_hash}:${composer_install_mode}"
@@ -103,15 +109,23 @@ node_manifest="package-lock.json"
 node_manifest_hash="$(sha256sum "$node_manifest" | awk '{print $1}')"
 installed_node_hash="$(cat node_modules/.node-manifest.sha256 2>/dev/null || true)"
 
-if [ "${SKIP_NODE_INSTALL:-false}" != "true" ] && { [ ! -x node_modules/.bin/vite ] || [ "$node_manifest_hash" != "$installed_node_hash" ]; }; then
+if [ "$use_prebuilt_frontend" != "true" ] && [ "${SKIP_NODE_INSTALL:-false}" != "true" ] && { [ ! -x node_modules/.bin/vite ] || [ "$node_manifest_hash" != "$installed_node_hash" ]; }; then
     echo "Instalando dependências do NPM..."
     npm install
     printf '%s' "$node_manifest_hash" > node_modules/.node-manifest.sha256
 fi
 
 if [ "$1" = "php-fpm" ]; then
-    echo "Gerando os assets frontend..."
-    npm run build
+    if [ "$use_prebuilt_frontend" = "true" ]; then
+        echo "Publicando os assets frontend gerados pela imagem..."
+        rm -rf public/build
+        mkdir -p public/build
+        cp -R "$prebuilt_frontend_dir/." public/build/
+        chown -R laravel:laravel public/build
+    else
+        echo "Gerando os assets frontend..."
+        npm run build
+    fi
 fi
 
 exec "$@"

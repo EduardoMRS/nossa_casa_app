@@ -23,7 +23,7 @@ defineExpose({
 </script>
 
 <template>
-    <div class="relative">
+    <div class="relative w-full min-w-0 max-w-full">
         <Input
             ref="inputRef"
             :type="showPassword ? 'text' : 'password'"

@@ -14,7 +14,7 @@ jobs:
   deploy:
     name: Update and deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
     env:
@@ -39,6 +39,18 @@ jobs:
           fi
 
           exit "${missing}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build production frontend image stage
+        shell: bash
+        run: |
+          docker build \
+            --file docker/Dockerfile \
+            --target frontend-builder \
+            --tag nossa-casa-frontend-build:${GITHUB_SHA} \
+            .
 
       - name: Update NossaCasaApp in Arcane
         shell: bash

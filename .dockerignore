@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+!.env.media-node.example
+node_modules
+vendor
+public/build
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*.php
+native/node_modules
+native/vendor
