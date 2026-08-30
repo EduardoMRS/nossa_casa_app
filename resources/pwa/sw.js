@@ -6,7 +6,8 @@ const OPEN_ACTION = __OPEN_ACTION__;
 const OFFLINE_TITLE = __OFFLINE_TITLE__;
 const OFFLINE_MESSAGE = __OFFLINE_MESSAGE__;
 const CACHE_ROOT = 'nossa-casa';
-const CACHE_PREFIX = `${CACHE_ROOT}-${CACHE_SCOPE}`;
+const CACHE_SCHEMA_VERSION = '2';
+const CACHE_PREFIX = `${CACHE_ROOT}-v${CACHE_SCHEMA_VERSION}-${CACHE_SCOPE}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const BIBLE_CACHE = `${CACHE_PREFIX}-bible-${CACHE_VERSION}`;
 const PAGE_CACHE = `${CACHE_PREFIX}-pages-${CACHE_VERSION}`;
@@ -137,6 +138,10 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (request.headers.get('X-Inertia') === 'true') {
+        return;
+    }
+
     if (url.pathname.startsWith('/build/')) {
         event.respondWith(cacheFirst(request));
 
@@ -147,10 +152,6 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(networkFirstPage(request));
 
         return;
-    }
-
-    if (request.headers.get('X-Inertia') === 'true') {
-        event.respondWith(networkFirstPage(request));
     }
 });
 
@@ -363,18 +364,44 @@ async function cacheReaderPage(readerUrl) {
     });
     const response = await fetch(request);
 
-    if (response.ok) {
+    if (isHtmlPageResponse(response)) {
         const cache = await caches.open(PAGE_CACHE);
 
         await cache.put(request, response);
     }
 }
 
+function isHtmlPageResponse(response) {
+    const contentType = response?.headers.get('Content-Type')?.toLowerCase() ?? '';
+
+    return (
+        response?.ok &&
+        contentType.includes('text/html') &&
+        response.headers.get('X-Inertia') !== 'true'
+    );
+}
+
+async function cachedHtmlPage(cache, request) {
+    const cached = await cache.match(request);
+
+    if (!cached) {
+        return null;
+    }
+
+    if (isHtmlPageResponse(cached)) {
+        return cached;
+    }
+
+    await cache.delete(request);
+
+    return null;
+}
+
 async function networkFirstPage(request) {
     try {
         const response = await fetch(request);
 
-        if (response.ok) {
+        if (isHtmlPageResponse(response)) {
             const cache = await caches.open(PAGE_CACHE);
 
             await cache.put(request, response.clone());
@@ -383,14 +410,14 @@ async function networkFirstPage(request) {
         return response;
     } catch {
         const cache = await caches.open(PAGE_CACHE);
-        const cached = await cache.match(request, { ignoreVary: true });
+        const cached = await cachedHtmlPage(cache, request);
 
         if (cached) {
             return cached;
         }
 
         if (request.mode === 'navigate') {
-            const cachedHome = await cache.match('/', { ignoreVary: true });
+            const cachedHome = await cachedHtmlPage(cache, '/');
 
             if (cachedHome) {
                 return cachedHome;

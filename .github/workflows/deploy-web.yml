@@ -44,22 +44,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl \
-            --fail-with-body \
-            --silent \
-            --show-error \
-            --request POST \
-            --max-time 120 \
-            "${ARCANE_UPDATE_WEBHOOK_URL}"
+          response="$(
+            curl \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --request POST \
+              --max-time 120 \
+              "${ARCANE_UPDATE_WEBHOOK_URL}"
+          )"
+          echo "${response}"
+          jq -e '.success == true and .data.status == "accepted"' <<<"${response}" >/dev/null
+
+      - name: Wait for Arcane project update
+        shell: bash
+        run: sleep 45
 
       - name: Deploy NossaCasaApp in Arcane
         shell: bash
         run: |
           set -euo pipefail
-          curl \
-            --fail-with-body \
-            --silent \
-            --show-error \
-            --request POST \
-            --max-time 120 \
-            "${ARCANE_DEPLOY_WEBHOOK_URL}"
+          response="$(
+            curl \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --request POST \
+              --max-time 120 \
+              "${ARCANE_DEPLOY_WEBHOOK_URL}"
+          )"
+          echo "${response}"
+          jq -e '.success == true and .data.status == "accepted"' <<<"${response}" >/dev/null

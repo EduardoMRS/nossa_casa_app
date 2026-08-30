@@ -77,7 +77,9 @@ test('manifest and service worker are generated dynamically for the church domai
         ->assertJsonPath('theme_color', '#123456')
         ->assertJsonPath('shortcuts.0.url', '/biblioteca/biblia');
 
-    $this->get('http://pwa.test/sw.js')
+    $serviceWorker = $this->get('http://pwa.test/sw.js');
+
+    $serviceWorker
         ->assertOk()
         ->assertHeader('Service-Worker-Allowed', '/')
         ->assertSee('nossa-casa', escape: false)
@@ -85,9 +87,13 @@ test('manifest and service worker are generated dynamically for the church domai
         ->assertSee('BIBLE_CACHE_READY', escape: false)
         ->assertSee('cachedMarker', escape: false)
         ->assertSee('CACHE_SCOPE', escape: false)
-        ->assertSee("request.headers.get('X-Inertia')", escape: false)
-        ->assertSee("cache.match('/', { ignoreVary: true })", escape: false)
+        ->assertSee("const CACHE_SCHEMA_VERSION = '2'", escape: false)
+        ->assertSee("request.headers.get('X-Inertia') === 'true'", escape: false)
+        ->assertSee('isHtmlPageResponse', escape: false)
+        ->assertSee("contentType.includes('text/html')", escape: false)
         ->assertSee("url.pathname.startsWith('/api/bible/')", escape: false);
+
+    expect($serviceWorker->getContent())->not->toContain('ignoreVary: true');
 
     $this->artisan('service-worker:update')->assertSuccessful();
 });
