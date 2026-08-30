@@ -1,4 +1,4 @@
-FROM php:8.5.5-fpm-alpine3.22 AS base
+FROM php:8.5.7-fpm-alpine3.22 AS base
 
 ARG USER=laravel
 ARG UID=1000
