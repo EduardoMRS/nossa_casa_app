@@ -355,6 +355,31 @@
 }
 
 @layer base {
+    html,
+    body,
+    #app {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    html,
+    body {
+        overflow-x: hidden;
+        overscroll-behavior-x: none;
+    }
+
+    body {
+        position: relative;
+    }
+
+    @supports (overflow: clip) {
+        html,
+        body {
+            overflow-x: clip;
+        }
+    }
+
     * {
         @apply border-border outline-ring/50;
     }
