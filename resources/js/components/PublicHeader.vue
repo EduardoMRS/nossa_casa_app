@@ -169,7 +169,7 @@ const navClass = (key: PublicNavKey): string =>
                     <DropdownMenuTrigger :as-child="true">
                         <Button
                             variant="ghost"
-                            class="h-10 gap-2 rounded-full border border-indigo-700 px-1.5 pr-3 text-white hover:bg-indigo-950 hover:text-white"
+                            class="hidden h-10 gap-2 rounded-full border border-indigo-700 px-1.5 pr-3 text-white hover:bg-indigo-950 hover:text-white md:flex"
                         >
                             <span class="hidden items-center gap-1.5 lg:flex">
                                 <span
@@ -205,8 +205,8 @@ const navClass = (key: PublicNavKey): string =>
                 </DropdownMenu>
                 <Link
                     v-else
-                    :href="login()"
-                    class="rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950 shadow-sm sm:px-4"
+                    :href="login({ query: { redirect: page.url } })"
+                    class="hidden rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950 shadow-sm sm:px-4 md:inline-flex"
                     >{{ t('nav.login') }}</Link
                 >
                 <button
@@ -246,18 +246,78 @@ const navClass = (key: PublicNavKey): string =>
 
         <nav
             v-if="mobileOpen"
-            class="grid grid-cols-2 gap-2 border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
+            class="border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
         >
-            <Link
-                v-for="item in navItems"
-                :key="item.key"
-                :href="item.href"
-                :class="navClass(item.key)"
-                class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold"
-                @click="mobileOpen = false"
+            <div class="grid grid-cols-2 gap-2">
+                <Link
+                    v-for="item in navItems"
+                    :key="item.key"
+                    :href="item.href"
+                    :class="navClass(item.key)"
+                    class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold"
+                    @click="mobileOpen = false"
+                >
+                    <component :is="item.icon" class="size-4" />
+                    {{ item.label }}
+                </Link>
+            </div>
+
+            <div
+                class="mt-3 border-t border-white/15 pt-3"
+                data-test="mobile-account-section"
             >
-                <component :is="item.icon" class="size-4" /> {{ item.label }}
-            </Link>
+                <DropdownMenu v-if="isAuthenticated && user">
+                    <DropdownMenuTrigger :as-child="true">
+                        <Button
+                            variant="ghost"
+                            class="h-auto w-full justify-start gap-3 rounded-lg border border-indigo-800 px-3 py-2.5 text-white hover:bg-indigo-900 hover:text-white"
+                        >
+                            <Avatar class="size-8 ring-2 ring-amber-400/70">
+                                <AvatarImage
+                                    v-if="user.avatar"
+                                    :src="user.avatar"
+                                    :alt="user.name"
+                                />
+                                <AvatarFallback
+                                    class="bg-indigo-900 text-white"
+                                >
+                                    {{ getInitials(user.name) }}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span class="min-w-0 flex-1 text-left">
+                                <strong class="block truncate text-sm">
+                                    {{ user.name }}
+                                </strong>
+                                <small
+                                    v-if="user.email"
+                                    class="block truncate text-[10px] text-indigo-200"
+                                >
+                                    {{ user.email }}
+                                </small>
+                            </span>
+                            <CircleAlert
+                                v-if="isForeignChurch"
+                                class="size-4 shrink-0 text-sky-300"
+                                :aria-label="t('membership.foreign_indicator')"
+                            />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="end"
+                        class="w-[calc(100vw-1.5rem)] max-w-sm"
+                    >
+                        <UserMenuContent :user="user" />
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <Link
+                    v-else
+                    :href="login({ query: { redirect: page.url } })"
+                    class="flex w-full items-center justify-center rounded-lg border border-indigo-800 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-900"
+                    @click="mobileOpen = false"
+                >
+                    {{ t('nav.login') }}
+                </Link>
+            </div>
         </nav>
     </header>
 </template>

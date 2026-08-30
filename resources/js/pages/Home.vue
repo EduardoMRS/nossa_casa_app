@@ -363,7 +363,7 @@ const submitPrayer = async (): Promise<void> => {
             class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-4 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8 lg:py-9"
         >
             <section
-                class="relative isolate grid overflow-hidden rounded-2xl border p-5 text-white shadow-xl shadow-slate-900/10 sm:rounded-[2rem] sm:p-7 md:grid-cols-[1.15fr_0.85fr] md:gap-8 md:p-9 lg:p-10"
+                class="relative isolate grid overflow-hidden rounded-2xl border p-4 text-white shadow-xl shadow-slate-900/10 sm:rounded-[2rem] sm:p-7 md:grid-cols-[1.15fr_0.85fr] md:gap-8 md:p-9 lg:p-10"
                 :style="{
                     borderColor:
                         'color-mix(in srgb, var(--church-primary) 75%, black)',
@@ -382,9 +382,9 @@ const submitPrayer = async (): Promise<void> => {
                     class="relative z-10 flex flex-col justify-center"
                     :class="{ 'md:col-span-2': !nextEvent }"
                 >
-                    <div class="mb-5 flex items-center gap-3 sm:mb-7">
+                    <div class="mb-3 flex items-center gap-2.5 sm:mb-7 sm:gap-3">
                         <span
-                            class="grid size-12 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white/10 text-lg font-black shadow-lg backdrop-blur"
+                            class="grid size-10 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black shadow-lg backdrop-blur sm:size-12 sm:rounded-2xl sm:text-lg"
                         >
                             <img
                                 v-if="branding.logo_url"
@@ -407,17 +407,17 @@ const submitPrayer = async (): Promise<void> => {
                         </span>
                     </div>
                     <p
-                        class="mb-3 font-mono text-[10px] font-bold tracking-[0.22em] text-amber-300 uppercase"
+                        class="mb-2 font-mono text-[9px] font-bold tracking-[0.2em] text-amber-300 uppercase sm:mb-3 sm:text-[10px] sm:tracking-[0.22em]"
                     >
                         {{ t('home.hero.kicker') }}
                     </p>
                     <h1
-                        class="max-w-3xl text-3xl leading-[1.08] font-black tracking-tight text-balance sm:text-4xl lg:text-5xl"
+                        class="max-w-3xl text-[1.75rem] leading-[1.08] font-black tracking-tight text-balance sm:text-4xl lg:text-5xl"
                     >
                         {{ branding.banner_title || t('home.hero.title') }}
                     </h1>
                     <p
-                        class="mt-5 max-w-2xl text-sm leading-7 text-white/75 sm:text-base"
+                        class="mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:mt-5 sm:text-base sm:leading-7"
                     >
                         {{
                             branding.banner_subtitle ||
@@ -425,17 +425,17 @@ const submitPrayer = async (): Promise<void> => {
                         }}
                     </p>
 
-                    <div class="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+                    <div class="mt-4 grid gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3">
                         <Link
                             :href="eventsIndex()"
-                            class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-extrabold text-indigo-950 shadow-lg transition hover:-translate-y-0.5"
+                            class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-indigo-950 shadow-lg transition hover:-translate-y-0.5 sm:px-5 sm:py-3"
                         >
                             {{ t('home.hero.cta_events') }}
                             <ArrowRight class="size-4" />
                         </Link>
                         <Link
                             :href="galleryIndex()"
-                            class="rounded-full border border-white/30 bg-white/5 px-5 py-3 text-center text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/15"
+                            class="rounded-full border border-white/30 bg-white/5 px-4 py-2.5 text-center text-xs font-extrabold text-white backdrop-blur transition hover:bg-white/15 sm:px-5 sm:py-3"
                         >
                             {{ t('home.hero.cta_gallery') }}
                         </Link>
@@ -445,7 +445,7 @@ const submitPrayer = async (): Promise<void> => {
                 <Link
                     v-if="nextEvent"
                     :href="eventsShow({ event: nextEvent.slug })"
-                    class="group relative z-10 mt-6 min-h-56 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/25 shadow-2xl backdrop-blur sm:min-h-64 sm:rounded-3xl md:mt-0 md:min-h-72"
+                    class="group relative z-10 mt-4 min-h-44 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/25 shadow-2xl backdrop-blur sm:mt-6 sm:min-h-64 sm:rounded-3xl md:mt-0 md:min-h-72"
                 >
                     <img
                         v-if="nextEvent.cover_path"
@@ -457,7 +457,7 @@ const submitPrayer = async (): Promise<void> => {
                         class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"
                     />
                     <div
-                        class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4 sm:p-6"
+                        class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3 sm:p-6"
                     >
                         <div>
                             <span
@@ -467,7 +467,7 @@ const submitPrayer = async (): Promise<void> => {
                                 {{ t('home.hero.next_event') }}
                             </span>
                             <h2
-                                class="mt-3 text-xl font-black text-balance sm:text-2xl"
+                                class="mt-2 text-lg font-black text-balance sm:mt-3 sm:text-2xl"
                             >
                                 {{ nextEvent.title }}
                             </h2>

@@ -25,6 +25,7 @@ defineProps<{
     status?: string;
     canResetPassword: boolean;
     church?: { id: string; name: string; domain: string } | null;
+    redirect?: string | null;
 }>();
 const { t } = useI18n();
 </script>
@@ -47,6 +48,12 @@ const { t } = useI18n();
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
+        <input
+            v-if="redirect"
+            type="hidden"
+            name="redirect"
+            :value="redirect"
+        />
         <div class="grid gap-6">
             <div class="grid gap-2">
                 <Label for="email">{{ t('auth.common.email') }}</Label>

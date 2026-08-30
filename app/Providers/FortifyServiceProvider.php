@@ -53,11 +53,22 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'status' => $request->session()->get('status'),
-            'church' => app(ChurchDomainContext::class)->church()?->only(['id', 'name', 'domain']),
-        ]));
+        Fortify::loginView(function (Request $request) {
+            $redirect = $request->string('redirect')->toString();
+
+            if ($redirect !== '') {
+                $request->session()->put('auth.login_redirect', $redirect);
+            } else {
+                $request->session()->forget('auth.login_redirect');
+            }
+
+            return Inertia::render('auth/Login', [
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'status' => $request->session()->get('status'),
+                'church' => app(ChurchDomainContext::class)->church()?->only(['id', 'name', 'domain']),
+                'redirect' => $redirect ?: null,
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/ResetPassword', [
             'email' => $request->email,

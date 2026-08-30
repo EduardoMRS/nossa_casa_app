@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Models\Church;
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
@@ -74,4 +76,51 @@ test('users are rate limited', function () {
     ]);
 
     $response->assertTooManyRequests();
+});
+
+test('dashboard users return to the public page where login started', function () {
+    $church = Church::factory()->create(['domain' => 'current-church.test']);
+    $user = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church->assignMember($user);
+
+    $this->post('http://current-church.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+        'redirect' => '/events?view=upcoming',
+    ])->assertRedirect('/events?view=upcoming');
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('login from another church hands dashboard users back to their own church', function () {
+    $homeChurch = Church::factory()->create(['domain' => 'home-church.test']);
+    Church::factory()->create(['domain' => 'visited-church.test']);
+    $user = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $homeChurch->assignMember($user);
+
+    $response = $this->post('http://visited-church.test/login', [
+        'email' => $user->email,
+        'password' => 'password',
+        'redirect' => '/events',
+    ]);
+
+    $response->assertStatus(409);
+    $handoffUrl = $response->headers->get('X-Inertia-Location');
+
+    expect($handoffUrl)->toStartWith('https://home-church.test/auth/handoff?token=');
+
+    $this->get($handoffUrl)
+        ->assertRedirect('https://home-church.test/dashboard');
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('login ignores unsafe external return URLs', function () {
+    $user = User::factory()->create();
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+        'redirect' => 'https://malicious.example/redirect',
+    ])->assertRedirect(route('home', absolute: false));
 });
