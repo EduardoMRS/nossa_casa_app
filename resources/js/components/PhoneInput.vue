@@ -129,7 +129,7 @@ const changeCountry = (): void => {
             v-model="selectedCode"
             :disabled="disabled"
             :aria-label="t('phone.country')"
-            class="phone-input__country w-28 shrink-0 rounded-l-lg border-0 px-2 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
+            class="phone-input__country w-24 shrink-0 sm:w-28 rounded-l-lg border-0 px-2 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
             @change="changeCountry"
         >
             <option
@@ -150,7 +150,7 @@ const changeCountry = (): void => {
             :required="required"
             :disabled="disabled"
             :placeholder="placeholder ?? t('phone.placeholder')"
-            class="phone-input__number min-w-0 flex-1 rounded-r-lg border-0 bg-transparent px-3 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
+            class="phone-input__number w-0 min-w-0 flex-1 rounded-r-lg border-0 bg-transparent px-3 py-2.5 text-sm focus:ring-0 disabled:opacity-60"
         />
         <input v-if="name" type="hidden" :name="name" :value="completeValue" />
     </div>

@@ -104,3 +104,26 @@ test('every shared public header participates in the PWA sticky shell', () => {
     assert.match(portalHeader, /public-top-navigation/);
     assert.match(welcome, /public-top-navigation/);
 });
+
+
+test('authenticated mobile workspaces contain controls and reserve PWA navigation', () => {
+    const workspace = readSource('resources/js/pages/settings/Workspace.vue');
+    const dashboard = readSource('resources/js/pages/Dashboard.vue');
+    const layout = readSource(
+        'resources/js/layouts/app/AppSidebarLayout.vue',
+    );
+    const phone = readSource('resources/js/components/PhoneInput.vue');
+    const navigation = readSource(
+        'resources/js/components/PwaBottomNavigation.vue',
+    );
+    const styles = readSource('resources/css/app.css');
+
+    assert.match(workspace, /overflow-x-clip/);
+    assert.match(workspace, /max-w-3xl overflow-hidden/);
+    assert.match(workspace, /type="file"[\s\S]*max-w-full overflow-hidden/);
+    assert.match(phone, /w-0 min-w-0 flex-1/);
+    assert.match(dashboard, /min-w-0 max-w-full/);
+    assert.match(layout, /dashboard-theme min-w-0 max-w-full/);
+    assert.match(navigation, /settings\/Workspace/);
+    assert.match(styles, /pwa-navigation-visible \.dashboard-theme/);
+});

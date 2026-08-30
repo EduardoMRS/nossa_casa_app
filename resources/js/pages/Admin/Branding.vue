@@ -120,6 +120,7 @@ const props = defineProps<{
     mainDomain: string;
     mailSettings: MailSettings;
 }>();
+const useOwnMailServer = ref(props.mailSettings.enabled);
 const colors = ref({
     primary_color: props.branding.primary_color,
     secondary_color: props.branding.secondary_color,
@@ -692,7 +693,7 @@ const resolvedDomain = computed(() =>
                 </div>
 
                 <section
-                    class="grid gap-4 rounded-2xl border border-border bg-muted/30 p-5"
+                    class="grid min-w-0 gap-4 rounded-2xl border border-border bg-muted/30 p-4 sm:p-5"
                 >
                     <div>
                         <h2 class="font-bold">
@@ -701,31 +702,40 @@ const resolvedDomain = computed(() =>
                         <p class="text-sm text-muted-foreground">
                             {{ t('admin.branding.mail_description') }}
                         </p>
+                    </div>
+
+                    <label
+                        class="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                    >
+                        <input
+                            type="hidden"
+                            name="mail[enabled]"
+                            value="0"
+                        />
+                        <input
+                            v-model="useOwnMailServer"
+                            name="mail[enabled]"
+                            value="1"
+                            type="checkbox"
+                        />
+                        <span class="min-w-0">
+                            {{ t('admin.branding.mail_enabled') }}
+                        </span>
+                    </label>
+
+                    <div
+                        v-if="useOwnMailServer"
+                        class="grid min-w-0 gap-4"
+                        data-test="custom-mail-server-options"
+                    >
                         <p
-                            class="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                            class="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
                         >
                             {{ t('admin.branding.mail_encryption_notice') }}
                         </p>
-                    </div>
-                    <div class="grid gap-3 sm:grid-cols-2">
+
                         <label
-                            class="flex items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
-                        >
-                            <input
-                                type="hidden"
-                                name="mail[enabled]"
-                                value="0"
-                            />
-                            <input
-                                name="mail[enabled]"
-                                value="1"
-                                type="checkbox"
-                                :checked="mailSettings.enabled"
-                            />
-                            {{ t('admin.branding.mail_enabled') }}
-                        </label>
-                        <label
-                            class="flex items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                            class="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
                         >
                             <input
                                 type="hidden"
@@ -738,72 +748,77 @@ const resolvedDomain = computed(() =>
                                 type="checkbox"
                                 :checked="mailSettings.allow_branches"
                             />
-                            {{ t('admin.branding.mail_allow_branches') }}
+                            <span class="min-w-0">
+                                {{ t('admin.branding.mail_allow_branches') }}
+                            </span>
                         </label>
-                    </div>
-                    <div class="grid gap-4 md:grid-cols-3">
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_host')
-                            }}<Input
-                                name="mail[host]"
-                                :default-value="mailSettings.host" /><InputError
-                                :message="errors['mail.host']"
-                        /></label>
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_port')
-                            }}<Input
-                                name="mail[port]"
-                                type="number"
-                                min="1"
-                                max="65535"
-                                :default-value="mailSettings.port" /><InputError
-                                :message="errors['mail.port']"
-                        /></label>
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_security')
-                            }}<select
-                                name="mail[scheme]"
-                                :value="mailSettings.scheme"
-                                class="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal"
+
+                        <div class="grid min-w-0 gap-4 md:grid-cols-3">
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_host')
+                                }}<Input
+                                    name="mail[host]"
+                                    :default-value="mailSettings.host"
+                                /><InputError
+                                    :message="errors['mail.host']"
+                            /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_port')
+                                }}<Input
+                                    name="mail[port]"
+                                    type="number"
+                                    min="1"
+                                    max="65535"
+                                    :default-value="mailSettings.port"
+                                /><InputError
+                                    :message="errors['mail.port']"
+                            /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_security')
+                                }}<select
+                                    name="mail[scheme]"
+                                    :value="mailSettings.scheme"
+                                    class="h-10 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                >
+                                    <option value="tls">TLS</option>
+                                    <option value="ssl">SSL</option>
+                                </select></label
                             >
-                                <option value="tls">TLS</option>
-                                <option value="ssl">SSL</option>
-                            </select></label
-                        >
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_username')
-                            }}<Input
-                                name="mail[username]"
-                                autocomplete="off"
-                                :default-value="mailSettings.username"
-                        /></label>
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_password')
-                            }}<Input
-                                name="mail[password]"
-                                type="password"
-                                autocomplete="new-password"
-                                :placeholder="
-                                    mailSettings.has_password
-                                        ? t(
-                                              'admin.branding.mail_password_saved',
-                                          )
-                                        : ''
-                                "
-                        /></label>
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_from_address')
-                            }}<Input
-                                name="mail[from_address]"
-                                type="email"
-                                :default-value="mailSettings.from_address"
-                        /></label>
-                        <label class="grid gap-2 text-sm font-bold"
-                            >{{ t('admin.branding.mail_from_name')
-                            }}<Input
-                                name="mail[from_name]"
-                                :default-value="mailSettings.from_name"
-                        /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_username')
+                                }}<Input
+                                    name="mail[username]"
+                                    autocomplete="off"
+                                    :default-value="mailSettings.username"
+                            /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_password')
+                                }}<Input
+                                    name="mail[password]"
+                                    type="password"
+                                    autocomplete="new-password"
+                                    :placeholder="
+                                        mailSettings.has_password
+                                            ? t(
+                                                  'admin.branding.mail_password_saved',
+                                              )
+                                            : ''
+                                    "
+                            /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_from_address')
+                                }}<Input
+                                    name="mail[from_address]"
+                                    type="email"
+                                    :default-value="mailSettings.from_address"
+                            /></label>
+                            <label class="grid min-w-0 gap-2 text-sm font-bold"
+                                >{{ t('admin.branding.mail_from_name')
+                                }}<Input
+                                    name="mail[from_name]"
+                                    :default-value="mailSettings.from_name"
+                            /></label>
+                        </div>
                     </div>
                 </section>
 
