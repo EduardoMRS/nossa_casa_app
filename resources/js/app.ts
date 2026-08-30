@@ -3,6 +3,7 @@ import { configureEcho } from '@laravel/echo-vue';
 import axios from 'axios';
 import { createApp, Fragment, h } from 'vue';
 import ConfirmDialogHost from '@/components/ConfirmDialogHost.vue';
+import PwaBottomNavigation from '@/components/PwaBottomNavigation.vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -82,7 +83,12 @@ createInertiaApp({
     },
     setup: ({ el, App, props, plugin }) => {
         const app = createApp({
-            render: () => h(Fragment, [h(App, props), h(ConfirmDialogHost)]),
+            render: () =>
+                h(Fragment, [
+                    h(App, props),
+                    h(PwaBottomNavigation),
+                    h(ConfirmDialogHost),
+                ]),
         });
 
         app.use(plugin);

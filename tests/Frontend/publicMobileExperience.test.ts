@@ -63,3 +63,25 @@ test('shared form controls cannot expand the mobile viewport', () => {
     assert.match(password, /w-full min-w-0 max-w-full/);
     assert.match(scrollDialog, /max-w-\[calc\(100%-2rem\)\]/);
 });
+
+
+test('installed PWA uses a contained scroll shell and native bottom navigation', () => {
+    const app = readSource('resources/js/app.ts');
+    const navigation = readSource(
+        'resources/js/components/PwaBottomNavigation.vue',
+    );
+    const styles = readSource('resources/css/app.css');
+
+    assert.match(app, /h\(PwaBottomNavigation\)/);
+    assert.match(navigation, /display-mode: standalone/);
+    assert.match(navigation, /navigator\.standalone/);
+    assert.match(navigation, /library\.bible|bible as bibleRoute/);
+    assert.match(navigation, /nav\.news/);
+    assert.match(navigation, /nav\.events/);
+    assert.match(navigation, /nav\.profile/);
+    assert.match(navigation, /safe-area-inset-bottom/);
+    assert.match(styles, /html\.pwa-public-shell body/);
+    assert.match(styles, /position: fixed/);
+    assert.match(styles, /overflow-y: auto/);
+    assert.match(styles, /--pwa-bottom-navigation-height/);
+});

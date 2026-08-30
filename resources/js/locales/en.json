@@ -113,7 +113,11 @@
         "watch": "Watch",
         "menu": "Open menu",
         "faith_community": "Faith community",
-        "live_now": "Live now: {name}"
+        "live_now": "Live now: {name}",
+        "bible": "Bible",
+        "news": "News",
+        "profile": "Profile",
+        "pwa_navigation": "Main app navigation"
     },
     "navigation": {
         "menu": "Navigation menu",

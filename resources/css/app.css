@@ -614,3 +614,44 @@
         font-size: 16px;
     }
 }
+
+
+@layer base {
+    :root {
+        --pwa-bottom-navigation-height: calc(
+            4rem + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    html.pwa-public-shell,
+    html.pwa-public-shell body,
+    html.pwa-public-shell #app {
+        height: 100%;
+        max-height: 100dvh;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    html.pwa-public-shell body {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+    }
+
+    html.pwa-public-shell #app > :first-child {
+        height: 100%;
+        min-height: 0 !important;
+        max-height: 100%;
+        overflow-x: clip;
+        overflow-y: auto;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 767px) {
+        html.pwa-navigation-visible #app > :first-child {
+            padding-bottom: var(--pwa-bottom-navigation-height);
+            scroll-padding-bottom: var(--pwa-bottom-navigation-height);
+        }
+    }
+}

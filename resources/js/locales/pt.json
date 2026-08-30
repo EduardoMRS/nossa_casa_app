@@ -113,7 +113,11 @@
         "watch": "Assistir",
         "menu": "Abrir menu",
         "faith_community": "Comunidade de fé",
-        "live_now": "Ao vivo agora: {name}"
+        "live_now": "Ao vivo agora: {name}",
+        "bible": "Bíblia",
+        "news": "Notícias",
+        "profile": "Perfil",
+        "pwa_navigation": "Navegação principal do aplicativo"
     },
     "navigation": {
         "menu": "Menu de navegação",
