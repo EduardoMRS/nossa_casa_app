@@ -15,7 +15,10 @@
         "country": "Country calling code",
         "placeholder": "Phone number"
     },
-    "money": { "currency": "Currency", "placeholder": "0.00" },
+    "money": {
+        "currency": "Currency",
+        "placeholder": "0.00"
+    },
     "editor": {
         "label": "Rich content editor",
         "embeds": {
@@ -541,7 +544,12 @@
             "schedule_end": "Ends",
             "schedule_remove": "Remove time",
             "schedule_empty": "No weekly schedule has been registered.",
-            "save": "Save church settings"
+            "save": "Save church settings",
+            "template_variant_descriptions": {
+                "classic": "Layered cards, soft depth and stronger brand colors.",
+                "editorial": "Wide composition, serif headlines and magazine-like dividers.",
+                "minimal": "Focused reading, restrained surfaces and almost no shadows."
+            }
         },
         "categories": {
             "all_types": "All types",

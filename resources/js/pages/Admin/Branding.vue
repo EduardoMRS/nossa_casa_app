@@ -1019,11 +1019,11 @@ const resolvedDomain = computed(() =>
                                     )
                                 }}
                             </legend>
-                            <div class="mt-2 grid grid-cols-3 gap-2">
+                            <div class="mt-3 grid gap-3 sm:grid-cols-3">
                                 <label
                                     v-for="variant in templateVariants"
                                     :key="variant"
-                                    class="group relative grid cursor-pointer gap-2 rounded-lg border bg-background p-1.5 transition focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:border-primary/60"
+                                    class="group relative grid min-w-0 cursor-pointer gap-2 rounded-xl border bg-background p-2 transition focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-sm"
                                     :class="
                                         templateSelections[section] === variant
                                             ? 'border-primary ring-1 ring-primary'
@@ -1059,6 +1059,15 @@ const resolvedDomain = computed(() =>
                                         {{
                                             t(
                                                 `admin.branding.template_variants.${variant}`,
+                                            )
+                                        }}
+                                    </span>
+                                    <span
+                                        class="line-clamp-2 px-0.5 text-center text-[10px] leading-4 text-muted-foreground"
+                                    >
+                                        {{
+                                            t(
+                                                `admin.branding.template_variant_descriptions.${variant}`,
                                             )
                                         }}
                                     </span>

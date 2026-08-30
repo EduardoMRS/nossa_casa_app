@@ -544,7 +544,12 @@
             "schedule_end": "Fim",
             "schedule_remove": "Remover horário",
             "schedule_empty": "Nenhum horário semanal foi registrado.",
-            "save": "Salvar configurações da igreja"
+            "save": "Salvar configurações da igreja",
+            "template_variant_descriptions": {
+                "classic": "Cards em camadas, profundidade suave e cores da marca em destaque.",
+                "editorial": "Composição ampla, títulos serifados e divisórias de revista.",
+                "minimal": "Leitura focada, superfícies discretas e quase nenhuma sombra."
+            }
         },
         "categories": {
             "all_types": "Todos os tipos",

@@ -318,11 +318,29 @@ const previewColors = computed(() => ({
 }
 
 .template-preview--classic {
-    border-radius: 0.5rem;
+    border-radius: 0.65rem;
+    box-shadow: 0 0.35rem 0.9rem
+        color-mix(in srgb, var(--preview-primary) 15%, transparent);
     background: linear-gradient(
         150deg,
         var(--preview-surface),
         color-mix(in srgb, var(--preview-primary) 7%, var(--preview-surface))
+    );
+}
+
+.template-preview--classic .template-preview__header {
+    background: color-mix(
+        in srgb,
+        var(--preview-primary) 8%,
+        var(--preview-surface)
+    );
+}
+
+.template-preview--classic .template-preview__hero {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--preview-primary) 18%, var(--preview-surface)),
+        color-mix(in srgb, var(--preview-primary) 5%, var(--preview-surface))
     );
 }
 
@@ -351,6 +369,24 @@ const previewColors = computed(() => ({
     padding-inline: 5%;
 }
 
+.template-preview--editorial .template-preview__logo,
+.template-preview--editorial .template-preview__action {
+    border-radius: 0;
+}
+
+.template-preview--editorial .template-preview__title {
+    width: 88%;
+    height: 12%;
+}
+
+.template-preview--editorial .template-preview__grid {
+    grid-template-columns: 1.6fr 1fr 1fr;
+}
+
+.template-preview--editorial .template-preview__card:first-child {
+    border-top: 0.2rem solid var(--preview-primary);
+}
+
 .template-preview--editorial .template-preview__hero {
     grid-template-columns: 5fr 3fr;
     border-radius: 0;
@@ -375,6 +411,16 @@ const previewColors = computed(() => ({
     border-bottom-color: transparent;
 }
 
+.template-preview--minimal .template-preview__nav,
+.template-preview--minimal .template-preview__action {
+    opacity: 0.18;
+}
+
+.template-preview--minimal .template-preview__logo {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--preview-primary);
+}
+
 .template-preview--minimal .template-preview__body {
     height: 86%;
     gap: 14%;
@@ -382,8 +428,21 @@ const previewColors = computed(() => ({
 }
 
 .template-preview--minimal .template-preview__hero {
+    grid-template-columns: 1fr;
     padding: 0;
     background: transparent;
+}
+
+.template-preview--minimal .template-preview__hero-media {
+    display: none;
+}
+
+.template-preview--minimal .template-preview__grid {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.template-preview--minimal .template-preview__card:last-child {
+    display: none;
 }
 
 .template-preview--minimal .template-preview__card,
