@@ -74,7 +74,7 @@ test('installed PWA uses a contained scroll shell and native bottom navigation',
 
     assert.match(app, /h\(PwaBottomNavigation\)/);
     assert.match(navigation, /display-mode: standalone/);
-    assert.match(navigation, /navigator\.standalone/);
+    assert.match(navigation, /StandaloneNavigator\)\.standalone/);
     assert.match(navigation, /library\.bible|bible as bibleRoute/);
     assert.match(navigation, /nav\.news/);
     assert.match(navigation, /nav\.events/);
