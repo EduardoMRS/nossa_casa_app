@@ -55,7 +55,7 @@ const featureCards = computed(() => [
         }"
     >
         <header
-            class="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+            class="public-top-navigation mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 bg-white px-4 sm:px-6 lg:px-8"
         >
             <div class="flex items-center gap-3">
                 <img

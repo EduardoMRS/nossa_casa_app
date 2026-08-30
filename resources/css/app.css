@@ -645,7 +645,22 @@
         overflow-x: clip;
         overflow-y: auto;
         overscroll-behavior: none;
+        scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
+    }
+
+    html.pwa-public-shell #app > :first-child::-webkit-scrollbar {
+        display: none;
+    }
+
+    html.pwa-public-shell .public-top-navigation {
+        position: sticky !important;
+        top: 0;
+        z-index: 60;
+        isolation: isolate;
+        background-clip: padding-box;
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
 
     @media (max-width: 767px) {

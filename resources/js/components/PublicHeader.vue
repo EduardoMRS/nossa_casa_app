@@ -119,7 +119,8 @@ const navClass = (key: PublicNavKey): string =>
 
 <template>
     <header
-        class="sticky top-0 z-40 border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
+        data-test="public-top-navigation"
+        class="public-top-navigation sticky top-0 z-40 border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
         :style="{ backgroundColor: 'var(--church-primary, #342f87)' }"
     >
         <div

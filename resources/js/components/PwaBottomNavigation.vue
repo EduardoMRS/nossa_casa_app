@@ -43,7 +43,10 @@ const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 const currentPath = computed(() => page.url.split(/[?#]/, 1)[0]);
 const isPublicShell = computed(() => publicShellComponents.has(page.component));
 const shouldShow = computed(
-    () => standalone.value && !page.component.startsWith('auth/'),
+    () =>
+        standalone.value &&
+        page.component !== 'Library/Bible' &&
+        !page.component.startsWith('auth/'),
 );
 
 const activeKey = computed<BottomNavigationKey | null>(() => {

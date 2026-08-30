@@ -79,9 +79,28 @@ test('installed PWA uses a contained scroll shell and native bottom navigation',
     assert.match(navigation, /nav\.news/);
     assert.match(navigation, /nav\.events/);
     assert.match(navigation, /nav\.profile/);
+    assert.match(navigation, /page\.component !== 'Library\/Bible'/);
     assert.match(navigation, /safe-area-inset-bottom/);
     assert.match(styles, /html\.pwa-public-shell body/);
     assert.match(styles, /position: fixed/);
     assert.match(styles, /overflow-y: auto/);
     assert.match(styles, /--pwa-bottom-navigation-height/);
+    assert.match(styles, /\.public-top-navigation/);
+    assert.match(styles, /scrollbar-width: none/);
+    assert.match(styles, /::-webkit-scrollbar/);
+});
+
+
+test('every shared public header participates in the PWA sticky shell', () => {
+    const publicHeader = readSource(
+        'resources/js/components/PublicHeader.vue',
+    );
+    const portalHeader = readSource(
+        'resources/js/components/PortalHeader.vue',
+    );
+    const welcome = readSource('resources/js/pages/Welcome.vue');
+
+    assert.match(publicHeader, /public-top-navigation/);
+    assert.match(portalHeader, /public-top-navigation/);
+    assert.match(welcome, /public-top-navigation/);
 });

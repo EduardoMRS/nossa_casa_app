@@ -18,7 +18,10 @@ const branding = computed(
 </script>
 
 <template>
-    <header class="border-b border-indigo-900/60 bg-[#312e81] text-white">
+    <header
+        data-test="public-top-navigation"
+        class="public-top-navigation border-b border-indigo-900/60 bg-[#312e81] text-white"
+    >
         <div
             class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:h-18 sm:px-5 lg:px-8"
         >
