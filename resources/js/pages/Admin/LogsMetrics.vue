@@ -16,7 +16,7 @@ import {
     Square,
     Upload,
 } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -72,6 +72,52 @@ const filteredLogs = computed(() =>
         )
         .reverse(),
 );
+
+watch(
+    () => props.stats,
+    (value) => {
+        stats.value = [...value];
+    },
+    { deep: true },
+);
+watch(
+    () => props.queue,
+    (value) => {
+        queue.value = { ...value };
+    },
+    { deep: true },
+);
+watch(
+    () => props.logs,
+    (value) => {
+        logs.value = [...value];
+    },
+    { deep: true },
+);
+watch(
+    () => props.liveStreams,
+    (value) => {
+        liveStreams.value = [...value];
+    },
+    { deep: true },
+);
+
+let refreshTimer: number | undefined;
+
+onMounted(() => {
+    refreshTimer = window.setInterval(() => {
+        router.reload({
+            only: ['stats', 'queue', 'logs', 'liveStreams'],
+            preserveScroll: true,
+        });
+    }, 30_000);
+});
+
+onBeforeUnmount(() => {
+    if (refreshTimer !== undefined) {
+        window.clearInterval(refreshTimer);
+    }
+});
 
 useEcho<MetricsSnapshot>(
     'system.metrics',
