@@ -61,8 +61,6 @@ class EventRegistrationExporter
             'tagline' => '',
             'primary_color' => '#342f87',
             'accent_color' => '#5eead4',
-            'field_label' => 'Campo',
-            'value_label' => 'Informação',
             'participant_label' => 'Inscrito :number',
             'project_reference' => 'Nossa Casa - tecnologia aberta para comunidades',
         ], $branding);
@@ -126,9 +124,15 @@ class EventRegistrationExporter
 
             do {
                 $minimumFieldHeight = 46.0;
-                $headingSpace = $showParticipantHeading ? $participantHeight : 0.0;
+                $headingSpace = $showParticipantHeading ? $participantHeight + $fieldGap : 0.0;
+                $firstIndex = $remainingIndexes[0] ?? null;
+                $firstValue = $firstIndex === null ? '' : (string) ($row[$firstIndex] ?? '');
+                $firstFieldHeight = max(
+                    $minimumFieldHeight,
+                    34.0 + (count($this->wrappedLines($firstValue, 88, 3)) * 11.0),
+                );
 
-                if ($y - $bottom < $headingSpace + $minimumFieldHeight + $fieldGap) {
+                if ($y - $bottom < $headingSpace + $firstFieldHeight) {
                     $pages[] = $content.$this->pageFooter($pageWidth, $branding);
                     $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
                     $y = $pageHeight - 124.0;
