@@ -86,7 +86,6 @@ it('shows church leader workspace modules on dashboard', function () {
         );
 });
 
-
 it('shows the platform workspace to global administrators on the main domain', function () {
     $admin = createDashboardUser('superadmin');
 
