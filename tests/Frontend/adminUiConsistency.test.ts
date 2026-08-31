@@ -67,5 +67,17 @@ test('dark theme uses layered slate-indigo surfaces instead of near black', () =
     assert.match(dark, /--background: hsl\(229 24% 10%\)/);
     assert.match(dark, /--card: hsl\(229 21% 13%\)/);
     assert.match(dark, /--primary: hsl\(246 75% 68%\)/);
+    assert.match(dark, /\.dark select option,/);
+    assert.match(dark, /background-color: var\(--popover\) !important/);
+    assert.match(dark, /color: var\(--popover-foreground\) !important/);
     assert.doesNotMatch(dark, /--background: hsl\(0 0% 3\.9%\)/);
+});
+
+test('logs and metrics refresh even when realtime is unavailable', () => {
+    const source = readSource('resources/js/pages/Admin/LogsMetrics.vue');
+
+    assert.match(source, /watch\(\s*\(\) => props\.logs/);
+    assert.match(source, /window\.setInterval/);
+    assert.match(source, /only: \['stats', 'queue', 'logs', 'liveStreams'\]/);
+    assert.match(source, /window\.clearInterval/);
 });
