@@ -267,8 +267,6 @@ class EventRegistrationController extends Controller
             'accent_color' => filled($branding['accent_color'] ?? null)
                 ? (string) $branding['accent_color']
                 : '#5eead4',
-            'field_label' => __('admin.event_registrations.pdf.field'),
-            'value_label' => __('admin.event_registrations.pdf.value'),
             'participant_label' => __('admin.event_registrations.pdf.participant'),
             'project_reference' => __('admin.event_registrations.pdf.project_reference'),
         ];
