@@ -45,6 +45,14 @@ type BibleCacheMessage = {
     readyVersions?: string[];
 };
 
+type BibleReadingPosition = {
+    version: string;
+    book: string;
+    chapter: number;
+};
+
+const bibleReadingPositionKey = 'nossa-casa:bible-reading-position:v1';
+
 const props = defineProps<{
     versions: BibleVersion[];
     defaultVersion: string | null;
@@ -112,6 +120,75 @@ const offlineProgressPercentage = computed(() =>
         : 0,
 );
 
+const readStoredPosition = (): BibleReadingPosition | null => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const stored = window.localStorage.getItem(bibleReadingPositionKey);
+
+        if (!stored) {
+            return null;
+        }
+
+        const position = JSON.parse(stored) as Partial<BibleReadingPosition>;
+
+        if (
+            typeof position.version !== 'string' ||
+            typeof position.book !== 'string' ||
+            typeof position.chapter !== 'number' ||
+            !Number.isInteger(position.chapter) ||
+            position.chapter < 1
+        ) {
+            return null;
+        }
+
+        return position as BibleReadingPosition;
+    } catch {
+        return null;
+    }
+};
+
+const restoreReadingPosition = (): void => {
+    const position = readStoredPosition();
+
+    if (
+        !position ||
+        !props.versions.some((item) => item.id === position.version)
+    ) {
+        return;
+    }
+
+    version.value = position.version;
+    book.value = position.book;
+    chapter.value = position.chapter;
+};
+
+const persistReadingPosition = (): void => {
+    if (
+        typeof window === 'undefined' ||
+        !version.value ||
+        !book.value ||
+        chapter.value === null
+    ) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(
+            bibleReadingPositionKey,
+            JSON.stringify({
+                version: version.value,
+                book: book.value,
+                chapter: chapter.value,
+            } satisfies BibleReadingPosition),
+        );
+    } catch {
+        // Reading still works when storage is disabled or unavailable.
+    }
+};
+
 const getJson = async <T,>(url: string): Promise<T> => {
     const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -140,9 +217,12 @@ const loadChapter = async (): Promise<void> => {
         }),
     );
     verses.value = payload.verses;
+    persistReadingPosition();
 };
 
-const loadChapters = async (): Promise<void> => {
+const loadChapters = async (
+    preferredChapter: number | null = null,
+): Promise<void> => {
     if (!version.value || !book.value) {
         chapters.value = [];
         verses.value = [];
@@ -154,7 +234,11 @@ const loadChapters = async (): Promise<void> => {
         bibleChapters.url({ version: version.value, book: book.value }),
     );
     chapters.value = payload.chapters;
-    chapter.value = payload.chapters[0] ?? null;
+    chapter.value =
+        preferredChapter !== null &&
+        payload.chapters.includes(preferredChapter)
+            ? preferredChapter
+            : (payload.chapters[0] ?? null);
     await loadChapter();
 };
 
@@ -173,7 +257,10 @@ const runLoad = async (callback: () => Promise<void>): Promise<void> => {
     }
 };
 
-const loadBooks = (): Promise<void> =>
+const loadBooks = (
+    preferredBook: string = book.value,
+    preferredChapter: number | null = chapter.value,
+): Promise<void> =>
     runLoad(async () => {
         books.value = [];
         chapters.value = [];
@@ -182,11 +269,18 @@ const loadBooks = (): Promise<void> =>
             bibleBooks.url(version.value),
         );
         books.value = payload.books;
-        book.value = payload.books[0]?.slug ?? '';
-        await loadChapters();
+        book.value = payload.books.some(
+            (item) => item.slug === preferredBook,
+        )
+            ? preferredBook
+            : (payload.books[0]?.slug ?? '');
+        await loadChapters(preferredChapter);
     });
 
-const changeBook = (): Promise<void> => runLoad(loadChapters);
+const changeVersion = (): Promise<void> =>
+    loadBooks(book.value, chapter.value);
+const changeBook = (): Promise<void> =>
+    runLoad(() => loadChapters(null));
 const changeChapter = (): Promise<void> => runLoad(loadChapter);
 
 const moveChapter = (direction: -1 | 1): void => {
@@ -315,8 +409,6 @@ const ensureSelectableVersion = async (): Promise<void> => {
 
     if (!availableVersions.length) {
         version.value = '';
-        book.value = '';
-        chapter.value = null;
         books.value = [];
         chapters.value = [];
         verses.value = [];
@@ -401,6 +493,7 @@ const handleOffline = (): void => {
 };
 
 onMounted(() => {
+    restoreReadingPosition();
     isOnline.value = navigator.onLine;
     selectorsExpanded.value = window.matchMedia('(min-width: 640px)').matches;
     lastScrollPosition = window.scrollY;
@@ -494,7 +587,7 @@ onBeforeUnmount(() => {
                         v-model="version"
                         :disabled="!selectableVersions.length"
                         class="h-10 rounded-lg border border-[var(--reader-border)] bg-[var(--reader-bg)] px-3 text-sm text-[var(--reader-text)] disabled:opacity-50"
-                        @change="loadBooks"
+                        @change="changeVersion"
                     >
                         <option
                             v-if="!selectableVersions.length"
