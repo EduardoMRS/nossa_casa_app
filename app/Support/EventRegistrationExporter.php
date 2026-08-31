@@ -61,8 +61,6 @@ class EventRegistrationExporter
             'tagline' => '',
             'primary_color' => '#342f87',
             'accent_color' => '#5eead4',
-            'field_label' => 'Campo',
-            'value_label' => 'Informação',
             'participant_label' => 'Inscrito :number',
             'project_reference' => 'Nossa Casa - tecnologia aberta para comunidades',
         ], $branding);
@@ -109,14 +107,12 @@ class EventRegistrationExporter
         $x = 36.0;
         $y = $pageHeight - 124.0;
         $bottom = 44.0;
-        $tableWidth = $pageWidth - 72.0;
-        $labelWidth = 172.0;
-        $valueWidth = $tableWidth - $labelWidth;
-        $headerHeight = 28.0;
+        $contentWidth = $pageWidth - 72.0;
         $participantHeight = 30.0;
-        $rowHeight = 34.0;
-        $gap = 14.0;
+        $fieldGap = 8.0;
+        $sectionGap = 12.0;
         $primary = $this->color($branding['primary_color']);
+        $accent = $this->color($branding['accent_color']);
         $fieldIndexes = array_keys($headers);
 
         if ($rows === []) {
@@ -127,17 +123,20 @@ class EventRegistrationExporter
             $remainingIndexes = $fieldIndexes;
 
             do {
-                $headingSpace = $showParticipantHeading ? $participantHeight : 0.0;
-                $minimumSpace = $headingSpace + $headerHeight + $rowHeight + $gap;
+                $minimumFieldHeight = 46.0;
+                $headingSpace = $showParticipantHeading ? $participantHeight + $fieldGap : 0.0;
+                $firstIndex = $remainingIndexes[0] ?? null;
+                $firstValue = $firstIndex === null ? '' : (string) ($row[$firstIndex] ?? '');
+                $firstFieldHeight = max(
+                    $minimumFieldHeight,
+                    34.0 + (count($this->wrappedLines($firstValue, 88, 3)) * 11.0),
+                );
 
-                if ($y - $bottom < $minimumSpace) {
+                if ($y - $bottom < $headingSpace + $firstFieldHeight) {
                     $pages[] = $content.$this->pageFooter($pageWidth, $branding);
                     $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
                     $y = $pageHeight - 124.0;
                 }
-
-                $availableRows = max(1, (int) floor(($y - $bottom - $headingSpace - $headerHeight - $gap) / $rowHeight));
-                $indexes = array_splice($remainingIndexes, 0, $availableRows);
 
                 if ($showParticipantHeading) {
                     $participantLabel = str_replace(':number', (string) ($participantIndex + 1), $branding['participant_label']);
@@ -147,28 +146,46 @@ class EventRegistrationExporter
                         $participantLabel .= ' - '.$participantName;
                     }
 
-                    $content .= $this->rect($x, $y - $participantHeight, $tableWidth, $participantHeight, [0.94, 0.95, 0.98], [0.82, 0.84, 0.9]);
-                    $content .= $this->rect($x, $y - $participantHeight, 4, $participantHeight, $this->color($branding['accent_color']));
+                    $content .= $this->rect($x, $y - $participantHeight, $contentWidth, $participantHeight, [0.94, 0.95, 0.98], [0.82, 0.84, 0.9]);
+                    $content .= $this->rect($x, $y - $participantHeight, 4, $participantHeight, $accent);
                     $content .= $this->text($this->fit($participantLabel, 76), $x + 14, $y - 20, 10, true, $primary);
-                    $y -= $participantHeight;
+                    $y -= $participantHeight + $fieldGap;
                 }
 
-                $content .= $this->rect($x, $y - $headerHeight, $labelWidth, $headerHeight, $primary);
-                $content .= $this->rect($x + $labelWidth, $y - $headerHeight, $valueWidth, $headerHeight, $primary);
-                $content .= $this->text($branding['field_label'], $x + 10, $y - 18, 9, true, [1, 1, 1]);
-                $content .= $this->text($branding['value_label'], $x + $labelWidth + 10, $y - 18, 9, true, [1, 1, 1]);
-                $y -= $headerHeight;
+                $renderedField = false;
 
-                foreach ($indexes as $position => $index) {
-                    $fill = $position % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
-                    $content .= $this->rect($x, $y - $rowHeight, $labelWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
-                    $content .= $this->rect($x + $labelWidth, $y - $rowHeight, $valueWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
-                    $content .= $this->text($this->fit((string) ($headers[$index] ?? ''), 32), $x + 10, $y - 21, 8.5, true, [0.2, 0.23, 0.3]);
-                    $content .= $this->text($this->fit((string) ($row[$index] ?? ''), 68), $x + $labelWidth + 10, $y - 21, 8.5, false, [0.11, 0.13, 0.18]);
-                    $y -= $rowHeight;
+                while ($remainingIndexes !== []) {
+                    $index = $remainingIndexes[0];
+                    $label = (string) ($headers[$index] ?? '');
+                    $value = (string) ($row[$index] ?? '');
+                    $valueLines = $this->wrappedLines($value, 88, 3);
+                    $fieldHeight = max($minimumFieldHeight, 34.0 + (count($valueLines) * 11.0));
+
+                    if ($y - $fieldHeight < $bottom && $renderedField) {
+                        break;
+                    }
+
+                    array_shift($remainingIndexes);
+                    $content .= $this->rect($x, $y - $fieldHeight, $contentWidth, $fieldHeight, [0.975, 0.98, 0.99], [0.86, 0.88, 0.92]);
+                    $content .= $this->rect($x, $y - $fieldHeight, 3, $fieldHeight, $accent);
+                    $content .= $this->text($this->fit($label, 76), $x + 12, $y - 15, 8, true, $primary);
+
+                    foreach ($valueLines as $lineIndex => $line) {
+                        $content .= $this->text(
+                            $line,
+                            $x + 12,
+                            $y - 31 - ($lineIndex * 11),
+                            9,
+                            false,
+                            [0.11, 0.13, 0.18],
+                        );
+                    }
+
+                    $y -= $fieldHeight + $fieldGap;
+                    $renderedField = true;
                 }
 
-                $y -= $gap;
+                $y -= $sectionGap;
 
                 if ($remainingIndexes !== []) {
                     $pages[] = $content.$this->pageFooter($pageWidth, $branding);
@@ -181,6 +198,44 @@ class EventRegistrationExporter
         $pages[] = $content.$this->pageFooter($pageWidth, $branding);
 
         return $pages;
+    }
+
+    /** @return list<string> */
+    private function wrappedLines(string $value, int $lineLength, int $maxLines): array
+    {
+        $remaining = preg_replace('/\s+/', ' ', trim($value)) ?? '';
+
+        if ($remaining === '') {
+            return ['-'];
+        }
+
+        $lines = [];
+
+        while ($remaining !== '' && count($lines) < $maxLines) {
+            if (mb_strlen($remaining) <= $lineLength) {
+                $lines[] = $remaining;
+
+                break;
+            }
+
+            if (count($lines) === $maxLines - 1) {
+                $lines[] = $this->fit($remaining, $lineLength);
+
+                break;
+            }
+
+            $candidate = mb_substr($remaining, 0, $lineLength + 1);
+            $breakAt = mb_strrpos($candidate, ' ');
+
+            if ($breakAt === false || $breakAt < (int) floor($lineLength / 2)) {
+                $breakAt = $lineLength;
+            }
+
+            $lines[] = trim(mb_substr($remaining, 0, $breakAt));
+            $remaining = ltrim(mb_substr($remaining, $breakAt));
+        }
+
+        return $lines;
     }
 
     /** @param array<string, string> $branding */
