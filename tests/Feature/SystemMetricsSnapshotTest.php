@@ -27,3 +27,28 @@ test('metrics snapshot keeps only a bounded tail of the application log', functi
         ->and(collect($lines)->every(fn (string $line): bool => mb_strlen($line) <= 323))
         ->toBeTrue();
 });
+
+test('metrics snapshot combines configured and daily log files chronologically', function () {
+    $olderLog = tempnam(sys_get_temp_dir(), 'metrics-old-');
+    $dailyLog = tempnam(sys_get_temp_dir(), 'metrics-daily-');
+
+    expect($olderLog)->toBeString()
+        ->and($dailyLog)->toBeString();
+
+    file_put_contents($olderLog, "older entry");
+    file_put_contents($dailyLog, "daily entry");
+    touch($olderLog, now()->subMinute()->timestamp);
+    touch($dailyLog, now()->timestamp);
+
+    try {
+        $lines = (new SystemMetricsSnapshot)->recentLogLinesFromPaths([
+            $dailyLog,
+            $olderLog,
+        ]);
+    } finally {
+        unlink($olderLog);
+        unlink($dailyLog);
+    }
+
+    expect($lines)->toBe(['older entry', 'daily entry']);
+});
