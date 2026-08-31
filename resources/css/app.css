@@ -590,6 +590,21 @@
         max-width: 100%;
     }
 
+    .dark select {
+        color-scheme: dark;
+    }
+
+    .dark select option,
+    .dark select optgroup {
+        background-color: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+    }
+
+    .dark select option:checked {
+        background-color: var(--primary) !important;
+        color: var(--primary-foreground) !important;
+    }
+
     @supports (overflow: clip) {
         html,
         body {
