@@ -542,7 +542,7 @@ async function save(): Promise<void> {
                             </label>
                             <textarea
                                 v-if="field.type === 'textarea'"
-                                v-model="previewValues[field.id] as string"
+                                v-model="previewValues[field.id]"
                                 :rows="
                                     field.size === 'fixed' ? field.height : 3
                                 "
@@ -551,7 +551,7 @@ async function save(): Promise<void> {
                             />
                             <select
                                 v-else-if="field.type === 'select'"
-                                v-model="previewValues[field.id] as string"
+                                v-model="previewValues[field.id]"
                                 class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
                             >
                                 <option value="">
@@ -588,7 +588,7 @@ async function save(): Promise<void> {
                                 class="mt-2 flex cursor-pointer items-center gap-2 text-sm font-normal"
                             >
                                 <input
-                                    v-model="previewValues[field.id] as boolean"
+                                    v-model="previewValues[field.id]"
                                     type="checkbox"
                                 />
                                 {{ field.placeholder || field.label }}
@@ -611,7 +611,7 @@ async function save(): Promise<void> {
                             />
                             <input
                                 v-else
-                                v-model="previewValues[field.id] as string"
+                                v-model="previewValues[field.id]"
                                 :type="field.type"
                                 :placeholder="field.placeholder"
                                 class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
