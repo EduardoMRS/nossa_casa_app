@@ -1131,7 +1131,18 @@
             "offline_error": "The offline download could not be completed. Check your connection and try again.",
             "offline_missing": "This chapter has not been downloaded for offline reading yet.",
             "offline_no_versions": "No Bible version is available offline on this device.",
-            "offline_open_versions": "{count} open versions enabled by this church can be downloaded. Versions with restricted licenses remain online only."
+            "offline_open_versions": "{count} open versions enabled by this church can be downloaded. Versions with restricted licenses remain online only.",
+            "highlight_verse": "Highlight verse {verse}",
+            "highlight_saved_local": "The highlight is saved on this device and works offline.",
+            "highlight_remove": "Remove",
+            "highlight_close": "Close highlighting",
+            "highlight_colors": {
+                "yellow": "Highlight in yellow",
+                "green": "Highlight in green",
+                "blue": "Highlight in blue",
+                "pink": "Highlight in pink",
+                "purple": "Highlight in purple"
+            }
         }
     },
     "reader": {
