@@ -136,9 +136,11 @@ class PortalController extends Controller
             'locationApplied' => $latitude !== null && $longitude !== null,
             'canOnboard' => (bool) $request->user(),
             'userCommunityId' => $request->user()?->profile?->community_id,
-            'userChurchUrl' => $request->user()?->church?->domain
-                ? $this->context->churchUrl($request->user()->church)
-                : null,
+            'userChurchUrl' => $request->user()
+                && ! in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
+                && $request->user()->church?->domain
+                    ? $this->context->churchUrl($request->user()->church)
+                    : null,
             'mainDomain' => $this->context->mainHost(),
             'reviewableRequests' => $reviewableRequests,
             'myRequests' => $myRequests,

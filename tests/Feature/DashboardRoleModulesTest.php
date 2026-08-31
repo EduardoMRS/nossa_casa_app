@@ -85,3 +85,26 @@ it('shows church leader workspace modules on dashboard', function () {
             ->where('modules.6.href', route('admin.logsMetrics.index'))
         );
 });
+
+
+it('shows the platform workspace to global administrators on the main domain', function () {
+    $admin = createDashboardUser('superadmin');
+
+    $this->actingAs($admin)
+        ->get(route('dashboard'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('context', 'platform')
+            ->has('kpis', 4)
+            ->has('modules', 4)
+            ->where('modules.0.href', route('admin.multiCongregation.index'))
+            ->where('modules.1.href', route('admin.userManagement.index'))
+            ->where('modules.2.href', route('admin.liveStreams.index'))
+            ->where('modules.3.href', route('admin.logsMetrics.index'))
+        );
+
+    $this->actingAs($admin)
+        ->get(route('admin.multiCongregation.index'))
+        ->assertSuccessful();
+});

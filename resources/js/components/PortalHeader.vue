@@ -2,14 +2,31 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { useI18n } from '@/lib/i18n';
-import { home, login, register } from '@/routes';
-import { privacy } from '@/routes/legal';
+import { dashboard, home, login, register } from '@/routes';
 
 defineProps<{ userChurchUrl?: string | null }>();
 
-const page = usePage();
+const page = usePage<{
+    auth?: {
+        user?: {
+            role?: string | { value?: string };
+        };
+    };
+    branding?: {
+        logo_url?: string;
+        brand_name?: string;
+    };
+}>();
 const { t } = useI18n();
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+const role = computed(() => {
+    const rawRole = page.props.auth?.user?.role;
+
+    return typeof rawRole === 'string' ? rawRole : rawRole?.value;
+});
+const isGlobalAdministrator = computed(() =>
+    ['superadmin', 'system'].includes(role.value ?? ''),
+);
 const branding = computed(
     () =>
         (page.props.branding as
@@ -46,8 +63,14 @@ const branding = computed(
                 </span>
             </Link>
             <div class="flex items-center gap-2">
+                <Link
+                    v-if="isGlobalAdministrator"
+                    :href="dashboard()"
+                    class="rounded-xl bg-white px-3 py-2.5 text-xs font-black text-indigo-950 sm:px-4"
+                    >{{ t('portal.open_dashboard') }}</Link
+                >
                 <a
-                    v-if="userChurchUrl"
+                    v-else-if="userChurchUrl"
                     :href="userChurchUrl"
                     class="rounded-xl bg-white px-3 py-2.5 text-xs font-black text-indigo-950 sm:px-4"
                     >{{ t('portal.open_my_church') }}</a
@@ -64,12 +87,6 @@ const branding = computed(
                         >{{ t('portal.create_account') }}</Link
                     >
                 </template>
-                <a
-                    :href="privacy().url"
-                    class="hidden rounded-xl px-2 py-2.5 text-xs font-bold text-indigo-100 transition hover:bg-white/10 hover:text-white lg:inline-flex"
-                >
-                    {{ t('footer.privacy_terms') }}
-                </a>
             </div>
         </div>
     </header>

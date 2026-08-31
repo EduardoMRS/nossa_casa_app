@@ -17,11 +17,8 @@ type ModuleItem = {
 
 const props = defineProps<{
     role: string;
-    kpis: {
-        events: number;
-        gallery: number;
-        posts: number;
-    };
+    context: 'church' | 'platform';
+    kpis: Record<string, number>;
     modules: ModuleItem[];
 }>();
 
@@ -39,6 +36,14 @@ const page = usePage<{
 }>();
 
 const branding = computed(() => page.props.branding ?? {});
+const isPlatformDashboard = computed(() => props.context === 'platform');
+const kpiItems = computed(() =>
+    Object.entries(props.kpis).map(([key, value]) => ({
+        key,
+        value,
+        label: t(`dashboard.kpis.${key}`),
+    })),
+);
 const { resolvedAppearance, updateAppearance } = useAppearance();
 
 const paletteStyle = computed(() => ({
@@ -62,7 +67,13 @@ defineOptions({
 </script>
 
 <template>
-    <Head :title="t('dashboard.title')" />
+    <Head
+        :title="
+            isPlatformDashboard
+                ? t('dashboard.platform.title')
+                : t('dashboard.title')
+        "
+    />
 
     <div
         class="flex h-full min-w-0 max-w-full flex-1 flex-col gap-6 overflow-x-clip bg-background p-4 text-foreground md:p-8"
@@ -92,60 +103,55 @@ defineOptions({
             <p
                 class="mb-1 text-xs tracking-[0.2em] text-slate-100/80 uppercase"
             >
-                {{ t('dashboard.workspace') }}
+                {{
+                    isPlatformDashboard
+                        ? t('dashboard.platform.workspace')
+                        : t('dashboard.workspace')
+                }}
             </p>
             <h1 class="text-2xl leading-tight font-black break-words sm:text-3xl md:text-4xl">
-                {{ branding.banner_title || t('dashboard.title') }}
+                {{
+                    isPlatformDashboard
+                        ? t('dashboard.platform.title')
+                        : branding.banner_title || t('dashboard.title')
+                }}
             </h1>
             <p class="mt-2 text-sm text-slate-100/90 md:text-base">
                 {{
-                    branding.banner_subtitle ||
-                    t('dashboard.profile_context', { role: roleLabel })
+                    isPlatformDashboard
+                        ? t('dashboard.platform.description')
+                        : branding.banner_subtitle ||
+                          t('dashboard.profile_context', { role: roleLabel })
                 }}
             </p>
             <p
-                v-if="branding.contact_email"
+                v-if="!isPlatformDashboard && branding.contact_email"
                 class="mt-3 text-xs font-semibold break-all text-slate-100/80"
             >
                 {{ branding.contact_email }}
             </p>
         </section>
 
-        <section class="grid gap-4 md:grid-cols-3">
+        <section
+            class="grid gap-4 sm:grid-cols-2"
+            :class="
+                kpiItems.length > 3
+                    ? 'xl:grid-cols-4'
+                    : 'xl:grid-cols-3'
+            "
+        >
             <article
+                v-for="item in kpiItems"
+                :key="item.key"
                 class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
                     class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
                 >
-                    {{ t('dashboard.kpis.events') }}
+                    {{ item.label }}
                 </p>
                 <p class="mt-2 text-3xl font-black text-card-foreground">
-                    {{ kpis.events }}
-                </p>
-            </article>
-            <article
-                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
-            >
-                <p
-                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
-                >
-                    {{ t('dashboard.kpis.gallery') }}
-                </p>
-                <p class="mt-2 text-3xl font-black text-card-foreground">
-                    {{ kpis.gallery }}
-                </p>
-            </article>
-            <article
-                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
-            >
-                <p
-                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
-                >
-                    {{ t('dashboard.kpis.posts') }}
-                </p>
-                <p class="mt-2 text-3xl font-black text-card-foreground">
-                    {{ kpis.posts }}
+                    {{ item.value }}
                 </p>
             </article>
         </section>

@@ -26,8 +26,10 @@ use App\Http\Controllers\SearchIndexController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Models\Category;
 use App\Models\Church;
+use App\Models\Community;
 use App\Models\Event;
 use App\Models\Form;
+use App\Models\LiveStream;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Setting;
@@ -243,55 +245,75 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     Route::get('/dashboard', function (Request $request) {
         $user = $request->user();
         $role = $user?->role?->value ?? (string) $user?->role;
-        $domainChurch = app(ChurchDomainContext::class)->church();
+        $domainContext = app(ChurchDomainContext::class);
+        $domainChurch = $domainContext->church();
         $isGlobalAdministrator = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $isPlatformDashboard = $isGlobalAdministrator && $domainContext->isMainDomain();
         $dashboardChurch = $domainChurch ?? ($isGlobalAdministrator ? null : $user?->church);
 
-        $modules = match ($role) {
-            'leader' => [
-                ['title_key' => 'dashboard.module.organize_events.title', 'description_key' => 'dashboard.module.organize_events.description', 'href' => route('events.create')],
-                ['title_key' => 'dashboard.module.track_registrations.title', 'description_key' => 'dashboard.module.track_registrations.description', 'href' => route('events.index')],
-                ['title_key' => 'dashboard.module.publish_updates.title', 'description_key' => 'dashboard.module.publish_updates.description', 'href' => route('posts.index')],
-                ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
-                ['title_key' => 'dashboard.module.security_settings.title', 'description_key' => 'dashboard.module.security_settings.description', 'href' => route('security.edit')],
-            ],
-            'media' => [
-                ['title_key' => 'dashboard.module.gallery_curation.title', 'description_key' => 'dashboard.module.gallery_curation.description', 'href' => route('gallery.index')],
-                ['title_key' => 'dashboard.module.visual_posts.title', 'description_key' => 'dashboard.module.visual_posts.description', 'href' => route('posts.create')],
-                ['title_key' => 'dashboard.module.coverage_schedule.title', 'description_key' => 'dashboard.module.coverage_schedule.description', 'href' => route('events.index')],
-                ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('posts.index')],
-                ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
-            ],
-            'church_leader', 'superadmin', 'system' => [
-                ['title_key' => 'dashboard.module.platform_governance.title', 'description_key' => 'dashboard.module.platform_governance.description', 'href' => route('dashboard')],
-                ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('admin.highlights.index')],
-                ['title_key' => 'dashboard.module.monitor_events.title', 'description_key' => 'dashboard.module.monitor_events.description', 'href' => route('admin.events.index')],
-                ['title_key' => 'dashboard.module.visual_identity.title', 'description_key' => 'dashboard.module.visual_identity.description', 'href' => route('admin.branding.edit')],
-                ['title_key' => 'dashboard.module.user_management.title', 'description_key' => 'dashboard.module.user_management.description', 'href' => route('admin.userManagement.index')],
+        if ($isPlatformDashboard) {
+            $modules = [
                 ['title_key' => 'dashboard.module.multicongregation.title', 'description_key' => 'dashboard.module.multicongregation.description', 'href' => route('admin.multiCongregation.index')],
+                ['title_key' => 'dashboard.module.user_management.title', 'description_key' => 'dashboard.module.user_management.description', 'href' => route('admin.userManagement.index')],
+                ['title_key' => 'dashboard.module.live_streams.title', 'description_key' => 'dashboard.module.live_streams.description', 'href' => route('admin.liveStreams.index')],
                 ['title_key' => 'dashboard.module.logs_metrics.title', 'description_key' => 'dashboard.module.logs_metrics.description', 'href' => route('admin.logsMetrics.index')],
-            ],
-            default => [
-                ['title_key' => 'dashboard.module.my_events.title', 'description_key' => 'dashboard.module.my_events.description', 'href' => route('events.index')],
-                ['title_key' => 'dashboard.module.community_gallery.title', 'description_key' => 'dashboard.module.community_gallery.description', 'href' => route('gallery.index')],
-                ['title_key' => 'dashboard.module.recent_updates.title', 'description_key' => 'dashboard.module.recent_updates.description', 'href' => route('posts.index')],
-            ],
-        };
+            ];
+            $kpis = [
+                'churches' => Church::query()->count(),
+                'communities' => Community::query()->count(),
+                'users' => User::query()->count(),
+                'live_streams' => LiveStream::query()->count(),
+            ];
+        } else {
+            $modules = match ($role) {
+                'leader' => [
+                    ['title_key' => 'dashboard.module.organize_events.title', 'description_key' => 'dashboard.module.organize_events.description', 'href' => route('events.create')],
+                    ['title_key' => 'dashboard.module.track_registrations.title', 'description_key' => 'dashboard.module.track_registrations.description', 'href' => route('events.index')],
+                    ['title_key' => 'dashboard.module.publish_updates.title', 'description_key' => 'dashboard.module.publish_updates.description', 'href' => route('posts.index')],
+                    ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
+                    ['title_key' => 'dashboard.module.security_settings.title', 'description_key' => 'dashboard.module.security_settings.description', 'href' => route('security.edit')],
+                ],
+                'media' => [
+                    ['title_key' => 'dashboard.module.gallery_curation.title', 'description_key' => 'dashboard.module.gallery_curation.description', 'href' => route('gallery.index')],
+                    ['title_key' => 'dashboard.module.visual_posts.title', 'description_key' => 'dashboard.module.visual_posts.description', 'href' => route('posts.create')],
+                    ['title_key' => 'dashboard.module.coverage_schedule.title', 'description_key' => 'dashboard.module.coverage_schedule.description', 'href' => route('events.index')],
+                    ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('posts.index')],
+                    ['title_key' => 'dashboard.module.account_settings.title', 'description_key' => 'dashboard.module.account_settings.description', 'href' => route('profile.edit')],
+                ],
+                'church_leader', 'superadmin', 'system' => [
+                    ['title_key' => 'dashboard.module.platform_governance.title', 'description_key' => 'dashboard.module.platform_governance.description', 'href' => route('dashboard')],
+                    ['title_key' => 'dashboard.module.review_content.title', 'description_key' => 'dashboard.module.review_content.description', 'href' => route('admin.highlights.index')],
+                    ['title_key' => 'dashboard.module.monitor_events.title', 'description_key' => 'dashboard.module.monitor_events.description', 'href' => route('admin.events.index')],
+                    ['title_key' => 'dashboard.module.visual_identity.title', 'description_key' => 'dashboard.module.visual_identity.description', 'href' => route('admin.branding.edit')],
+                    ['title_key' => 'dashboard.module.user_management.title', 'description_key' => 'dashboard.module.user_management.description', 'href' => route('admin.userManagement.index')],
+                    ['title_key' => 'dashboard.module.multicongregation.title', 'description_key' => 'dashboard.module.multicongregation.description', 'href' => route('admin.multiCongregation.index')],
+                    ['title_key' => 'dashboard.module.logs_metrics.title', 'description_key' => 'dashboard.module.logs_metrics.description', 'href' => route('admin.logsMetrics.index')],
+                ],
+                default => [
+                    ['title_key' => 'dashboard.module.my_events.title', 'description_key' => 'dashboard.module.my_events.description', 'href' => route('events.index')],
+                    ['title_key' => 'dashboard.module.community_gallery.title', 'description_key' => 'dashboard.module.community_gallery.description', 'href' => route('gallery.index')],
+                    ['title_key' => 'dashboard.module.recent_updates.title', 'description_key' => 'dashboard.module.recent_updates.description', 'href' => route('posts.index')],
+                ],
+            };
 
-        if ($dashboardChurch === null) {
-            $modules = array_values(array_filter(
-                $modules,
-                fn (array $module): bool => $module['href'] !== route('admin.branding.edit'),
-            ));
+            if ($dashboardChurch === null) {
+                $modules = array_values(array_filter(
+                    $modules,
+                    fn (array $module): bool => $module['href'] !== route('admin.branding.edit'),
+                ));
+            }
+
+            $kpis = [
+                'events' => Event::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
+                'gallery' => Media::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
+                'posts' => Post::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
+            ];
         }
 
         return Inertia::render('Dashboard', [
             'role' => $role,
-            'kpis' => [
-                'events' => Event::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
-                'gallery' => Media::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
-                'posts' => Post::query()->when($dashboardChurch, fn ($query, Church $church) => $query->where('church_id', $church->id))->count(),
-            ],
+            'context' => $isPlatformDashboard ? 'platform' : 'church',
+            'kpis' => $kpis,
             'modules' => $modules,
         ]);
     })->middleware('role:leader|media|church_leader|superadmin|system')->name('dashboard');
