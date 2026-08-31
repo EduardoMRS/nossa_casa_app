@@ -1132,9 +1132,10 @@
             "offline_missing": "Este capítulo ainda não foi baixado para leitura offline.",
             "offline_no_versions": "Nenhuma versão está disponível offline neste dispositivo.",
             "offline_open_versions": "{count} versões abertas habilitadas por esta igreja podem ser baixadas. Versões com licenças restritas permanecem apenas online.",
-            "highlight_verse": "Marcar versículo {verse}",
+            "highlight_hint": "Selecione uma palavra ou frase para marcar o texto.",
+            "highlight_selection": "Marcar texto selecionado",
             "highlight_saved_local": "A marcação fica salva neste dispositivo e funciona offline.",
-            "highlight_remove": "Remover",
+            "highlight_remove": "Remover do trecho",
             "highlight_close": "Fechar marcação",
             "highlight_colors": {
                 "yellow": "Marcar em amarelo",

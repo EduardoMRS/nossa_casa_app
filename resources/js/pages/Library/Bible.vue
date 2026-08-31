@@ -55,9 +55,29 @@ type BibleReadingPosition = {
 };
 
 type BibleHighlightColor = 'yellow' | 'green' | 'blue' | 'pink' | 'purple';
+type BibleTextHighlight = {
+    id: string;
+    start: number;
+    end: number;
+    color: BibleHighlightColor;
+};
+type BibleHighlightFragment = {
+    verse: number;
+    start: number;
+    end: number;
+};
+type PendingBibleHighlight = {
+    text: string;
+    fragments: BibleHighlightFragment[];
+};
+type BibleTextSegment = {
+    key: string;
+    text: string;
+    color: BibleHighlightColor | null;
+};
 
 const bibleReadingPositionKey = 'nossa-casa:bible-reading-position:v1';
-const bibleHighlightsKey = 'nossa-casa:bible-highlights:v1';
+const bibleHighlightsKey = 'nossa-casa:bible-text-highlights:v2';
 const highlightPalette: Array<{
     color: BibleHighlightColor;
     backgroundColor: string;
@@ -95,8 +115,10 @@ const readyOfflineVersions = ref<string[]>([]);
 const isOnline = ref(true);
 const selectorsExpanded = ref(false);
 const automaticDownloadStarted = ref(false);
-const verseHighlights = ref<Record<string, BibleHighlightColor>>({});
-const selectedVerse = ref<number | null>(null);
+const textHighlights = ref<Record<string, BibleTextHighlight[]>>({});
+const pendingHighlight = ref<PendingBibleHighlight | null>(null);
+const readerTextRef = ref<HTMLElement | null>(null);
+let selectionCaptureTimer: number | null = null;
 let lastScrollPosition = 0;
 const currentChapterIndex = computed(() =>
     chapters.value.findIndex((item) => item === chapter.value),
@@ -143,11 +165,16 @@ const verseHighlightKey = (verseNumber: number): string =>
     [version.value, book.value, chapter.value, verseNumber]
         .map((part) => encodeURIComponent(String(part)))
         .join(':');
-const selectedVerseHighlight = computed(() =>
-    selectedVerse.value === null
-        ? null
-        : (verseHighlights.value[verseHighlightKey(selectedVerse.value)] ??
-          null),
+const selectionHasHighlight = computed(() =>
+    Boolean(
+        pendingHighlight.value?.fragments.some((fragment) =>
+            (textHighlights.value[verseHighlightKey(fragment.verse)] ?? []).some(
+                (highlight) =>
+                    highlight.start < fragment.end &&
+                    highlight.end > fragment.start,
+            ),
+        ),
+    ),
 );
 
 const readStoredPosition = (): BibleReadingPosition | null => {
@@ -219,7 +246,7 @@ const persistReadingPosition = (): void => {
     }
 };
 
-const loadVerseHighlights = (): void => {
+const loadTextHighlights = (): void => {
     if (typeof window === 'undefined') {
         return;
     }
@@ -229,21 +256,37 @@ const loadVerseHighlights = (): void => {
         const parsed = stored
             ? (JSON.parse(stored) as Record<string, unknown>)
             : {};
-        const validHighlights: Record<string, BibleHighlightColor> = {};
+        const validHighlights: Record<string, BibleTextHighlight[]> = {};
 
-        Object.entries(parsed).forEach(([key, color]) => {
-            if (isHighlightColor(color)) {
-                validHighlights[key] = color;
+        Object.entries(parsed).forEach(([key, value]) => {
+            if (!Array.isArray(value)) {
+                return;
+            }
+
+            const highlights = value.filter(
+                (item): item is BibleTextHighlight =>
+                    typeof item === 'object' &&
+                    item !== null &&
+                    typeof item.id === 'string' &&
+                    typeof item.start === 'number' &&
+                    typeof item.end === 'number' &&
+                    item.start >= 0 &&
+                    item.end > item.start &&
+                    isHighlightColor(item.color),
+            );
+
+            if (highlights.length) {
+                validHighlights[key] = highlights;
             }
         });
 
-        verseHighlights.value = validHighlights;
+        textHighlights.value = validHighlights;
     } catch {
-        verseHighlights.value = {};
+        textHighlights.value = {};
     }
 };
 
-const persistVerseHighlights = (): void => {
+const persistTextHighlights = (): void => {
     if (typeof window === 'undefined') {
         return;
     }
@@ -251,54 +294,256 @@ const persistVerseHighlights = (): void => {
     try {
         window.localStorage.setItem(
             bibleHighlightsKey,
-            JSON.stringify(verseHighlights.value),
+            JSON.stringify(textHighlights.value),
         );
     } catch {
         // Highlighting remains available for the current session.
     }
 };
 
-const verseHighlightStyle = (
-    verseNumber: number,
-): Record<string, string> | undefined => {
-    const color = verseHighlights.value[verseHighlightKey(verseNumber)];
-    const paletteItem = highlightPalette.find((item) => item.color === color);
-
-    return paletteItem
-        ? { backgroundColor: paletteItem.backgroundColor }
-        : undefined;
-};
-
-const selectVerse = (verseNumber: number): void => {
-    selectedVerse.value =
-        selectedVerse.value === verseNumber ? null : verseNumber;
-};
-
 const highlightColorLabel = (color: BibleHighlightColor): string =>
     t(`library.bible.highlight_colors.${color}`);
 
-const setVerseHighlight = (color: BibleHighlightColor): void => {
-    if (selectedVerse.value === null) {
-        return;
-    }
+const highlightBackground = (color: BibleHighlightColor): string =>
+    highlightPalette.find((item) => item.color === color)?.backgroundColor ??
+    'transparent';
 
-    verseHighlights.value = {
-        ...verseHighlights.value,
-        [verseHighlightKey(selectedVerse.value)]: color,
-    };
-    persistVerseHighlights();
+const textOffsetWithin = (
+    element: HTMLElement,
+    node: Node,
+    offset: number,
+): number => {
+    const offsetRange = document.createRange();
+
+    offsetRange.selectNodeContents(element);
+    offsetRange.setEnd(node, offset);
+
+    return offsetRange.toString().length;
 };
 
-const removeVerseHighlight = (): void => {
-    if (selectedVerse.value === null) {
+const captureTextSelection = (): void => {
+    const selection = window.getSelection();
+    const reader = readerTextRef.value;
+
+    if (
+        !selection ||
+        selection.rangeCount === 0 ||
+        selection.isCollapsed ||
+        !reader
+    ) {
+        pendingHighlight.value = null;
+
         return;
     }
 
-    const nextHighlights = { ...verseHighlights.value };
+    const range = selection.getRangeAt(0);
 
-    delete nextHighlights[verseHighlightKey(selectedVerse.value)];
-    verseHighlights.value = nextHighlights;
-    persistVerseHighlights();
+    if (!reader.contains(range.commonAncestorContainer)) {
+        pendingHighlight.value = null;
+
+        return;
+    }
+
+    const fragments: BibleHighlightFragment[] = [];
+
+    reader
+        .querySelectorAll<HTMLElement>('[data-bible-verse-text]')
+        .forEach((element) => {
+            if (!range.intersectsNode(element)) {
+                return;
+            }
+
+            const verseNumber = Number(element.dataset.verseNumber);
+            const textLength = element.textContent?.length ?? 0;
+            const start = element.contains(range.startContainer)
+                ? textOffsetWithin(
+                      element,
+                      range.startContainer,
+                      range.startOffset,
+                  )
+                : 0;
+            const end = element.contains(range.endContainer)
+                ? textOffsetWithin(element, range.endContainer, range.endOffset)
+                : textLength;
+            const safeStart = Math.max(0, Math.min(start, textLength));
+            const safeEnd = Math.max(safeStart, Math.min(end, textLength));
+
+            if (Number.isInteger(verseNumber) && safeEnd > safeStart) {
+                fragments.push({
+                    verse: verseNumber,
+                    start: safeStart,
+                    end: safeEnd,
+                });
+            }
+        });
+
+    const selectedText = selection.toString().trim();
+
+    pendingHighlight.value =
+        fragments.length && selectedText
+            ? { text: selectedText, fragments }
+            : null;
+};
+
+const queueTextSelectionCapture = (): void => {
+    if (selectionCaptureTimer !== null) {
+        window.clearTimeout(selectionCaptureTimer);
+    }
+
+    selectionCaptureTimer = window.setTimeout(() => {
+        selectionCaptureTimer = null;
+        captureTextSelection();
+    }, 120);
+};
+
+const clearNativeSelection = (): void => {
+    window.getSelection()?.removeAllRanges();
+    pendingHighlight.value = null;
+};
+
+const splitHighlightsAroundRange = (
+    highlights: BibleTextHighlight[],
+    start: number,
+    end: number,
+): BibleTextHighlight[] =>
+    highlights.flatMap((highlight) => {
+        if (highlight.end <= start || highlight.start >= end) {
+            return [highlight];
+        }
+
+        const remaining: BibleTextHighlight[] = [];
+
+        if (highlight.start < start) {
+            remaining.push({
+                ...highlight,
+                id: `${highlight.id}-left-${start}`,
+                end: start,
+            });
+        }
+
+        if (highlight.end > end) {
+            remaining.push({
+                ...highlight,
+                id: `${highlight.id}-right-${end}`,
+                start: end,
+            });
+        }
+
+        return remaining;
+    });
+
+const createHighlightId = (): string =>
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const setTextHighlight = (color: BibleHighlightColor): void => {
+    const selection = pendingHighlight.value;
+
+    if (!selection) {
+        return;
+    }
+
+    const nextHighlights = { ...textHighlights.value };
+
+    selection.fragments.forEach((fragment) => {
+        const key = verseHighlightKey(fragment.verse);
+        const retained = splitHighlightsAroundRange(
+            nextHighlights[key] ?? [],
+            fragment.start,
+            fragment.end,
+        );
+
+        nextHighlights[key] = [
+            ...retained,
+            {
+                id: createHighlightId(),
+                start: fragment.start,
+                end: fragment.end,
+                color,
+            },
+        ].sort((left, right) => left.start - right.start);
+    });
+
+    textHighlights.value = nextHighlights;
+    persistTextHighlights();
+    clearNativeSelection();
+};
+
+const removeTextHighlight = (): void => {
+    const selection = pendingHighlight.value;
+
+    if (!selection) {
+        return;
+    }
+
+    const nextHighlights = { ...textHighlights.value };
+
+    selection.fragments.forEach((fragment) => {
+        const key = verseHighlightKey(fragment.verse);
+        const retained = splitHighlightsAroundRange(
+            nextHighlights[key] ?? [],
+            fragment.start,
+            fragment.end,
+        );
+
+        if (retained.length) {
+            nextHighlights[key] = retained;
+        } else {
+            delete nextHighlights[key];
+        }
+    });
+
+    textHighlights.value = nextHighlights;
+    persistTextHighlights();
+    clearNativeSelection();
+};
+
+const verseTextSegments = (verse: BibleVerse): BibleTextSegment[] => {
+    const highlights = [
+        ...(textHighlights.value[verseHighlightKey(verse.verse)] ?? []),
+    ].sort((left, right) => left.start - right.start);
+    const segments: BibleTextSegment[] = [];
+    let cursor = 0;
+
+    highlights.forEach((highlight) => {
+        const start = Math.max(
+            cursor,
+            Math.min(highlight.start, verse.text.length),
+        );
+        const end = Math.max(
+            start,
+            Math.min(highlight.end, verse.text.length),
+        );
+
+        if (start > cursor) {
+            segments.push({
+                key: `plain-${cursor}-${start}`,
+                text: verse.text.slice(cursor, start),
+                color: null,
+            });
+        }
+
+        if (end > start) {
+            segments.push({
+                key: highlight.id,
+                text: verse.text.slice(start, end),
+                color: highlight.color,
+            });
+        }
+
+        cursor = Math.max(cursor, end);
+    });
+
+    if (cursor < verse.text.length) {
+        segments.push({
+            key: `plain-${cursor}-${verse.text.length}`,
+            text: verse.text.slice(cursor),
+            color: null,
+        });
+    }
+
+    return segments.length
+        ? segments
+        : [{ key: 'plain-full', text: verse.text, color: null }];
 };
 
 const getJson = async <T,>(url: string): Promise<T> => {
@@ -315,7 +560,7 @@ const getJson = async <T,>(url: string): Promise<T> => {
 };
 
 const loadChapter = async (): Promise<void> => {
-    selectedVerse.value = null;
+    pendingHighlight.value = null;
 
     if (!version.value || !book.value || chapter.value === null) {
         verses.value = [];
@@ -608,7 +853,8 @@ const handleOffline = (): void => {
 
 onMounted(() => {
     restoreReadingPosition();
-    loadVerseHighlights();
+    loadTextHighlights();
+    document.addEventListener('selectionchange', queueTextSelectionCapture);
     isOnline.value = navigator.onLine;
     selectorsExpanded.value = window.matchMedia('(min-width: 640px)').matches;
     lastScrollPosition = window.scrollY;
@@ -637,6 +883,11 @@ onBeforeUnmount(() => {
     window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
+    document.removeEventListener('selectionchange', queueTextSelectionCapture);
+
+    if (selectionCaptureTimer !== null) {
+        window.clearTimeout(selectionCaptureTimer);
+    }
 });
 </script>
 
@@ -886,43 +1137,54 @@ onBeforeUnmount(() => {
                 </button>
             </header>
 
+            <p
+                class="mt-6 flex items-center justify-center gap-2 text-center text-xs font-semibold text-[var(--reader-muted)]"
+            >
+                <Highlighter class="size-4" />
+                {{ t('library.bible.highlight_hint') }}
+            </p>
+
             <div
-                class="mt-6 font-serif text-[1.08rem] leading-8 sm:mt-8 sm:text-xl sm:leading-10"
+                ref="readerTextRef"
+                class="mt-3 select-text font-serif text-[1.08rem] leading-8 sm:mt-4 sm:text-xl sm:leading-10"
+                data-test="bible-selectable-text"
+                @mouseup="queueTextSelectionCapture"
+                @touchend="queueTextSelectionCapture"
             >
                 <p class="text-pretty">
                     <span
                         v-for="item in verses"
                         :key="item.verse"
-                        role="button"
-                        tabindex="0"
-                        class="mr-1.5 inline cursor-pointer rounded px-0.5 py-0.5 transition-[background-color,box-shadow] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--church-primary,#6750a4)]"
-                        :class="{
-                            'ring-2 ring-[var(--church-primary,#6750a4)] ring-offset-2 ring-offset-[var(--reader-bg)]':
-                                selectedVerse === item.verse,
-                        }"
-                        :style="verseHighlightStyle(item.verse)"
-                        :aria-label="
-                            t('library.bible.highlight_verse', {
-                                verse: item.verse,
-                            })
-                        "
-                        @click="selectVerse(item.verse)"
-                        @keydown.enter.prevent="selectVerse(item.verse)"
-                        @keydown.space.prevent="selectVerse(item.verse)"
+                        class="mr-1.5 inline"
                     >
                         <sup
-                            class="mr-1.5 font-sans text-xs font-black text-[var(--church-primary,#6750a4)]"
+                            class="mr-1.5 select-none font-sans text-xs font-black text-[var(--church-primary,#6750a4)]"
                         >
                             {{ item.verse }}
                         </sup>
-                        {{ item.text }}
+                        <span
+                            data-bible-verse-text
+                            :data-verse-number="item.verse"
+                        ><template
+                                v-for="segment in verseTextSegments(item)"
+                                :key="segment.key"
+                            ><mark
+                                    v-if="segment.color"
+                                    class="rounded-sm px-0.5 text-inherit"
+                                    :style="{
+                                        backgroundColor:
+                                            highlightBackground(segment.color),
+                                    }"
+                                >{{ segment.text }}</mark><template v-else>{{
+                                    segment.text
+                                }}</template></template></span>
                     </span>
                 </p>
             </div>
 
             <aside
-                v-if="selectedVerse !== null"
-                class="sticky bottom-[calc(var(--pwa-bottom-navigation-height,0px)+0.75rem)] z-20 mt-6 rounded-2xl border border-[var(--reader-border)] bg-[var(--reader-surface)] p-3 shadow-xl shadow-black/10 sm:bottom-4 sm:p-4"
+                v-if="pendingHighlight"
+                class="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-2xl rounded-2xl border border-[var(--reader-border)] bg-[var(--reader-surface)] p-3 shadow-2xl shadow-black/20 sm:bottom-4 sm:p-4"
                 data-test="bible-highlight-toolbar"
             >
                 <div class="flex items-start justify-between gap-3">
@@ -931,55 +1193,46 @@ onBeforeUnmount(() => {
                             <Highlighter
                                 class="size-4 text-[var(--church-primary,#6750a4)]"
                             />
-                            {{
-                                t('library.bible.highlight_verse', {
-                                    verse: selectedVerse,
-                                })
-                            }}
+                            {{ t('library.bible.highlight_selection') }}
                         </p>
                         <p
-                            class="mt-1 text-xs leading-5 text-[var(--reader-muted)]"
+                            class="mt-1 line-clamp-2 text-xs italic leading-5 text-[var(--reader-muted)]"
                         >
-                            {{ t('library.bible.highlight_saved_local') }}
+                            “{{ pendingHighlight.text }}”
                         </p>
                     </div>
                     <button
                         type="button"
                         class="shrink-0 rounded-full p-1.5 text-[var(--reader-muted)] transition hover:bg-[var(--reader-border)]"
                         :title="t('library.bible.highlight_close')"
-                        @click="selectedVerse = null"
+                        @click="clearNativeSelection"
                     >
                         <X class="size-4" />
                     </button>
                 </div>
+
+                <p class="mt-2 text-xs leading-5 text-[var(--reader-muted)]">
+                    {{ t('library.bible.highlight_saved_local') }}
+                </p>
 
                 <div class="mt-3 flex flex-wrap items-center gap-2">
                     <button
                         v-for="paletteItem in highlightPalette"
                         :key="paletteItem.color"
                         type="button"
-                        class="size-9 rounded-full border-2 transition hover:scale-105"
-                        :class="
-                            selectedVerseHighlight === paletteItem.color
-                                ? 'border-[var(--church-primary,#6750a4)] ring-2 ring-[var(--church-primary,#6750a4)]/25'
-                                : 'border-[var(--reader-border)]'
-                        "
+                        class="size-9 rounded-full border-2 border-[var(--reader-border)] transition hover:scale-105"
                         :style="{
                             backgroundColor: paletteItem.backgroundColor,
                         }"
-                        :title="
-                            highlightColorLabel(paletteItem.color)
-                        "
-                        :aria-label="
-                            highlightColorLabel(paletteItem.color)
-                        "
-                        @click="setVerseHighlight(paletteItem.color)"
+                        :title="highlightColorLabel(paletteItem.color)"
+                        :aria-label="highlightColorLabel(paletteItem.color)"
+                        @click="setTextHighlight(paletteItem.color)"
                     />
                     <button
-                        v-if="selectedVerseHighlight"
+                        v-if="selectionHasHighlight"
                         type="button"
                         class="ml-auto inline-flex h-9 items-center gap-2 rounded-full border border-[var(--reader-border)] px-3 text-xs font-bold text-[var(--reader-muted)] transition hover:text-rose-600"
-                        @click="removeVerseHighlight"
+                        @click="removeTextHighlight"
                     >
                         <Eraser class="size-4" />
                         {{ t('library.bible.highlight_remove') }}
