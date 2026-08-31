@@ -22,7 +22,7 @@ beforeEach(function () {
     $this->event = Event::query()->create([
         'church_id' => $this->church->id,
         'author_id' => $this->leader->id,
-        'title' => 'Community Conference',
+        'title' => 'Conferência Comunitária',
         'slug' => 'community-conference-'.Str::lower((string) Str::ulid()),
         'start_time' => now()->addDay(),
         'end_time' => now()->addDays(2),
@@ -111,6 +111,15 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         'answers' => ['diet' => 'None'],
     ]);
 
+    EventUser::query()->create([
+        'event_id' => $this->event->id,
+        'first_name' => 'Ana Júlia',
+        'last_name' => 'Gonçalves',
+        'email' => 'ana@example.test',
+        'status' => 'confirmed',
+        'answers' => ['diet' => 'Sem glúten'],
+    ]);
+
     $pdf = $this->actingAs($this->leader)
         ->get("/dashboard/eventos/{$this->event->id}/inscritos/exportar/pdf?columns[]=name&columns[]=answers.diet")
         ->assertSuccessful()
@@ -127,7 +136,11 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         ->and($pdf->getContent())->toContain('Registration Church')
         ->and($pdf->getContent())->toContain('Dietary needs')
         ->and($pdf->getContent())->not->toContain('(Email)')
-        ->and($pdf->getContent())->toContain('/MediaBox [0 0 842 595]')
+        ->and($pdf->getContent())->toContain('/MediaBox [0 0 595 842]')
+        ->and($pdf->getContent())->not->toContain('/MediaBox [0 0 842 595]')
+        ->and($pdf->getContent())->toContain('/Encoding /WinAnsiEncoding')
+        ->and($pdf->getContent())->toContain(iconv('UTF-8', 'Windows-1252', 'Conferência Comunitária'))
+        ->and(substr_count($pdf->getContent(), '(Participant '))->toBe(2)
         ->and($individualPdf->getContent())->toContain('/MediaBox [0 0 595 842]')
         ->and($individualPdf->getContent())->toContain('Nossa Casa - open source project')
         ->and($xlsx->getContent())->toStartWith('PK');
