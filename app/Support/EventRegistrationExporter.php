@@ -46,6 +46,7 @@ class EventRegistrationExporter
      * @param  list<string>  $headers
      * @param  list<list<string>>  $rows
      * @param  array<string, string>  $branding
+     * @param  list<string>  $participantNames
      */
     public function pdf(
         string $title,
@@ -53,6 +54,7 @@ class EventRegistrationExporter
         array $rows,
         string $subtitle = '',
         array $branding = [],
+        array $participantNames = [],
     ): string {
         $branding = array_merge([
             'name' => 'Nossa Casa',
@@ -61,55 +63,27 @@ class EventRegistrationExporter
             'accent_color' => '#5eead4',
             'field_label' => 'Campo',
             'value_label' => 'Informação',
+            'participant_label' => 'Inscrito :number',
             'project_reference' => 'Nossa Casa - tecnologia aberta para comunidades',
         ], $branding);
-        $isIndividual = count($rows) === 1;
-        $pageWidth = $isIndividual ? 595.0 : 842.0;
-        $pageHeight = $isIndividual ? 842.0 : 595.0;
-        $pageStreams = [];
+        $pageWidth = 595.0;
+        $pageHeight = 842.0;
 
-        if ($isIndividual) {
-            foreach (array_chunk(array_keys($headers), 15) as $fieldIndexes) {
-                $pageStreams[] = $this->individualPage(
-                    $pageWidth,
-                    $pageHeight,
-                    $title,
-                    $subtitle,
-                    $headers,
-                    $rows[0],
-                    $fieldIndexes,
-                    $branding,
-                );
-            }
-        } else {
-            $columnGroups = array_chunk(array_keys($headers), 5);
-            $rowChunks = array_chunk($rows, 12);
-
-            if ($columnGroups === []) {
-                $columnGroups = [[]];
-            }
-
-            if ($rowChunks === []) {
-                $rowChunks = [[]];
-            }
-
-            foreach ($columnGroups as $columnIndexes) {
-                foreach ($rowChunks as $pageRows) {
-                    $pageStreams[] = $this->tablePage(
-                        $pageWidth,
-                        $pageHeight,
-                        $title,
-                        $subtitle,
-                        $headers,
-                        $pageRows,
-                        $columnIndexes,
-                        $branding,
-                    );
-                }
-            }
-        }
-
-        return $this->document($pageWidth, $pageHeight, $pageStreams);
+        return $this->document(
+            $pageWidth,
+            $pageHeight,
+            $this->registrationPages(
+                $pageWidth,
+                $pageHeight,
+                $title,
+                $subtitle,
+                $headers,
+                $rows,
+                $branding,
+                $participantNames,
+                count($rows) > 1,
+            ),
+        );
     }
 
     /**
@@ -118,122 +92,94 @@ class EventRegistrationExporter
      * @param  list<int>  $fieldIndexes
      * @param  array<string, string>  $branding
      */
-    private function individualPage(
-        float $pageWidth,
-        float $pageHeight,
-        string $title,
-        string $subtitle,
-        array $headers,
-        array $row,
-        array $fieldIndexes,
-        array $branding,
-    ): string {
-        $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
-        $x = 36.0;
-        $y = $pageHeight - 124.0;
-        $tableWidth = $pageWidth - 72.0;
-        $labelWidth = 172.0;
-        $valueWidth = $tableWidth - $labelWidth;
-        $headerHeight = 28.0;
-        $primary = $this->color($branding['primary_color']);
-        $content .= $this->rect($x, $y - $headerHeight, $labelWidth, $headerHeight, $primary);
-        $content .= $this->rect($x + $labelWidth, $y - $headerHeight, $valueWidth, $headerHeight, $primary);
-        $content .= $this->text($branding['field_label'], $x + 10, $y - 18, 9, true, [1, 1, 1]);
-        $content .= $this->text($branding['value_label'], $x + $labelWidth + 10, $y - 18, 9, true, [1, 1, 1]);
-        $y -= $headerHeight;
-
-        foreach ($fieldIndexes as $position => $index) {
-            $height = 34.0;
-            $fill = $position % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
-            $content .= $this->rect($x, $y - $height, $labelWidth, $height, $fill, [0.86, 0.88, 0.91]);
-            $content .= $this->rect($x + $labelWidth, $y - $height, $valueWidth, $height, $fill, [0.86, 0.88, 0.91]);
-            $content .= $this->text(
-                $this->fit((string) ($headers[$index] ?? ''), 32),
-                $x + 10,
-                $y - 21,
-                8.5,
-                true,
-                [0.2, 0.23, 0.3],
-            );
-            $content .= $this->text(
-                $this->fit((string) ($row[$index] ?? ''), 68),
-                $x + $labelWidth + 10,
-                $y - 21,
-                8.5,
-                false,
-                [0.11, 0.13, 0.18],
-            );
-            $y -= $height;
-        }
-
-        return $content.$this->pageFooter($pageWidth, $branding);
-    }
-
-    /**
-     * @param  list<string>  $headers
-     * @param  list<list<string>>  $rows
-     * @param  list<int>  $columnIndexes
-     * @param  array<string, string>  $branding
-     */
-    private function tablePage(
+    private function registrationPages(
         float $pageWidth,
         float $pageHeight,
         string $title,
         string $subtitle,
         array $headers,
         array $rows,
-        array $columnIndexes,
         array $branding,
-    ): string {
+        array $participantNames,
+        bool $showParticipantHeading,
+    ): array {
+        $pages = [];
         $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
         $x = 36.0;
         $y = $pageHeight - 124.0;
+        $bottom = 44.0;
         $tableWidth = $pageWidth - 72.0;
-        $columnCount = max(1, count($columnIndexes));
-        $columnWidth = $tableWidth / $columnCount;
-        $headerHeight = 30.0;
-        $rowHeight = 30.0;
+        $labelWidth = 172.0;
+        $valueWidth = $tableWidth - $labelWidth;
+        $headerHeight = 28.0;
+        $participantHeight = 30.0;
+        $rowHeight = 34.0;
+        $gap = 14.0;
         $primary = $this->color($branding['primary_color']);
-
-        foreach ($columnIndexes as $position => $index) {
-            $cellX = $x + ($position * $columnWidth);
-            $content .= $this->rect($cellX, $y - $headerHeight, $columnWidth, $headerHeight, $primary);
-            $content .= $this->text(
-                $this->fit((string) ($headers[$index] ?? ''), max(10, (int) ($columnWidth / 5.2))),
-                $cellX + 8,
-                $y - 19,
-                8,
-                true,
-                [1, 1, 1],
-            );
-        }
-
-        $y -= $headerHeight;
-
-        foreach ($rows as $rowIndex => $row) {
-            $fill = $rowIndex % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
-
-            foreach ($columnIndexes as $position => $index) {
-                $cellX = $x + ($position * $columnWidth);
-                $content .= $this->rect($cellX, $y - $rowHeight, $columnWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
-                $content .= $this->text(
-                    $this->fit((string) ($row[$index] ?? ''), max(10, (int) ($columnWidth / 4.7))),
-                    $cellX + 8,
-                    $y - 19,
-                    8,
-                    false,
-                    [0.11, 0.13, 0.18],
-                );
-            }
-
-            $y -= $rowHeight;
-        }
+        $fieldIndexes = array_keys($headers);
 
         if ($rows === []) {
-            $content .= $this->text('-', $x + 8, $y - 20, 9, false, [0.42, 0.46, 0.54]);
+            return [$content.$this->text('-', $x + 10, $y - 20, 9, false, [0.42, 0.46, 0.54]).$this->pageFooter($pageWidth, $branding)];
         }
 
-        return $content.$this->pageFooter($pageWidth, $branding);
+        foreach ($rows as $participantIndex => $row) {
+            $remainingIndexes = $fieldIndexes;
+
+            do {
+                $headingSpace = $showParticipantHeading ? $participantHeight : 0.0;
+                $minimumSpace = $headingSpace + $headerHeight + $rowHeight + $gap;
+
+                if ($y - $bottom < $minimumSpace) {
+                    $pages[] = $content.$this->pageFooter($pageWidth, $branding);
+                    $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
+                    $y = $pageHeight - 124.0;
+                }
+
+                $availableRows = max(1, (int) floor(($y - $bottom - $headingSpace - $headerHeight - $gap) / $rowHeight));
+                $indexes = array_splice($remainingIndexes, 0, $availableRows);
+
+                if ($showParticipantHeading) {
+                    $participantLabel = str_replace(':number', (string) ($participantIndex + 1), $branding['participant_label']);
+                    $participantName = trim((string) ($participantNames[$participantIndex] ?? ''));
+
+                    if ($participantName !== '') {
+                        $participantLabel .= ' - '.$participantName;
+                    }
+
+                    $content .= $this->rect($x, $y - $participantHeight, $tableWidth, $participantHeight, [0.94, 0.95, 0.98], [0.82, 0.84, 0.9]);
+                    $content .= $this->rect($x, $y - $participantHeight, 4, $participantHeight, $this->color($branding['accent_color']));
+                    $content .= $this->text($this->fit($participantLabel, 76), $x + 14, $y - 20, 10, true, $primary);
+                    $y -= $participantHeight;
+                }
+
+                $content .= $this->rect($x, $y - $headerHeight, $labelWidth, $headerHeight, $primary);
+                $content .= $this->rect($x + $labelWidth, $y - $headerHeight, $valueWidth, $headerHeight, $primary);
+                $content .= $this->text($branding['field_label'], $x + 10, $y - 18, 9, true, [1, 1, 1]);
+                $content .= $this->text($branding['value_label'], $x + $labelWidth + 10, $y - 18, 9, true, [1, 1, 1]);
+                $y -= $headerHeight;
+
+                foreach ($indexes as $position => $index) {
+                    $fill = $position % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
+                    $content .= $this->rect($x, $y - $rowHeight, $labelWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
+                    $content .= $this->rect($x + $labelWidth, $y - $rowHeight, $valueWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
+                    $content .= $this->text($this->fit((string) ($headers[$index] ?? ''), 32), $x + 10, $y - 21, 8.5, true, [0.2, 0.23, 0.3]);
+                    $content .= $this->text($this->fit((string) ($row[$index] ?? ''), 68), $x + $labelWidth + 10, $y - 21, 8.5, false, [0.11, 0.13, 0.18]);
+                    $y -= $rowHeight;
+                }
+
+                $y -= $gap;
+
+                if ($remainingIndexes !== []) {
+                    $pages[] = $content.$this->pageFooter($pageWidth, $branding);
+                    $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
+                    $y = $pageHeight - 124.0;
+                }
+            } while ($remainingIndexes !== []);
+        }
+
+        $pages[] = $content.$this->pageFooter($pageWidth, $branding);
+
+        return $pages;
     }
 
     /** @param array<string, string> $branding */
@@ -281,8 +227,8 @@ class EventRegistrationExporter
         $objects = [
             1 => '<< /Type /Catalog /Pages 2 0 R >>',
             2 => '',
-            3 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-            4 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
+            3 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+            4 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
         ];
         $pageIds = [];
 
@@ -315,8 +261,8 @@ class EventRegistrationExporter
     }
 
     /**
-     * @param  list<float|int>  $fill
-     * @param  list<float|int>|null  $stroke
+     * @param  array{0: float, 1: float, 2: float}  $fill
+     * @param  array{0: float, 1: float, 2: float}|null  $stroke
      */
     private function rect(
         float $x,
@@ -337,7 +283,7 @@ class EventRegistrationExporter
     }
 
     /**
-     * @param  list<float|int>  $color
+     * @param  array{0: float, 1: float, 2: float}  $color
      */
     private function text(
         string $value,
@@ -352,7 +298,7 @@ class EventRegistrationExporter
         return "BT /{$font} {$size} Tf {$color[0]} {$color[1]} {$color[2]} rg {$x} {$y} Td (".$this->pdfText($value).") Tj ET\n";
     }
 
-    /** @return list<float> */
+    /** @return array{0: float, 1: float, 2: float} */
     private function color(string $hex): array
     {
         $hex = ltrim($hex, '#');
@@ -461,4 +407,3 @@ class EventRegistrationExporter
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $encoded);
     }
 }
-
