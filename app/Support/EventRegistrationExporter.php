@@ -88,9 +88,10 @@ class EventRegistrationExporter
 
     /**
      * @param  list<string>  $headers
-     * @param  list<string>  $row
-     * @param  list<int>  $fieldIndexes
+     * @param  list<list<string>>  $rows
      * @param  array<string, string>  $branding
+     * @param  list<string>  $participantNames
+     * @return list<string>
      */
     private function registrationPages(
         float $pageWidth,
