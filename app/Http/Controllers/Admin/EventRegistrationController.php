@@ -108,6 +108,7 @@ class EventRegistrationController extends Controller
                 $rows,
                 __('admin.event_registrations.export_generated_at', ['date' => now()->format('d/m/Y H:i')]),
                 $this->pdfBranding($event),
+                $registrations->pluck('name')->map(fn (mixed $name): string => (string) $name)->all(),
             );
         $filename = Str::slug($event->title).'-'.__('admin.event_registrations.filename').'.'.$format;
 
@@ -268,6 +269,7 @@ class EventRegistrationController extends Controller
                 : '#5eead4',
             'field_label' => __('admin.event_registrations.pdf.field'),
             'value_label' => __('admin.event_registrations.pdf.value'),
+            'participant_label' => __('admin.event_registrations.pdf.participant'),
             'project_reference' => __('admin.event_registrations.pdf.project_reference'),
         ];
     }
