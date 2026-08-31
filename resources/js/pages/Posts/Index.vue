@@ -131,10 +131,10 @@ const getTitle = (post: Post) => {
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm">
                         <thead
-                            class="border-b border-border bg-muted text-muted-foreground"
+                            class="border-b border-border bg-muted text-xs font-bold tracking-wide text-muted-foreground uppercase"
                         >
                             <tr>
-                                <th class="px-5 py-3 font-semibold">
+                                <th class="px-5 py-3">
                                     {{ t('posts.index.content') }}
                                 </th>
                                 <th class="px-5 py-3 font-semibold">
@@ -146,7 +146,7 @@ const getTitle = (post: Post) => {
                                 <th class="px-5 py-3 font-semibold">
                                     {{ t('posts.index.status') }}
                                 </th>
-                                <th class="px-5 py-3 text-right font-semibold">
+                                <th class="px-5 py-3 text-right">
                                     {{ t('posts.index.actions') }}
                                 </th>
                             </tr>
@@ -159,7 +159,7 @@ const getTitle = (post: Post) => {
                             >
                                 <td class="px-5 py-4">
                                     <p
-                                        class="max-w-md truncate font-semibold text-card-foreground"
+                                        class="max-w-md truncate font-bold text-card-foreground"
                                     >
                                         {{ getTitle(post) }}
                                     </p>
@@ -231,13 +231,13 @@ const getTitle = (post: Post) => {
                                         </Link>
                                         <Link
                                             :href="edit({ post: post.id })"
-                                            class="rounded-lg border border-border p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                            class="rounded-lg border border-border p-2 text-primary transition hover:bg-primary/10"
                                         >
                                             <Edit class="h-4 w-4" />
                                         </Link>
                                         <button
                                             @click="deletePost(post.id)"
-                                            class="rounded-lg border border-red-200 p-2 text-red-600 transition hover:bg-red-50 dark:border-red-500/40 dark:hover:bg-red-500/10"
+                                            class="rounded-lg border border-destructive/30 p-2 text-destructive transition hover:bg-destructive/10"
                                         >
                                             <Trash class="h-4 w-4" />
                                         </button>
@@ -256,9 +256,8 @@ const getTitle = (post: Post) => {
                         </tbody>
                     </table>
                 </div>
-            </section>
 
-            <nav class="flex flex-wrap gap-2 border-t border-border p-4">
+                <nav class="flex flex-wrap gap-2 border-t border-border p-4">
                 <Link
                     v-for="link in props.posts.links"
                     :key="link.label"
@@ -273,7 +272,8 @@ const getTitle = (post: Post) => {
                 >
                     <span v-html="link.label" />
                 </Link>
-            </nav>
+                </nav>
+            </section>
         </div>
         <CategoryManagerModal
             :open="categoriesOpen"

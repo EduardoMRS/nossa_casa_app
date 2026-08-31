@@ -26,8 +26,7 @@ class SystemMetricsSnapshot
     /** @return array{stats: list<array{label: string, value: int, tone: string}>, queue: array{pending: int, failed: int}, liveStreams: list<array<string, mixed>>, logs: list<string>} */
     public function make(): array
     {
-        $logPath = storage_path('logs/laravel.log');
-        $logLines = $this->recentLogLines($logPath);
+        $logLines = $this->recentApplicationLogLines();
 
         return [
             'stats' => [
@@ -61,6 +60,37 @@ class SystemMetricsSnapshot
                 ->all()),
             'logs' => $logLines,
         ];
+    }
+
+    /** @return list<string> */
+    public function recentApplicationLogLines(): array
+    {
+        $configuredPaths = collect(config('logging.channels', []))
+            ->pluck('path')
+            ->filter(fn (mixed $path): bool => is_string($path) && $path !== '')
+            ->all();
+        $discoveredPaths = File::glob(storage_path('logs/*.log')) ?: [];
+
+        return $this->recentLogLinesFromPaths([
+            ...$configuredPaths,
+            ...$discoveredPaths,
+        ]);
+    }
+
+    /**
+     * @param  list<string>  $logPaths
+     * @return list<string>
+     */
+    public function recentLogLinesFromPaths(array $logPaths): array
+    {
+        return collect($logPaths)
+            ->filter(fn (string $path): bool => File::exists($path) && is_readable($path))
+            ->unique()
+            ->sortBy(fn (string $path): int => File::lastModified($path))
+            ->flatMap(fn (string $path): array => $this->recentLogLines($path))
+            ->take(-self::MAX_LOG_LINES)
+            ->values()
+            ->all();
     }
 
     /** @return list<string> */

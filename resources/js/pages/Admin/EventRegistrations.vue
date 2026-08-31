@@ -217,24 +217,26 @@ const exportUrl = (format: 'pdf' | 'xlsx'): string => {
             </button>
         </header>
 
-        <section class="overflow-hidden rounded-2xl border bg-white shadow-sm">
+        <section
+            class="relative rounded-2xl border border-border bg-card text-card-foreground shadow-sm"
+        >
             <div
                 class="flex flex-wrap items-center justify-between gap-3 border-b p-4"
             >
-                <details class="relative">
+                <details class="relative z-30">
                     <summary
-                        class="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold"
+                        class="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-bold text-card-foreground transition hover:bg-muted"
                     >
                         <SlidersHorizontal class="size-4" />
                         {{ t('admin.event_registrations.columns') }}
                     </summary>
                     <div
-                        class="absolute z-20 mt-2 max-h-80 min-w-64 space-y-2 overflow-y-auto rounded-xl border bg-white p-4 shadow-xl"
+                        class="absolute left-0 z-50 mt-2 max-h-80 w-[min(18rem,calc(100vw-3rem))] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-xl"
                     >
                         <label
                             v-for="column in columns"
                             :key="column.key"
-                            class="flex items-center gap-2 text-sm"
+                            class="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1.5 text-sm hover:bg-muted"
                         >
                             <input
                                 v-model="selectedColumns"
@@ -262,7 +264,7 @@ const exportUrl = (format: 'pdf' | 'xlsx'): string => {
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-b-2xl">
                 <table class="min-w-full text-left text-sm">
                     <thead
                         class="border-b bg-slate-50 text-xs text-slate-500 uppercase"

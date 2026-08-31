@@ -531,39 +531,39 @@
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
+    --background: hsl(229 24% 10%);
+    --foreground: hsl(220 20% 96%);
+    --card: hsl(229 21% 13%);
+    --card-foreground: hsl(220 20% 96%);
+    --popover: hsl(229 21% 14%);
+    --popover-foreground: hsl(220 20% 96%);
+    --primary: hsl(246 75% 68%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(228 17% 20%);
+    --secondary-foreground: hsl(220 20% 96%);
+    --muted: hsl(228 16% 18%);
+    --muted-foreground: hsl(220 12% 70%);
+    --accent: hsl(244 24% 22%);
+    --accent-foreground: hsl(220 20% 96%);
     --destructive: hsl(0 84% 60%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
+    --border: hsl(226 15% 25%);
+    --input: hsl(226 15% 25%);
+    --ring: hsl(246 80% 72%);
     --chart-1: hsl(220 70% 50%);
     --chart-2: hsl(160 60% 45%);
     --chart-3: hsl(30 80% 55%);
     --chart-4: hsl(280 65% 60%);
     --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
+    --sidebar-background: hsl(230 24% 9%);
+    --sidebar-foreground: hsl(220 18% 94%);
+    --sidebar-primary: hsl(246 75% 68%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
+    --sidebar-accent: hsl(240 20% 19%);
+    --sidebar-accent-foreground: hsl(220 18% 94%);
+    --sidebar-border: hsl(226 15% 23%);
     --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    --sidebar: hsl(230 24% 9%);
 }
 
 @layer base {
@@ -588,6 +588,21 @@
     :where(input, select, textarea) {
         min-width: 0;
         max-width: 100%;
+    }
+
+    .dark select {
+        color-scheme: dark;
+    }
+
+    .dark select option,
+    .dark select optgroup {
+        background-color: var(--popover) !important;
+        color: var(--popover-foreground) !important;
+    }
+
+    .dark select option:checked {
+        background-color: var(--primary) !important;
+        color: var(--primary-foreground) !important;
     }
 
     @supports (overflow: clip) {

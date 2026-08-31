@@ -118,11 +118,11 @@ const remove = async (category: ManagedCategory): Promise<void> => {
         scrollable
         @update:open="(value) => !value && emit('close')"
     >
-        <div class="grid gap-6 lg:grid-cols-[1fr_0.72fr]">
-            <div class="overflow-hidden rounded-xl border border-slate-200">
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
+            <div class="overflow-hidden rounded-xl border border-border bg-card">
                 <table class="w-full text-left text-sm">
                     <thead
-                            class="bg-slate-50 text-[10px] font-bold tracking-wider text-slate-500 uppercase"
+                            class="border-b border-border bg-muted/70 text-[10px] font-bold tracking-wider text-muted-foreground uppercase"
                         >
                             <tr>
                                 <th class="px-4 py-3">
@@ -136,25 +136,29 @@ const remove = async (category: ManagedCategory): Promise<void> => {
                                 </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <tr v-for="category in categories" :key="category.id">
-                            <td class="px-4 py-3 font-bold text-slate-800">
+                    <tbody class="divide-y divide-border">
+                        <tr
+                                v-for="category in categories"
+                                :key="category.id"
+                                class="transition hover:bg-muted/50"
+                            >
+                            <td class="px-4 py-3 font-bold text-card-foreground">
                                 {{ category.name }}
                             </td>
                                 <td
-                                    class="px-4 py-3 font-mono text-xs text-slate-400"
+                                    class="px-4 py-3 font-mono text-xs text-muted-foreground"
                                 >
                                     {{ category.slug }}
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-1">
                                         <button
-                                            class="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                                            class="rounded-lg border border-border p-2 text-primary transition hover:bg-primary/10"
                                             @click="edit(category)"
                                         >
                                             <Pencil class="size-4" /></button
                                         ><button
-                                            class="rounded-lg p-2 text-rose-600 hover:bg-rose-50"
+                                            class="rounded-lg border border-destructive/30 p-2 text-destructive transition hover:bg-destructive/10"
                                             @click="remove(category)"
                                         >
                                             <Trash2 class="size-4" />
@@ -166,18 +170,18 @@ const remove = async (category: ManagedCategory): Promise<void> => {
                     </table>
                     <p
                         v-if="!categories.length"
-                        class="p-8 text-center text-sm text-slate-400"
+                        class="p-8 text-center text-sm text-muted-foreground"
                     >
                         {{ t('admin.categories.empty') }}
                     </p>
                 </div>
                 <form
-                    class="h-fit space-y-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
+                    class="h-fit space-y-4 rounded-xl border border-border bg-muted/50 p-4 text-foreground"
                     @submit.prevent="save"
                 >
                     <div class="flex items-center justify-between">
                         <h3 class="flex items-center gap-2 font-black">
-                            <Tags class="size-4 text-indigo-600" />{{
+                            <Tags class="size-4 text-primary" />{{
                                 editingId
                                     ? t('admin.categories.edit')
                                     : t('admin.categories.new')
@@ -186,35 +190,35 @@ const remove = async (category: ManagedCategory): Promise<void> => {
                         <button
                             v-if="editingId"
                             type="button"
-                            class="text-xs font-bold text-slate-500"
+                            class="text-xs font-bold text-muted-foreground"
                             @click="reset"
                         >
                             {{ t('admin.common.clear') }}
                         </button>
                     </div>
-                    <label class="block text-xs font-bold text-slate-600"
+                    <label class="block text-xs font-bold text-foreground"
                         >{{ t('admin.common.name')
                         }}<input
                             v-model="form.name"
                             required
-                            class="mt-1 w-full rounded-lg border-slate-200 bg-white text-sm"
+                            class="mt-1 w-full rounded-lg border border-input bg-background text-sm text-foreground"
                     /></label>
                     <p v-if="errors.name" class="text-xs text-rose-600">
                         {{ errors.name }}
                     </p>
-                    <label class="block text-xs font-bold text-slate-600"
+                    <label class="block text-xs font-bold text-foreground"
                         >{{ t('admin.common.slug')
                         }}<input
                             v-model="form.slug"
                             required
-                            class="mt-1 w-full rounded-lg border-slate-200 bg-white text-sm"
+                            class="mt-1 w-full rounded-lg border border-input bg-background text-sm text-foreground"
                     /></label>
                     <p v-if="errors.slug" class="text-xs text-rose-600">
                         {{ errors.slug }}
                     </p>
                     <button
                         :disabled="processing"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
                     >
                         <Plus class="size-4" />{{
                             editingId

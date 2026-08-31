@@ -53,6 +53,7 @@ return [
         'pdf' => [
             'field' => 'Campo',
             'value' => 'Informação',
+            'participant' => 'Inscrito :number',
             'project_reference' => 'Nossa Casa - projeto open source',
         ],
         'statuses' => [

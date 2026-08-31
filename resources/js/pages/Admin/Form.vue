@@ -46,6 +46,7 @@ const { t } = useI18n();
 const { forms } = useRepositories();
 const saving = ref(false);
 const error = ref('');
+const previewValues = ref<Record<string, string | boolean>>({});
 const fields = ref<FormElement[]>([]);
 const formState = ref({
     title: props.form?.title ?? '',
@@ -258,7 +259,7 @@ async function save(): Promise<void> {
             @submit.prevent="save"
         >
             <section
-                class="space-y-5 rounded-2xl border bg-white p-5 text-slate-900 shadow-sm md:p-7"
+                class="space-y-5 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm md:p-7"
             >
                 <p
                     v-if="error"
@@ -272,19 +273,19 @@ async function save(): Promise<void> {
                         <input
                             v-model="formState.title"
                             required
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                         />
                     </label>
                     <label class="text-sm font-semibold">
                         {{ t('admin.common.description') }}
                         <input
                             v-model="formState.description"
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                         />
                     </label>
                 </div>
 
-                <div class="rounded-xl bg-slate-50 p-3">
+                <div class="rounded-xl border border-border bg-muted/60 p-3">
                     <p class="text-sm font-bold">
                         {{ t('admin.forms.add_element') }}
                     </p>
@@ -293,7 +294,7 @@ async function save(): Promise<void> {
                             v-for="[value, label] in fieldTypes"
                             :key="value"
                             type="button"
-                            class="rounded-full border bg-white px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-card-foreground transition hover:bg-muted"
                             @click="addField(value)"
                         >
                             {{ label }}
@@ -305,11 +306,11 @@ async function save(): Promise<void> {
                     <article
                         v-for="(field, fieldIndex) in fields"
                         :key="field.id"
-                        class="rounded-xl border p-4"
+                        class="rounded-xl border border-border bg-background/30 p-4"
                     >
                         <div class="mb-3 flex items-center justify-between">
                             <span
-                                class="text-xs font-bold text-slate-500 uppercase"
+                                class="text-xs font-bold text-muted-foreground uppercase"
                                 >{{ field.type }}</span
                             >
                             <div class="flex gap-2 text-xs">
@@ -340,21 +341,21 @@ async function save(): Promise<void> {
                                     {{ t('admin.forms.label') }}
                                     <input
                                         v-model="field.label"
-                                        class="mt-1 w-full rounded-lg border-slate-300"
+                                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     />
                                 </label>
                                 <label class="text-sm">
                                     {{ t('admin.forms.identifier') }}
                                     <input
                                         v-model="field.name"
-                                        class="mt-1 w-full rounded-lg border-slate-300"
+                                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     />
                                 </label>
                                 <label class="text-sm">
                                     {{ t('admin.forms.width') }}
                                     <select
                                         v-model.number="field.width"
-                                        class="mt-1 w-full rounded-lg border-slate-300"
+                                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     >
                                         <option
                                             v-for="width in widths"
@@ -369,7 +370,7 @@ async function save(): Promise<void> {
                                     {{ t('admin.forms.mobile_width') }}
                                     <select
                                         v-model.number="field.mobile_width"
-                                        class="mt-1 w-full rounded-lg border-slate-300"
+                                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     >
                                         <option
                                             v-for="width in widths"
@@ -384,7 +385,7 @@ async function save(): Promise<void> {
                                     {{ t('admin.forms.size') }}
                                     <select
                                         v-model="field.size"
-                                        class="mt-1 w-full rounded-lg border-slate-300"
+                                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     >
                                         <option value="auto">
                                             {{ t('admin.forms.dynamic') }}
@@ -415,7 +416,7 @@ async function save(): Promise<void> {
                                     type="number"
                                     min="1"
                                     max="20"
-                                    class="mt-1 w-32 rounded-lg border-slate-300"
+                                    class="mt-1 w-32 rounded-lg border-input bg-background text-foreground"
                                 />
                             </label>
                             <label
@@ -426,7 +427,7 @@ async function save(): Promise<void> {
                                 <textarea
                                     :value="field.options?.join('\n')"
                                     rows="3"
-                                    class="mt-1 w-full rounded-lg border-slate-300"
+                                    class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                     @input="
                                         field.options = (
                                             $event.target as HTMLTextAreaElement
@@ -442,11 +443,11 @@ async function save(): Promise<void> {
                                 {{ t('admin.common.title') }}
                                 <input
                                     v-model="field.label"
-                                    class="mt-1 w-full rounded-lg border-slate-300"
+                                    class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                                 />
                             </label>
                         </template>
-                        <p v-else class="text-sm text-slate-500">
+                        <p v-else class="text-sm text-muted-foreground">
                             {{ t('admin.forms.visual_element') }}
                         </p>
                     </article>
@@ -458,7 +459,7 @@ async function save(): Promise<void> {
                         <select
                             v-model="formState.event_ids"
                             multiple
-                            class="mt-1 h-28 w-full rounded-lg border-slate-300"
+                            class="mt-1 h-28 w-full rounded-lg border-input bg-background text-foreground"
                         >
                             <option
                                 v-for="event in props.events"
@@ -474,7 +475,7 @@ async function save(): Promise<void> {
                         <select
                             v-model="formState.post_ids"
                             multiple
-                            class="mt-1 h-28 w-full rounded-lg border-slate-300"
+                            class="mt-1 h-28 w-full rounded-lg border-input bg-background text-foreground"
                         >
                             <option
                                 v-for="post in props.posts"
@@ -495,7 +496,7 @@ async function save(): Promise<void> {
 
                 <button
                     :disabled="saving"
-                    class="w-full rounded-lg bg-slate-900 py-2 text-sm font-bold text-white disabled:opacity-50"
+                    class="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
                 >
                     {{
                         saving
@@ -508,7 +509,7 @@ async function save(): Promise<void> {
             </section>
 
             <aside
-                class="h-fit rounded-2xl border bg-white p-5 text-slate-900 shadow-sm"
+                class="h-fit rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm xl:sticky xl:top-6"
             >
                 <h2 class="font-black">{{ t('admin.common.preview') }}</h2>
                 <div class="mt-4 grid grid-cols-12 gap-3">
@@ -524,7 +525,7 @@ async function save(): Promise<void> {
                         </h3>
                         <hr
                             v-else-if="field.type === 'divider'"
-                            class="col-span-12 border-slate-200"
+                            class="col-span-12 border-border"
                         />
                         <div
                             v-else-if="field.type !== 'line_break'"
@@ -541,39 +542,86 @@ async function save(): Promise<void> {
                             </label>
                             <textarea
                                 v-if="field.type === 'textarea'"
+                                v-model="previewValues[field.id]"
                                 :rows="
                                     field.size === 'fixed' ? field.height : 3
                                 "
-                                disabled
-                                class="mt-1 w-full rounded-lg border-slate-300"
+                                :placeholder="field.placeholder"
+                                class="mt-1 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-foreground"
                             />
                             <select
                                 v-else-if="field.type === 'select'"
-                                disabled
-                                class="mt-1 w-full rounded-lg border-slate-300"
+                                v-model="previewValues[field.id]"
+                                class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
                             >
-                                <option>{{ t('admin.common.select') }}</option>
+                                <option value="">
+                                    {{ t('admin.common.select') }}
+                                </option>
+                                <option
+                                    v-for="option in field.options ?? []"
+                                    :key="option"
+                                    :value="option"
+                                >
+                                    {{ option }}
+                                </option>
                             </select>
+                            <div
+                                v-else-if="field.type === 'radio'"
+                                class="mt-2 space-y-2"
+                            >
+                                <label
+                                    v-for="option in field.options ?? []"
+                                    :key="option"
+                                    class="flex cursor-pointer items-center gap-2 text-sm font-normal"
+                                >
+                                    <input
+                                        v-model="previewValues[field.id]"
+                                        type="radio"
+                                        :name="'preview-' + field.id"
+                                        :value="option"
+                                    />
+                                    {{ option }}
+                                </label>
+                            </div>
+                            <label
+                                v-else-if="field.type === 'checkbox'"
+                                class="mt-2 flex cursor-pointer items-center gap-2 text-sm font-normal"
+                            >
+                                <input
+                                    v-model="previewValues[field.id]"
+                                    type="checkbox"
+                                />
+                                {{ field.placeholder || field.label }}
+                            </label>
                             <PhoneInput
                                 v-else-if="field.type === 'phone'"
-                                disabled
+                                :model-value="String(previewValues[field.id] ?? '')"
                                 class="mt-1"
+                                @update:model-value="
+                                    previewValues[field.id] = $event
+                                "
                             />
                             <MoneyInput
                                 v-else-if="field.type === 'money'"
-                                disabled
+                                :model-value="String(previewValues[field.id] ?? '')"
                                 class="mt-1"
+                                @update:model-value="
+                                    previewValues[field.id] = $event
+                                "
                             />
                             <input
                                 v-else
-                                disabled
-                                :type="
-                                    field.type === 'checkbox'
-                                        ? 'checkbox'
-                                        : field.type
-                                "
-                                class="mt-1 rounded-lg border-slate-300"
+                                v-model="previewValues[field.id]"
+                                :type="field.type"
+                                :placeholder="field.placeholder"
+                                class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground"
                             />
+                            <p
+                                v-if="field.help_text"
+                                class="mt-1 text-xs font-normal text-muted-foreground"
+                            >
+                                {{ field.help_text }}
+                            </p>
                         </div>
                         <div v-else class="col-span-12 h-2" />
                     </template>

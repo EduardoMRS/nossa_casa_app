@@ -114,8 +114,14 @@ onMounted(async () => {
     embedButton.type = 'button';
     embedButton.className =
         'toastui-editor-toolbar-icons content-embed-toolbar';
-    embedButton.textContent = '⊞';
+    embedButton.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+            <path d="M12 8v8M8 12h8"></path>
+        </svg>
+    `;
     embedButton.setAttribute('aria-label', t('editor.embeds.open'));
+    embedButton.setAttribute('title', t('editor.embeds.open'));
     embedButton.addEventListener('click', openPicker);
 
     editor = new Editor({
@@ -167,7 +173,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="overflow-hidden rounded-xl border border-[#dfe7ef] bg-white">
+    <div class="markdown-wysiwyg overflow-hidden rounded-xl border border-border bg-card">
         <div ref="root" />
         <AppModal
             v-model:open="pickerOpen"
@@ -273,10 +279,42 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+:deep(.toastui-editor-toolbar-group) {
+    align-items: center;
+}
+
 :deep(.content-embed-toolbar) {
-    background-image: none;
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 30px;
+    display: inline-flex !important;
+    width: 32px !important;
+    height: 32px !important;
+    margin: 3px !important;
+    padding: 0 !important;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent !important;
+    color: #475569;
+    vertical-align: middle;
+}
+
+:deep(.content-embed-toolbar svg) {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+:deep(.content-embed-toolbar:hover),
+:deep(.content-embed-toolbar:focus-visible) {
+    border-radius: 6px;
+    background: #eef2ff !important;
+    color: #4338ca;
+}
+
+:deep(.toastui-editor-dropdown-toolbar .content-embed-toolbar) {
+    margin: 0 !important;
 }
 </style>

@@ -131,5 +131,15 @@ it('restricts operational logs and metrics to superadmin and system users', func
 
     $this->actingAs($admin)->get(route('admin.logsMetrics.index'))->assertForbidden();
     $this->actingAs($superadmin)->get(route('admin.logsMetrics.index'))->assertSuccessful();
-    $this->actingAs($system)->get(route('admin.logsMetrics.index'))->assertSuccessful();
+    $this->actingAs($system)
+        ->get(route('admin.logsMetrics.index'))
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/LogsMetrics')
+            ->has('stats', 6)
+            ->has('queue.pending')
+            ->has('queue.failed')
+            ->has('logs')
+            ->has('system.environment'));
+
 });
