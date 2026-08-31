@@ -50,6 +50,18 @@ return [
         'filename' => 'registrations',
         'export_generated_at' => 'Generated at :date',
         'individual_export' => 'Complete participant registration',
+        'pdf' => [
+            'field' => 'Field',
+            'value' => 'Information',
+            'project_reference' => 'Nossa Casa - open source project',
+        ],
+        'statuses' => [
+            'pending' => 'Pending',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'canceled' => 'Canceled',
+            'confirmed' => 'Confirmed',
+        ],
         'columns' => [
             'name' => 'Name',
             'email' => 'Email',

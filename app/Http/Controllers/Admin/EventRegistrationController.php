@@ -89,16 +89,26 @@ class EventRegistrationController extends Controller
     {
         $this->ensureAccess($request, $event);
         abort_unless(in_array($format, ['pdf', 'xlsx'], true), 404);
+        $event->loadMissing('church.settings');
         $form = $event->forms()->first();
-        $columns = collect($this->columns($form));
+        $columns = $this->selectedColumns($request, $form);
         $registrations = $this->registrations($event, $form);
         $headers = $columns->pluck('label')->all();
         $rows = $registrations->map(fn (array $registration): array => $columns
-            ->map(fn (array $column): string => $this->displayValue(data_get($registration, $column['key'])))
+            ->map(fn (array $column): string => $this->displayValue(
+                data_get($registration, $column['key']),
+                $column['key'],
+            ))
             ->all())->all();
         $contents = $format === 'xlsx'
             ? $this->exporter->xlsx($headers, $rows)
-            : $this->exporter->pdf($event->title, $headers, $rows, __('admin.event_registrations.export_generated_at', ['date' => now()->format('d/m/Y H:i')]));
+            : $this->exporter->pdf(
+                $event->title,
+                $headers,
+                $rows,
+                __('admin.event_registrations.export_generated_at', ['date' => now()->format('d/m/Y H:i')]),
+                $this->pdfBranding($event),
+            );
         $filename = Str::slug($event->title).'-'.__('admin.event_registrations.filename').'.'.$format;
 
         return response($contents, 200, [
@@ -113,13 +123,23 @@ class EventRegistrationController extends Controller
     {
         $this->ensureAccess($request, $event);
         abort_unless($registration->event_id === $event->id, 404);
+        $event->loadMissing('church.settings');
         $form = $event->forms()->first();
         $item = $this->registrations($event, $form)->firstWhere('id', $registration->id);
         abort_unless($item !== null, 404);
         $columns = collect($this->columns($form));
         $headers = $columns->pluck('label')->all();
-        $row = $columns->map(fn (array $column): string => $this->displayValue(data_get($item, $column['key'])))->all();
-        $contents = $this->exporter->pdf($event->title, $headers, [$row], __('admin.event_registrations.individual_export'));
+        $row = $columns->map(fn (array $column): string => $this->displayValue(
+            data_get($item, $column['key']),
+            $column['key'],
+        ))->all();
+        $contents = $this->exporter->pdf(
+            $event->title,
+            $headers,
+            [$row],
+            __('admin.event_registrations.individual_export'),
+            $this->pdfBranding($event),
+        );
 
         return response($contents, 200, [
             'Content-Type' => 'application/pdf',
@@ -177,7 +197,7 @@ class EventRegistrationController extends Controller
         ];
     }
 
-    /** @return Collection<int, array{key: string, label: string}> */
+    /** @return Collection<int, array{key: string, label: string, type: string}> */
     private function formFields(?Form $form): Collection
     {
         $schema = $form?->schema ?? [];
@@ -188,6 +208,7 @@ class EventRegistrationController extends Controller
             ->map(fn (array $field): array => [
                 'key' => (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? ''),
                 'label' => (string) ($field['label'] ?? $field['name'] ?? $field['key'] ?? ''),
+                'type' => (string) ($field['type'] ?? 'text'),
             ])
             ->filter(fn (array $field): bool => $field['key'] !== '')
             ->values();
@@ -204,8 +225,16 @@ class EventRegistrationController extends Controller
             : $available->filter(fn (array $column): bool => $selected->contains($column['key']))->values();
     }
 
-    private function displayValue(mixed $value): string
+    private function displayValue(mixed $value, string $key = ''): string
     {
+        if ($key === 'status' && filled($value)) {
+            return __('admin.event_registrations.statuses.'.(string) $value);
+        }
+
+        if ($key === 'registered_at' && $value instanceof \DateTimeInterface) {
+            return $value->format('d/m/Y H:i');
+        }
+
         if (is_bool($value)) {
             return $value ? __('common.yes') : __('common.no');
         }
@@ -215,6 +244,32 @@ class EventRegistrationController extends Controller
         }
 
         return (string) ($value ?? '');
+    }
+
+    /** @return array<string, string> */
+    private function pdfBranding(Event $event): array
+    {
+        $branding = data_get($event->church?->settings?->options, 'branding', []);
+
+        if (! is_array($branding)) {
+            $branding = [];
+        }
+
+        return [
+            'name' => filled($branding['brand_name'] ?? null)
+                ? (string) $branding['brand_name']
+                : (string) ($event->church?->name ?? config('app.name')),
+            'tagline' => (string) ($branding['tagline'] ?? ''),
+            'primary_color' => filled($branding['primary_color'] ?? null)
+                ? (string) $branding['primary_color']
+                : '#342f87',
+            'accent_color' => filled($branding['accent_color'] ?? null)
+                ? (string) $branding['accent_color']
+                : '#5eead4',
+            'field_label' => __('admin.event_registrations.pdf.field'),
+            'value_label' => __('admin.event_registrations.pdf.value'),
+            'project_reference' => __('admin.event_registrations.pdf.project_reference'),
+        ];
     }
 
     private function ensureAccess(Request $request, Event $event): void

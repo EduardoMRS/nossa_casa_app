@@ -50,9 +50,21 @@ return [
         'filename' => 'inscricoes',
         'export_generated_at' => 'Gerado em :date',
         'individual_export' => 'Ficha completa do participante',
+        'pdf' => [
+            'field' => 'Campo',
+            'value' => 'Informação',
+            'project_reference' => 'Nossa Casa - projeto open source',
+        ],
+        'statuses' => [
+            'pending' => 'Pendente',
+            'approved' => 'Aprovada',
+            'rejected' => 'Rejeitada',
+            'canceled' => 'Cancelada',
+            'confirmed' => 'Confirmada',
+        ],
         'columns' => [
             'name' => 'Nome',
-            'email' => 'Email',
+            'email' => 'E-mail',
             'phone' => 'Telefone',
             'status' => 'Status',
             'registered_at' => 'Inscrito em',

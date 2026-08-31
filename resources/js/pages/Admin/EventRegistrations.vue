@@ -12,6 +12,7 @@ import axios from 'axios';
 import { computed, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
+import { Input } from '@/components/ui/input';
 import { useI18n } from '@/lib/i18n';
 import { index as eventIndex } from '@/routes/admin/events';
 import { index as eventContent } from '@/routes/admin/events/content';
@@ -23,7 +24,7 @@ import {
 } from '@/routes/admin/events/registrations';
 
 type Column = { key: string; label: string };
-type FormField = { key: string; label: string };
+type FormField = { key: string; label: string; type: string };
 type Registration = {
     id: string;
     user_id: string | null;
@@ -71,6 +72,16 @@ const visibleColumns = computed(() =>
         selectedColumns.value.includes(column.key),
     ),
 );
+
+const isMultilineField = (field: FormField): boolean =>
+    ['textarea', 'long_text', 'paragraph'].includes(field.type);
+
+const answerInputType = (field: FormField): string =>
+    ['date', 'datetime-local', 'email', 'number', 'tel', 'time', 'url'].includes(
+        field.type,
+    )
+        ? field.type
+        : 'text';
 
 const valueAt = (registration: Registration, key: string): unknown => {
     if (key.startsWith('answers.')) {
@@ -336,46 +347,46 @@ const exportUrl = (format: 'pdf' | 'xlsx'): string => {
         >
             <form class="space-y-5" @submit.prevent="save">
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="text-sm font-bold">
+                    <label class="space-y-1.5 text-sm font-bold text-foreground">
                         {{ t('admin.event_registrations.first_name') }}
-                        <input
+                        <Input
                             v-model="form.first_name"
                             required
-                            :disabled="editingHasAccount"
-                            class="mt-1 w-full rounded-lg border-slate-300 disabled:bg-slate-100"
+                            :readonly="editingHasAccount"
+                            class="bg-background read-only:cursor-default read-only:bg-muted/50 read-only:text-foreground"
                         />
                     </label>
-                    <label class="text-sm font-bold">
+                    <label class="space-y-1.5 text-sm font-bold text-foreground">
                         {{ t('admin.event_registrations.last_name') }}
-                        <input
+                        <Input
                             v-model="form.last_name"
                             required
-                            :disabled="editingHasAccount"
-                            class="mt-1 w-full rounded-lg border-slate-300 disabled:bg-slate-100"
+                            :readonly="editingHasAccount"
+                            class="bg-background read-only:cursor-default read-only:bg-muted/50 read-only:text-foreground"
                         />
                     </label>
-                    <label class="text-sm font-bold">
+                    <label class="space-y-1.5 text-sm font-bold text-foreground">
                         {{ t('admin.event_registrations.email') }}
-                        <input
+                        <Input
                             v-model="form.email"
                             type="email"
-                            :disabled="editingHasAccount"
-                            class="mt-1 w-full rounded-lg border-slate-300 disabled:bg-slate-100"
+                            :readonly="editingHasAccount"
+                            class="bg-background read-only:cursor-default read-only:bg-muted/50 read-only:text-foreground"
                         />
                     </label>
-                    <label class="text-sm font-bold">
+                    <label class="space-y-1.5 text-sm font-bold text-foreground">
                         {{ t('admin.event_registrations.phone') }}
                         <PhoneInput
                             v-model="form.phone"
                             :disabled="editingHasAccount"
-                            class="mt-1"
+                            class="min-w-0"
                         />
                     </label>
-                    <label class="text-sm font-bold sm:col-span-2">
+                    <label class="space-y-1.5 text-sm font-bold text-foreground sm:col-span-2">
                         {{ t('admin.event_registrations.status') }}
                         <select
                             v-model="form.status"
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            class="border-input bg-background focus:border-ring focus:ring-ring/50 h-9 w-full min-w-0 rounded-md border px-3 text-sm shadow-xs outline-none focus:ring-[3px]"
                         >
                             <option
                                 v-for="status in statuses"
@@ -393,16 +404,27 @@ const exportUrl = (format: 'pdf' | 'xlsx'): string => {
                     <label
                         v-for="field in formFields"
                         :key="field.key"
-                        class="text-sm font-bold sm:col-span-2"
+                        class="space-y-1.5 text-sm font-bold text-foreground sm:col-span-2"
                     >
                         {{ field.label }}
-                        <input
+                        <textarea
+                            v-if="isMultilineField(field)"
                             :value="String(form.answers[field.key] ?? '')"
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            rows="4"
+                            class="border-input bg-background focus:border-ring focus:ring-ring/50 min-h-24 w-full min-w-0 resize-y rounded-md border px-3 py-2 text-sm font-normal shadow-xs outline-none focus:ring-[3px]"
                             @input="
                                 form.answers[field.key] = (
-                                    $event.target as HTMLInputElement
+                                    $event.target as HTMLTextAreaElement
                                 ).value
+                            "
+                        />
+                        <Input
+                            v-else
+                            :model-value="String(form.answers[field.key] ?? '')"
+                            :type="answerInputType(field)"
+                            class="bg-background font-normal"
+                            @update:model-value="
+                                form.answers[field.key] = $event
                             "
                         />
                     </label>
