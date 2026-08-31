@@ -243,13 +243,13 @@ const personFor = (item: Relationship): Person | undefined =>
 
 <template>
     <Head :title="t('settings.workspace.title')" />
-    <div class="flex min-h-screen flex-col bg-slate-50 text-slate-950">
+    <div class="flex min-h-screen min-w-0 max-w-full flex-col overflow-x-clip bg-slate-50 text-slate-950">
         <PublicHeader />
-        <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <main class="mx-auto w-full min-w-0 max-w-7xl flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
             <header
                 class="overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-6 text-white shadow-sm"
             >
-                <div class="flex items-center gap-4">
+                <div class="flex min-w-0 items-center gap-4">
                     <img
                         v-if="workspaceUser.avatar"
                         :src="workspaceUser.avatar"
@@ -262,16 +262,16 @@ const personFor = (item: Relationship): Person | undefined =>
                         {{ workspaceUser.first_name?.[0]
                         }}{{ workspaceUser.last_name?.[0] }}
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <p
                             class="font-mono text-[10px] font-bold tracking-widest text-amber-300 uppercase"
                         >
                             {{ t('settings.workspace.account') }}
                         </p>
-                        <h1 class="mt-1 text-2xl font-black">
+                        <h1 class="mt-1 text-xl font-black break-words sm:text-2xl">
                             {{ workspaceUser.name }}
                         </h1>
-                        <p class="text-sm text-indigo-100">
+                        <p class="text-sm break-all text-indigo-100">
                             {{ workspaceUser.email }}
                         </p>
                     </div>
@@ -297,46 +297,46 @@ const personFor = (item: Relationship): Person | undefined =>
 
             <section
                 v-if="activeTab === 'profile'"
-                class="mt-6 max-w-3xl rounded-2xl border bg-white p-6 shadow-sm"
+                class="mt-6 w-full min-w-0 max-w-3xl overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
             >
                 <h2 class="text-xl font-black">
                     {{ t('settings.workspace.profile') }}
                 </h2>
                 <form
-                    class="mt-5 grid gap-4 sm:grid-cols-2"
+                    class="mt-5 grid min-w-0 max-w-full gap-4 sm:grid-cols-2"
                     @submit.prevent="saveProfile"
                 >
                     <label
-                        class="text-xs font-bold text-slate-600 sm:col-span-2"
+                        class="min-w-0 max-w-full text-xs font-bold text-slate-600 sm:col-span-2"
                         >{{ t('settings.profile.name')
                         }}<input
                             v-model="profile.name"
                             required
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300" /></label
                     ><label
-                        class="text-xs font-bold text-slate-600 sm:col-span-2"
+                        class="min-w-0 max-w-full text-xs font-bold text-slate-600 sm:col-span-2"
                         >{{ t('auth.common.email')
                         }}<input
                             v-model="profile.email"
                             required
                             type="email"
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
-                    ><label class="text-xs font-bold text-slate-600"
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300" /></label
+                    ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.birth_date')
                         }}<input
                             v-model="profile.birth_date"
                             type="date"
-                            class="mt-1 w-full rounded-lg border-slate-300" /></label
-                    ><label class="text-xs font-bold text-slate-600"
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300" /></label
+                    ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.phone')
                         }}<PhoneInput
                             v-model="profile.phone"
                             class="mt-1" /></label
-                    ><label class="text-xs font-bold text-slate-600"
+                    ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.gender')
                         }}<select
                             v-model="profile.gender"
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300"
                         >
                             <option value="">—</option>
                             <option value="female">
@@ -350,11 +350,11 @@ const personFor = (item: Relationship): Person | undefined =>
                             </option>
                         </select></label
                     >
-                    <label class="text-xs font-bold text-slate-600"
+                    <label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.workspace.community')
                         }}<select
                             v-model="profile.community_id"
-                            class="mt-1 w-full rounded-lg border-slate-300"
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300"
                             @change="changeCommunity"
                         >
                             <option value="">
@@ -368,12 +368,12 @@ const personFor = (item: Relationship): Person | undefined =>
                                 {{ community.name }}
                             </option>
                         </select></label
-                    ><label class="text-xs font-bold text-slate-600"
+                    ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.workspace.church')
                         }}<select
                             v-model="profile.church_id"
                             :disabled="!profile.community_id"
-                            class="mt-1 w-full rounded-lg border-slate-300 disabled:bg-slate-100"
+                            class="mt-1 block w-full min-w-0 max-w-full rounded-lg border-slate-300 disabled:bg-slate-100"
                         >
                             <option value="">
                                 {{ t('settings.workspace.select_church') }}
@@ -388,24 +388,24 @@ const personFor = (item: Relationship): Person | undefined =>
                         </select></label
                     >
                     <label
-                        class="text-xs font-bold text-slate-600 sm:col-span-2"
+                        class="min-w-0 max-w-full text-xs font-bold text-slate-600 sm:col-span-2"
                         >{{ t('settings.workspace.avatar')
                         }}<input
                             type="file"
                             accept="image/*"
-                            class="mt-1 w-full rounded-lg border p-2 text-sm"
+                            class="mt-1 block w-full min-w-0 max-w-full overflow-hidden rounded-lg border p-2 text-xs sm:text-sm"
                             @change="selectAvatar"
                     /></label>
                     <div
-                        class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2"
+                        class="flex min-w-0 flex-col items-stretch gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div class="flex items-center gap-3">
+                        <div class="flex min-w-0 items-center gap-3">
                             <Languages class="size-5 text-indigo-600" />
-                            <div>
+                            <div class="min-w-0">
                                 <p class="text-sm font-black text-slate-900">
                                     {{ t('settings.profile.language') }}
                                 </p>
-                                <p class="text-xs text-slate-500">
+                                <p class="text-xs break-words text-slate-500">
                                     {{ t('settings.profile.language_hint') }}
                                 </p>
                             </div>

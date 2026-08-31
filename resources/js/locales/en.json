@@ -1125,11 +1125,12 @@
             "no_versions": "No Bible version has been enabled for this church.",
             "load_error": "Bible data could not be loaded. Try again shortly.",
             "offline_download": "Download again",
-            "offline_download_description": "Download the open Bible versions enabled by this church for reading without an internet connection.",
+            "offline_download_description": "Download this Bible version for reading without an internet connection.",
             "offline_downloading": "Automatically preparing open-license Bibles for offline reading…",
             "offline_ready": "Available offline",
             "offline_error": "The offline download could not be completed. Check your connection and try again.",
             "offline_missing": "This chapter has not been downloaded for offline reading yet.",
+            "offline_no_versions": "No Bible version is available offline on this device.",
             "offline_open_versions": "{count} open versions enabled by this church can be downloaded. Versions with restricted licenses remain online only."
         }
     },

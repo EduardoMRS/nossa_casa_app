@@ -31,6 +31,7 @@ const publicShellComponents = new Set([
     'Gallery/Index',
     'Library/Index',
     'Library/Bible',
+    'settings/Workspace',
     'LiveStreams/Show',
 ]);
 

@@ -65,7 +65,7 @@ defineOptions({
     <Head :title="t('dashboard.title')" />
 
     <div
-        class="flex h-full flex-1 flex-col gap-6 overflow-x-hidden bg-background p-4 text-foreground md:p-8"
+        class="flex h-full min-w-0 max-w-full flex-1 flex-col gap-6 overflow-x-clip bg-background p-4 text-foreground md:p-8"
         :style="paletteStyle"
     >
         <section
@@ -94,7 +94,7 @@ defineOptions({
             >
                 {{ t('dashboard.workspace') }}
             </p>
-            <h1 class="text-3xl font-black md:text-4xl">
+            <h1 class="text-2xl leading-tight font-black break-words sm:text-3xl md:text-4xl">
                 {{ branding.banner_title || t('dashboard.title') }}
             </h1>
             <p class="mt-2 text-sm text-slate-100/90 md:text-base">
@@ -105,7 +105,7 @@ defineOptions({
             </p>
             <p
                 v-if="branding.contact_email"
-                class="mt-3 text-xs font-semibold text-slate-100/80"
+                class="mt-3 text-xs font-semibold break-all text-slate-100/80"
             >
                 {{ branding.contact_email }}
             </p>
@@ -113,7 +113,7 @@ defineOptions({
 
         <section class="grid gap-4 md:grid-cols-3">
             <article
-                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
                     class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
@@ -125,7 +125,7 @@ defineOptions({
                 </p>
             </article>
             <article
-                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
                     class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
@@ -137,7 +137,7 @@ defineOptions({
                 </p>
             </article>
             <article
-                class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
             >
                 <p
                     class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
@@ -157,7 +157,7 @@ defineOptions({
                 >
                     {{ t('dashboard.modules') }}
                 </p>
-                <h2 class="text-2xl font-black text-foreground">
+                <h2 class="text-2xl font-black break-words text-foreground">
                     {{ t('dashboard.recommended_actions') }}
                 </h2>
             </div>
@@ -166,7 +166,7 @@ defineOptions({
                 <article
                     v-for="module in modules"
                     :key="module.title_key"
-                    class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+                    class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
                 >
                     <h3 class="text-lg font-black text-card-foreground">
                         {{ t(module.title_key) }}

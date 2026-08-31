@@ -36,7 +36,7 @@ const themeStyle = computed(() => {
         <AppSidebar :style="themeStyle" />
         <AppContent
             variant="sidebar"
-            class="dashboard-theme overflow-x-hidden bg-background text-foreground"
+            class="dashboard-theme min-w-0 max-w-full overflow-x-clip bg-background text-foreground"
             :style="themeStyle"
         >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
