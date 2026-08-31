@@ -44,7 +44,7 @@
         "@laravel/passkeys": "^0.4.0",
         "@lucide/vue": "^1.17.0",
         "@toast-ui/editor": "^3.2.2",
-        "@vueuse/core": "^12.8.2",
+        "@vueuse/core": "^14.4.0",
         "axios": "^1.18.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
