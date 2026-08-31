@@ -45,58 +45,257 @@ class EventRegistrationExporter
     /**
      * @param  list<string>  $headers
      * @param  list<list<string>>  $rows
+     * @param  array<string, string>  $branding
      */
-    public function pdf(string $title, array $headers, array $rows, string $subtitle = ''): string
-    {
-        $lines = [strtoupper($title), $subtitle, str_repeat('=', 110), ''];
+    public function pdf(
+        string $title,
+        array $headers,
+        array $rows,
+        string $subtitle = '',
+        array $branding = [],
+    ): string {
+        $branding = array_merge([
+            'name' => 'Nossa Casa',
+            'tagline' => '',
+            'primary_color' => '#342f87',
+            'accent_color' => '#5eead4',
+            'field_label' => 'Campo',
+            'value_label' => 'Informação',
+            'project_reference' => 'Nossa Casa - tecnologia aberta para comunidades',
+        ], $branding);
+        $isIndividual = count($rows) === 1;
+        $pageWidth = $isIndividual ? 595.0 : 842.0;
+        $pageHeight = $isIndividual ? 842.0 : 595.0;
+        $pageStreams = [];
 
-        if (count($rows) === 1) {
-            foreach ($headers as $index => $header) {
-                $lines[] = $header;
-                $lines[] = '  '.($rows[0][$index] ?? '');
-                $lines[] = str_repeat('-', 110);
+        if ($isIndividual) {
+            foreach (array_chunk(array_keys($headers), 15) as $fieldIndexes) {
+                $pageStreams[] = $this->individualPage(
+                    $pageWidth,
+                    $pageHeight,
+                    $title,
+                    $subtitle,
+                    $headers,
+                    $rows[0],
+                    $fieldIndexes,
+                    $branding,
+                );
             }
         } else {
-            foreach ($rows as $rowIndex => $row) {
-                $lines[] = '#'.($rowIndex + 1);
+            $columnGroups = array_chunk(array_keys($headers), 5);
+            $rowChunks = array_chunk($rows, 12);
 
-                foreach ($headers as $index => $header) {
-                    $lines[] = $header.': '.($row[$index] ?? '');
+            if ($columnGroups === []) {
+                $columnGroups = [[]];
+            }
+
+            if ($rowChunks === []) {
+                $rowChunks = [[]];
+            }
+
+            foreach ($columnGroups as $columnIndexes) {
+                foreach ($rowChunks as $pageRows) {
+                    $pageStreams[] = $this->tablePage(
+                        $pageWidth,
+                        $pageHeight,
+                        $title,
+                        $subtitle,
+                        $headers,
+                        $pageRows,
+                        $columnIndexes,
+                        $branding,
+                    );
                 }
-
-                $lines[] = str_repeat('-', 110);
             }
         }
 
-        $wrappedLines = collect($lines)
-            ->flatMap(fn (string $line): array => $line === '' ? [''] : explode("\n", wordwrap($line, 110)))
-            ->all();
-        $pages = array_chunk($wrappedLines, 52);
+        return $this->document($pageWidth, $pageHeight, $pageStreams);
+    }
+
+    /**
+     * @param  list<string>  $headers
+     * @param  list<string>  $row
+     * @param  list<int>  $fieldIndexes
+     * @param  array<string, string>  $branding
+     */
+    private function individualPage(
+        float $pageWidth,
+        float $pageHeight,
+        string $title,
+        string $subtitle,
+        array $headers,
+        array $row,
+        array $fieldIndexes,
+        array $branding,
+    ): string {
+        $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
+        $x = 36.0;
+        $y = $pageHeight - 124.0;
+        $tableWidth = $pageWidth - 72.0;
+        $labelWidth = 172.0;
+        $valueWidth = $tableWidth - $labelWidth;
+        $headerHeight = 28.0;
+        $primary = $this->color($branding['primary_color']);
+        $content .= $this->rect($x, $y - $headerHeight, $labelWidth, $headerHeight, $primary);
+        $content .= $this->rect($x + $labelWidth, $y - $headerHeight, $valueWidth, $headerHeight, $primary);
+        $content .= $this->text($branding['field_label'], $x + 10, $y - 18, 9, true, [1, 1, 1]);
+        $content .= $this->text($branding['value_label'], $x + $labelWidth + 10, $y - 18, 9, true, [1, 1, 1]);
+        $y -= $headerHeight;
+
+        foreach ($fieldIndexes as $position => $index) {
+            $height = 34.0;
+            $fill = $position % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
+            $content .= $this->rect($x, $y - $height, $labelWidth, $height, $fill, [0.86, 0.88, 0.91]);
+            $content .= $this->rect($x + $labelWidth, $y - $height, $valueWidth, $height, $fill, [0.86, 0.88, 0.91]);
+            $content .= $this->text(
+                $this->fit((string) ($headers[$index] ?? ''), 32),
+                $x + 10,
+                $y - 21,
+                8.5,
+                true,
+                [0.2, 0.23, 0.3],
+            );
+            $content .= $this->text(
+                $this->fit((string) ($row[$index] ?? ''), 68),
+                $x + $labelWidth + 10,
+                $y - 21,
+                8.5,
+                false,
+                [0.11, 0.13, 0.18],
+            );
+            $y -= $height;
+        }
+
+        return $content.$this->pageFooter($pageWidth, $branding);
+    }
+
+    /**
+     * @param  list<string>  $headers
+     * @param  list<list<string>>  $rows
+     * @param  list<int>  $columnIndexes
+     * @param  array<string, string>  $branding
+     */
+    private function tablePage(
+        float $pageWidth,
+        float $pageHeight,
+        string $title,
+        string $subtitle,
+        array $headers,
+        array $rows,
+        array $columnIndexes,
+        array $branding,
+    ): string {
+        $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
+        $x = 36.0;
+        $y = $pageHeight - 124.0;
+        $tableWidth = $pageWidth - 72.0;
+        $columnCount = max(1, count($columnIndexes));
+        $columnWidth = $tableWidth / $columnCount;
+        $headerHeight = 30.0;
+        $rowHeight = 30.0;
+        $primary = $this->color($branding['primary_color']);
+
+        foreach ($columnIndexes as $position => $index) {
+            $cellX = $x + ($position * $columnWidth);
+            $content .= $this->rect($cellX, $y - $headerHeight, $columnWidth, $headerHeight, $primary);
+            $content .= $this->text(
+                $this->fit((string) ($headers[$index] ?? ''), max(10, (int) ($columnWidth / 5.2))),
+                $cellX + 8,
+                $y - 19,
+                8,
+                true,
+                [1, 1, 1],
+            );
+        }
+
+        $y -= $headerHeight;
+
+        foreach ($rows as $rowIndex => $row) {
+            $fill = $rowIndex % 2 === 0 ? [0.97, 0.975, 0.985] : [1, 1, 1];
+
+            foreach ($columnIndexes as $position => $index) {
+                $cellX = $x + ($position * $columnWidth);
+                $content .= $this->rect($cellX, $y - $rowHeight, $columnWidth, $rowHeight, $fill, [0.86, 0.88, 0.91]);
+                $content .= $this->text(
+                    $this->fit((string) ($row[$index] ?? ''), max(10, (int) ($columnWidth / 4.7))),
+                    $cellX + 8,
+                    $y - 19,
+                    8,
+                    false,
+                    [0.11, 0.13, 0.18],
+                );
+            }
+
+            $y -= $rowHeight;
+        }
+
+        if ($rows === []) {
+            $content .= $this->text('-', $x + 8, $y - 20, 9, false, [0.42, 0.46, 0.54]);
+        }
+
+        return $content.$this->pageFooter($pageWidth, $branding);
+    }
+
+    /** @param array<string, string> $branding */
+    private function pageHeader(
+        float $pageWidth,
+        float $pageHeight,
+        string $title,
+        string $subtitle,
+        array $branding,
+    ): string {
+        $primary = $this->color($branding['primary_color']);
+        $accent = $this->color($branding['accent_color']);
+        $content = $this->rect(0, $pageHeight - 102, $pageWidth, 102, $primary);
+        $content .= $this->rect(0, $pageHeight - 106, $pageWidth, 4, $accent);
+        $content .= $this->rect(36, $pageHeight - 58, 34, 34, $accent);
+        $content .= $this->text($this->initials($branding['name']), 43, $pageHeight - 46, 11, true, $primary);
+        $content .= $this->text($this->fit($branding['name'], 42), 80, $pageHeight - 37, 15, true, [1, 1, 1]);
+
+        if ($branding['tagline'] !== '') {
+            $content .= $this->text($this->fit($branding['tagline'], 70), 80, $pageHeight - 52, 7.5, false, [0.88, 0.9, 0.96]);
+        }
+
+        $content .= $this->text($this->fit($title, 85), 36, $pageHeight - 76, 13, true, [1, 1, 1]);
+
+        if ($subtitle !== '') {
+            $content .= $this->text($this->fit($subtitle, 110), 36, $pageHeight - 91, 8, false, [0.88, 0.9, 0.96]);
+        }
+
+        return $content;
+    }
+
+    /** @param array<string, string> $branding */
+    private function pageFooter(float $pageWidth, array $branding): string
+    {
+        $reference = $this->fit($branding['project_reference'], 90);
+        $estimatedWidth = strlen($reference) * 3.3;
+        $x = max(36.0, ($pageWidth - $estimatedWidth) / 2);
+
+        return $this->text($reference, $x, 22, 6.5, false, [0.55, 0.58, 0.64]);
+    }
+
+    /** @param list<string> $pageStreams */
+    private function document(float $pageWidth, float $pageHeight, array $pageStreams): string
+    {
         $objects = [
             1 => '<< /Type /Catalog /Pages 2 0 R >>',
             2 => '',
             3 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+            4 => '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
         ];
         $pageIds = [];
 
-        foreach ($pages as $index => $pageLines) {
-            $pageId = 4 + ($index * 2);
+        foreach ($pageStreams as $index => $stream) {
+            $pageId = 5 + ($index * 2);
             $contentId = $pageId + 1;
             $pageIds[] = $pageId;
-            $content = "BT /F1 9 Tf 40 800 Td\n";
-
-            foreach ($pageLines as $line) {
-                $content .= '('.$this->pdfText($line).") Tj 0 -14 Td\n";
-            }
-
-            $content .= 'ET';
-            $objects[$pageId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents {$contentId} 0 R >>";
-            $objects[$contentId] = '<< /Length '.strlen($content).">>\nstream\n{$content}\nendstream";
+            $objects[$pageId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {$pageWidth} {$pageHeight}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents {$contentId} 0 R >>";
+            $objects[$contentId] = '<< /Length '.strlen($stream).">>\nstream\n{$stream}\nendstream";
         }
 
         $objects[2] = '<< /Type /Pages /Kids ['.implode(' ', array_map(fn (int $id): string => "{$id} 0 R", $pageIds)).'] /Count '.count($pageIds).' >>';
         ksort($objects);
-
         $pdf = "%PDF-1.4\n";
         $offsets = [0];
 
@@ -106,13 +305,83 @@ class EventRegistrationExporter
         }
 
         $xrefOffset = strlen($pdf);
-        $pdf .= 'xref'."\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
+        $pdf .= "xref\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
 
         foreach (array_keys($objects) as $id) {
             $pdf .= sprintf('%010d 00000 n ', $offsets[$id])."\n";
         }
 
-        return $pdf.'trailer'."\n<< /Size ".(count($objects) + 1).' /Root 1 0 R >>'."\nstartxref\n{$xrefOffset}\n%%EOF";
+        return $pdf."trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
+    }
+
+    /**
+     * @param  list<float|int>  $fill
+     * @param  list<float|int>|null  $stroke
+     */
+    private function rect(
+        float $x,
+        float $y,
+        float $width,
+        float $height,
+        array $fill,
+        ?array $stroke = null,
+    ): string {
+        $operator = $stroke === null ? 'f' : 'B';
+        $command = "q {$fill[0]} {$fill[1]} {$fill[2]} rg ";
+
+        if ($stroke !== null) {
+            $command .= "{$stroke[0]} {$stroke[1]} {$stroke[2]} RG 0.5 w ";
+        }
+
+        return $command."{$x} {$y} {$width} {$height} re {$operator} Q\n";
+    }
+
+    /**
+     * @param  list<float|int>  $color
+     */
+    private function text(
+        string $value,
+        float $x,
+        float $y,
+        float $size,
+        bool $bold,
+        array $color,
+    ): string {
+        $font = $bold ? 'F2' : 'F1';
+
+        return "BT /{$font} {$size} Tf {$color[0]} {$color[1]} {$color[2]} rg {$x} {$y} Td (".$this->pdfText($value).") Tj ET\n";
+    }
+
+    /** @return list<float> */
+    private function color(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+
+        if (! preg_match('/^[0-9a-fA-F]{6}$/', $hex)) {
+            $hex = '342f87';
+        }
+
+        return [
+            round(hexdec(substr($hex, 0, 2)) / 255, 3),
+            round(hexdec(substr($hex, 2, 2)) / 255, 3),
+            round(hexdec(substr($hex, 4, 2)) / 255, 3),
+        ];
+    }
+
+    private function initials(string $name): string
+    {
+        $parts = preg_split('/\s+/', trim($name)) ?: [];
+
+        return strtoupper(collect($parts)->take(2)->map(fn (string $part): string => mb_substr($part, 0, 1))->implode(''));
+    }
+
+    private function fit(string $value, int $length): string
+    {
+        $value = preg_replace('/\s+/', ' ', trim($value)) ?? '';
+
+        return mb_strlen($value) > $length
+            ? mb_substr($value, 0, max(1, $length - 1)).'...'
+            : $value;
     }
 
     /** @param list<list<string>> $rows */
@@ -192,3 +461,4 @@ class EventRegistrationExporter
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $encoded);
     }
 }
+

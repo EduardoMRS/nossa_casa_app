@@ -102,7 +102,7 @@ test('church administrator can add and edit a registration without creating a us
 });
 
 test('registration exports produce PDF and XLSX downloads with selected columns', function () {
-    EventUser::query()->create([
+    $registration = EventUser::query()->create([
         'event_id' => $this->event->id,
         'first_name' => 'Guest',
         'last_name' => 'Export',
@@ -119,8 +119,17 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         ->assertSuccessful()
         ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
+    $individualPdf = $this->get("/dashboard/eventos/{$this->event->id}/inscritos/{$registration->id}/pdf")
+        ->assertSuccessful()
+        ->assertHeader('content-type', 'application/pdf');
+
     expect($pdf->getContent())->toStartWith('%PDF-1.4')
-        ->and($pdf->getContent())->toContain('Email')
+        ->and($pdf->getContent())->toContain('Registration Church')
+        ->and($pdf->getContent())->toContain('Dietary needs')
+        ->and($pdf->getContent())->not->toContain('(Email)')
+        ->and($pdf->getContent())->toContain('/MediaBox [0 0 842 595]')
+        ->and($individualPdf->getContent())->toContain('/MediaBox [0 0 595 842]')
+        ->and($individualPdf->getContent())->toContain('Nossa Casa - open source project')
         ->and($xlsx->getContent())->toStartWith('PK');
 });
 

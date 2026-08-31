@@ -149,3 +149,18 @@ test('portal navigation and global dashboard use platform context', () => {
     assert.match(passkey, /localizedPasskeyError/);
     assert.doesNotMatch(passkey, /:message="error"/);
 });
+
+test('dashboard submenus stay compact and registration fields use shared controls', () => {
+    const navigation = readSource('resources/js/components/NavMain.vue');
+    const registrations = readSource(
+        'resources/js/pages/Admin/EventRegistrations.vue',
+    );
+
+    assert.match(navigation, /CollapsibleContent/);
+    assert.match(navigation, /:default-open="isCurrentUrl\(item\.href\)"/);
+    assert.match(navigation, /data-\[state=open\]:rotate-90/);
+    assert.match(registrations, /import \{ Input \}/);
+    assert.match(registrations, /isMultilineField/);
+    assert.match(registrations, /read-only:bg-muted\/50/);
+    assert.match(registrations, /border-input bg-background/);
+});
