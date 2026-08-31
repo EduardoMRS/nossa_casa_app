@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Tags } from '@lucide/vue';
+import { Edit3, Plus, Tags, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
 import { destroy } from '@/actions/App/Http/Controllers/FormController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
@@ -81,12 +81,12 @@ const remove = async (form: ManagedForm): Promise<void> => {
         </AdminPageHeader>
 
         <section
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            class="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm"
         >
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left text-sm">
                     <thead
-                        class="border-b bg-slate-50 text-xs font-bold tracking-wide text-slate-500 uppercase"
+                        class="border-b border-border bg-muted text-xs font-bold tracking-wide text-muted-foreground uppercase"
                     >
                         <tr>
                             <th class="px-5 py-3">
@@ -103,18 +103,18 @@ const remove = async (form: ManagedForm): Promise<void> => {
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody class="divide-y divide-border">
                         <tr
                             v-for="form in props.forms.data"
                             :key="form.id"
                             class="transition hover:bg-muted/60"
                         >
                             <td class="px-5 py-4">
-                                <p class="font-bold text-slate-900">
+                                <p class="font-bold text-card-foreground">
                                     {{ form.title }}
                                 </p>
                                 <p
-                                    class="mt-1 max-w-md truncate text-xs text-slate-500"
+                                    class="mt-1 max-w-md truncate text-xs text-muted-foreground"
                                 >
                                     {{
                                         form.description ||
@@ -122,25 +122,27 @@ const remove = async (form: ManagedForm): Promise<void> => {
                                     }}
                                 </p>
                             </td>
-                            <td class="px-5 py-4 text-slate-600">
+                            <td class="px-5 py-4 text-muted-foreground">
                                 {{ form.events.length + form.posts.length }}
                             </td>
-                            <td class="px-5 py-4 text-slate-600">
+                            <td class="px-5 py-4 text-muted-foreground">
                                 {{ form.responses_count }}
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex justify-end gap-2">
                                     <Link
                                         :href="edit({ form: form.id })"
-                                        class="rounded-lg border p-2 text-indigo-600"
+                                        class="rounded-lg border border-border p-2 text-primary transition hover:bg-primary/10"
+                                        :title="t('actions.edit')"
                                     >
-                                        {{ t('actions.edit') }}
+                                        <Edit3 class="size-4" />
                                     </Link>
                                     <button
-                                        class="rounded-lg border p-2 text-rose-600"
+                                        class="rounded-lg border border-destructive/30 p-2 text-destructive transition hover:bg-destructive/10"
+                                        :title="t('actions.delete')"
                                         @click="remove(form)"
                                     >
-                                        {{ t('actions.delete') }}
+                                        <Trash2 class="size-4" />
                                     </button>
                                 </div>
                             </td>
@@ -150,7 +152,7 @@ const remove = async (form: ManagedForm): Promise<void> => {
             </div>
             <p
                 v-if="!props.forms.data.length"
-                class="p-12 text-center text-sm text-slate-500"
+                class="p-12 text-center text-sm text-muted-foreground"
             >
                 {{ t('admin.forms.empty') }}
             </p>
@@ -162,8 +164,8 @@ const remove = async (form: ManagedForm): Promise<void> => {
                     :class="[
                         'rounded-lg border px-3 py-1.5 text-xs',
                         link.active
-                            ? 'bg-indigo-700 text-white'
-                            : 'bg-white text-slate-600',
+                            ? 'border-transparent bg-primary text-primary-foreground'
+                            : 'border-border bg-card text-muted-foreground',
                         !link.url && 'pointer-events-none opacity-40',
                     ]"
                 >
