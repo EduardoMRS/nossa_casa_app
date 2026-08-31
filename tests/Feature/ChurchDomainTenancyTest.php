@@ -177,8 +177,14 @@ test('global administrator login on the main domain stays on the portal dashboar
     $this->get('http://platform.test/dashboard')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
+            ->component('Dashboard')
+            ->where('context', 'platform')
             ->where('churchContext.church', null)
-            ->where('permissions.manageBranding', false));
+            ->where('permissions.manageBranding', false)
+            ->has('kpis', 4)
+            ->has('modules', 4)
+            ->where('modules.0.href', route('admin.multiCongregation.index'))
+            ->where('modules.2.href', route('admin.liveStreams.index')));
 });
 
 test('system administrator can configure a normalized custom church domain', function () {

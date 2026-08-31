@@ -22,6 +22,25 @@ type Props = {
 const props = defineProps<Props>();
 const { t } = useI18n();
 
+const localizedPasskeyError = (value: unknown): string => {
+    const normalized = String(value ?? '').toLowerCase();
+
+    if (normalized.includes('timed out') || normalized.includes('timeout')) {
+        return t('settings.passkeys.errors.timeout');
+    }
+
+    if (
+        normalized.includes('cancelled') ||
+        normalized.includes('canceled') ||
+        normalized.includes('notallowederror') ||
+        normalized.includes('not allowed')
+    ) {
+        return t('settings.passkeys.errors.cancelled');
+    }
+
+    return t('settings.passkeys.errors.failed');
+};
+
 const { verify, isLoading, error, isSupported } = usePasskeyVerify({
     ...(props.routes
         ? {
@@ -58,7 +77,7 @@ const { verify, isLoading, error, isSupported } = usePasskeyVerify({
             </Button>
 
             <div v-if="error" class="text-center">
-                <InputError :message="error" />
+                <InputError :message="localizedPasskeyError(error)" />
             </div>
         </div>
 

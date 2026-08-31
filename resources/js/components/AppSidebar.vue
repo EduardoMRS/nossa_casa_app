@@ -34,7 +34,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useI18n } from '@/lib/i18n';
-import { home } from '@/routes';
+import { dashboard, home } from '@/routes';
 import { edit as brandingEdit } from '@/routes/admin/branding';
 import { index as adminCategoriesIndex } from '@/routes/admin/categories';
 import { index as adminClassroomsIndex } from '@/routes/admin/classrooms';
@@ -64,7 +64,10 @@ const page = usePage<{
         };
     };
     separateKidsMinistry?: boolean;
-    churchContext?: { church?: { id: string } | null };
+    churchContext?: {
+        isMainDomain?: boolean;
+        church?: { id: string } | null;
+    };
     permissions?: { manageBranding?: boolean };
 }>();
 
@@ -86,6 +89,12 @@ const role = computed(() => {
     return '';
 });
 
+const isPlatformDashboard = computed(
+    () =>
+        page.props.churchContext?.isMainDomain === true &&
+        ['superadmin', 'system'].includes(role.value),
+);
+
 const canManageWorkspace = computed(
     () =>
         ['church_leader', 'superadmin', 'system'].includes(role.value) &&
@@ -99,27 +108,59 @@ const canControlLiveStreams = computed(
         ) && Boolean(page.props.churchContext?.church),
 );
 
-const mainNavItems = computed<NavItem[]>(() => [
-    {
-        title: t('nav.dashboard'),
-        href: home(),
-        icon: LayoutGrid,
-    },
-    {
-        title: t('admin.prayers.title'),
-        href: myPrayersIndex(),
-        icon: Heart,
-    },
-    ...(canControlLiveStreams.value
-        ? [
-              {
-                  title: 'Transmissões',
-                  href: '/dashboard/live-streams',
-                  icon: Radio,
-              },
-          ]
-        : []),
-]);
+const mainNavItems = computed<NavItem[]>(() => {
+    if (isPlatformDashboard.value) {
+        return [
+            {
+                title: t('nav.dashboard'),
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+            {
+                title: t('dashboard.module.multicongregation.title'),
+                href: adminMultiCongregationIndex(),
+                icon: PanelsTopLeft,
+            },
+            {
+                title: t('dashboard.module.user_management.title'),
+                href: adminUserManagementIndex(),
+                icon: UserRoundCog,
+            },
+            {
+                title: t('dashboard.module.live_streams.title'),
+                href: '/dashboard/live-streams',
+                icon: Radio,
+            },
+            {
+                title: t('dashboard.module.logs_metrics.title'),
+                href: adminLogsMetricsIndex(),
+                icon: ListChecks,
+            },
+        ];
+    }
+
+    return [
+        {
+            title: t('nav.dashboard'),
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: t('admin.prayers.title'),
+            href: myPrayersIndex(),
+            icon: Heart,
+        },
+        ...(canControlLiveStreams.value
+            ? [
+                  {
+                      title: t('dashboard.module.live_streams.title'),
+                      href: '/dashboard/live-streams',
+                      icon: Radio,
+                  },
+              ]
+            : []),
+    ];
+});
 
 const communicationNavItems = computed<NavItem[]>(() => [
     {

@@ -385,7 +385,12 @@
             "register": "Registrar chave de acesso",
             "authenticating": "Autenticando...",
             "verify": "Entrar com uma chave de acesso",
-            "email_separator": "Ou continue com o e‑mail"
+            "email_separator": "Ou continue com o e‑mail",
+            "errors": {
+                "cancelled": "A operação com a chave de acesso foi cancelada.",
+                "timeout": "A autenticação com a chave de acesso expirou. Tente novamente.",
+                "failed": "Não foi possível autenticar com a chave de acesso. Tente novamente."
+            }
         },
         "two_factor": {
             "title": "Autenticação de dois fatores",
@@ -1514,12 +1519,25 @@
             "logs_metrics": {
                 "title": "Logs e métricas",
                 "description": "Acesse indicadores da plataforma e visão geral operacional."
+            },
+            "live_streams": {
+                "title": "Transmissões",
+                "description": "Acompanhe e gerencie as transmissões da plataforma."
             }
         },
         "kpis": {
             "events": "Eventos",
             "gallery": "Galeria",
-            "posts": "Postagens"
+            "posts": "Postagens",
+            "churches": "Igrejas",
+            "communities": "Comunidades",
+            "users": "Usuários",
+            "live_streams": "Transmissões"
+        },
+        "platform": {
+            "workspace": "Administração da plataforma",
+            "title": "Configurações gerais",
+            "description": "Gerencie igrejas, comunidades, usuários, transmissões, logs e a operação global da plataforma."
         }
     },
     "membership": {
@@ -1638,7 +1656,8 @@
         },
         "errors": {
             "generic": "A operação não pôde ser concluída."
-        }
+        },
+        "open_dashboard": "Acessar dashboard"
     },
     "footer": {
         "privacy_terms": "Privacidade e termos",

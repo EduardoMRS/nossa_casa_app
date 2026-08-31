@@ -21,6 +21,7 @@ use App\Models\PrayerRequest;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\SystemBackupService;
+use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
 use App\Support\SystemMetricsSnapshot;
 use App\Traits\ManagesChurchCategories;
@@ -373,18 +374,19 @@ class AdminWorkspaceController extends Controller
         $user = $request->user();
         $isSystem = $user?->role === UserRole::SYSTEM;
         $canChangeChurchCommunity = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $hasPlatformScope = $canChangeChurchCommunity && app(ChurchDomainContext::class)->isMainDomain();
         $communityId = $user?->profile?->community_id ?? $user?->church?->community_id;
 
-        if (! $isSystem) {
+        if (! $hasPlatformScope) {
             abort_unless($communityId, 403);
         }
 
         $churchQuery = Church::query()
-            ->when(! $isSystem, fn ($query) => $query->where('community_id', $communityId));
+            ->when(! $hasPlatformScope, fn ($query) => $query->where('community_id', $communityId));
         $communityQuery = Community::query()
             ->when(! $canChangeChurchCommunity, fn ($query) => $query->whereKey($communityId));
         $networkQuery = Network::query()
-            ->when(! $isSystem, function ($query) use ($communityId): void {
+            ->when(! $hasPlatformScope, function ($query) use ($communityId): void {
                 $query->where(function ($networkQuery) use ($communityId): void {
                     $networkQuery->where('community_id', $communityId)
                         ->orWhere(function ($legacyNetworkQuery) use ($communityId): void {
@@ -419,7 +421,7 @@ class AdminWorkspaceController extends Controller
             $network->childChurch?->makeHidden('translations');
         });
         $registrationRequests = ChurchRegistrationRequest::query()
-            ->when(! $isSystem, fn ($query) => $query->where('community_id', $communityId))
+            ->when(! $hasPlatformScope, fn ($query) => $query->where('community_id', $communityId))
             ->with(['community:id,name', 'requester:id,first_name,last_name,email'])
             ->latest()
             ->get();

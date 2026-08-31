@@ -127,3 +127,25 @@ test('authenticated mobile workspaces contain controls and reserve PWA navigatio
     assert.match(navigation, /settings\/Workspace/);
     assert.match(styles, /pwa-navigation-visible \.dashboard-theme/);
 });
+
+test('portal navigation and global dashboard use platform context', () => {
+    const portalHeader = readSource(
+        'resources/js/components/PortalHeader.vue',
+    );
+    const sidebar = readSource('resources/js/components/AppSidebar.vue');
+    const dashboard = readSource('resources/js/pages/Dashboard.vue');
+    const passkey = readSource(
+        'resources/js/components/PasskeyVerify.vue',
+    );
+
+    assert.match(portalHeader, /isGlobalAdministrator/);
+    assert.match(portalHeader, /portal\.open_dashboard/);
+    assert.doesNotMatch(portalHeader, /privacy\(\)/);
+    assert.match(sidebar, /isPlatformDashboard/);
+    assert.match(sidebar, /adminMultiCongregationIndex/);
+    assert.match(sidebar, /\/dashboard\/live-streams/);
+    assert.match(dashboard, /context: 'church' \| 'platform'/);
+    assert.match(dashboard, /dashboard\.platform\.title/);
+    assert.match(passkey, /localizedPasskeyError/);
+    assert.doesNotMatch(passkey, /:message="error"/);
+});

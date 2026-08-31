@@ -385,7 +385,12 @@
             "register": "Register passkey",
             "authenticating": "Authenticating...",
             "verify": "Sign in with a passkey",
-            "email_separator": "Or continue with email"
+            "email_separator": "Or continue with email",
+            "errors": {
+                "cancelled": "The passkey operation was cancelled.",
+                "timeout": "The passkey authentication timed out. Try again.",
+                "failed": "Could not authenticate with the passkey. Try again."
+            }
         },
         "two_factor": {
             "title": "Two-factor authentication",
@@ -1514,12 +1519,25 @@
             "logs_metrics": {
                 "title": "Logs and metrics",
                 "description": "Access platform indicators and operational overview."
+            },
+            "live_streams": {
+                "title": "Live streams",
+                "description": "Monitor and manage live streams across the platform."
             }
         },
         "kpis": {
             "events": "Events",
             "gallery": "Gallery",
-            "posts": "Posts"
+            "posts": "Posts",
+            "churches": "Churches",
+            "communities": "Communities",
+            "users": "Users",
+            "live_streams": "Live streams"
+        },
+        "platform": {
+            "workspace": "Platform administration",
+            "title": "General settings",
+            "description": "Manage churches, communities, users, live streams, logs, and global platform operations."
         }
     },
     "membership": {
@@ -1638,7 +1656,8 @@
         },
         "errors": {
             "generic": "The operation could not be completed."
-        }
+        },
+        "open_dashboard": "Open dashboard"
     },
     "footer": {
         "privacy_terms": "Privacy and terms",
