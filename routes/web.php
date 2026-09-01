@@ -487,7 +487,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         $churchId = request()->user()?->church?->id;
         $posts = Post::query()
             ->where('church_id', $churchId)
-            ->where('is_event_private', false)
+            ->where('visibility', 'public')
             ->with('author:id,first_name,last_name,email')
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -527,7 +527,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         ]);
     })->name('posts.create');
     Route::get('/dashboard/posts/{post}/edit', function ($post) {
-        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('visibility', 'public')->with(['church', 'medias'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $church = $post->church;
         $props = [
@@ -551,7 +551,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
     Route::get('/dashboard/posts/{post}', function () {
-        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('visibility', 'public')->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $post->localize(relations: ['church', 'categories']);
         $props = [
