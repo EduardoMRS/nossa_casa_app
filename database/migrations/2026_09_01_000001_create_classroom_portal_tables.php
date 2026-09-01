@@ -45,15 +45,21 @@ return new class extends Migration
         });
 
         Schema::table('classrooms', function (Blueprint $table) {
-            if (! DB::connection()->getSchemaBuilder()->hasTable('classrooms') || ! DB::connection()->getSchemaBuilder()->hasIndex('classrooms', 'classrooms_church_id_slug_unique')) {
+            if (! DB::connection()->getSchemaBuilder()->hasIndex('classrooms', 'classrooms_church_id_slug_unique')) {
                 $table->unique(['church_id', 'slug']);
             }
         });
 
         Schema::table('posts', function (Blueprint $table) {
-            $table->string('visibility', 30)->default('public')->index()->after('is_event_private');
-            $table->boolean('comments_enabled')->default(true)->after('visibility');
-            $table->boolean('reactions_enabled')->default(true)->after('comments_enabled');
+            if (! Schema::hasColumn('posts', 'visibility')) {
+                $table->string('visibility', 30)->default('public')->index()->after('is_event_private');
+            }
+            if (! Schema::hasColumn('posts', 'comments_enabled')) {
+                $table->boolean('comments_enabled')->default(true)->after('visibility');
+            }
+            if (! Schema::hasColumn('posts', 'reactions_enabled')) {
+                $table->boolean('reactions_enabled')->default(true)->after('comments_enabled');
+            }
         });
 
         DB::table('posts')->where('is_event_private', true)->update(['visibility' => 'event_private']);
@@ -132,27 +138,43 @@ return new class extends Migration
         Schema::dropIfExists('classroom_activities');
 
         Schema::table('posts', function (Blueprint $table) {
-            $table->dropColumn(['visibility', 'comments_enabled', 'reactions_enabled']);
+            $columns = [];
+            if (Schema::hasColumn('posts', 'visibility')) {
+                $columns[] = 'visibility';
+            }
+            if (Schema::hasColumn('posts', 'comments_enabled')) {
+                $columns[] = 'comments_enabled';
+            }
+            if (Schema::hasColumn('posts', 'reactions_enabled')) {
+                $columns[] = 'reactions_enabled';
+            }
+            if (! empty($columns)) {
+                $table->dropColumn($columns);
+            }
         });
 
         Schema::table('classrooms', function (Blueprint $table) {
             if (DB::connection()->getSchemaBuilder()->hasIndex('classrooms', 'classrooms_church_id_slug_unique')) {
                 $table->dropUnique(['church_id', 'slug']);
             }
+            $columns = [];
             if (Schema::hasColumn('classrooms', 'cover_path')) {
-                $table->dropColumn('cover_path');
+                $columns[] = 'cover_path';
             }
             if (Schema::hasColumn('classrooms', 'accent_color')) {
-                $table->dropColumn('accent_color');
+                $columns[] = 'accent_color';
             }
             if (Schema::hasColumn('classrooms', 'portal_enabled')) {
-                $table->dropColumn('portal_enabled');
+                $columns[] = 'portal_enabled';
             }
             if (Schema::hasColumn('classrooms', 'portal_settings')) {
-                $table->dropColumn('portal_settings');
+                $columns[] = 'portal_settings';
             }
             if (Schema::hasColumn('classrooms', 'slug')) {
-                $table->dropColumn('slug');
+                $columns[] = 'slug';
+            }
+            if (! empty($columns)) {
+                $table->dropColumn($columns);
             }
         });
     }
