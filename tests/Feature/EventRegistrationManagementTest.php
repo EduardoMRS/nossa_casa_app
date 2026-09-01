@@ -7,6 +7,7 @@ use App\Models\EventUser;
 use App\Models\Form;
 use App\Models\FormResponse;
 use App\Models\User;
+use App\Support\EventRegistrationExporter;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -32,7 +33,10 @@ beforeEach(function () {
         'title' => 'Registration form',
         'schema' => [
             'fields' => [
-                ['name' => 'diet', 'label' => 'Dietary needs', 'type' => 'text'],
+                ['name' => 'diet', 'label' => 'Dietary needs', 'type' => 'text', 'width' => 6],
+                ['name' => 'arrival', 'label' => 'Arrival time', 'type' => 'time', 'width' => 6],
+                ['id' => 'registration-break', 'type' => 'line_break'],
+                ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea', 'width' => 8],
             ],
         ],
     ]);
@@ -63,7 +67,11 @@ test('church administrator can view registered users and their submitted answers
             ->component('Admin/EventRegistrations')
             ->where('registrations.0.name', 'Ana Silva')
             ->where('registrations.0.answers.diet', 'Vegetarian')
-            ->where('columns.5.key', 'answers.diet'));
+            ->where('columns.5.key', 'answers.diet')
+            ->where('formFields.0.width', 6)
+            ->where('formFields.1.width', 6)
+            ->where('formFields.2.width', 8)
+            ->where('formFields.2.break_before', true));
 });
 
 test('church administrator can add and edit a registration without creating a user account', function () {
@@ -151,6 +159,31 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         ->and($individualPdf->getContent())->not->toContain('(Information)')
         ->and($individualPdf->getContent())->toContain('Nossa Casa - open source project')
         ->and($xlsx->getContent())->toStartWith('PK');
+});
+
+test('PDF exporter respects the twelve column form grid and explicit row breaks', function () {
+    $pdf = app(EventRegistrationExporter::class)->pdf(
+        'Grid event',
+        ['First name', 'Last name', 'E-mail'],
+        [['Ana', 'Silva', 'ana@example.test']],
+        fieldLayout: [
+            ['width' => 6],
+            ['width' => 6],
+            ['width' => 12, 'break_before' => true],
+        ],
+    );
+
+    preg_match('/([0-9.]+) ([0-9.]+) Td \\(First name\\)/', $pdf, $firstName);
+    preg_match('/([0-9.]+) ([0-9.]+) Td \\(Last name\\)/', $pdf, $lastName);
+    preg_match('/([0-9.]+) ([0-9.]+) Td \\(E-mail\\)/', $pdf, $email);
+
+    expect($firstName)->not->toBeEmpty()
+        ->and($lastName)->not->toBeEmpty()
+        ->and($email)->not->toBeEmpty()
+        ->and((float) $lastName[1])->toBeGreaterThan((float) $firstName[1])
+        ->and((float) $lastName[2])->toBe((float) $firstName[2])
+        ->and((float) $email[1])->toBe((float) $firstName[1])
+        ->and((float) $email[2])->toBeLessThan((float) $firstName[2]);
 });
 
 test('church administrator cannot manage registrations from another church', function () {
