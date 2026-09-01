@@ -11,10 +11,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeMail extends Mailable implements ShouldQueue
+class WelcomeMail extends BrandedMailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -67,23 +66,8 @@ class WelcomeMail extends Mailable implements ShouldQueue
         );
     }
 
-    /**
-     * Configure a church-owned SMTP transport only for this message.
-     */
-    public function send($mailer): mixed
+    protected function churchForMail(): ?Church
     {
-        $churchMailManager = app(ChurchMailManager::class);
-
-        if ($this->church !== null) {
-            $churchMailManager->configureFor($this->church);
-        } else {
-            $churchMailManager->reset();
-        }
-
-        try {
-            return parent::send($mailer);
-        } finally {
-            $churchMailManager->reset();
-        }
+        return $this->church;
     }
 }
