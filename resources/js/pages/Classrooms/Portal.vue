@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { BookOpen, ClipboardCheck, Download, FileText, Lock, MessageSquare, Pin, Send, Settings, Users } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
 import DynamicFormRenderer from '@/components/forms/DynamicFormRenderer.vue';
@@ -32,25 +33,23 @@ const topic = reactive({ title: '', content: '' });
 const replies = reactive<Record<string, string>>({});
 const accent = computed(() => props.classroom.accent_color || '#4f46e5');
 
-const submitActivity = (activity: Activity): void => {
+const submitActivity = async (activity: Activity): Promise<void> => {
     submitting.value = activity.id;
-    router.post(`/classrooms/${props.classroom.slug}/activities/${activity.id}/submissions`, { answers: answers[activity.id] ?? {} }, {
-        preserveScroll: true,
-        onFinish: () => { submitting.value = ''; },
-    });
+    try {
+        await axios.post(`/classrooms/${props.classroom.slug}/activities/${activity.id}/submissions`, { answers: answers[activity.id] ?? {} });
+        router.reload({ only: ['activities'] });
+    } finally { submitting.value = ''; }
 };
-const createTopic = (): void => {
-    router.post(`/classrooms/${props.classroom.slug}/discussions`, topic, {
-        preserveScroll: true,
-        onSuccess: () => { topic.title = ''; topic.content = ''; },
-    });
+const createTopic = async (): Promise<void> => {
+    await axios.post(`/classrooms/${props.classroom.slug}/discussions`, topic);
+    topic.title = ''; topic.content = '';
+    router.reload({ only: ['discussions'] });
 };
-const reply = (discussion: Discussion): void => {
+const reply = async (discussion: Discussion): Promise<void> => {
     if (!replies[discussion.id]?.trim()) return;
-    router.post(`/classrooms/${props.classroom.slug}/discussions/${discussion.id}/replies`, { content: replies[discussion.id] }, {
-        preserveScroll: true,
-        onSuccess: () => { replies[discussion.id] = ''; },
-    });
+    await axios.post(`/classrooms/${props.classroom.slug}/discussions/${discussion.id}/replies`, { content: replies[discussion.id] });
+    replies[discussion.id] = '';
+    router.reload({ only: ['discussions'] });
 };
 const size = (bytes?: number): string => !bytes ? '' : bytes > 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
 </script>
