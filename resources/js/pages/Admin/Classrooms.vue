@@ -548,7 +548,7 @@ function updateSeparation(value: boolean): void {
                         ><Link
                             :href="`/dashboard/classrooms/${room.id}/content`"
                             class="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-indigo-700"
-                            title="Gerenciar portal"
+                            :title="t('admin.classrooms.manage_portal')"
                         >
                             <BookOpen class="size-4" />
                         </Link><button
