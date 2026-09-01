@@ -87,6 +87,8 @@ class EventContentController extends Controller
             'published_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after:published_at'],
             'form_id' => ['nullable', 'string', 'exists:forms,id'],
+            'comments_enabled' => ['required', 'boolean'],
+            'reactions_enabled' => ['required', 'boolean'],
         ]);
         $post = Post::query()->create([
             ...collect($validated)->except('form_id')->all(),
@@ -95,6 +97,7 @@ class EventContentController extends Controller
             'church_id' => $event->church_id,
             'published_at' => $validated['published_at'] ?? now(),
             'is_event_private' => true,
+            'visibility' => 'event_private',
         ]);
         $event->privatePosts()->attach($post);
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $event->church_id));
@@ -118,6 +121,8 @@ class EventContentController extends Controller
             'published_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after:published_at'],
             'form_id' => ['nullable', 'string', 'exists:forms,id'],
+            'comments_enabled' => ['required', 'boolean'],
+            'reactions_enabled' => ['required', 'boolean'],
         ]);
         $post->update(collect($validated)->except('form_id')->all());
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $event->church_id));
@@ -216,7 +221,7 @@ class EventContentController extends Controller
             'categories' => $event->church->categories()->where('type', CategoryType::POST->value)->get(['id', 'name', 'slug', 'type']),
             'forms' => Form::query()->where('church_id', $event->church_id)->orderBy('title')->get(['id', 'title', 'description']),
             'post' => $post ? [
-                ...$post->only(['id', 'title', 'slug', 'content', 'published_at', 'expires_at']),
+                ...$post->only(['id', 'title', 'slug', 'content', 'published_at', 'expires_at', 'comments_enabled', 'reactions_enabled']),
                 'category_ids' => $post->categories()->pluck('categories.id')->all(),
                 'form_id' => $post->forms()->value('forms.id'),
             ] : null,
