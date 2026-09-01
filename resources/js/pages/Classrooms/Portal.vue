@@ -11,7 +11,7 @@ import PublicHeader from '@/components/PublicHeader.vue';
 type Activity = { id: string; title: string; instructions?: string; available_until?: string; max_attempts: number; attempts: number; can_submit: boolean; form: { title: string; description?: string; schema: unknown } };
 type Discussion = { id: string; title: string; content: string; is_pinned: boolean; is_locked: boolean; replies_count: number; author: { first_name: string; last_name: string }; replies: Array<{ id: string; content: string; author: { first_name: string; last_name: string } }> };
 const props = defineProps<{
-    classroom: { id: string; name: string; slug: string; description?: string; cover_path?: string; accent_color?: string; portal_settings?: Record<string, unknown>; church?: { name: string }; teacher?: { first_name: string; last_name: string } };
+    classroom: { id: string; name: string; slug: string; description?: string; cover_url?: string; accent_color?: string; portal_settings?: Record<string, unknown>; church?: { name: string }; teacher?: { first_name: string; last_name: string } };
     wallPosts: Array<{ post: any; comments: any[]; reactions: any[]; canComment: boolean; canReact: boolean }>;
     activities: Activity[];
     materials: Array<{ id: string; title: string; description?: string; type: string; mimetype?: string; size?: number; download_url: string }>;
@@ -60,7 +60,7 @@ const size = (bytes?: number): string => !bytes ? '' : bytes > 1048576 ? `${(byt
         <PublicHeader />
         <main class="mx-auto w-full max-w-6xl flex-1 px-3 py-5 sm:px-5 md:py-9">
             <header class="relative overflow-hidden rounded-3xl bg-slate-950 p-6 text-white shadow-xl md:p-10">
-                <img v-if="classroom.cover_path" :src="classroom.cover_path" alt="" class="absolute inset-0 size-full object-cover opacity-30" />
+                <img v-if="classroom.cover_url" :src="classroom.cover_url" alt="" class="absolute inset-0 size-full object-cover opacity-30" />
                 <div class="relative max-w-3xl">
                     <p class="text-xs font-black tracking-[.22em] uppercase" :style="{ color: accent }">{{ classroom.church?.name }} · Classroom</p>
                     <h1 class="mt-3 text-3xl font-black md:text-5xl">{{ classroom.name }}</h1>
