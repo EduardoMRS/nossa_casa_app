@@ -26,7 +26,7 @@ class ContentEmbedController extends Controller
                 'description' => $media->description, 'url' => $media->url, 'mimetype' => $media->mimetype,
                 'categories' => $media->categories->map->only(['id', 'name'])->values(),
             ]),
-            'posts' => Post::query()->where('church_id', $churchId)->where('is_event_private', false)->latest()->get(['id', 'title', 'slug', 'content']),
+            'posts' => Post::query()->where('church_id', $churchId)->where('visibility', 'public')->latest()->get(['id', 'title', 'slug', 'content']),
             'events' => Event::query()->where('church_id', $churchId)->latest('start_time')->get(['id', 'title', 'slug', 'description', 'start_time']),
             'library' => Library::query()->with('categories:id,name')->where('church_id', $churchId)->latest()->get()->map(fn (Library $item): array => [
                 'id' => $item->id, 'title' => $item->title, 'description' => $item->description,
