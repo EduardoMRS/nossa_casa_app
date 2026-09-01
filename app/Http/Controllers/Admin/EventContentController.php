@@ -87,8 +87,8 @@ class EventContentController extends Controller
             'published_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after:published_at'],
             'form_id' => ['nullable', 'string', 'exists:forms,id'],
-            'comments_enabled' => ['required', 'boolean'],
-            'reactions_enabled' => ['required', 'boolean'],
+            'comments_enabled' => ['sometimes', 'boolean'],
+            'reactions_enabled' => ['sometimes', 'boolean'],
         ]);
         $post = Post::query()->create([
             ...collect($validated)->except('form_id')->all(),
@@ -121,8 +121,8 @@ class EventContentController extends Controller
             'published_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after:published_at'],
             'form_id' => ['nullable', 'string', 'exists:forms,id'],
-            'comments_enabled' => ['required', 'boolean'],
-            'reactions_enabled' => ['required', 'boolean'],
+            'comments_enabled' => ['sometimes', 'boolean'],
+            'reactions_enabled' => ['sometimes', 'boolean'],
         ]);
         $post->update(collect($validated)->except('form_id')->all());
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $event->church_id));
