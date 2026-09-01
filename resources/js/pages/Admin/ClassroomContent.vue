@@ -22,7 +22,7 @@ const settings = useForm({
 const post = useForm({ title: '', content: '', published_at: '', comments_enabled: true, reactions_enabled: true });
 const activity = useForm({ form_id: '', title: '', instructions: '', published_at: '', available_until: '', max_attempts: 1, is_published: true });
 const material = useForm({ title: '', description: '', type: 'link', url: '', file: null as File | null });
-const saveSettings = () => settings.post(`${base}/settings`, { forceFormData: true, _method: 'put', preserveScroll: true });
+const saveSettings = () => settings.transform((data) => ({ ...data, _method: 'put' })).post(`${base}/settings`, { forceFormData: true, preserveScroll: true });
 const createPost = () => post.post(`${base}/posts`, { preserveScroll: true, onSuccess: () => post.reset() });
 const createActivity = () => activity.post(`${base}/activities`, { preserveScroll: true, onSuccess: () => activity.reset() });
 const createMaterial = () => material.post(`${base}/materials`, { forceFormData: true, preserveScroll: true, onSuccess: () => material.reset() });
