@@ -36,6 +36,8 @@ beforeEach(function () {
                 ['name' => 'diet', 'label' => 'Dietary needs', 'type' => 'text', 'width' => 6],
                 ['name' => 'arrival', 'label' => 'Arrival time', 'type' => 'time', 'width' => 6],
                 ['id' => 'registration-break', 'type' => 'line_break'],
+                ['name' => 'event_day', 'label' => 'Event day', 'type' => 'date', 'width' => 6],
+                ['name' => 'contact_phone', 'label' => 'Contact phone', 'type' => 'phone', 'width' => 6],
                 ['name' => 'notes', 'label' => 'Notes', 'type' => 'textarea', 'width' => 8],
             ],
         ],
@@ -70,8 +72,10 @@ test('church administrator can view registered users and their submitted answers
             ->where('columns.5.key', 'answers.diet')
             ->where('formFields.0.width', 6)
             ->where('formFields.1.width', 6)
-            ->where('formFields.2.width', 8)
-            ->where('formFields.2.break_before', true));
+            ->where('formFields.2.width', 6)
+            ->where('formFields.2.break_before', true)
+            ->where('formFields.3.width', 6)
+            ->where('formFields.4.width', 8));
 });
 
 test('church administrator can add and edit a registration without creating a user account', function () {
@@ -115,8 +119,14 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         'first_name' => 'Guest',
         'last_name' => 'Export',
         'email' => 'export@example.test',
+        'phone' => '+5569984011007',
         'status' => 'pending',
-        'answers' => ['diet' => 'None'],
+        'answers' => [
+            'diet' => 'None',
+            'arrival' => '18:30',
+            'event_day' => '2026-09-15',
+            'contact_phone' => '69984011007',
+        ],
     ]);
 
     EventUser::query()->create([
@@ -124,12 +134,18 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         'first_name' => 'Ana Júlia',
         'last_name' => 'Gonçalves',
         'email' => 'ana@example.test',
+        'phone' => '+5569984011008',
         'status' => 'confirmed',
-        'answers' => ['diet' => 'Sem glúten'],
+        'answers' => [
+            'diet' => 'Sem glúten',
+            'arrival' => '19:45',
+            'event_day' => '2026-09-16',
+            'contact_phone' => '69984011008',
+        ],
     ]);
 
     $pdf = $this->actingAs($this->leader)
-        ->get("/dashboard/eventos/{$this->event->id}/inscritos/exportar/pdf?columns[]=name&columns[]=answers.diet")
+        ->get("/dashboard/eventos/{$this->event->id}/inscritos/exportar/pdf?columns[]=name&columns[]=phone&columns[]=answers.diet&columns[]=answers.arrival&columns[]=answers.event_day&columns[]=answers.contact_phone")
         ->assertSuccessful()
         ->assertHeader('content-type', 'application/pdf');
     $xlsx = $this->get("/dashboard/eventos/{$this->event->id}/inscritos/exportar/xlsx?columns[]=name")
@@ -144,6 +160,9 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         ->and($pdf->getContent())->toContain('Registration Church')
         ->and($pdf->getContent())->toContain('Dietary needs')
         ->and($pdf->getContent())->toContain('(None)')
+        ->and($pdf->getContent())->toContain('(15/09/2026)')
+        ->and($pdf->getContent())->toContain('+55 \\(69\\) 98401-1007')
+        ->and($pdf->getContent())->toContain('\\(69\\) 98401-1007')
         ->and($pdf->getContent())->not->toContain('(Email)')
         ->and($pdf->getContent())->not->toContain('(Field)')
         ->and($pdf->getContent())->not->toContain('(Information)')
@@ -155,6 +174,8 @@ test('registration exports produce PDF and XLSX downloads with selected columns'
         ->and($individualPdf->getContent())->toContain('/MediaBox [0 0 595 842]')
         ->and($individualPdf->getContent())->toContain('(Dietary needs)')
         ->and($individualPdf->getContent())->toContain('(None)')
+        ->and($individualPdf->getContent())->toContain('(15/09/2026)')
+        ->and($individualPdf->getContent())->toContain('+55 \\(69\\) 98401-1007')
         ->and($individualPdf->getContent())->not->toContain('(Field)')
         ->and($individualPdf->getContent())->not->toContain('(Information)')
         ->and($individualPdf->getContent())->toContain('Nossa Casa - open source project')
