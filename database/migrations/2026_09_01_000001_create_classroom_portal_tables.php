@@ -11,10 +11,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('classrooms', function (Blueprint $table) {
-            $table->string('cover_path')->nullable()->after('description');
-            $table->string('accent_color', 7)->nullable()->after('cover_path');
-            $table->boolean('portal_enabled')->default(true)->after('accent_color');
-            $table->json('portal_settings')->nullable()->after('portal_enabled');
+            if (! Schema::hasColumn('classrooms', 'slug')) {
+                $table->string('slug')->nullable()->after('name');
+            }
+            if (! Schema::hasColumn('classrooms', 'cover_path')) {
+                $table->string('cover_path')->nullable()->after('description');
+            }
+            if (! Schema::hasColumn('classrooms', 'accent_color')) {
+                $table->string('accent_color', 7)->nullable()->after('cover_path');
+            }
+            if (! Schema::hasColumn('classrooms', 'portal_enabled')) {
+                $table->boolean('portal_enabled')->default(true)->after('accent_color');
+            }
+            if (! Schema::hasColumn('classrooms', 'portal_settings')) {
+                $table->json('portal_settings')->nullable()->after('portal_enabled');
+            }
         });
 
         DB::table('classrooms')->orderBy('id')->get(['id', 'church_id', 'name'])->each(function (object $classroom): void {
@@ -34,7 +45,9 @@ return new class extends Migration
         });
 
         Schema::table('classrooms', function (Blueprint $table) {
-            $table->unique(['church_id', 'slug']);
+            if (! DB::connection()->getSchemaBuilder()->hasTable('classrooms') || ! DB::connection()->getSchemaBuilder()->hasIndex('classrooms', 'classrooms_church_id_slug_unique')) {
+                $table->unique(['church_id', 'slug']);
+            }
         });
 
         Schema::table('posts', function (Blueprint $table) {
@@ -123,8 +136,24 @@ return new class extends Migration
         });
 
         Schema::table('classrooms', function (Blueprint $table) {
-            $table->dropUnique(['church_id', 'slug']);
-            $table->dropColumn(['cover_path', 'accent_color', 'portal_enabled', 'portal_settings']);
+            if (DB::connection()->getSchemaBuilder()->hasIndex('classrooms', 'classrooms_church_id_slug_unique')) {
+                $table->dropUnique(['church_id', 'slug']);
+            }
+            if (Schema::hasColumn('classrooms', 'cover_path')) {
+                $table->dropColumn('cover_path');
+            }
+            if (Schema::hasColumn('classrooms', 'accent_color')) {
+                $table->dropColumn('accent_color');
+            }
+            if (Schema::hasColumn('classrooms', 'portal_enabled')) {
+                $table->dropColumn('portal_enabled');
+            }
+            if (Schema::hasColumn('classrooms', 'portal_settings')) {
+                $table->dropColumn('portal_settings');
+            }
+            if (Schema::hasColumn('classrooms', 'slug')) {
+                $table->dropColumn('slug');
+            }
         });
     }
 };
