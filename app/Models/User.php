@@ -207,7 +207,10 @@ class User extends Authenticatable implements HasLocalePreference, PasskeyUser
         return Str::before(str_replace('_', '-', $locale), '-');
     }
 
-    public function sendPasswordResetNotification(string $token): void
+    /**
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
     {
         $this->notify(new BrandedResetPasswordNotification($token));
     }
