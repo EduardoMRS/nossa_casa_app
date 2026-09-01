@@ -41,13 +41,12 @@ test('church welcome email uses its own name colors logo and domain', function (
 
     $branding = app(MailBrandingResolver::class)->resolve($church);
 
-    expect($branding)
-        ->name->toBe('Igreja Esperança')
-        ->primary_color->toBe('#123456')
-        ->secondary_color->toBe('#654321')
-        ->logo_url->toBe('https://esperanca.test/branding/logo')
-        ->portal_url->toBe('https://esperanca.test')
-        ->is_church->toBeTrue();
+    expect($branding['name'])->toBe('Igreja Esperança')
+        ->and($branding['primary_color'])->toBe('#123456')
+        ->and($branding['secondary_color'])->toBe('#654321')
+        ->and($branding['logo_url'])->toBe('https://esperanca.test/branding/logo')
+        ->and($branding['portal_url'])->toBe('https://esperanca.test')
+        ->and($branding['is_church'])->toBeTrue();
 
     (new WelcomeMail($user, $church))
         ->locale('pt')
