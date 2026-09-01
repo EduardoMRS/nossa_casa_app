@@ -47,6 +47,7 @@ class EventRegistrationExporter
      * @param  list<list<string>>  $rows
      * @param  array<string, string>  $branding
      * @param  list<string>  $participantNames
+     * @param  list<array{width?: int, break_before?: bool}>  $fieldLayout
      */
     public function pdf(
         string $title,
@@ -55,6 +56,7 @@ class EventRegistrationExporter
         string $subtitle = '',
         array $branding = [],
         array $participantNames = [],
+        array $fieldLayout = [],
     ): string {
         $branding = array_merge([
             'name' => 'Nossa Casa',
@@ -80,6 +82,7 @@ class EventRegistrationExporter
                 $branding,
                 $participantNames,
                 count($rows) > 1,
+                $fieldLayout,
             ),
         );
     }
@@ -89,6 +92,7 @@ class EventRegistrationExporter
      * @param  list<list<string>>  $rows
      * @param  array<string, string>  $branding
      * @param  list<string>  $participantNames
+     * @param  list<array{width?: int, break_before?: bool}>  $fieldLayout
      * @return list<string>
      */
     private function registrationPages(
@@ -101,6 +105,7 @@ class EventRegistrationExporter
         array $branding,
         array $participantNames,
         bool $showParticipantHeading,
+        array $fieldLayout,
     ): array {
         $pages = [];
         $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
@@ -109,30 +114,24 @@ class EventRegistrationExporter
         $bottom = 44.0;
         $contentWidth = $pageWidth - 72.0;
         $participantHeight = 30.0;
-        $fieldGap = 8.0;
+        $columnGap = 7.0;
+        $rowGap = 9.0;
         $sectionGap = 12.0;
         $primary = $this->color($branding['primary_color']);
         $accent = $this->color($branding['accent_color']);
-        $fieldIndexes = array_keys($headers);
 
         if ($rows === []) {
             return [$content.$this->text('-', $x + 10, $y - 20, 9, false, [0.42, 0.46, 0.54]).$this->pageFooter($pageWidth, $branding)];
         }
 
         foreach ($rows as $participantIndex => $row) {
-            $remainingIndexes = $fieldIndexes;
+            $remainingRows = $this->formRows($headers, $row, $fieldLayout);
 
             do {
-                $minimumFieldHeight = 46.0;
-                $headingSpace = $showParticipantHeading ? $participantHeight + $fieldGap : 0.0;
-                $firstIndex = $remainingIndexes[0] ?? null;
-                $firstValue = $firstIndex === null ? '' : (string) ($row[$firstIndex] ?? '');
-                $firstFieldHeight = max(
-                    $minimumFieldHeight,
-                    34.0 + (count($this->wrappedLines($firstValue, 88, 3)) * 11.0),
-                );
+                $headingSpace = $showParticipantHeading ? $participantHeight + $rowGap : 0.0;
+                $firstRowHeight = (float) collect($remainingRows[0] ?? [])->max('height');
 
-                if ($y - $bottom < $headingSpace + $firstFieldHeight) {
+                if ($y - $bottom < $headingSpace + $firstRowHeight) {
                     $pages[] = $content.$this->pageFooter($pageWidth, $branding);
                     $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
                     $y = $pageHeight - 124.0;
@@ -149,55 +148,116 @@ class EventRegistrationExporter
                     $content .= $this->rect($x, $y - $participantHeight, $contentWidth, $participantHeight, [0.94, 0.95, 0.98], [0.82, 0.84, 0.9]);
                     $content .= $this->rect($x, $y - $participantHeight, 4, $participantHeight, $accent);
                     $content .= $this->text($this->fit($participantLabel, 76), $x + 14, $y - 20, 10, true, $primary);
-                    $y -= $participantHeight + $fieldGap;
+                    $y -= $participantHeight + $rowGap;
                 }
 
-                $renderedField = false;
+                $renderedRow = false;
 
-                while ($remainingIndexes !== []) {
-                    $index = $remainingIndexes[0];
-                    $label = (string) ($headers[$index] ?? '');
-                    $value = (string) ($row[$index] ?? '');
-                    $valueLines = $this->wrappedLines($value, 88, 3);
-                    $fieldHeight = max($minimumFieldHeight, 34.0 + (count($valueLines) * 11.0));
+                while ($remainingRows !== []) {
+                    $formRow = $remainingRows[0];
+                    $rowHeight = (float) collect($formRow)->max('height');
 
-                    if ($y - $fieldHeight < $bottom && $renderedField) {
+                    if ($y - $rowHeight < $bottom && $renderedRow) {
                         break;
                     }
 
-                    array_shift($remainingIndexes);
-                    $content .= $this->rect($x, $y - $fieldHeight, $contentWidth, $fieldHeight, [0.975, 0.98, 0.99], [0.86, 0.88, 0.92]);
-                    $content .= $this->rect($x, $y - $fieldHeight, 3, $fieldHeight, $accent);
-                    $content .= $this->text($this->fit($label, 76), $x + 12, $y - 15, 8, true, $primary);
+                    array_shift($remainingRows);
+                    $usedColumns = 0;
+                    $unitWidth = ($contentWidth - (11 * $columnGap)) / 12;
 
-                    foreach ($valueLines as $lineIndex => $line) {
+                    foreach ($formRow as $field) {
+                        $width = $field['width'];
+                        $fieldX = $x + ($usedColumns * ($unitWidth + $columnGap));
+                        $fieldWidth = ($width * $unitWidth) + (($width - 1) * $columnGap);
+                        $content .= $this->rect($fieldX, $y - $rowHeight, $fieldWidth, $rowHeight, [0.975, 0.98, 0.99], [0.86, 0.88, 0.92]);
+                        $content .= $this->rect($fieldX, $y - $rowHeight, 3, $rowHeight, $accent);
                         $content .= $this->text(
-                            $line,
-                            $x + 12,
-                            $y - 31 - ($lineIndex * 11),
-                            9,
-                            false,
-                            [0.11, 0.13, 0.18],
+                            $this->fit($field['label'], max(8, $width * 7)),
+                            $fieldX + 10,
+                            $y - 15,
+                            8,
+                            true,
+                            $primary,
                         );
+
+                        foreach ($field['lines'] as $lineIndex => $line) {
+                            $content .= $this->text(
+                                $line,
+                                $fieldX + 10,
+                                $y - 31 - ($lineIndex * 11),
+                                9,
+                                false,
+                                [0.11, 0.13, 0.18],
+                            );
+                        }
+
+                        $usedColumns += $width;
                     }
 
-                    $y -= $fieldHeight + $fieldGap;
-                    $renderedField = true;
+                    $y -= $rowHeight + $rowGap;
+                    $renderedRow = true;
                 }
 
                 $y -= $sectionGap;
 
-                if ($remainingIndexes !== []) {
+                if ($remainingRows !== []) {
                     $pages[] = $content.$this->pageFooter($pageWidth, $branding);
                     $content = $this->pageHeader($pageWidth, $pageHeight, $title, $subtitle, $branding);
                     $y = $pageHeight - 124.0;
                 }
-            } while ($remainingIndexes !== []);
+            } while ($remainingRows !== []);
         }
 
         $pages[] = $content.$this->pageFooter($pageWidth, $branding);
 
         return $pages;
+    }
+
+    /**
+     * @param  list<string>  $headers
+     * @param  list<string>  $row
+     * @param  list<array{width?: int, break_before?: bool}>  $fieldLayout
+     * @return list<list<array{label: string, lines: list<string>, width: int, height: float}>>
+     */
+    private function formRows(array $headers, array $row, array $fieldLayout): array
+    {
+        $rows = [];
+        $currentRow = [];
+        $usedColumns = 0;
+
+        foreach (array_keys($headers) as $index) {
+            $layout = $fieldLayout[$index] ?? [];
+            $width = max(1, min(12, (int) ($layout['width'] ?? 12)));
+            $breakBefore = (bool) ($layout['break_before'] ?? false);
+
+            if ($currentRow !== [] && ($breakBefore || $usedColumns + $width > 12)) {
+                $rows[] = $currentRow;
+                $currentRow = [];
+                $usedColumns = 0;
+            }
+
+            $characterWidth = max(12, ($width * 7) - 2);
+            $lines = $this->wrappedLines((string) ($row[$index] ?? ''), $characterWidth, 4);
+            $currentRow[] = [
+                'label' => (string) ($headers[$index] ?? ''),
+                'lines' => $lines,
+                'width' => $width,
+                'height' => max(46.0, 34.0 + (count($lines) * 11.0)),
+            ];
+            $usedColumns += $width;
+
+            if ($usedColumns === 12) {
+                $rows[] = $currentRow;
+                $currentRow = [];
+                $usedColumns = 0;
+            }
+        }
+
+        if ($currentRow !== []) {
+            $rows[] = $currentRow;
+        }
+
+        return $rows;
     }
 
     /** @return list<string> */
