@@ -41,8 +41,16 @@ const props = defineProps<{
     post: ArticlePost;
     comments: CommentItem[];
     reactions: ReactionItem[];
-    canInteract: boolean;
+    canInteract?: boolean;
+    canComment?: boolean;
+    canReact?: boolean;
 }>();
+const allowComment = computed(
+    () => props.canComment ?? props.canInteract ?? false,
+);
+const allowReact = computed(
+    () => props.canReact ?? props.canInteract ?? false,
+);
 const { locale, t } = useI18n();
 const { interactions } = useRepositories();
 const page = usePage();
@@ -95,7 +103,7 @@ const submitComment = async (): Promise<void> => {
 };
 
 const react = async (content: string): Promise<void> => {
-    if (!props.canInteract) {
+    if (!allowReact.value) {
         return;
     }
 
@@ -129,7 +137,7 @@ const react = async (content: string): Promise<void> => {
 };
 
 const reactToComment = async (commentItem: CommentItem): Promise<void> => {
-    if (!props.canInteract) {
+    if (!allowReact.value) {
         return;
     }
 
@@ -247,7 +255,7 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
                         v-for="emoji in emojis"
                         :key="emoji"
                         type="button"
-                        :disabled="!canInteract || reacting !== ''"
+                        :disabled="!allowReact || reacting !== ''"
                         class="flex items-center justify-center gap-1 rounded-lg py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
                         :class="
                             ownPostReaction?.content === emoji
@@ -261,7 +269,7 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
                     </button>
                 </div>
                 <p
-                    v-if="!canInteract"
+                    v-if="!allowComment && !allowReact"
                     class="mt-2 text-center text-xs text-slate-500"
                 >
                     {{ t('posts.show.login_to_interact') }}
@@ -290,7 +298,7 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
             </div>
 
             <form
-                v-if="canInteract"
+                v-if="allowComment"
                 class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
                 @submit.prevent="submitComment"
             >
@@ -335,7 +343,7 @@ const reactToComment = async (commentItem: CommentItem): Promise<void> => {
                     </p>
                     <button
                         type="button"
-                        :disabled="!canInteract || reacting !== ''"
+                        :disabled="!allowReact || reacting !== ''"
                         class="mt-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-slate-500 transition hover:bg-white hover:text-rose-600 disabled:opacity-40"
                         :class="
                             (item.reactions ?? []).some(
