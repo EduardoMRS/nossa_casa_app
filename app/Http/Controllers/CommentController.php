@@ -10,12 +10,19 @@ use App\Models\Media;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class CommentController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->commentable_type && $request->commentable_id) {
+            $target = $this->findCommentable($request->commentable_type, $request->commentable_id);
+            if ($post = $this->rootPost($target)) Gate::authorize('view', $post);
+            $this->ensurePublicChurchResource($this->commentableChurchId($target));
+        }
+
         return response()->json(Comment::with('user:id,first_name,last_name')
             ->when($request->commentable_type, fn ($query, $type) => $query->where('commentable_type', $this->commentableClass($type)))
             ->when($request->commentable_id, fn ($query, $id) => $query->where('commentable_id', $id))
@@ -32,6 +39,7 @@ class CommentController extends Controller
 
         $commentable = $this->findCommentable($validated['commentable_type'], $validated['commentable_id']);
         $this->ensurePublicChurchResource($this->commentableChurchId($commentable));
+        if ($post = $this->rootPost($commentable)) Gate::authorize('comment', $post);
 
         $comment = Comment::create([
             ...$validated,
@@ -46,9 +54,9 @@ class CommentController extends Controller
     {
         $churchId = $this->commentableChurchId($comment);
         $this->ensurePublicChurchResource($churchId);
+        if ($post = $this->rootPost($comment)) Gate::authorize('comment', $post);
         $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->update($request->validate(['content' => ['required', 'string', 'max:5000']]));
-
         return response()->json($comment);
     }
 
@@ -58,35 +66,27 @@ class CommentController extends Controller
         $this->ensurePublicChurchResource($churchId);
         $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->delete();
-
         return response()->noContent();
     }
 
     public function pin(Request $request, Comment $comment): JsonResponse
     {
-        $role = $request->user()->role;
-        abort_unless(in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
-
+        abort_unless(in_array($request->user()->role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
         $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
         $validated = $request->validate(['is_pinned' => ['required', 'boolean']]);
-
         $comment->update([
             'is_pinned' => $validated['is_pinned'],
             'pinned_by_id' => $validated['is_pinned'] ? $request->user()->id : null,
             'pinned_at' => $validated['is_pinned'] ? now() : null,
         ]);
-
         return response()->json($comment->fresh('user:id,first_name,last_name'));
     }
 
     private function commentableClass(string $type): string
     {
         return match ($type) {
-            'post' => Post::class,
-            'event' => Event::class,
-            'media' => Media::class,
-            'live_stream' => LiveStream::class,
-            'comment' => Comment::class,
+            'post' => Post::class, 'event' => Event::class, 'media' => Media::class,
+            'live_stream' => LiveStream::class, 'comment' => Comment::class,
         };
     }
 
@@ -95,18 +95,24 @@ class CommentController extends Controller
         return $this->commentableClass($type)::query()->findOrFail($id);
     }
 
+    private function rootPost(Post|Event|Media|LiveStream|Comment $target): ?Post
+    {
+        if ($target instanceof Post) return $target;
+        if ($target instanceof Comment) {
+            $parent = $target->commentable;
+            return $parent instanceof Post || $parent instanceof Comment ? $this->rootPost($parent) : null;
+        }
+        return null;
+    }
+
     private function commentableChurchId(Post|Event|Media|LiveStream|Comment $commentable): string
     {
         if ($commentable instanceof Comment) {
             $parent = $commentable->commentable;
-
             abort_unless($parent instanceof Post || $parent instanceof Event || $parent instanceof Media || $parent instanceof LiveStream || $parent instanceof Comment, 422);
-
             return $this->commentableChurchId($parent);
         }
-
         abort_unless($commentable->church_id, 422);
-
         return $commentable->church_id;
     }
 }
