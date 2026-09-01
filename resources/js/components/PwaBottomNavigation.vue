@@ -47,7 +47,9 @@ const shouldShow = computed(
     () =>
         standalone.value &&
         page.component !== 'Library/Bible' &&
-        !page.component.startsWith('auth/'),
+        !page.component.startsWith('auth/') &&
+        !currentPath.value.startsWith('/dashboard') &&
+        !currentPath.value.startsWith('/classrooms'),
 );
 
 const activeKey = computed<BottomNavigationKey | null>(() => {
