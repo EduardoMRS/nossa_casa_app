@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import MoneyInput from '@/components/MoneyInput.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
+import { useI18n } from '@/lib/i18n';
 
 type Field = {
     key: string;
@@ -16,6 +17,8 @@ type Field = {
     mobileWidth: number;
     height: number;
 };
+
+const { t } = useI18n();
 
 const props = withDefaults(defineProps<{
     schema: unknown;
@@ -65,7 +68,7 @@ const update = (field: Field, next: unknown): void => emit('update:modelValue', 
                 <label class="text-sm font-bold text-slate-700">{{ field.label }}<span v-if="field.required" class="text-rose-600"> *</span></label>
                 <textarea v-if="field.type === 'textarea'" :value="String(value(field))" :rows="field.height" :disabled="disabled" class="w-full rounded-xl border-slate-300 text-sm" :placeholder="field.placeholder" @input="update(field, ($event.target as HTMLTextAreaElement).value)" />
                 <select v-else-if="field.type === 'select'" :value="String(value(field))" :disabled="disabled" class="w-full rounded-xl border-slate-300 text-sm" @change="update(field, ($event.target as HTMLSelectElement).value)">
-                    <option value="">Selecione</option>
+                    <option value="">{{ t('classrooms.form.select') }}</option>
                     <option v-for="option in field.options" :key="option.value" :value="option.value">{{ option.label }}</option>
                 </select>
                 <div v-else-if="field.type === 'radio'" class="space-y-2">
