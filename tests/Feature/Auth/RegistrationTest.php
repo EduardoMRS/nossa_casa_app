@@ -32,9 +32,12 @@ test('new users can register with optional profile details and a simple eight ch
     $this->assertAuthenticated();
     $response->assertRedirect(route('home', absolute: false));
 
-    $user = auth()->user()?->load('profile');
+    $user = \App\Models\User::query()
+        ->where('email', 'test@example.com')
+        ->with('profile')
+        ->firstOrFail();
 
-    expect($user)->not->toBeNull()
+    expect($user)
         ->and($user->birth_date?->format('Y-m-d'))->toBe('1990-05-20')
         ->and($user->profile?->phone)->toBe('+55 (69) 99999-9999')
         ->and($user->profile?->gender)->toBe('other')
