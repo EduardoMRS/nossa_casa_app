@@ -543,6 +543,8 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
                 'expires_at' => $post->expires_at,
                 'category_ids' => $post->categories()->pluck('categories.id')->all(),
                 'form_id' => $post->forms()->value('forms.id'),
+                'comments_enabled' => $post->comments_enabled,
+                'reactions_enabled' => $post->reactions_enabled,
             ],
         ];
 
