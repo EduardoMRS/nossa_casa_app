@@ -11,7 +11,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('classrooms', function (Blueprint $table) {
-            $table->string('slug')->nullable()->after('name');
             $table->string('cover_path')->nullable()->after('description');
             $table->string('accent_color', 7)->nullable()->after('cover_path');
             $table->boolean('portal_enabled')->default(true)->after('accent_color');
@@ -125,7 +124,7 @@ return new class extends Migration
 
         Schema::table('classrooms', function (Blueprint $table) {
             $table->dropUnique(['church_id', 'slug']);
-            $table->dropColumn(['slug', 'cover_path', 'accent_color', 'portal_enabled', 'portal_settings']);
+            $table->dropColumn(['cover_path', 'accent_color', 'portal_enabled', 'portal_settings']);
         });
     }
 };
