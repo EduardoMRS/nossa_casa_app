@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Mail\ResetPasswordMail;
 use App\Models\Church;
+use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +29,10 @@ class BrandedResetPasswordNotification extends ResetPassword implements ShouldQu
         return ['mail' => 'mail'];
     }
 
-    public function toMail(object $notifiable): ResetPasswordMail
+    /**
+     * @param  User  $notifiable
+     */
+    public function toMail($notifiable): ResetPasswordMail
     {
         /** @var Church|null $church */
         $church = $notifiable->church;
