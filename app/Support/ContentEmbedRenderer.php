@@ -28,7 +28,7 @@ class ContentEmbedRenderer
         $model = match ($type) {
             'form' => Form::query()->where('church_id', $churchId)->find($id),
             'media' => Media::query()->where('church_id', $churchId)->find($id),
-            'post' => Post::query()->where('church_id', $churchId)->where('is_event_private', false)->find($id),
+            'post' => Post::query()->where('church_id', $churchId)->where('visibility', 'public')->find($id),
             'event' => Event::query()->where('church_id', $churchId)->find($id),
             'library' => Library::query()->where('church_id', $churchId)->find($id),
             default => null,
