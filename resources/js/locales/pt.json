@@ -661,7 +661,8 @@
                 "all": "Todos os gêneros",
                 "male": "Masculino",
                 "female": "Feminino"
-            }
+            },
+            "manage_portal": "Gerenciar portal"
         },
         "forms": {
             "registered": "Formulários registrados",
@@ -1149,7 +1150,8 @@
                 "blue": "Marcar em azul",
                 "pink": "Marcar em rosa",
                 "purple": "Marcar em roxo"
-            }
+            },
+            "navigation": "Navegação"
         }
     },
     "reader": {
