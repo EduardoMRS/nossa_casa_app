@@ -109,6 +109,7 @@ class EventRegistrationController extends Controller
                 __('admin.event_registrations.export_generated_at', ['date' => now()->format('d/m/Y H:i')]),
                 $this->pdfBranding($event),
                 $registrations->pluck('name')->map(fn (mixed $name): string => (string) $name)->all(),
+                $this->pdfLayout($columns),
             );
         $filename = Str::slug($event->title).'-'.__('admin.event_registrations.filename').'.'.$format;
 
@@ -140,6 +141,8 @@ class EventRegistrationController extends Controller
             [$row],
             __('admin.event_registrations.individual_export'),
             $this->pdfBranding($event),
+            [],
+            $this->pdfLayout($columns),
         );
 
         return response($contents, 200, [
@@ -182,37 +185,74 @@ class EventRegistrationController extends Controller
         });
     }
 
-    /** @return list<array{key: string, label: string}> */
+    /** @return list<array{key: string, label: string, width: int, break_before: bool}> */
     private function columns(?Form $form): array
     {
         return [
-            ['key' => 'name', 'label' => __('admin.event_registrations.columns.name')],
-            ['key' => 'email', 'label' => __('admin.event_registrations.columns.email')],
-            ['key' => 'phone', 'label' => __('admin.event_registrations.columns.phone')],
-            ['key' => 'status', 'label' => __('admin.event_registrations.columns.status')],
-            ['key' => 'registered_at', 'label' => __('admin.event_registrations.columns.registered_at')],
+            ['key' => 'name', 'label' => __('admin.event_registrations.columns.name'), 'width' => 12, 'break_before' => false],
+            ['key' => 'email', 'label' => __('admin.event_registrations.columns.email'), 'width' => 6, 'break_before' => false],
+            ['key' => 'phone', 'label' => __('admin.event_registrations.columns.phone'), 'width' => 6, 'break_before' => false],
+            ['key' => 'status', 'label' => __('admin.event_registrations.columns.status'), 'width' => 6, 'break_before' => false],
+            ['key' => 'registered_at', 'label' => __('admin.event_registrations.columns.registered_at'), 'width' => 6, 'break_before' => false],
             ...$this->formFields($form)->map(fn (array $field): array => [
                 'key' => 'answers.'.$field['key'],
                 'label' => $field['label'],
+                'width' => $field['width'],
+                'break_before' => $field['break_before'],
             ])->all(),
         ];
     }
 
-    /** @return Collection<int, array{key: string, label: string, type: string}> */
+    /** @return Collection<int, array{key: string, label: string, type: string, width: int, break_before: bool}> */
     private function formFields(?Form $form): Collection
     {
         $schema = $form?->schema ?? [];
         $fields = isset($schema['fields']) && is_array($schema['fields']) ? $schema['fields'] : $schema;
+        $breakBeforeNextField = false;
 
         return collect($fields)
             ->filter(fn (mixed $field): bool => is_array($field))
-            ->map(fn (array $field): array => [
-                'key' => (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? ''),
-                'label' => (string) ($field['label'] ?? $field['name'] ?? $field['key'] ?? ''),
-                'type' => (string) ($field['type'] ?? 'text'),
-            ])
-            ->filter(fn (array $field): bool => $field['key'] !== '')
+            ->map(function (array $field) use (&$breakBeforeNextField): ?array {
+                $type = strtolower((string) ($field['type'] ?? 'text'));
+
+                if (in_array($type, ['heading', 'divider', 'line_break'], true)) {
+                    $breakBeforeNextField = true;
+
+                    return null;
+                }
+
+                $key = (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? '');
+
+                if ($key === '') {
+                    return null;
+                }
+
+                $normalized = [
+                    'key' => $key,
+                    'label' => (string) ($field['label'] ?? $field['name'] ?? $field['key'] ?? ''),
+                    'type' => $type,
+                    'width' => $this->formFieldWidth($field['width'] ?? 12),
+                    'break_before' => $breakBeforeNextField,
+                ];
+                $breakBeforeNextField = false;
+
+                return $normalized;
+            })
+            ->filter()
             ->values();
+    }
+
+    private function formFieldWidth(mixed $width): int
+    {
+        if (is_numeric($width)) {
+            return max(1, min(12, (int) $width));
+        }
+
+        return [
+            'full' => 12,
+            'half' => 6,
+            'third' => 4,
+        ][(string) $width] ?? 12;
     }
 
     /** @return Collection<int, array{key: string, label: string}> */
@@ -224,6 +264,18 @@ class EventRegistrationController extends Controller
         return $selected->isEmpty()
             ? $available
             : $available->filter(fn (array $column): bool => $selected->contains($column['key']))->values();
+    }
+
+    /**
+     * @param  Collection<int, array{width?: int, break_before?: bool}>  $columns
+     * @return list<array{width: int, break_before: bool}>
+     */
+    private function pdfLayout(Collection $columns): array
+    {
+        return $columns->map(fn (array $column): array => [
+            'width' => max(1, min(12, (int) ($column['width'] ?? 12))),
+            'break_before' => (bool) ($column['break_before'] ?? false),
+        ])->values()->all();
     }
 
     private function displayValue(mixed $value, string $key = ''): string
