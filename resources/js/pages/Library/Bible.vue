@@ -643,8 +643,7 @@ const loadBooks = (
         await loadChapters(preferredChapter);
     });
 
-const changeVersion = (): Promise<void> =>
-    loadBooks(book.value, chapter.value, currentBookIndex.value);
+const changeVersion = (): Promise<void> => loadBooks(book.value, chapter.value);
 const changeBook = (): Promise<void> =>
     runLoad(() => loadChapters(null));
 const changeChapter = (): Promise<void> => runLoad(loadChapter);
