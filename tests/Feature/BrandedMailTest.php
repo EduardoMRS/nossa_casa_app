@@ -59,8 +59,9 @@ test('church welcome email uses its own name colors logo and domain', function (
 test('password reset notification uses the branded responsive view', function () {
     App::setLocale('pt');
     $user = User::factory()->create();
+    $user->profile()->create(['location_lang' => 'pt-BR']);
     $message = (new BrandedResetPasswordNotification('reset-token'))->toMail($user);
-    $html = $message->render()->toHtml();
+    $html = $message->render();
 
     expect($html)
         ->toContain('Redefina sua senha')
