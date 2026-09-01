@@ -3,6 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { BookOpen, ExternalLink, FileText, MessageSquare, Plus, Settings, Trash2 } from '@lucide/vue';
 import { ref } from 'vue';
+import MarkdownWysiwyg from '@/components/MarkdownWysiwyg.vue';
 
 const props = defineProps<{
     classroom: any;
@@ -20,10 +21,23 @@ const settings = useForm({
     cover: null as File | null,
 });
 const post = useForm({ title: '', content: '', published_at: '', comments_enabled: true, reactions_enabled: true });
+const editingPostId = ref('');
 const activity = useForm({ form_id: '', title: '', instructions: '', published_at: '', available_until: '', max_attempts: 1, is_published: true });
 const material = useForm({ title: '', description: '', type: 'link', url: '', file: null as File | null });
 const saveSettings = () => settings.transform((data) => ({ ...data, _method: 'put' })).post(`${base}/settings`, { forceFormData: true, preserveScroll: true });
-const createPost = () => post.post(`${base}/posts`, { preserveScroll: true, onSuccess: () => post.reset() });
+const resetPost = () => { editingPostId.value = ''; post.reset(); };
+const editPost = (item: any) => {
+    editingPostId.value = item.id;
+    post.title = item.title;
+    post.content = item.content;
+    post.published_at = item.published_at ? String(item.published_at).slice(0, 16) : '';
+    post.comments_enabled = Boolean(item.comments_enabled);
+    post.reactions_enabled = Boolean(item.reactions_enabled);
+};
+const createPost = () => {
+    const options = { preserveScroll: true, onSuccess: resetPost };
+    editingPostId.value ? post.put(`${base}/posts/${editingPostId.value}`, options) : post.post(`${base}/posts`, options);
+};
 const createActivity = () => activity.post(`${base}/activities`, { preserveScroll: true, onSuccess: () => activity.reset() });
 const createMaterial = () => material.post(`${base}/materials`, { forceFormData: true, preserveScroll: true, onSuccess: () => material.reset() });
 const remove = (path: string) => { if (confirm('Excluir este item?')) router.delete(path, { preserveScroll: true }); };
@@ -59,8 +73,8 @@ const tabs = [{ id: 'settings', label: 'Portal', icon: Settings }, { id: 'posts'
         </section>
 
         <section v-else-if="tab === 'posts'" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <div class="space-y-3"><article v-for="item in classroom.posts" :key="item.id" class="rounded-2xl border bg-white p-5"><div class="flex justify-between gap-3"><div><h3 class="font-black">{{ item.title }}</h3><p class="mt-1 text-xs text-slate-500">{{ item.comments_enabled ? 'Comentários ativos' : 'Comentários desativados' }} · {{ item.reactions_enabled ? 'Reações ativas' : 'Reações desativadas' }}</p></div><button class="text-rose-600" @click="remove(`${base}/posts/${item.id}`)"><Trash2 class="size-4" /></button></div></article><p v-if="!classroom.posts?.length" class="rounded-2xl border border-dashed bg-white p-8 text-center text-sm text-slate-500">Nenhuma publicação.</p></div>
-            <form class="h-fit space-y-3 rounded-2xl border bg-white p-5" @submit.prevent="createPost"><h2 class="font-black">Nova publicação</h2><input v-model="post.title" required class="w-full rounded-xl border-slate-300" placeholder="Título" /><textarea v-model="post.content" required rows="7" class="w-full rounded-xl border-slate-300" placeholder="Conteúdo (Markdown)" /><label class="flex gap-2 text-sm"><input v-model="post.comments_enabled" type="checkbox" />Permitir comentários</label><label class="flex gap-2 text-sm"><input v-model="post.reactions_enabled" type="checkbox" />Permitir reações</label><button class="w-full rounded-xl bg-indigo-600 py-2.5 font-black text-white"><Plus class="mr-1 inline size-4" />Publicar</button></form>
+            <div class="space-y-3"><article v-for="item in classroom.posts" :key="item.id" class="rounded-2xl border bg-white p-5"><div class="flex justify-between gap-3"><div><h3 class="font-black">{{ item.title }}</h3><p class="mt-1 text-xs text-slate-500">{{ item.comments_enabled ? 'Comentários ativos' : 'Comentários desativados' }} · {{ item.reactions_enabled ? 'Reações ativas' : 'Reações desativadas' }}</p></div><div class="flex items-center gap-2"><button class="rounded-lg border px-3 py-1.5 text-xs font-bold" @click="editPost(item)">Editar</button><button class="text-rose-600" @click="remove(`${base}/posts/${item.id}`)"><Trash2 class="size-4" /></button></div></div></article><p v-if="!classroom.posts?.length" class="rounded-2xl border border-dashed bg-white p-8 text-center text-sm text-slate-500">Nenhuma publicação.</p></div>
+            <form class="h-fit space-y-3 rounded-2xl border bg-white p-5" @submit.prevent="createPost"><div class="flex items-center justify-between"><h2 class="font-black">{{ editingPostId ? 'Editar publicação' : 'Nova publicação' }}</h2><button v-if="editingPostId" type="button" class="text-xs font-bold text-slate-500" @click="resetPost">Cancelar</button></div><input v-model="post.title" required class="w-full rounded-xl border-slate-300" placeholder="Título" /><MarkdownWysiwyg v-model="post.content" /><label class="flex gap-2 text-sm"><input v-model="post.comments_enabled" type="checkbox" />Permitir comentários</label><label class="flex gap-2 text-sm"><input v-model="post.reactions_enabled" type="checkbox" />Permitir reações</label><button class="w-full rounded-xl bg-indigo-600 py-2.5 font-black text-white"><Plus class="mr-1 inline size-4" />{{ editingPostId ? 'Salvar' : 'Publicar' }}</button></form>
         </section>
 
         <section v-else-if="tab === 'activities'" class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
