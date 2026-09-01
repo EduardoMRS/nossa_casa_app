@@ -58,6 +58,7 @@ services:
         condition: service_started
       minio-init:
         condition: service_completed_successfully
+    restart: unless-stopped
 
   native-builder:
     profiles: ["native"]
@@ -74,6 +75,7 @@ services:
       GRADLE_USER_HOME: /var/www/native/storage/gradle
     volumes:
       - .:/var/www
+    restart: unless-stopped
 
   media-worker:
     build:
@@ -128,6 +130,7 @@ services:
         condition: service_started
       minio-init:
         condition: service_completed_successfully
+    restart: unless-stopped
 
   scheduler:
     build:
@@ -242,6 +245,7 @@ services:
         condition: service_healthy
       reverb:
         condition: service_started
+    restart: unless-stopped
 
   db:
     image: mysql:8.0.45
@@ -252,6 +256,7 @@ services:
       - dbdata:/var/lib/mysql
     networks:
       - laravel_network
+    restart: unless-stopped
 
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
