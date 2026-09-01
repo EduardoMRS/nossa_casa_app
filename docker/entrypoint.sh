@@ -118,10 +118,12 @@ fi
 if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
     migration_attempt=1
     migration_max_attempts="${MIGRATION_MAX_ATTEMPTS:-12}"
+    database_ready_command='require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $app->make("db")->connection()->getPdo();'
 
-    until php artisan db:show --no-interaction >/dev/null 2>&1; do
+    until php -r "$database_ready_command" >/dev/null 2>&1; do
         if [ "$migration_attempt" -ge "$migration_max_attempts" ]; then
-            echo "Erro: banco indisponível após $migration_attempt tentativa(s)." >&2
+            echo "Erro: não foi possível abrir uma conexão PDO com o banco após $migration_attempt tentativa(s)." >&2
+            php -r "$database_ready_command" >&2 || true
             exit 1
         fi
 

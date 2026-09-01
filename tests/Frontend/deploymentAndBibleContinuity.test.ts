@@ -27,9 +27,24 @@ test('classroom portal migration resumes after a partial MySQL execution', () =>
 test('production startup retries only database readiness failures', () => {
     const entrypoint = readSource('docker/entrypoint.sh');
 
-    assert.match(entrypoint, /until php artisan db:show/);
+    assert.match(entrypoint, /until php -r "\$database_ready_command"/);
+    assert.match(entrypoint, /connection\(\)->getPdo\(\)/);
+    assert.doesNotMatch(entrypoint, /php artisan db:show/);
     assert.match(entrypoint, /php artisan migrate --force --no-interaction/);
     assert.doesNotMatch(entrypoint, /until php artisan migrate/);
+});
+
+test('database stays internal and gates dependent containers by health', () => {
+    const compose = readSource('docker-compose.yml');
+    const databaseService =
+        compose.match(/\n  db:\n([\s\S]*?)\n  minio:/)?.[1] ?? '';
+
+    assert.match(databaseService, /mysqladmin ping/);
+    assert.doesNotMatch(databaseService, /\n\s+ports:/);
+    assert.equal(
+        (compose.match(/db:\n\s+condition: service_healthy/g) ?? []).length,
+        3,
+    );
 });
 
 test('Bible version changes preserve the canonical book and chapter', () => {
