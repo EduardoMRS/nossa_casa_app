@@ -76,6 +76,36 @@ services:
     volumes:
       - .:/var/www
 
+  queue-worker:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    command: php artisan queue:work --queue=mail,default --tries=3 --timeout=60 --backoff=5
+    volumes:
+      - .:/var/www
+      - phpvendor:/var/www/vendor
+      - frameworkcache:/var/www/storage/framework
+      - bootstrapcache:/var/www/bootstrap/cache
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DOCKER_DB_DATABASE:-laravel}
+      DB_USERNAME: ${DOCKER_DB_USERNAME:-root}
+      DB_PASSWORD: ${DOCKER_DB_PASSWORD:-secret}
+      SKIP_NODE_INSTALL: "true"
+    networks:
+      - laravel_network
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   media-worker:
     build:
       context: .
