@@ -16,6 +16,8 @@ type PostResource = {
     published_at?: string | null;
     expires_at?: string | null;
     category_ids?: string[];
+    comments_enabled?: boolean;
+    reactions_enabled?: boolean;
 };
 
 type CategoryOption = {
@@ -53,6 +55,8 @@ const form = useForm({
     published_at: toDateTimeLocal(props.post?.published_at),
     expires_at: toDateTimeLocal(props.post?.expires_at),
     category_ids: props.post?.category_ids ? [...props.post.category_ids] : [],
+    comments_enabled: props.post?.comments_enabled ?? true,
+    reactions_enabled: props.post?.reactions_enabled ?? true,
 });
 
 const slugify = (value: string): string => {
@@ -194,6 +198,17 @@ const submit = () => {
                     :label="t('posts.form.category_title')"
                     :hint="t('posts.form.category_hint')"
                 />
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
+                        <input v-model="form.comments_enabled" type="checkbox" class="rounded border-input" />
+                        Permitir comentários
+                    </label>
+                    <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
+                        <input v-model="form.reactions_enabled" type="checkbox" class="rounded border-input" />
+                        Permitir reações
+                    </label>
+                </div>
 
                 <div class="grid gap-5 md:grid-cols-2">
                     <div class="space-y-2">
