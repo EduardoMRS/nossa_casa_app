@@ -17,7 +17,7 @@ class PostController extends Controller
     public function index()
     {
         // Utilizando o local scope "visible" criado no seu model
-        $posts = Post::visible()->where('is_event_private', false)->with(['church', 'categories'])->paginate(15)->map(function ($post) {
+        $posts = Post::visible()->where('visibility', 'public')->with(['church', 'categories'])->paginate(15)->map(function ($post) {
             $post->localize(relations: ['church', 'categories']);
 
             return [
@@ -50,6 +50,8 @@ class PostController extends Controller
             'author_id' => 'nullable|string|exists:users,id',
             'church_id' => 'nullable|string|exists:churches,id',
             'form_id' => 'nullable|string|exists:forms,id',
+            'comments_enabled' => 'required|boolean',
+            'reactions_enabled' => 'required|boolean',
         ]);
 
         $validated['author_id'] = $request->user()->id;
@@ -71,7 +73,7 @@ class PostController extends Controller
 
     public function show(string $id)
     {
-        $post = Post::where('is_event_private', false)->with(['author', 'church', 'categories', 'medias', 'comments'])->findOrFail($id);
+        $post = Post::where('visibility', 'public')->with(['author', 'church', 'categories', 'medias', 'comments'])->findOrFail($id);
         $post->localize(relations: ['church', 'categories']);
 
         return response()->json($post);
@@ -79,7 +81,7 @@ class PostController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $post = Post::where('is_event_private', false)->findOrFail($id);
+        $post = Post::where('visibility', 'public')->findOrFail($id);
         $this->ensureChurchAccess($request, $post->church_id);
 
         $validated = $request->validate([
@@ -89,6 +91,8 @@ class PostController extends Controller
             'published_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after:published_at',
             'form_id' => 'sometimes|nullable|string|exists:forms,id',
+            'comments_enabled' => 'sometimes|required|boolean',
+            'reactions_enabled' => 'sometimes|required|boolean',
         ]);
 
         $post->update($validated);
@@ -110,7 +114,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, string $id)
     {
-        $post = Post::where('is_event_private', false)->findOrFail($id);
+        $post = Post::where('visibility', 'public')->findOrFail($id);
         $this->ensureChurchAccess($request, $post->church_id);
         $post->delete();
 
