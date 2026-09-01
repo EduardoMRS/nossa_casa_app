@@ -10,6 +10,7 @@ import {
     Newspaper,
     Radio,
     X,
+    Users,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
@@ -30,7 +31,7 @@ import { index as galleryIndex } from '@/routes/gallery';
 import { index as libraryIndex } from '@/routes/library';
 import { index as publicPostsIndex } from '@/routes/posts/public';
 
-type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library';
+type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library' | 'classrooms';
 
 const props = withDefaults(
     defineProps<{ active?: PublicNavKey; showLocale?: boolean }>(),
@@ -109,6 +110,14 @@ const navItems = computed(() => [
         href: libraryIndex(),
         icon: LibraryBig,
     },
+    ...(isAuthenticated.value
+        ? [{
+              key: 'classrooms' as const,
+              label: t('nav.classrooms'),
+              href: '/classrooms',
+              icon: Users,
+          }]
+        : []),
 ]);
 
 const navClass = (key: PublicNavKey): string =>

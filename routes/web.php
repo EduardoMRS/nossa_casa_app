@@ -3,6 +3,7 @@
 use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\AdminWorkspaceController;
+use App\Http\Controllers\Admin\ClassroomContentController;
 use App\Http\Controllers\Admin\EventContentController;
 use App\Http\Controllers\Admin\EventRegistrationController;
 use App\Http\Controllers\Admin\LibraryVerseController;
@@ -11,6 +12,10 @@ use App\Http\Controllers\Admin\StopLiveStreamController;
 use App\Http\Controllers\BrandingAssetController;
 use App\Http\Controllers\ChurchOnboardingController;
 use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\ClassroomActivitySubmissionController;
+use App\Http\Controllers\ClassroomDiscussionController;
+use App\Http\Controllers\ClassroomMaterialDownloadController;
+use App\Http\Controllers\ClassroomPortalController;
 use App\Http\Controllers\ContentEmbedController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\EventPrivateAreaController;
@@ -88,6 +93,28 @@ Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->n
 Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('classrooms.index');
+    Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('classrooms.show');
+    Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store'])->name('classrooms.activities.submit');
+    Route::get('/classrooms/{classroom:slug}/materials/{material}', ClassroomMaterialDownloadController::class)->name('classrooms.materials.download');
+    Route::post('/classrooms/{classroom:slug}/discussions', [ClassroomDiscussionController::class, 'store'])->name('classrooms.discussions.store');
+    Route::post('/classrooms/{classroom:slug}/discussions/{discussion}/replies', [ClassroomDiscussionController::class, 'reply'])->name('classrooms.discussions.replies.store');
+
+    Route::prefix('dashboard/classrooms/{classroom}/content')
+        ->name('admin.classrooms.content.')
+        ->group(function () {
+            Route::get('/', [ClassroomContentController::class, 'index'])->name('index');
+            Route::put('/settings', [ClassroomContentController::class, 'updateSettings'])->name('settings.update');
+            Route::post('/posts', [ClassroomContentController::class, 'storePost'])->name('posts.store');
+            Route::put('/posts/{post}', [ClassroomContentController::class, 'updatePost'])->name('posts.update');
+            Route::delete('/posts/{post}', [ClassroomContentController::class, 'destroyPost'])->name('posts.destroy');
+            Route::post('/activities', [ClassroomContentController::class, 'storeActivity'])->name('activities.store');
+            Route::delete('/activities/{activity}', [ClassroomContentController::class, 'destroyActivity'])->name('activities.destroy');
+            Route::post('/materials', [ClassroomContentController::class, 'storeMaterial'])->name('materials.store');
+            Route::delete('/materials/{material}', [ClassroomContentController::class, 'destroyMaterial'])->name('materials.destroy');
+            Route::put('/discussions/{discussion}', [ClassroomContentController::class, 'moderateDiscussion'])->name('discussions.update');
+            Route::delete('/discussions/{discussion}', [ClassroomContentController::class, 'destroyDiscussion'])->name('discussions.destroy');
+        });
     Route::post('/api/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('/api/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::post('/onboarding/communities', [ChurchOnboardingController::class, 'storeCommunity'])->name('onboarding.communities.store');
@@ -460,7 +487,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         $churchId = request()->user()?->church?->id;
         $posts = Post::query()
             ->where('church_id', $churchId)
-            ->where('is_event_private', false)
+            ->where('visibility', 'public')
             ->with('author:id,first_name,last_name,email')
             ->orderByDesc('created_at')
             ->paginate(10)
@@ -500,7 +527,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         ]);
     })->name('posts.create');
     Route::get('/dashboard/posts/{post}/edit', function ($post) {
-        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('visibility', 'public')->with(['church', 'medias'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $church = $post->church;
         $props = [
@@ -516,13 +543,15 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
                 'expires_at' => $post->expires_at,
                 'category_ids' => $post->categories()->pluck('categories.id')->all(),
                 'form_id' => $post->forms()->value('forms.id'),
+                'comments_enabled' => $post->comments_enabled,
+                'reactions_enabled' => $post->reactions_enabled,
             ],
         ];
 
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
     Route::get('/dashboard/posts/{post}', function () {
-        $post = Post::query()->where('is_event_private', false)->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
+        $post = Post::query()->where('visibility', 'public')->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
         abort_unless($post->church_id === request()->user()?->church?->id, 403);
         $post->localize(relations: ['church', 'categories']);
         $props = [

@@ -102,6 +102,7 @@
         "ios_instructions": "Open the browser share menu and choose Add to Home Screen."
     },
     "nav": {
+        "classrooms": "Classrooms",
         "posts": "Posts",
         "home": "Home",
         "events": "Events",

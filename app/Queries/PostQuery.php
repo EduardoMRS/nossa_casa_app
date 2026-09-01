@@ -133,7 +133,7 @@ final class PostQuery
     private function publishedPosts(?string $churchId): Builder
     {
         return Post::query()
-            ->where('is_event_private', false)
+            ->where('visibility', 'public')
             ->published()
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
             ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
@@ -148,7 +148,7 @@ final class PostQuery
             && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true);
 
         return Post::query()
-            ->where('is_event_private', false)
+            ->where('visibility', 'public')
             ->when($canPreview, fn (Builder $query): Builder => $query->visible(), fn (Builder $query): Builder => $query->published())
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
             ->with(['church:id,name,slug', 'author:id,first_name,last_name', 'categories:id,name', 'medias'])
