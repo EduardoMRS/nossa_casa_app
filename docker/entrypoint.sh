@@ -115,6 +115,24 @@ if [ "$use_prebuilt_frontend" != "true" ] && [ "${SKIP_NODE_INSTALL:-false}" != 
     printf '%s' "$node_manifest_hash" > node_modules/.node-manifest.sha256
 fi
 
+if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
+    echo "Aplicando migrations pendentes..."
+
+    migration_attempt=1
+    migration_max_attempts="${MIGRATION_MAX_ATTEMPTS:-12}"
+
+    until php artisan migrate --force --no-interaction; do
+        if [ "$migration_attempt" -ge "$migration_max_attempts" ]; then
+            echo "Erro: migrations falharam após $migration_attempt tentativa(s)." >&2
+            exit 1
+        fi
+
+        echo "Banco ainda indisponível; nova tentativa em 5 segundos ($migration_attempt/$migration_max_attempts)..."
+        migration_attempt=$((migration_attempt + 1))
+        sleep 5
+    done
+fi
+
 if [ "$1" = "php-fpm" ]; then
     if [ "$use_prebuilt_frontend" = "true" ]; then
         echo "Publicando os assets frontend gerados pela imagem..."
