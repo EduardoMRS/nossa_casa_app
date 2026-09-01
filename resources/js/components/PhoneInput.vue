@@ -124,7 +124,9 @@ const changeCountry = (): void => {
 </script>
 
 <template>
-    <div class="phone-input flex h-9 w-full min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/30">
+    <div
+        class="phone-input flex h-9 w-full min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/30"
+    >
         <select
             v-model="selectedCode"
             :disabled="disabled"
