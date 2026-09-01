@@ -37,8 +37,7 @@ test('new users can register with optional profile details and a simple eight ch
         ->with('profile')
         ->firstOrFail();
 
-    expect($user)
-        ->and($user->birth_date?->format('Y-m-d'))->toBe('1990-05-20')
+    expect($user->birth_date?->format('Y-m-d'))->toBe('1990-05-20')
         ->and($user->profile?->phone)->toBe('+55 (69) 99999-9999')
         ->and($user->profile?->gender)->toBe('other')
         ->and($user->profile?->location_lang)->toBe('pt-BR');
