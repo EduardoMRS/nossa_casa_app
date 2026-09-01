@@ -96,7 +96,8 @@ class ClassroomPortalController extends Controller
 
         return Inertia::render('Classrooms/Portal', [
             'classroom' => [
-                ...$classroom->only(['id', 'name', 'slug', 'description', 'cover_path', 'accent_color', 'portal_settings']),
+                ...$classroom->only(['id', 'name', 'slug', 'description', 'accent_color', 'portal_settings']),
+                'cover_url' => $classroom->cover_path ? genUrl($classroom->cover_path) : null,
                 'church' => $classroom->church,
                 'teacher' => $classroom->teacher,
             ],
