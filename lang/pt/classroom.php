@@ -9,4 +9,16 @@ return [
     'student_age_mismatch' => 'A idade do aluno não é compatível com esta sala.',
     'student_gender_mismatch' => 'O gênero do aluno não é compatível com esta sala.',
     'student_membership_required' => 'O aluno não pertence a esta sala.',
+    'notifications' => [
+        'portal_updated' => 'Portal da sala atualizado.',
+        'post_published' => 'Publicação criada.',
+        'post_updated' => 'Publicação atualizada.',
+        'activity_created' => 'Atividade criada.',
+        'material_added' => 'Material adicionado.',
+    ],
+    'validation' => [
+        'activity_unavailable' => 'Esta atividade não está mais disponível.',
+        'required' => 'O campo :attribute é obrigatório.',
+        'attempt_limit' => 'O limite de tentativas foi atingido.',
+    ],
 ];

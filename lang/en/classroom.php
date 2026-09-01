@@ -9,4 +9,16 @@ return [
     'student_age_mismatch' => 'The student age is not compatible with this classroom.',
     'student_gender_mismatch' => 'The student gender is not compatible with this classroom.',
     'student_membership_required' => 'The student does not belong to this classroom.',
+    'notifications' => [
+        'portal_updated' => 'Classroom portal updated.',
+        'post_published' => 'Post published.',
+        'post_updated' => 'Post updated.',
+        'activity_created' => 'Activity created.',
+        'material_added' => 'Material added.',
+    ],
+    'validation' => [
+        'activity_unavailable' => 'This activity is no longer available.',
+        'required' => 'The :attribute field is required.',
+        'attempt_limit' => 'The attempt limit has been reached.',
+    ],
 ];

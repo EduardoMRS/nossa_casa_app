@@ -18,7 +18,7 @@ class ClassroomActivitySubmissionController extends Controller
         abort_unless($activity->is_published && (! $activity->published_at || $activity->published_at->isPast()), 404);
 
         if ($activity->available_until?->isPast()) {
-            throw ValidationException::withMessages(['activity' => __('This activity is no longer available.')]);
+            throw ValidationException::withMessages(['activity' => __('classroom.validation.activity_unavailable')]);
         }
 
         $answers = $request->validate(['answers' => ['required', 'array']])['answers'];
@@ -31,7 +31,7 @@ class ClassroomActivitySubmissionController extends Controller
             if (in_array($type, ['heading', 'divider', 'line_break'], true)) continue;
             $key = (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? '');
             if ($key !== '' && blank($answers[$key] ?? null)) {
-                $errors["answers.$key"] = __('The :attribute field is required.', ['attribute' => $field['label'] ?? $key]);
+                $errors["answers.$key"] = __('classroom.validation.required', ['attribute' => $field['label'] ?? $key]);
             }
         }
 
@@ -39,7 +39,7 @@ class ClassroomActivitySubmissionController extends Controller
 
         $attempt = $activity->submissions()->where('user_id', $request->user()->id)->count() + 1;
         if ($attempt > $activity->max_attempts) {
-            throw ValidationException::withMessages(['activity' => __('The attempt limit has been reached.')]);
+            throw ValidationException::withMessages(['activity' => __('classroom.validation.attempt_limit')]);
         }
 
         $submission = $activity->submissions()->create([

@@ -52,7 +52,7 @@ class ClassroomContentController extends Controller
             'cover_path' => $coverPath,
             'portal_settings' => [...($classroom->portal_settings ?? []), 'forum_enabled' => $validated['forum_enabled']],
         ]);
-        return back()->with('success', __('Classroom portal updated.'));
+        return back()->with('success', __('classroom.notifications.portal_updated'));
     }
 
     public function storePost(Request $request, Classroom $classroom): RedirectResponse
@@ -74,7 +74,7 @@ class ClassroomContentController extends Controller
             'visibility' => 'classroom_private',
         ]);
         $classroom->posts()->attach($post);
-        return back()->with('success', __('Post published.'));
+        return back()->with('success', __('classroom.notifications.post_published'));
     }
 
     public function updatePost(Request $request, Classroom $classroom, Post $post): RedirectResponse
@@ -88,7 +88,7 @@ class ClassroomContentController extends Controller
             'comments_enabled' => ['required', 'boolean'],
             'reactions_enabled' => ['required', 'boolean'],
         ]));
-        return back()->with('success', __('Post updated.'));
+        return back()->with('success', __('classroom.notifications.post_updated'));
     }
 
     public function destroyPost(Request $request, Classroom $classroom, Post $post): RedirectResponse
@@ -112,7 +112,7 @@ class ClassroomContentController extends Controller
             'is_published' => ['required', 'boolean'],
         ]);
         $classroom->activities()->create([...$validated, 'created_by_id' => $request->user()->id]);
-        return back()->with('success', __('Activity created.'));
+        return back()->with('success', __('classroom.notifications.activity_created'));
     }
 
     public function destroyActivity(Request $request, Classroom $classroom, ClassroomActivity $activity): RedirectResponse
@@ -143,7 +143,7 @@ class ClassroomContentController extends Controller
             'mimetype' => $file?->getMimeType(),
             'size' => $file?->getSize(),
         ]);
-        return back()->with('success', __('Material added.'));
+        return back()->with('success', __('classroom.notifications.material_added'));
     }
 
     public function destroyMaterial(Request $request, Classroom $classroom, ClassroomMaterial $material): RedirectResponse

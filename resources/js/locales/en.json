@@ -661,7 +661,8 @@
                 "all": "all genders",
                 "male": "Male",
                 "female": "Female"
-            }
+            },
+            "manage_portal": "Manage portal"
         },
         "forms": {
             "registered": "Registered forms",
@@ -749,14 +750,14 @@
                 "processing": "Maintenance mode active...",
                 "error": "The backup operation could not be completed."
             },
-            "stats": {
-                "0": "Users",
-                "1": "Events",
-                "2": "Posts",
-                "3": "Comments",
-                "4": "Media",
-                "5": "Forms"
-            }
+            "stats": [
+                "Users",
+                "Events",
+                "Posts",
+                "Comments",
+                "Media",
+                "Forms"
+            ]
         },
         "live_streams": {
             "title": "Live stream control",
@@ -827,10 +828,10 @@
             "anonymous": "Anonymous request",
             "mine": "My request",
             "send_anonymously": "Send anonymously",
-            "stats": {
-                "0": "Requests sent",
-                "1": "Church requests"
-            }
+            "stats": [
+                "Requests sent",
+                "Church requests"
+            ]
         },
         "wall": {
             "title": "Moderate wall",
@@ -844,11 +845,11 @@
             "all_types": "All content types",
             "removed": "Comment removed.",
             "empty": "No comments to review.",
-            "stats": {
-                "0": "Total comments",
-                "1": "Posts with comments",
-                "2": "Events with comments"
-            }
+            "stats": [
+                "Total comments",
+                "Posts with comments",
+                "Events with comments"
+            ]
         },
         "multicongregation": {
             "title": "Multicongregations",
@@ -880,11 +881,11 @@
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
-            "stats": {
-                "0": "Churches",
-                "1": "Communities",
-                "2": "Headquarters/branch links"
-            },
+            "stats": [
+                "Churches",
+                "Communities",
+                "Headquarters/branch links"
+            ],
             "status": {
                 "active": "Active",
                 "inactive": "Inactive",
@@ -906,11 +907,11 @@
             "reset_password": "Send password reset",
             "protected": "Protected account",
             "delete_confirm": "Delete user \"{name}\"?",
-            "stats": {
-                "0": "Total users",
-                "1": "Administrators",
-                "2": "Members"
-            }
+            "stats": [
+                "Total users",
+                "Administrators",
+                "Members"
+            ]
         },
         "media": {
             "title": "Moderate gallery",
@@ -939,16 +940,16 @@
             "approve": "Approve",
             "reject": "Reject",
             "empty": "No media registered yet.",
-            "actions": {
-                "0": "Open public gallery",
-                "1": "Go to dashboard"
-            },
-            "stats": {
-                "0": "Media submitted",
-                "1": "Pending",
-                "2": "Approved",
-                "3": "Rejected"
-            },
+            "actions": [
+                "Open public gallery",
+                "Go to dashboard"
+            ],
+            "stats": [
+                "Media submitted",
+                "Pending",
+                "Approved",
+                "Rejected"
+            ],
             "status": {
                 "pending": "Pending",
                 "approved": "Approved",
@@ -1069,44 +1070,44 @@
                 "title": "Highlights",
                 "subtitle": "Communication and content",
                 "description": "Manage the visual highlights shown to the community across the main channels.",
-                "stats": {
-                    "0": "Active highlights",
-                    "1": "Published posts",
-                    "2": "Published events"
-                },
-                "actions": {
-                    "0": "Manage posts",
-                    "1": "Open events",
-                    "2": "Church settings"
-                }
+                "stats": [
+                    "Active highlights",
+                    "Published posts",
+                    "Published events"
+                ],
+                "actions": [
+                    "Manage posts",
+                    "Open events",
+                    "Church settings"
+                ]
             },
             "library": {
                 "title": "Library and verse",
                 "subtitle": "Communication and content",
                 "description": "Manage devotional materials, the digital collection, and featured verses.",
-                "stats": {
-                    "0": "Library materials",
-                    "1": "Registered verses",
-                    "2": "Content categories"
-                },
-                "actions": {
-                    "0": "Open public home",
-                    "1": "Review highlights"
-                }
+                "stats": [
+                    "Library materials",
+                    "Registered verses",
+                    "Content categories"
+                ],
+                "actions": [
+                    "Open public home",
+                    "Review highlights"
+                ]
             },
             "prayer_requests": {
                 "title": "Intercession requests",
                 "subtitle": "Ministries and members",
                 "description": "Review incoming requests and organize pastoral follow-up.",
-                "stats": {
-                    "0": "Requests received",
-                    "1": "Anonymous requests",
-                    "2": "Identified requests"
-                },
-                "actions": {
-                    "0": "Open my prayers",
-                    "1": "Go to dashboard"
-                }
+                "stats": [
+                    "Requests received",
+                    "Anonymous requests",
+                    "Identified requests"
+                ],
+                "actions": [
+                    "Open my prayers",
+                    "Go to dashboard"
+                ]
             }
         }
     },
@@ -1149,7 +1150,8 @@
                 "blue": "Highlight in blue",
                 "pink": "Highlight in pink",
                 "purple": "Highlight in purple"
-            }
+            },
+            "navigation": "Navigation"
         }
     },
     "reader": {
@@ -1663,5 +1665,83 @@
     "footer": {
         "privacy_terms": "Privacy and terms",
         "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
+    },
+    "classrooms": {
+        "index": {
+            "meta_title": "My classrooms",
+            "kicker": "Classroom",
+            "title": "My classrooms",
+            "description": "Activities, conversations, and materials together in one place.",
+            "empty": "You are not enrolled in a classroom yet."
+        },
+        "portal": {
+            "kicker": "Classroom",
+            "manage": "Manage",
+            "tabs": {
+                "wall": "Wall",
+                "activities": "Activities",
+                "materials": "Materials",
+                "forum": "Forum"
+            },
+            "wall_empty": "The wall does not have any posts yet.",
+            "activity_meta": "Activity · {attempts}/{max} attempts",
+            "available_until": "Available until {date}",
+            "submit_activity": "Submit activity",
+            "limit_reached": "Attempt limit reached",
+            "activities_empty": "No activities are available right now.",
+            "materials_empty": "No materials have been published.",
+            "start_discussion": "Start a discussion",
+            "subject": "Subject",
+            "discussion_placeholder": "Share a question or idea...",
+            "publish": "Publish",
+            "reply_placeholder": "Reply to the discussion",
+            "forum_empty": "The forum does not have any discussions yet."
+        },
+        "form": {
+            "select": "Select"
+        },
+        "admin": {
+            "page_title": "Classroom",
+            "kicker": "Classroom management",
+            "open_portal": "Open portal",
+            "identity_access": "Identity and access",
+            "name": "Name",
+            "accent_color": "Accent color",
+            "description": "Description",
+            "cover": "Cover",
+            "portal_enabled": "Portal available",
+            "forum_enabled": "Forum available",
+            "save_portal": "Save portal",
+            "comments_on": "Comments enabled",
+            "comments_off": "Comments disabled",
+            "reactions_on": "Reactions enabled",
+            "reactions_off": "Reactions disabled",
+            "edit": "Edit",
+            "empty_posts": "No posts.",
+            "edit_post": "Edit post",
+            "new_post": "New post",
+            "cancel": "Cancel",
+            "title": "Title",
+            "allow_comments": "Allow comments",
+            "allow_reactions": "Allow reactions",
+            "save": "Save",
+            "publish": "Publish",
+            "new_activity": "New activity",
+            "choose_form": "Choose a form",
+            "instructions": "Instructions",
+            "available_until": "Available until",
+            "attempts": "Attempts",
+            "create_activity": "Create activity",
+            "add_material": "Add material",
+            "link": "Link",
+            "file": "File",
+            "add": "Add",
+            "delete_confirm": "Delete this item?",
+            "unpin": "Unpin",
+            "pin": "Pin",
+            "unlock": "Unlock",
+            "lock": "Lock",
+            "delete": "Delete"
+        }
     }
 }
