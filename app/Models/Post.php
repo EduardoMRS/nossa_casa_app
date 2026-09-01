@@ -41,6 +41,15 @@ class Post extends Model
         'reactions_enabled' => true,
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Post $post): void {
+            if ($post->is_event_private && $post->visibility === 'public') {
+                $post->visibility = 'event_private';
+            }
+        });
+    }
+
     protected $appends = [
         'translations',
         'author_details',
