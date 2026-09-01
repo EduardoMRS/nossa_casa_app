@@ -661,7 +661,8 @@
                 "all": "all genders",
                 "male": "Male",
                 "female": "Female"
-            }
+            },
+            "manage_portal": "Manage portal"
         },
         "forms": {
             "registered": "Registered forms",
@@ -1149,7 +1150,8 @@
                 "blue": "Highlight in blue",
                 "pink": "Highlight in pink",
                 "purple": "Highlight in purple"
-            }
+            },
+            "navigation": "Navigation"
         }
     },
     "reader": {
