@@ -54,7 +54,7 @@ class EventPrivateAreaController extends Controller
                 ]),
             ],
             'posts' => $event->privatePosts()
-                ->where('is_event_private', true)
+                ->where('visibility', 'event_private')
                 ->published()
                 ->latest('published_at')
                 ->get()
