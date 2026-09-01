@@ -80,6 +80,10 @@ test('installed PWA uses a contained scroll shell and native bottom navigation',
     assert.match(navigation, /nav\.events/);
     assert.match(navigation, /nav\.profile/);
     assert.match(navigation, /page\.component !== 'Library\/Bible'/);
+    assert.match(navigation, /currentPath\.value\.startsWith\('\/dashboard'\)/);
+    assert.match(navigation, /currentPath\.value\.startsWith\('\/classrooms'\)/);
+    assert.match(app, /'Classrooms\/Index'/);
+    assert.match(app, /'Classrooms\/Portal'/);
     assert.match(navigation, /safe-area-inset-bottom/);
     assert.match(styles, /html\.pwa-public-shell body/);
     assert.match(styles, /position: fixed/);
