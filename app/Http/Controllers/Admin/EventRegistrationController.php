@@ -255,7 +255,7 @@ class EventRegistrationController extends Controller
         ][(string) $width] ?? 12;
     }
 
-    /** @return Collection<int, array{key: string, label: string}> */
+    /** @return Collection<int, array{key: string, label: string, width: int, break_before: bool}> */
     private function selectedColumns(Request $request, ?Form $form): Collection
     {
         $available = collect($this->columns($form));
