@@ -120,6 +120,9 @@ const pendingHighlight = ref<PendingBibleHighlight | null>(null);
 const readerTextRef = ref<HTMLElement | null>(null);
 let selectionCaptureTimer: number | null = null;
 let lastScrollPosition = 0;
+const currentBookIndex = computed(() =>
+    books.value.findIndex((item) => item.slug === book.value),
+);
 const currentChapterIndex = computed(() =>
     chapters.value.findIndex((item) => item === chapter.value),
 );
@@ -619,6 +622,7 @@ const runLoad = async (callback: () => Promise<void>): Promise<void> => {
 const loadBooks = (
     preferredBook: string = book.value,
     preferredChapter: number | null = chapter.value,
+    preferredBookIndex: number = currentBookIndex.value,
 ): Promise<void> =>
     runLoad(async () => {
         books.value = [];
@@ -628,16 +632,19 @@ const loadBooks = (
             bibleBooks.url(version.value),
         );
         books.value = payload.books;
-        book.value = payload.books.some(
-            (item) => item.slug === preferredBook,
-        )
-            ? preferredBook
-            : (payload.books[0]?.slug ?? '');
+
+        const matchingBook =
+            payload.books.find((item) => item.slug === preferredBook) ??
+            (preferredBookIndex >= 0
+                ? payload.books[preferredBookIndex]
+                : undefined);
+
+        book.value = matchingBook?.slug ?? payload.books[0]?.slug ?? '';
         await loadChapters(preferredChapter);
     });
 
 const changeVersion = (): Promise<void> =>
-    loadBooks(book.value, chapter.value);
+    loadBooks(book.value, chapter.value, currentBookIndex.value);
 const changeBook = (): Promise<void> =>
     runLoad(() => loadChapters(null));
 const changeChapter = (): Promise<void> => runLoad(loadChapter);

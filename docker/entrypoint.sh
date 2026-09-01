@@ -116,14 +116,12 @@ if [ "$use_prebuilt_frontend" != "true" ] && [ "${SKIP_NODE_INSTALL:-false}" != 
 fi
 
 if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
-    echo "Aplicando migrations pendentes..."
-
     migration_attempt=1
     migration_max_attempts="${MIGRATION_MAX_ATTEMPTS:-12}"
 
-    until php artisan migrate --force --no-interaction; do
+    until php artisan db:show --no-interaction >/dev/null 2>&1; do
         if [ "$migration_attempt" -ge "$migration_max_attempts" ]; then
-            echo "Erro: migrations falharam após $migration_attempt tentativa(s)." >&2
+            echo "Erro: banco indisponível após $migration_attempt tentativa(s)." >&2
             exit 1
         fi
 
@@ -131,6 +129,9 @@ if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIG
         migration_attempt=$((migration_attempt + 1))
         sleep 5
     done
+
+    echo "Aplicando migrations pendentes..."
+    php artisan migrate --force --no-interaction
 fi
 
 if [ "$1" = "php-fpm" ]; then
