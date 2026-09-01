@@ -1663,5 +1663,83 @@
     "footer": {
         "privacy_terms": "Privacidade e termos",
         "copyright": "© 2026 Nossa Casa Project · Open Source (MIT)"
+    },
+    "classrooms": {
+        "index": {
+            "meta_title": "Minhas salas",
+            "kicker": "Classroom",
+            "title": "Minhas salas",
+            "description": "Atividades, conversas e materiais reunidos em um só lugar.",
+            "empty": "Você ainda não participa de uma sala."
+        },
+        "portal": {
+            "kicker": "Classroom",
+            "manage": "Gerenciar",
+            "tabs": {
+                "wall": "Mural",
+                "activities": "Atividades",
+                "materials": "Materiais",
+                "forum": "Fórum"
+            },
+            "wall_empty": "O mural ainda não tem publicações.",
+            "activity_meta": "Atividade · {attempts}/{max} tentativas",
+            "available_until": "Disponível até {date}",
+            "submit_activity": "Enviar atividade",
+            "limit_reached": "Limite de tentativas atingido",
+            "activities_empty": "Nenhuma atividade disponível agora.",
+            "materials_empty": "Nenhum material publicado.",
+            "start_discussion": "Iniciar discussão",
+            "subject": "Assunto",
+            "discussion_placeholder": "Compartilhe uma dúvida ou ideia...",
+            "publish": "Publicar",
+            "reply_placeholder": "Responder à discussão",
+            "forum_empty": "O fórum ainda não tem discussões."
+        },
+        "form": {
+            "select": "Selecione"
+        },
+        "admin": {
+            "page_title": "Classroom",
+            "kicker": "Gestão do classroom",
+            "open_portal": "Abrir portal",
+            "identity_access": "Identidade e acesso",
+            "name": "Nome",
+            "accent_color": "Cor de destaque",
+            "description": "Descrição",
+            "cover": "Capa",
+            "portal_enabled": "Portal disponível",
+            "forum_enabled": "Fórum disponível",
+            "save_portal": "Salvar portal",
+            "comments_on": "Comentários ativos",
+            "comments_off": "Comentários desativados",
+            "reactions_on": "Reações ativas",
+            "reactions_off": "Reações desativadas",
+            "edit": "Editar",
+            "empty_posts": "Nenhuma publicação.",
+            "edit_post": "Editar publicação",
+            "new_post": "Nova publicação",
+            "cancel": "Cancelar",
+            "title": "Título",
+            "allow_comments": "Permitir comentários",
+            "allow_reactions": "Permitir reações",
+            "save": "Salvar",
+            "publish": "Publicar",
+            "new_activity": "Nova atividade",
+            "choose_form": "Escolha o formulário",
+            "instructions": "Instruções",
+            "available_until": "Disponível até",
+            "attempts": "Tentativas",
+            "create_activity": "Criar atividade",
+            "add_material": "Adicionar material",
+            "link": "Link",
+            "file": "Arquivo",
+            "add": "Adicionar",
+            "delete_confirm": "Excluir este item?",
+            "unpin": "Desafixar",
+            "pin": "Fixar",
+            "unlock": "Desbloquear",
+            "lock": "Bloquear",
+            "delete": "Excluir"
+        }
     }
 }
