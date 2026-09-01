@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     Baby,
+    BookOpen,
     ArrowLeft,
     Camera,
     DoorOpen,
@@ -41,6 +42,7 @@ type Member = {
 };
 type Classroom = {
     id: string;
+    slug?: string;
     name: string;
     description: string | null;
     min_age: number | null;
@@ -543,7 +545,13 @@ function updateSeparation(value: boolean): void {
                             <DoorOpen class="size-4" />{{
                                 t('admin.classrooms.open')
                             }}</button
-                        ><button
+                        ><Link
+                            :href="`/dashboard/classrooms/${room.id}/content`"
+                            class="inline-flex items-center justify-center rounded-lg border px-3 py-2 text-indigo-700"
+                            title="Gerenciar portal"
+                        >
+                            <BookOpen class="size-4" />
+                        </Link><button
                             class="rounded-lg border px-3 py-2 text-slate-600"
                             @click="edit(room)"
                         >
