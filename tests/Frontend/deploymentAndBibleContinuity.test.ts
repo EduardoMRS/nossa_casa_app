@@ -40,6 +40,6 @@ test('Bible version changes preserve the canonical book and chapter', () => {
     assert.match(reader, /payload\.books\[preferredBookIndex\]/);
     assert.match(
         reader,
-        /loadBooks\(book\.value, chapter\.value, currentBookIndex\.value\)/,
+        /loadBooks\(book\.value, chapter\.value\)/,
     );
 });
