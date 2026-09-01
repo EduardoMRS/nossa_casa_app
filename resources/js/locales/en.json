@@ -196,7 +196,15 @@
             "full_name": "Full name",
             "email": "Email address",
             "password": "Password",
-            "confirm_password": "Confirm password"
+            "confirm_password": "Confirm password",
+            "birth_date": "Date of birth",
+            "phone": "Phone / WhatsApp",
+            "gender": "Gender",
+            "optional": "optional",
+            "not_informed": "Prefer not to say",
+            "female": "Female",
+            "male": "Male",
+            "other": "Other"
         },
         "login": {
             "meta_title": "Log in",
@@ -214,7 +222,10 @@
             "title": "Create an account",
             "description": "Enter your details below to create your account",
             "submit": "Create account",
-            "has_account": "Already have an account?"
+            "has_account": "Already have an account?",
+            "password_hint": "Use at least 8 characters.",
+            "accept_legal_prefix": "I have read and accept the",
+            "legal_document": "Privacy policy and terms of use"
         },
         "forgot": {
             "meta_title": "Forgot password",
