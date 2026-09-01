@@ -170,7 +170,15 @@ return [
       'rule-name' => 'mensagem personalizada',
     ],
   ],
-  'attributes' => 
-  [
+  'attributes' => [
+    'name' => 'nome',
+    'email' => 'endereço de e-mail',
+    'password' => 'senha',
+    'password_confirmation' => 'confirmação de senha',
+    'birth_date' => 'data de nascimento',
+    'phone' => 'telefone / WhatsApp',
+    'gender' => 'gênero',
+    'location_lang' => 'idioma',
+    'terms_accepted' => 'aceite da Política de privacidade e dos termos de uso',
   ],
 ];

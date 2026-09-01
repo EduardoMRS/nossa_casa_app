@@ -196,7 +196,15 @@
             "full_name": "Nome completo",
             "email": "Endereço de e‑mail",
             "password": "Senha",
-            "confirm_password": "Confirmar senha"
+            "confirm_password": "Confirmar senha",
+            "birth_date": "Data de nascimento",
+            "phone": "Telefone / WhatsApp",
+            "gender": "Gênero",
+            "optional": "opcional",
+            "not_informed": "Prefiro não informar",
+            "female": "Feminino",
+            "male": "Masculino",
+            "other": "Outro"
         },
         "login": {
             "meta_title": "Entrar",
@@ -214,7 +222,10 @@
             "title": "Criar conta",
             "description": "Insira seus dados abaixo para criar sua conta",
             "submit": "Criar conta",
-            "has_account": "Já tem conta?"
+            "has_account": "Já tem conta?",
+            "password_hint": "Use pelo menos 8 caracteres.",
+            "accept_legal_prefix": "Li e aceito a",
+            "legal_document": "Política de privacidade e os termos de uso"
         },
         "forgot": {
             "meta_title": "Esqueceu a senha",

@@ -195,6 +195,16 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'name' => 'name',
+        'email' => 'email address',
+        'password' => 'password',
+        'password_confirmation' => 'password confirmation',
+        'birth_date' => 'date of birth',
+        'phone' => 'phone / WhatsApp',
+        'gender' => 'gender',
+        'location_lang' => 'language',
+        'terms_accepted' => 'Privacy policy and terms of use acceptance',
+    ],
 
 ];
