@@ -98,6 +98,7 @@ class EventRegistrationController extends Controller
             ->map(fn (array $column): string => $this->displayValue(
                 data_get($registration, $column['key']),
                 $column['key'],
+                (string) ($column['type'] ?? 'text'),
             ))
             ->all())->all();
         $contents = $format === 'xlsx'
@@ -109,6 +110,7 @@ class EventRegistrationController extends Controller
                 __('admin.event_registrations.export_generated_at', ['date' => now()->format('d/m/Y H:i')]),
                 $this->pdfBranding($event),
                 $registrations->pluck('name')->map(fn (mixed $name): string => (string) $name)->all(),
+                $this->pdfLayout($columns),
             );
         $filename = Str::slug($event->title).'-'.__('admin.event_registrations.filename').'.'.$format;
 
@@ -133,6 +135,7 @@ class EventRegistrationController extends Controller
         $row = $columns->map(fn (array $column): string => $this->displayValue(
             data_get($item, $column['key']),
             $column['key'],
+            (string) ($column['type'] ?? 'text'),
         ))->all();
         $contents = $this->exporter->pdf(
             $event->title,
@@ -140,6 +143,8 @@ class EventRegistrationController extends Controller
             [$row],
             __('admin.event_registrations.individual_export'),
             $this->pdfBranding($event),
+            [],
+            $this->pdfLayout($columns),
         );
 
         return response($contents, 200, [
@@ -182,40 +187,78 @@ class EventRegistrationController extends Controller
         });
     }
 
-    /** @return list<array{key: string, label: string}> */
+    /** @return list<array{key: string, label: string, type: string, width: int, break_before: bool}> */
     private function columns(?Form $form): array
     {
         return [
-            ['key' => 'name', 'label' => __('admin.event_registrations.columns.name')],
-            ['key' => 'email', 'label' => __('admin.event_registrations.columns.email')],
-            ['key' => 'phone', 'label' => __('admin.event_registrations.columns.phone')],
-            ['key' => 'status', 'label' => __('admin.event_registrations.columns.status')],
-            ['key' => 'registered_at', 'label' => __('admin.event_registrations.columns.registered_at')],
+            ['key' => 'name', 'label' => __('admin.event_registrations.columns.name'), 'type' => 'text', 'width' => 12, 'break_before' => false],
+            ['key' => 'email', 'label' => __('admin.event_registrations.columns.email'), 'type' => 'email', 'width' => 6, 'break_before' => false],
+            ['key' => 'phone', 'label' => __('admin.event_registrations.columns.phone'), 'type' => 'phone', 'width' => 6, 'break_before' => false],
+            ['key' => 'status', 'label' => __('admin.event_registrations.columns.status'), 'type' => 'status', 'width' => 6, 'break_before' => false],
+            ['key' => 'registered_at', 'label' => __('admin.event_registrations.columns.registered_at'), 'type' => 'datetime', 'width' => 6, 'break_before' => false],
             ...$this->formFields($form)->map(fn (array $field): array => [
                 'key' => 'answers.'.$field['key'],
                 'label' => $field['label'],
+                'type' => $field['type'],
+                'width' => $field['width'],
+                'break_before' => $field['break_before'],
             ])->all(),
         ];
     }
 
-    /** @return Collection<int, array{key: string, label: string, type: string}> */
+    /** @return Collection<int, array{key: string, label: string, type: string, width: int, break_before: bool}> */
     private function formFields(?Form $form): Collection
     {
         $schema = $form?->schema ?? [];
         $fields = isset($schema['fields']) && is_array($schema['fields']) ? $schema['fields'] : $schema;
+        $breakBeforeNextField = false;
 
         return collect($fields)
             ->filter(fn (mixed $field): bool => is_array($field))
-            ->map(fn (array $field): array => [
-                'key' => (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? ''),
-                'label' => (string) ($field['label'] ?? $field['name'] ?? $field['key'] ?? ''),
-                'type' => (string) ($field['type'] ?? 'text'),
-            ])
-            ->filter(fn (array $field): bool => $field['key'] !== '')
+            ->map(function (array $field) use (&$breakBeforeNextField): ?array {
+                $type = strtolower((string) ($field['type'] ?? 'text'));
+
+                if (in_array($type, ['heading', 'divider', 'line_break'], true)) {
+                    $breakBeforeNextField = true;
+
+                    return null;
+                }
+
+                $key = (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? '');
+
+                if ($key === '') {
+                    return null;
+                }
+
+                $normalized = [
+                    'key' => $key,
+                    'label' => (string) ($field['label'] ?? $field['name'] ?? $field['key'] ?? ''),
+                    'type' => $type,
+                    'width' => $this->formFieldWidth($field['width'] ?? 12),
+                    'break_before' => $breakBeforeNextField,
+                ];
+                $breakBeforeNextField = false;
+
+                return $normalized;
+            })
+            ->filter()
             ->values();
     }
 
-    /** @return Collection<int, array{key: string, label: string}> */
+    private function formFieldWidth(mixed $width): int
+    {
+        if (is_numeric($width)) {
+            return max(1, min(12, (int) $width));
+        }
+
+        return [
+            'full' => 12,
+            'half' => 6,
+            'third' => 4,
+        ][(string) $width] ?? 12;
+    }
+
+    /** @return Collection<int, array{key: string, label: string, type: string, width: int, break_before: bool}> */
     private function selectedColumns(Request $request, ?Form $form): Collection
     {
         $available = collect($this->columns($form));
@@ -226,7 +269,19 @@ class EventRegistrationController extends Controller
             : $available->filter(fn (array $column): bool => $selected->contains($column['key']))->values();
     }
 
-    private function displayValue(mixed $value, string $key = ''): string
+    /**
+     * @param  Collection<int, array{width?: int, break_before?: bool}>  $columns
+     * @return list<array{width: int, break_before: bool}>
+     */
+    private function pdfLayout(Collection $columns): array
+    {
+        return $columns->map(fn (array $column): array => [
+            'width' => max(1, min(12, (int) ($column['width'] ?? 12))),
+            'break_before' => (bool) ($column['break_before'] ?? false),
+        ])->values()->all();
+    }
+
+    private function displayValue(mixed $value, string $key = '', string $type = 'text'): string
     {
         if ($key === 'status' && filled($value)) {
             return __('admin.event_registrations.statuses.'.(string) $value);
@@ -234,6 +289,14 @@ class EventRegistrationController extends Controller
 
         if ($key === 'registered_at' && $value instanceof \DateTimeInterface) {
             return $value->format('d/m/Y H:i');
+        }
+
+        if (in_array($type, ['date', 'datetime', 'datetime-local', 'time'], true)) {
+            return $this->formattedDateValue($value, $type);
+        }
+
+        if ($key === 'phone' || in_array($type, ['phone', 'tel'], true)) {
+            return $this->formattedPhoneValue($value);
         }
 
         if (is_bool($value)) {
@@ -245,6 +308,59 @@ class EventRegistrationController extends Controller
         }
 
         return (string) ($value ?? '');
+    }
+
+    private function formattedDateValue(mixed $value, string $type): string
+    {
+        $raw = trim((string) ($value ?? ''));
+
+        if ($raw === '') {
+            return '';
+        }
+
+        try {
+            $date = $value instanceof \DateTimeInterface
+                ? $value
+                : new \DateTimeImmutable($raw);
+
+            return match ($type) {
+                'date' => $date->format('d/m/Y'),
+                'time' => $date->format('H:i'),
+                default => $date->format('d/m/Y H:i'),
+            };
+        } catch (\Throwable) {
+            return $raw;
+        }
+    }
+
+    private function formattedPhoneValue(mixed $value): string
+    {
+        $raw = trim((string) ($value ?? ''));
+
+        if ($raw === '') {
+            return '';
+        }
+
+        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+
+        if (str_starts_with($digits, '55') && in_array(strlen($digits), [12, 13], true)) {
+            $national = substr($digits, 2);
+            $areaCode = substr($national, 0, 2);
+            $number = substr($national, 2);
+            $prefixLength = strlen($number) === 9 ? 5 : 4;
+
+            return '+55 ('.$areaCode.') '.substr($number, 0, $prefixLength).'-'.substr($number, $prefixLength);
+        }
+
+        if (in_array(strlen($digits), [10, 11], true)) {
+            $areaCode = substr($digits, 0, 2);
+            $number = substr($digits, 2);
+            $prefixLength = strlen($number) === 9 ? 5 : 4;
+
+            return '('.$areaCode.') '.substr($number, 0, $prefixLength).'-'.substr($number, $prefixLength);
+        }
+
+        return $raw;
     }
 
     /** @return array<string, string> */
