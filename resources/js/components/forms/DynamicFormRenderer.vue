@@ -32,8 +32,12 @@ const mobileClasses = ['','col-span-1','col-span-2','col-span-3','col-span-4','c
 const desktopClasses = ['','md:col-span-1','md:col-span-2','md:col-span-3','md:col-span-4','md:col-span-5','md:col-span-6','md:col-span-7','md:col-span-8','md:col-span-9','md:col-span-10','md:col-span-11','md:col-span-12'];
 
 const fields = computed<Field[]>(() => {
-    const source = props.schema as { fields?: unknown[] } | unknown[];
-    const raw = Array.isArray(source) ? source : Array.isArray(source?.fields) ? source.fields : [];
+    const record = props.schema as { fields?: unknown[] } | null;
+    const raw = Array.isArray(props.schema)
+        ? props.schema
+        : Array.isArray(record?.fields)
+          ? record.fields
+          : [];
     return raw.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object')).map((item, index) => {
         const name = String(item.name ?? item.key ?? item.id ?? '');
         const options = Array.isArray(item.options) ? item.options.map((option) => typeof option === 'string'
