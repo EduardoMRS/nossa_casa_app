@@ -1687,7 +1687,10 @@
             "approval_notice": "The request will be sent to community leaders. The domain will only be activated after approval.",
             "send_request": "Send for approval",
             "request_sent": "Request sent successfully.",
-            "my_requests": "My requests"
+            "my_requests": "My requests",
+            "community_approval": "Community approval (no parent church)",
+            "parent_church_hint": "Choose a parent church to send the request directly to its leaders.",
+            "parent_approval_notice": "The request will be visible only to the selected parent church. Once approved, the new congregation will be linked as its branch."
         },
         "domain": {
             "subdomain": "Platform subdomain",
@@ -1708,7 +1711,8 @@
             "reject": "Reject",
             "approve_confirm": "Approve congregation {name}?",
             "reject_reason": "Enter the rejection reason:",
-            "view_document": "View proof document"
+            "view_document": "View proof document",
+            "requested_parent": "Requested parent church: {name}"
         },
         "status": {
             "pending": "Pending",
@@ -1725,7 +1729,8 @@
             "contact_phone": "Contact phone",
             "address": "Full address",
             "proof_document": "Proof of church existence or authorization",
-            "proof_document_hint": "PDF, JPG, PNG, or WebP up to 10 MB (optional)"
+            "proof_document_hint": "PDF, JPG, PNG, or WebP up to 10 MB (optional)",
+            "parent_church": "Parent church (optional)"
         },
         "errors": {
             "generic": "The operation could not be completed."
