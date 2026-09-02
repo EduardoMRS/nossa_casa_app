@@ -22,8 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
-import type { ChurchNetworkSettingsData } from '@/types/church-network';
-import { edit } from '@/routes/admin/branding';
+import { edit }
+import type { ChurchNetworkSettingsData } from '@/types/church-network'; from '@/routes/admin/branding';
 
 type BrandingData = {
     domain: string;
@@ -259,8 +259,8 @@ const resolvedDomain = computed(() =>
                 v-for="section in [
                     'identity',
                     'domain',
-                    'communication',
                     'network',
+                    'communication',
                     'location',
                     'templates',
                     'schedule',
