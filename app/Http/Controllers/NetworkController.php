@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ChurchNetworkRequestStatus;
 use App\Http\Requests\MoveChurchNetworkRequest;
 use App\Http\Requests\StoreChurchNetworkRequest;
 use App\Models\Church;
