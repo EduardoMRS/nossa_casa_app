@@ -17,7 +17,7 @@ import {
     Paperclip,
 } from '@lucide/vue';
 import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import PortalHeader from '@/components/PortalHeader.vue';
@@ -50,6 +50,7 @@ type Community = {
     churches_count: number;
     churches: Church[];
     distance_km?: number | null;
+    default_locale: 'pt' | 'en';
 };
 
 type RegistrationRequest = {
@@ -61,6 +62,7 @@ type RegistrationRequest = {
     address?: string | null;
     contact_email?: string | null;
     contact_phone?: string | null;
+    locale?: 'pt' | 'en' | null;
     status: string;
     review_notes?: string | null;
     community: { id: string; name: string };
@@ -78,14 +80,15 @@ const props = defineProps<{
     userChurchUrl?: string | null;
     reviewableRequests: RegistrationRequest[];
     myRequests: RegistrationRequest[];
-    registrationParentChurches: ParentChurch[];
     mainDomain: string;
 }>();
 
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const { confirm, prompt } = useConfirmDialog();
 const communityModalOpen = ref(false);
-const churchModalOpen = ref(false);
+const onboardingMode = ref<'new_community' | 'existing_community'>(
+    props.userCommunityId ? 'existing_community' : 'new_community',
+);
 const processing = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
@@ -98,6 +101,10 @@ const communityForm = ref({
     slug: '',
     description: '',
     found_date: '',
+    default_locale: locale.value,
+    address: '',
+    latitude: '',
+    longitude: '',
 });
 const churchForm = ref({
     community_id: props.userCommunityId ?? '',
@@ -109,6 +116,9 @@ const churchForm = ref({
     contact_email: '',
     contact_phone: '',
     address: '',
+    latitude: '',
+    longitude: '',
+    locale: locale.value,
 });
 
 const normalizedDomainInput = computed(() =>
@@ -147,11 +157,49 @@ const domainError = computed(() => {
     return '';
 });
 
-const availableCommunities = computed(() =>
-    props.communities.filter(
-        (community) => community.id === props.userCommunityId,
+const availableCommunities = computed(() => props.communities);
+const selectedCommunity = computed(() =>
+    props.communities.find(
+        (community) => community.id === churchForm.value.community_id,
     ),
 );
+const registrationParentChurches = computed<ParentChurch[]>(() =>
+    (selectedCommunity.value?.churches ?? []).map(({ id, name }) => ({
+        id,
+        name,
+    })),
+);
+
+watch(
+    () => churchForm.value.community_id,
+    () => {
+        churchForm.value.parent_church_id = '';
+        churchForm.value.locale =
+            selectedCommunity.value?.default_locale ?? locale.value;
+    },
+    { immediate: true },
+);
+
+const openOnboarding = (
+    mode: 'new_community' | 'existing_community',
+): void => {
+    onboardingMode.value = mode;
+    errorMessage.value = '';
+    communityModalOpen.value = true;
+};
+
+const useCurrentLocation = (
+    form: { latitude: string; longitude: string },
+): void => {
+    if (!('geolocation' in navigator)) {
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+        form.latitude = String(coords.latitude);
+        form.longitude = String(coords.longitude);
+    });
+};
 
 const requestNearbyCommunities = (
     latitude: number,
@@ -279,7 +327,7 @@ const requestChurch = async (): Promise<void> => {
         }
 
         await axios.post('/onboarding/churches', payload);
-        churchModalOpen.value = false;
+        communityModalOpen.value = false;
         successMessage.value = t('portal.onboarding.request_sent');
         window.setTimeout(() => window.location.reload(), 900);
     } catch (error) {
@@ -364,7 +412,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             <button
                                 v-if="canOnboard"
                                 class="rounded-xl border border-white/30 px-5 py-3 text-center text-sm font-black"
-                                @click="communityModalOpen = true"
+                                @click="openOnboarding('new_community')"
                             >
                                 {{ t('portal.onboarding.register_community') }}
                             </button>
@@ -511,9 +559,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         </p>
                     </div>
                     <button
-                        v-if="canOnboard && userCommunityId"
+                        v-if="canOnboard"
                         class="inline-flex items-center gap-2 rounded-xl bg-indigo-700 px-4 py-3 text-sm font-black text-white"
-                        @click="churchModalOpen = true"
+                        @click="openOnboarding('existing_community')"
                     >
                         <Plus class="size-4" />
                         {{ t('portal.onboarding.request_church') }}
@@ -743,6 +791,13 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     >
                                         {{ item.address }}
                                     </p>
+                                    <p
+                                        v-if="item.locale"
+                                        class="mt-1 text-xs font-bold text-slate-500"
+                                    >
+                                        {{ t('portal.fields.default_language') }}:
+                                        {{ t(`portal.fields.language_${item.locale}`) }}
+                                    </p>
                                     <a
                                         v-if="item.document_url"
                                         :href="item.document_url"
@@ -780,33 +835,138 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
         <AppModal
             v-model:open="communityModalOpen"
-            :title="t('portal.onboarding.register_community')"
-            :description="t('portal.onboarding.community_kicker')"
+            :title="
+                onboardingMode === 'new_community'
+                    ? t('portal.onboarding.register_community')
+                    : t('portal.onboarding.request_church')
+            "
+            :description="
+                onboardingMode === 'new_community'
+                    ? t('portal.onboarding.community_kicker')
+                    : t('portal.onboarding.church_kicker')
+            "
             size="lg"
             scrollable
+            content-class="border-slate-200 bg-white text-slate-950 shadow-2xl"
+            header-class="text-slate-950 [&_p]:text-slate-500"
         >
-            <form class="space-y-4" @submit.prevent="saveCommunity">
-                <input
-                    v-model="communityForm.name"
-                    required
-                    class="w-full rounded-xl border-slate-300"
-                    :placeholder="t('portal.fields.name')"
-                /><input
-                    v-model="communityForm.slug"
-                    required
-                    class="w-full rounded-xl border-slate-300"
-                    :placeholder="t('portal.fields.slug')"
-                /><textarea
-                    v-model="communityForm.description"
-                    required
-                    rows="4"
-                    class="w-full rounded-xl border-slate-300"
-                    :placeholder="t('portal.fields.description')"
-                /><input
-                    v-model="communityForm.found_date"
-                    type="date"
-                    class="w-full rounded-xl border-slate-300"
-                />
+            <div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                <button
+                    type="button"
+                    class="rounded-lg px-3 py-2.5 text-sm font-bold transition"
+                    :class="
+                        onboardingMode === 'new_community'
+                            ? 'bg-white text-indigo-700 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                    "
+                    @click="onboardingMode = 'new_community'"
+                >
+                    {{ t('portal.onboarding.new_community') }}
+                </button>
+                <button
+                    type="button"
+                    class="rounded-lg px-3 py-2.5 text-sm font-bold transition"
+                    :class="
+                        onboardingMode === 'existing_community'
+                            ? 'bg-white text-indigo-700 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                    "
+                    @click="onboardingMode = 'existing_community'"
+                >
+                    {{ t('portal.onboarding.existing_community') }}
+                </button>
+            </div>
+
+            <form
+                v-if="onboardingMode === 'new_community'"
+                class="space-y-5"
+                @submit.prevent="saveCommunity"
+            >
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.name') }}
+                        <input
+                            v-model="communityForm.name"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.slug') }}
+                        <input
+                            v-model="communityForm.slug"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.description') }}
+                        <textarea
+                            v-model="communityForm.description"
+                            required
+                            rows="4"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.found_date') }}
+                        <input
+                            v-model="communityForm.found_date"
+                            type="date"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none [color-scheme:light] focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.default_language') }}
+                        <select
+                            v-model="communityForm.default_locale"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        >
+                            <option value="pt">{{ t('portal.fields.language_pt') }}</option>
+                            <option value="en">{{ t('portal.fields.language_en') }}</option>
+                        </select>
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.address') }}
+                        <textarea
+                            v-model="communityForm.address"
+                            rows="2"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            :placeholder="t('portal.fields.address_hint')"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.latitude') }}
+                        <input
+                            v-model="communityForm.latitude"
+                            type="number"
+                            step="0.0000001"
+                            min="-90"
+                            max="90"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.longitude') }}
+                        <input
+                            v-model="communityForm.longitude"
+                            type="number"
+                            step="0.0000001"
+                            min="-180"
+                            max="180"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                </div>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100"
+                    @click="useCurrentLocation(communityForm)"
+                >
+                    <LocateFixed class="size-4" />
+                    {{ t('portal.fields.use_current_location') }}
+                </button>
                 <p v-if="errorMessage" class="text-sm font-bold text-rose-600">
                     {{ errorMessage }}
                 </p>
@@ -817,32 +977,26 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     {{ t('actions.save') }}
                 </button>
             </form>
-        </AppModal>
-
-        <AppModal
-            v-model:open="churchModalOpen"
-            :title="t('portal.onboarding.request_church')"
-            :description="t('portal.onboarding.church_kicker')"
-            size="lg"
-            scrollable
-        >
-            <form class="space-y-4" @submit.prevent="requestChurch">
-                <select
-                    v-model="churchForm.community_id"
-                    required
-                    class="w-full rounded-xl border-slate-300"
-                >
-                    <option value="" disabled>
-                        {{ t('portal.fields.community') }}
-                    </option>
-                    <option
-                        v-for="community in availableCommunities"
-                        :key="community.id"
-                        :value="community.id"
+            <form v-else class="space-y-5" @submit.prevent="requestChurch">
+                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
+                    {{ t('portal.fields.community') }}
+                    <select
+                        v-model="churchForm.community_id"
+                        required
+                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                     >
-                        {{ community.name }}
-                    </option>
-                </select>
+                        <option value="" disabled>
+                            {{ t('portal.fields.select_community') }}
+                        </option>
+                        <option
+                            v-for="community in availableCommunities"
+                            :key="community.id"
+                            :value="community.id"
+                        >
+                            {{ community.name }}
+                        </option>
+                    </select>
+                </label>
                 <div>
                     <label
                         for="registration-parent-church"
@@ -853,7 +1007,8 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     <select
                         id="registration-parent-church"
                         v-model="churchForm.parent_church_id"
-                        class="w-full rounded-xl border-slate-300"
+                        :disabled="!churchForm.community_id"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                     >
                         <option value="">
                             {{ t('portal.onboarding.community_approval') }}
@@ -871,23 +1026,28 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </p>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <input
-                        v-model="churchForm.name"
-                        required
-                        class="rounded-xl border-slate-300"
-                        :placeholder="t('portal.fields.name')"
-                    /><input
-                        v-model="churchForm.slug"
-                        required
-                        class="rounded-xl border-slate-300"
-                        :placeholder="t('portal.fields.slug')"
-                    />
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.name') }}
+                        <input
+                            v-model="churchForm.name"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.slug') }}
+                        <input
+                            v-model="churchForm.slug"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
                     <div class="space-y-3 sm:col-span-2">
                         <div class="grid gap-2 sm:grid-cols-2">
                             <label
                                 v-for="mode in domainModes"
                                 :key="mode"
-                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3"
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-slate-800"
                                 :class="{
                                     'border-indigo-500 bg-indigo-50':
                                         domainMode === mode,
@@ -915,7 +1075,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             <input
                                 v-model="domainInput"
                                 required
-                                class="min-w-0 flex-1 border-0 focus:ring-0"
+                                class="min-w-0 flex-1 border-0 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-0"
                                 :placeholder="
                                     domainMode === 'subdomain'
                                         ? t(
@@ -945,31 +1105,90 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             {{ domainError }}
                         </p>
                     </div>
-                    <input
-                        v-model="churchForm.found_date"
-                        type="date"
-                        class="rounded-xl border-slate-300"
-                    /><input
-                        v-model="churchForm.contact_email"
-                        type="email"
-                        class="rounded-xl border-slate-300"
-                        :placeholder="t('portal.fields.contact_email')"
-                    /><PhoneInput
-                        v-model="churchForm.contact_phone"
-                        :placeholder="t('portal.fields.contact_phone')"
-                    />
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.found_date') }}
+                        <input
+                            v-model="churchForm.found_date"
+                            type="date"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none [color-scheme:light] focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.default_language') }}
+                        <select
+                            v-model="churchForm.locale"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        >
+                            <option value="pt">{{ t('portal.fields.language_pt') }}</option>
+                            <option value="en">{{ t('portal.fields.language_en') }}</option>
+                        </select>
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.contact_email') }}
+                        <input
+                            v-model="churchForm.contact_email"
+                            type="email"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.contact_phone') }}
+                        <PhoneInput
+                            v-model="churchForm.contact_phone"
+                            class="border-slate-300 bg-white [&_input]:text-slate-900 [&_select]:text-slate-900"
+                        />
+                    </label>
                 </div>
-                <textarea
-                    v-model="churchForm.description"
-                    rows="3"
-                    class="w-full rounded-xl border-slate-300"
-                    :placeholder="t('portal.fields.description')"
-                /><textarea
-                    v-model="churchForm.address"
-                    rows="2"
-                    class="w-full rounded-xl border-slate-300"
-                    :placeholder="t('portal.fields.address')"
-                />
+                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
+                    {{ t('portal.fields.description') }}
+                    <textarea
+                        v-model="churchForm.description"
+                        rows="3"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    />
+                </label>
+                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
+                    {{ t('portal.fields.address') }}
+                    <textarea
+                        v-model="churchForm.address"
+                        rows="2"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        :placeholder="t('portal.fields.address_hint')"
+                    />
+                </label>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.latitude') }}
+                        <input
+                            v-model="churchForm.latitude"
+                            type="number"
+                            step="0.0000001"
+                            min="-90"
+                            max="90"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.longitude') }}
+                        <input
+                            v-model="churchForm.longitude"
+                            type="number"
+                            step="0.0000001"
+                            min="-180"
+                            max="180"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
+                    </label>
+                </div>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-bold text-indigo-700 transition hover:bg-indigo-100"
+                    @click="useCurrentLocation(churchForm)"
+                >
+                    <LocateFixed class="size-4" />
+                    {{ t('portal.fields.use_current_location') }}
+                </button>
                 <label
                     class="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 p-4"
                 >

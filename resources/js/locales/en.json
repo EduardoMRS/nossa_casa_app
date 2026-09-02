@@ -1687,6 +1687,8 @@
         "onboarding": {
             "register_community": "Register community",
             "request_church": "Request a new congregation",
+            "new_community": "Create a new community",
+            "existing_community": "Join an existing community",
             "community_kicker": "New network",
             "church_kicker": "New congregation",
             "approval_notice": "The request will be sent to community leaders. The domain will only be activated after approval.",
@@ -1735,7 +1737,16 @@
             "address": "Full address",
             "proof_document": "Proof of church existence or authorization",
             "proof_document_hint": "PDF, JPG, PNG, or WebP up to 10 MB (optional)",
-            "parent_church": "Parent church (optional)"
+            "parent_church": "Initial parent church (optional)",
+            "select_community": "Select a community",
+            "found_date": "Foundation date",
+            "default_language": "Default language",
+            "language_pt": "Portuguese",
+            "language_en": "English",
+            "address_hint": "Street, number, neighborhood, city, and state",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "use_current_location": "Use current location"
         },
         "errors": {
             "generic": "The operation could not be completed."

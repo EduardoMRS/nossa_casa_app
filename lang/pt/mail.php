@@ -30,6 +30,12 @@ return [
         'community' => 'Comunidade: :community',
         'parent_church' => 'Igreja matriz solicitada: :church',
         'contact' => 'E-mail para contato: :email',
+        'address' => 'Endereço: :address',
+        'language' => 'Idioma padrão: :language',
+        'languages' => [
+            'pt' => 'Português',
+            'en' => 'Inglês',
+        ],
         'action' => 'Analisar solicitação',
         'outro' => 'Acesse o portal para conferir as informações e aprovar ou rejeitar esta solicitação.',
     ],

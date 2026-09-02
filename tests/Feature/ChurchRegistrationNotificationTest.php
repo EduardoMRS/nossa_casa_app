@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Mail\ChurchRegistrationRequestedMail;
 use App\Models\Church;
+use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
@@ -61,4 +62,59 @@ test('community reviewers receive the registration request email when no parent 
     Mail::assertQueued(ChurchRegistrationRequestedMail::class, fn ($mail) => $mail->hasTo($owner->email));
     Mail::assertQueued(ChurchRegistrationRequestedMail::class, fn ($mail) => $mail->hasTo($communityLeader->email));
     Mail::assertNotQueued(ChurchRegistrationRequestedMail::class, fn ($mail) => $mail->hasTo($outsider->email));
+});
+
+test('unassigned user can request an existing community and location is applied after approval', function () {
+    $owner = User::factory()->create();
+    $requester = User::factory()->create();
+    $community = Community::factory()->create([
+        'owner_id' => $owner->id,
+        'default_locale' => 'en',
+    ]);
+
+    $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'name' => 'Unassigned Church',
+        'slug' => 'unassigned-church',
+        'domain' => 'unassigned-church.platform.test',
+        'address' => '123 Faith Street',
+        'latitude' => -10.88,
+        'longitude' => -61.95,
+        'locale' => 'en',
+    ])->assertCreated();
+
+    $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
+    expect($registrationRequest->locale)->toBe('en')
+        ->and($registrationRequest->latitude)->toBe(-10.88)
+        ->and($registrationRequest->longitude)->toBe(-61.95);
+
+    $this->actingAs($owner)
+        ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
+        ->assertOk();
+
+    $church = $registrationRequest->fresh()->approvedChurch;
+    expect($church->address()->first()?->street)->toBe('123 Faith Street')
+        ->and($church->address()->first()?->latitude)->toBe(-10.88)
+        ->and(data_get($church->settings()->first()?->options, 'default_locale'))->toBe('en')
+        ->and($requester->fresh()->profile?->community_id)->toBe($community->id);
+});
+
+test('new community stores its default language and map location', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->postJson('http://platform.test/onboarding/communities', [
+        'name' => 'Mapped Community',
+        'slug' => 'mapped-community',
+        'description' => 'A community with a default language and location.',
+        'default_locale' => 'pt',
+        'address' => 'Avenida Brasil, 1000',
+        'latitude' => -10.88,
+        'longitude' => -61.95,
+    ])->assertCreated();
+
+    $community = Community::query()->where('slug', 'mapped-community')->firstOrFail();
+    expect($community->default_locale)->toBe('pt')
+        ->and($community->address?->street)->toBe('Avenida Brasil, 1000')
+        ->and($community->address?->latitude)->toBe(-10.88)
+        ->and($community->address?->longitude)->toBe(-61.95);
 });

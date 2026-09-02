@@ -1687,6 +1687,8 @@
         "onboarding": {
             "register_community": "Registrar comunidade",
             "request_church": "Solicitar nova congregação",
+            "new_community": "Criar nova comunidade",
+            "existing_community": "Entrar em comunidade existente",
             "community_kicker": "Nova rede",
             "church_kicker": "Nova congregação",
             "approval_notice": "O pedido será enviado aos líderes da comunidade. O domínio será ativado apenas após aprovação.",
@@ -1735,7 +1737,16 @@
             "address": "Endereço completo",
             "proof_document": "Comprovante de existência da igreja ou autorização",
             "proof_document_hint": "PDF, JPG, PNG ou WebP até 10 MB (opcional)",
-            "parent_church": "Igreja matriz (opcional)"
+            "parent_church": "Igreja matriz inicial (opcional)",
+            "select_community": "Selecione uma comunidade",
+            "found_date": "Data de fundação",
+            "default_language": "Idioma padrão",
+            "language_pt": "Português",
+            "language_en": "Inglês",
+            "address_hint": "Rua, número, bairro, cidade e estado",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
+            "use_current_location": "Usar localização atual"
         },
         "errors": {
             "generic": "A operação não pôde ser concluída."
