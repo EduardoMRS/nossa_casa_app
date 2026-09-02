@@ -15,35 +15,43 @@ use Illuminate\Validation\Rule;
 
 class UserRelationshipController extends Controller
 {
-    public function storeChild(Request $request): JsonResponse
+    public function storeFamilyMember(Request $request): JsonResponse
     {
         $guardian = $request->user()->load('profile');
-        abort_unless($guardian->profile?->church_id, 422, __('user.select_church_before_child'));
-
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:120'],
             'last_name' => ['required', 'string', 'max:120'],
-            'birth_date' => ['required', 'date', 'before:today'],
+            'birth_date' => ['nullable', 'date', 'before:today'],
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'medical_notes' => ['nullable', 'string', 'max:3000'],
             'avatar' => ['nullable', 'image', 'max:5120'],
+            'relationship_type' => [
+                'nullable',
+                Rule::in([
+                    UserRelationships::SPOUSE->value,
+                    UserRelationships::PARENT->value,
+                    UserRelationships::CHILD->value,
+                ]),
+            ],
         ]);
+        $relationshipType = $validated['relationship_type'] ?? UserRelationships::PARENT->value;
+        $guardianProfile = $guardian->profile;
 
-        $child = DB::transaction(function () use ($request, $guardian, $validated): User {
-            $child = User::query()->create([
+        $relative = DB::transaction(function () use ($request, $guardian, $guardianProfile, $validated, $relationshipType): User {
+            $relative = User::query()->create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'email' => 'family.'.Str::lower((string) Str::ulid()).'@nossacasa.invalid',
                 'password' => Hash::make(Str::random(48)),
-                'birth_date' => $validated['birth_date'],
+                'birth_date' => $validated['birth_date'] ?? null,
                 'role' => UserRole::MEMBER,
             ]);
             $avatarPath = $request->hasFile('avatar')
-                ? $request->file('avatar')->store("users/{$child->id}/avatar", (string) config('media.disk'))
+                ? $request->file('avatar')->store("users/{$relative->id}/avatar", (string) config('media.disk'))
                 : null;
-            $child->profile()->create([
-                'church_id' => $guardian->profile->church_id,
-                'community_id' => $guardian->profile->community_id,
+            $relative->profile()->create([
+                'church_id' => $guardianProfile?->church_id,
+                'community_id' => $guardianProfile?->community_id,
                 'gender' => $validated['gender'] ?? null,
                 'medical_notes' => $validated['medical_notes'] ?? null,
                 'avatar_path' => $avatarPath,
@@ -51,57 +59,76 @@ class UserRelationshipController extends Controller
 
             UserRelationship::query()->create([
                 'user_id' => $guardian->id,
-                'related_user_id' => $child->id,
-                'relationship_type' => UserRelationships::PARENT->value,
+                'related_user_id' => $relative->id,
+                'relationship_type' => $relationshipType,
             ]);
             UserRelationship::query()->create([
-                'user_id' => $child->id,
+                'user_id' => $relative->id,
                 'related_user_id' => $guardian->id,
-                'relationship_type' => UserRelationships::CHILD->value,
+                'relationship_type' => $this->inverseType($relationshipType),
             ]);
 
-            return $child;
+            return $relative;
         });
 
-        return response()->json($child->load('profile'), 201);
+        return response()->json($relative->load('profile'), 201);
+    }
+
+    public function storeChild(Request $request): JsonResponse
+    {
+        return $this->storeFamilyMember($request);
     }
 
     public function store(Request $request, string $userId): JsonResponse
     {
-        $user = User::findOrFail($userId);
+        $user = User::query()->findOrFail($userId);
         $this->ensureOwnerOrModerator($request, $user->id);
+        $isOwner = $request->user()->is($user);
         $churchId = $user->church?->id;
-        abort_unless($churchId, 422, __('user.selected_user_church_required'));
-        $this->ensureChurchAccess($request, $churchId);
+
+        if (! $isOwner) {
+            abort_unless($churchId, 422, __('user.selected_user_church_required'));
+            $this->ensureChurchAccess($request, $churchId);
+        }
 
         $validated = $request->validate([
-            'related_user_id' => 'required|exists:users,id',
+            'related_user_id' => [
+                'nullable',
+                'required_without:related_user_email',
+                Rule::exists('users', 'id'),
+            ],
+            'related_user_email' => [
+                'nullable',
+                'required_without:related_user_id',
+                'email:rfc',
+                'max:255',
+                Rule::exists('users', 'email'),
+            ],
             'relationship_type' => ['required', Rule::enum(UserRelationships::class)],
         ]);
-        $relatedUser = User::query()->findOrFail($validated['related_user_id']);
+        $relatedUser = isset($validated['related_user_id'])
+            ? User::query()->findOrFail($validated['related_user_id'])
+            : User::query()->where('email', Str::lower(trim($validated['related_user_email'])))->firstOrFail();
 
-        abort_if($user->id === $relatedUser->id, 422, __('user.relationship_self_forbidden'));
-        abort_unless($relatedUser->church?->id === $churchId, 422, __('user.relationship_same_church_required'));
+        abort_if($user->is($relatedUser), 422, __('user.relationship_self_forbidden'));
 
-        $relationship = UserRelationship::updateOrCreate(
+        if (! $isOwner) {
+            abort_unless($relatedUser->church?->id === $churchId, 422, __('user.relationship_same_church_required'));
+        }
+
+        $relationship = UserRelationship::query()->updateOrCreate(
             [
                 'user_id' => $user->id,
-                'related_user_id' => $validated['related_user_id'],
+                'related_user_id' => $relatedUser->id,
             ],
             [
                 'relationship_type' => $validated['relationship_type'],
-            ]
+            ],
         );
 
-        $inverseType = match ($validated['relationship_type']) {
-            UserRelationships::PARENT->value => UserRelationships::CHILD->value,
-            UserRelationships::CHILD->value => UserRelationships::PARENT->value,
-            default => $validated['relationship_type'],
-        };
-
-        UserRelationship::updateOrCreate(
+        UserRelationship::query()->updateOrCreate(
             ['user_id' => $relatedUser->id, 'related_user_id' => $user->id],
-            ['relationship_type' => $inverseType],
+            ['relationship_type' => $this->inverseType($validated['relationship_type'])],
         );
 
         return response()->json($relationship, 201);
@@ -110,7 +137,10 @@ class UserRelationshipController extends Controller
     public function destroy(Request $request, UserRelationship $relationship): JsonResponse
     {
         $this->ensureOwnerOrModerator($request, $relationship->user_id);
-        $this->ensureChurchAccess($request, $relationship->user->church?->id ?? '');
+
+        if ($request->user()->id !== $relationship->user_id) {
+            $this->ensureChurchAccess($request, $relationship->user->church?->id ?? '');
+        }
 
         UserRelationship::query()
             ->where('user_id', $relationship->related_user_id)
@@ -119,5 +149,14 @@ class UserRelationshipController extends Controller
         $relationship->delete();
 
         return response()->json([], 204);
+    }
+
+    private function inverseType(string $relationshipType): string
+    {
+        return match ($relationshipType) {
+            UserRelationships::PARENT->value => UserRelationships::CHILD->value,
+            UserRelationships::CHILD->value => UserRelationships::PARENT->value,
+            default => $relationshipType,
+        };
     }
 }

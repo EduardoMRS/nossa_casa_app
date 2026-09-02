@@ -83,7 +83,6 @@ type PendingCheckout = {
 const props = defineProps<{
     workspaceUser: WorkspaceUser;
     prayerRequests: Array<{ id: string; content: string; created_at: string }>;
-    churchMembers: Person[];
     mustVerifyEmail: boolean;
     status?: string;
     communities: CommunityOption[];
@@ -94,7 +93,7 @@ const { t } = useI18n();
 const { confirm } = useConfirmDialog();
 const activeTab = ref('profile');
 const saving = ref(false);
-const relationUserId = ref('');
+const relationEmail = ref('');
 const relationType = ref('parent');
 const relationSaving = ref(false);
 const prayerContent = ref('');
@@ -113,6 +112,7 @@ const profile = reactive({
     church_id: props.workspaceUser.profile?.church_id ?? '',
 });
 const childForm = reactive({
+    relationship_type: 'parent',
     first_name: '',
     last_name: '',
     birth_date: '',
@@ -139,7 +139,7 @@ const relationships = computed(() => props.workspaceUser.relationships);
 const children = computed(() =>
     relationships.value.filter((item) => item.relationship_type === 'parent'),
 );
-const authorizedAdults = computed(() =>
+const familyMembers = computed(() =>
     relationships.value.filter((item) => item.relationship_type !== 'parent'),
 );
 const availableChurches = computed(
@@ -197,7 +197,7 @@ const addChild = async (): Promise<void> => {
     childSaving.value = true;
 
     try {
-        await axios.post('/settings/children', childForm, {
+        await axios.post('/settings/family-members', childForm, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
         window.location.reload();
@@ -208,7 +208,7 @@ const addChild = async (): Promise<void> => {
 const pendingCheckoutFor = (userId?: string): PendingCheckout | undefined =>
     props.pendingChildCheckouts.find((presence) => presence.user_id === userId);
 const addRelationship = async (): Promise<void> => {
-    if (!relationUserId.value) {
+    if (!relationEmail.value.trim()) {
         return;
     }
 
@@ -216,7 +216,7 @@ const addRelationship = async (): Promise<void> => {
 
     try {
         await axios.post(`/settings/relationships/${props.workspaceUser.id}`, {
-            related_user_id: relationUserId.value,
+            related_user_email: relationEmail.value.trim(),
             relationship_type: relationType.value,
         });
         window.location.reload();
@@ -565,10 +565,10 @@ const personFor = (item: Relationship): Person | undefined =>
                             class="flex items-center gap-2 border-b pb-3 text-sm font-black"
                         >
                             <ShieldCheck class="size-4 text-emerald-600" />
-                            {{ t('settings.workspace.authorized_adults') }}
+                            {{ t('settings.workspace.family_members') }}
                         </div>
                         <article
-                            v-for="relation in authorizedAdults"
+                            v-for="relation in familyMembers"
                             :key="relation.id"
                             class="flex items-center gap-3 rounded-xl border bg-slate-50 p-3"
                         >
@@ -600,10 +600,10 @@ const personFor = (item: Relationship): Person | undefined =>
                             </button>
                         </article>
                         <p
-                            v-if="!authorizedAdults.length"
+                            v-if="!familyMembers.length"
                             class="rounded-xl border border-dashed p-6 text-center text-xs text-slate-400"
                         >
-                            {{ t('settings.workspace.no_authorized_adults') }}
+                            {{ t('settings.workspace.no_family_members') }}
                         </p>
 
                         <form
@@ -614,26 +614,17 @@ const personFor = (item: Relationship): Person | undefined =>
                                 class="flex items-center gap-2 text-xs font-black uppercase"
                             >
                                 <Plus class="size-4 text-indigo-600" />{{
-                                    t('settings.workspace.authorize_adult')
+                                    t('settings.workspace.add_family_by_email')
                                 }}
                             </h3>
-                            <select
-                                v-model="relationUserId"
+                            <input
+                                v-model="relationEmail"
                                 required
+                                type="email"
+                                autocomplete="email"
+                                :placeholder="t('settings.workspace.family_email')"
                                 class="w-full rounded-lg border-slate-300 text-sm"
-                            >
-                                <option value="">
-                                    {{ t('settings.workspace.select_person') }}
-                                </option>
-                                <option
-                                    v-for="member in churchMembers"
-                                    :key="member.id"
-                                    :value="member.id"
-                                >
-                                    {{ member.first_name }}
-                                    {{ member.last_name }}
-                                </option>
-                            </select>
+                            />
                             <select
                                 v-model="relationType"
                                 class="w-full rounded-lg border-slate-300 text-sm"
@@ -653,7 +644,7 @@ const personFor = (item: Relationship): Person | undefined =>
                                 :disabled="relationSaving"
                                 class="w-full rounded-lg bg-slate-950 px-4 py-2.5 text-xs font-black text-white"
                             >
-                                {{ t('settings.workspace.authorize') }}
+                                {{ t('settings.workspace.add') }}
                             </button>
                         </form>
                     </div>
@@ -772,9 +763,23 @@ const personFor = (item: Relationship): Person | undefined =>
                                 class="flex items-center gap-2 text-xs font-black uppercase"
                             >
                                 <Plus class="size-4 text-indigo-600" />{{
-                                    t('settings.workspace.add_child')
+                                    t('settings.workspace.add_family_without_contact')
                                 }}
                             </h3>
+                            <select
+                                v-model="childForm.relationship_type"
+                                class="w-full rounded-lg border-slate-300 text-sm"
+                            >
+                                <option value="spouse">
+                                    {{ t('settings.workspace.relationship_types.spouse') }}
+                                </option>
+                                <option value="parent">
+                                    {{ t('settings.workspace.responsible_for') }}
+                                </option>
+                                <option value="child">
+                                    {{ t('settings.workspace.child_of') }}
+                                </option>
+                            </select>
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <input
                                     v-model="childForm.first_name"
@@ -796,7 +801,6 @@ const personFor = (item: Relationship): Person | undefined =>
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <input
                                     v-model="childForm.birth_date"
-                                    required
                                     type="date"
                                     class="rounded-lg border-slate-300 text-sm"
                                 />
@@ -838,7 +842,7 @@ const personFor = (item: Relationship): Person | undefined =>
                                 :disabled="childSaving"
                                 class="w-full rounded-lg bg-indigo-600 px-4 py-3 text-xs font-black text-white"
                             >
-                                {{ t('settings.workspace.register_child') }}
+                                {{ t('settings.workspace.register_family_member') }}
                             </button>
                         </form>
                     </div>

@@ -89,6 +89,16 @@ class BrandingController extends Controller
         ]);
     }
 
+    public function network(Request $request): Response
+    {
+        $church = $this->churchForRequest($request);
+        abort_unless($church, 403);
+
+        return Inertia::render('Admin/ChurchNetwork', [
+            'network' => $this->networkSettings->forChurch($church),
+        ]);
+    }
+
     public function update(UpdateChurchSettingsRequest $request): RedirectResponse
     {
         $church = $this->churchForRequest($request);

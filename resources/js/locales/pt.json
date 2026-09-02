@@ -317,16 +317,16 @@
             "new_prayer": "Novo pedido de intercessão",
             "prayer_placeholder": "Compartilhe seu pedido de oração...",
             "send_prayer": "Enviar pedido",
-            "family_management": "Gerenciamento de Família e Ministério de Crianças",
-            "family_management_hint": "Registre membros da família, responsáveis e crianças para facilitar o check-in e a retirada segura.",
+            "family_management": "Família e cuidado",
+            "family_management_hint": "Vincule familiares com conta pelo e-mail ou cadastre pessoas sem contato para organizar responsáveis, dependentes e retiradas seguras.",
             "authorized_adults": "Adultos autorizados",
             "no_authorized_adults": "Sem outros adultos autorizados.",
             "authorize_adult": "Autorizar adulto ou responsável",
             "authorize": "Autorizar",
-            "registered_children": "Meus filhos registrados",
+            "registered_children": "Filhos e dependentes",
             "checkout_pin": "Código de retirada",
             "checked_in": "Check-in realizado",
-            "no_children": "Nenhum filho registrado.",
+            "no_children": "Nenhum filho ou dependente registrado.",
             "add_child": "Registrar um filho na família",
             "first_name": "Nome",
             "last_name": "Sobrenome",
@@ -340,8 +340,8 @@
             "family_member": "Pessoa",
             "select_person": "Selecionar uma pessoa",
             "relationship": "Relação",
-            "responsible_for": "Eu sou responsável por este filho",
-            "child_of": "Esta pessoa é meu guardião",
+            "responsible_for": "É meu filho ou dependente",
+            "child_of": "É meu responsável, pai ou mãe",
             "add": "Adicionar relação",
             "remove_relationship_confirm": "Remover esta relação?",
             "relationship_types": {
@@ -351,7 +351,13 @@
                 "friend": "Amigo",
                 "follower": "Seguidor",
                 "blocked": "Bloqueado"
-            }
+            },
+            "family_members": "Minha família",
+            "no_family_members": "Nenhum outro familiar vinculado.",
+            "add_family_by_email": "Adicionar familiar com conta",
+            "family_email": "E-mail da pessoa",
+            "add_family_without_contact": "Cadastrar familiar sem conta ou contato",
+            "register_family_member": "Cadastrar familiar"
         },
         "security": {
             "nav": "Segurança",
@@ -1155,6 +1161,23 @@
                     "Ir para o painel"
                 ]
             }
+        },
+        "church_network": {
+            "kicker": "Estrutura organizacional",
+            "title": "Rede da church",
+            "description": "Visualize a cadeia de matrizes e toda a estrutura de filiais vinculada a esta church.",
+            "manage": "Gerenciar vínculos",
+            "current": "Church atual",
+            "parent_chain": "Cadeia de matrizes",
+            "parent_chain_description": "Da matriz principal até a church que você está administrando.",
+            "no_parent": "Esta church não possui uma matriz vinculada.",
+            "direct_branches": "Filiais diretas",
+            "all_branches": "Todas as filiais",
+            "levels": "Níveis abaixo",
+            "hierarchy": "Árvore de filiais",
+            "hierarchy_description": "A estrutura completa subordinada à church atual.",
+            "empty": "Nenhuma filial aprovada foi vinculada ainda.",
+            "branch_count": "{count} filial | {count} filiais"
         }
     },
     "library": {

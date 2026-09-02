@@ -11,6 +11,7 @@ import {
     ListChecks,
     Megaphone,
     MessageSquareWarning,
+    Network as NetworkIcon,
     Settings2,
     Sparkles,
     Users,
@@ -43,6 +44,7 @@ import { index as adminFormsIndex } from '@/routes/admin/forms';
 import { index as adminGalleryModerationIndex } from '@/routes/admin/galleryModeration';
 import { index as adminHighlightsIndex } from '@/routes/admin/highlights';
 import { index as adminKidsMinistryIndex } from '@/routes/admin/kidsMinistry';
+import { index as adminChurchNetworkIndex } from '@/routes/admin/churchNetwork';
 import { index as adminLibraryVerseIndex } from '@/routes/admin/libraryVerse';
 import { index as adminLogsMetricsIndex } from '@/routes/admin/logsMetrics';
 import { index as adminMultiCongregationIndex } from '@/routes/admin/multiCongregation';
@@ -242,6 +244,11 @@ const administrationNavItems = computed<NavItem[]>(() => [
         title: t('admin.categories.title'),
         href: adminCategoriesIndex(),
         icon: FolderGit2,
+    },
+    {
+        title: t('admin.church_network.title'),
+        href: adminChurchNetworkIndex(),
+        icon: NetworkIcon,
     },
     {
         title: t('admin.multicongregation.title'),

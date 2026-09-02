@@ -26,6 +26,51 @@ final readonly class ChurchNetworkSettingsData
             ->orderBy('created_at')
             ->get();
 
+        $ancestors = collect();
+        $visitedChurchIds = [$church->id];
+        $ancestorChurchId = $church->id;
+
+        while (true) {
+            $ancestorNetwork = Network::query()
+                ->where('child_church_id', $ancestorChurchId)
+                ->with('parentChurch:id,name')
+                ->first();
+            $ancestor = $ancestorNetwork?->parentChurch;
+
+            if (! $ancestor || in_array($ancestor->id, $visitedChurchIds, true)) {
+                break;
+            }
+
+            $ancestors->prepend($ancestor->only(['id', 'name']));
+            $visitedChurchIds[] = $ancestor->id;
+            $ancestorChurchId = $ancestor->id;
+        }
+
+        $childrenByParent = $networkRows->groupBy('parent_church_id');
+        $buildTree = function (Church $node) use (&$buildTree, $childrenByParent): array {
+            $children = $childrenByParent
+                ->get($node->id, collect())
+                ->pluck('childChurch')
+                ->filter()
+                ->map(fn (Church $child): array => $buildTree($child))
+                ->values()
+                ->all();
+
+            return [
+                'id' => $node->id,
+                'name' => $node->name,
+                'children' => $children,
+            ];
+        };
+        $tree = $buildTree($church);
+        $treeDepth = function (array $node) use (&$treeDepth): int {
+            if ($node['children'] === []) {
+                return 0;
+            }
+
+            return 1 + max(array_map($treeDepth, $node['children']));
+        };
+
         $pendingRequests = ChurchNetworkRequest::query()
             ->where('status', ChurchNetworkRequestStatus::PENDING)
             ->where(function ($query) use ($church): void {
@@ -56,6 +101,13 @@ final readonly class ChurchNetworkSettingsData
                 ->filter()
                 ->map->only(['id', 'name'])
                 ->values(),
+            'ancestors' => $ancestors->values(),
+            'tree' => $tree,
+            'stats' => [
+                'direct_branches' => $networkRows->where('parent_church_id', $church->id)->count(),
+                'all_branches' => $networkRows->count(),
+                'levels' => $treeDepth($tree),
+            ],
             'availableChurches' => Church::query()
                 ->where('community_id', $church->community_id)
                 ->whereKeyNot($church->id)
