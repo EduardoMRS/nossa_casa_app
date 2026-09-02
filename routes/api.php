@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PushGatewayController;
 use App\Http\Controllers\BibleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ChurchController;
+use App\Http\Controllers\ChurchProximityController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityController;
@@ -125,6 +126,10 @@ Route::middleware(['auth:sanctum', 'church.context:public'])->group(function () 
 });
 
 Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function () {
+    Route::get('church-proximity', ChurchProximityController::class)
+        ->middleware('throttle:30,1')
+        ->name('api.church-proximity');
+
     Route::post('push/devices', [DevicePushTokenController::class, 'store'])
         ->middleware('throttle:30,1')
         ->name('api.push.devices.store');
