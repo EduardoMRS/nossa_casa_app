@@ -846,8 +846,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     : t('portal.onboarding.church_kicker')
             "
             size="lg"
-            scrollable
-            content-class="border-slate-200 bg-white text-slate-950 shadow-2xl"
+            content-class="max-h-[90dvh] grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border-slate-200 bg-white text-slate-950 shadow-2xl"
             header-class="text-slate-950 [&_p]:text-slate-500"
         >
             <div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
@@ -879,7 +878,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
             <form
                 v-if="onboardingMode === 'new_community'"
-                class="space-y-5"
+                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
                 @submit.prevent="saveCommunity"
             >
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -977,7 +976,11 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     {{ t('actions.save') }}
                 </button>
             </form>
-            <form v-else class="space-y-5" @submit.prevent="requestChurch">
+            <form
+                v-else
+                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+                @submit.prevent="requestChurch"
+            >
                 <label class="block space-y-1.5 text-sm font-bold text-slate-700">
                     {{ t('portal.fields.community') }}
                     <select
@@ -1136,7 +1139,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         {{ t('portal.fields.contact_phone') }}
                         <PhoneInput
                             v-model="churchForm.contact_phone"
-                            class="border-slate-300 bg-white [&_input]:text-slate-900 [&_select]:text-slate-900"
+                            class="!border-slate-300 !bg-white [&_input]:!bg-white [&_input]:!text-slate-900 [&_input]:placeholder:!text-slate-400 [&_option]:!bg-white [&_option]:!text-slate-900 [&_select]:!bg-white [&_select]:!text-slate-900"
                         />
                     </label>
                 </div>
