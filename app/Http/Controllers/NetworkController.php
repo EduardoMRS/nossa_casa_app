@@ -2,62 +2,118 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ChurchNetworkRequestStatus;
+use App\Http\Requests\MoveChurchNetworkRequest;
+use App\Http\Requests\StoreChurchNetworkRequest;
+use App\Models\Church;
+use App\Models\ChurchNetworkRequest;
 use App\Models\Network;
+use App\Services\ChurchNetworkService;
+use App\Support\ChurchDomainContext;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class NetworkController extends Controller
 {
-    public function index()
+    public function __construct(
+        private readonly ChurchNetworkService $networks,
+        private readonly ChurchDomainContext $context,
+    ) {}
+
+    public function index(Request $request): JsonResponse
     {
-        $networks = Network::with(['parentChurch', 'childChurch', 'community'])->paginate(15);
-        $networks->getCollection()->each(function (Network $network): void {
-            $network->parentChurch?->localize();
-            $network->childChurch?->localize();
-            $network->community?->localize();
-        });
+        $actorChurch = $this->actorChurch($request);
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+
+        $networkIds = array_values(array_unique([
+            $actorChurch->id,
+            ...$this->networks->relatedIds($actorChurch),
+        ]));
+
+        $networks = Network::query()
+            ->whereIn('parent_church_id', $networkIds)
+            ->whereIn('child_church_id', $networkIds)
+            ->with(['parentChurch:id,name', 'childChurch:id,name'])
+            ->latest()
+            ->get();
 
         return response()->json($networks);
     }
 
-    public function show(Network $network)
+    public function store(StoreChurchNetworkRequest $request): JsonResponse
     {
-        $network->load(['parentChurch', 'childChurch', 'community']);
-        $network->parentChurch?->localize();
-        $network->childChurch?->localize();
-        $network->community?->localize();
+        $actorChurch = $request->actorChurch();
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $parentChurch = Church::query()->findOrFail($request->validated('parent_church_id'));
+        $childChurch = Church::query()->findOrFail($request->validated('child_church_id'));
+        $networkRequest = $this->networks->request(
+            $actorChurch,
+            $parentChurch,
+            $childChurch,
+            $request->user(),
+        );
 
-        return response()->json($network);
+        return response()->json($networkRequest->load([
+            'requestingChurch:id,name',
+            'parentChurch:id,name',
+            'childChurch:id,name',
+        ]), Response::HTTP_CREATED);
     }
 
-    public function store(Request $request)
+    public function accept(Request $request, ChurchNetworkRequest $networkRequest): JsonResponse
     {
-        $network = Network::create($request->validate([
-            'parent_church_id' => ['required', 'different:child_church_id', 'exists:churches,id'],
-            'child_church_id' => [
-                'required',
-                'exists:churches,id',
-                Rule::unique('networks')->where('parent_church_id', $request->parent_church_id),
-            ],
-            'community_id' => ['nullable', 'exists:communities,id'],
-        ]));
+        $actorChurch = $this->actorChurch($request);
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $network = $this->networks->accept($actorChurch, $networkRequest, $request->user());
 
-        return response()->json($network, 201);
+        return response()->json($network->load(['parentChurch:id,name', 'childChurch:id,name']));
     }
 
-    public function update(Request $request, Network $network)
+    public function reject(Request $request, ChurchNetworkRequest $networkRequest): Response
     {
-        $network->update($request->validate([
-            'community_id' => ['nullable', 'exists:communities,id'],
-        ]));
+        $actorChurch = $this->actorChurch($request);
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $this->networks->reject($actorChurch, $networkRequest, $request->user());
 
-        return response()->json($network);
+        return response()->noContent();
     }
 
-    public function destroy(Network $network)
+    public function update(MoveChurchNetworkRequest $request, Network $network): JsonResponse
     {
+        $actorChurch = $request->actorChurch();
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $newParentChurch = Church::query()->findOrFail($request->validated('new_parent_church_id'));
+        $network->loadMissing('childChurch');
+        $movedNetwork = $this->networks->moveDescendant(
+            $actorChurch,
+            $network->childChurch,
+            $newParentChurch,
+        );
+
+        return response()->json($movedNetwork->load(['parentChurch:id,name', 'childChurch:id,name']));
+    }
+
+    public function destroy(Request $request, Network $network): Response
+    {
+        $actorChurch = $this->actorChurch($request);
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $network->loadMissing(['parentChurch', 'childChurch']);
+        $allowedChurchIds = [$actorChurch->id, ...$this->networks->descendantIds($actorChurch)];
+
+        abort_unless(
+            in_array($network->parent_church_id, $allowedChurchIds, true)
+                && in_array($network->child_church_id, $allowedChurchIds, true),
+            Response::HTTP_FORBIDDEN,
+        );
+
         $network->delete();
 
         return response()->noContent();
+    }
+
+    private function actorChurch(Request $request): ?Church
+    {
+        return $this->context->church() ?? $request->user()?->church;
     }
 }
