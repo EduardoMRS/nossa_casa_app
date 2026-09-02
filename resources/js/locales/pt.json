@@ -1687,7 +1687,10 @@
             "approval_notice": "O pedido será enviado aos líderes da comunidade. O domínio será ativado apenas após aprovação.",
             "send_request": "Enviar para aprovação",
             "request_sent": "Pedido enviado com sucesso.",
-            "my_requests": "Meus pedidos"
+            "my_requests": "Meus pedidos",
+            "community_approval": "Aprovação pela comunidade (sem matriz)",
+            "parent_church_hint": "Escolha uma matriz para enviar a solicitação diretamente aos líderes dela.",
+            "parent_approval_notice": "A solicitação ficará visível apenas para a matriz selecionada. Após a aprovação, a nova congregação será vinculada como sua filial."
         },
         "domain": {
             "subdomain": "Subdomínio da plataforma",
@@ -1708,7 +1711,8 @@
             "reject": "Rejeitar",
             "approve_confirm": "Aprovar congregação {name}?",
             "reject_reason": "Insira o motivo da rejeição:",
-            "view_document": "Ver documento de comprovação"
+            "view_document": "Ver documento de comprovação",
+            "requested_parent": "Matriz solicitada: {name}"
         },
         "status": {
             "pending": "Pendente",
@@ -1725,7 +1729,8 @@
             "contact_phone": "Telefone de contato",
             "address": "Endereço completo",
             "proof_document": "Comprovante de existência da igreja ou autorização",
-            "proof_document_hint": "PDF, JPG, PNG ou WebP até 10 MB (opcional)"
+            "proof_document_hint": "PDF, JPG, PNG ou WebP até 10 MB (opcional)",
+            "parent_church": "Igreja matriz (opcional)"
         },
         "errors": {
             "generic": "A operação não pôde ser concluída."
