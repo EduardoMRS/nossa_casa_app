@@ -87,6 +87,8 @@ onMounted(async () => {
         };
 
         if (
+            typeof location.latitude !== 'number' ||
+            typeof location.longitude !== 'number' ||
             !Number.isFinite(location.latitude) ||
             !Number.isFinite(location.longitude)
         ) {
