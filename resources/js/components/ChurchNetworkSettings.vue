@@ -5,7 +5,6 @@ import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
-
 import type { ChurchNetworkOption, ChurchNetworkSettingsData } from '@/types/church-network';
 
 const props = defineProps<{ settings: ChurchNetworkSettingsData }>();
