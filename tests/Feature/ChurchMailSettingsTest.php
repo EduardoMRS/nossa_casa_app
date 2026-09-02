@@ -48,3 +48,21 @@ test('branch own server takes precedence over inherited server', function () {
 
     expect(app(ChurchMailManager::class)->resolveFor($branch)?->host)->toBe('branch.test');
 });
+
+test('application mail uses the authenticated smtp account when no church server exists', function () {
+    config()->set('mail.application_from', [
+        'address' => 'application@example.test',
+        'name' => 'Application Mail',
+    ]);
+    config()->set('mail.from', [
+        'address' => 'church@example.test',
+        'name' => 'Church Mail',
+    ]);
+    config()->set('mail.default', 'church');
+
+    app(ChurchMailManager::class)->reset();
+
+    expect(config('mail.default'))->toBe(config('mail.application_default'))
+        ->and(config('mail.from.address'))->toBe('application@example.test')
+        ->and(config('mail.from.name'))->toBe('Application Mail');
+});
