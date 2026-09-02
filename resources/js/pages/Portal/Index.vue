@@ -36,6 +36,11 @@ type Church = {
     distance_km?: number | null;
 };
 
+type ParentChurch = {
+    id: string;
+    name: string;
+};
+
 type Community = {
     id: string;
     name: string;
@@ -59,6 +64,7 @@ type RegistrationRequest = {
     status: string;
     review_notes?: string | null;
     community: { id: string; name: string };
+    requested_parent_church?: ParentChurch | null;
     requester?: { name: string; email: string };
     document_url?: string | null;
 };
@@ -72,6 +78,7 @@ const props = defineProps<{
     userChurchUrl?: string | null;
     reviewableRequests: RegistrationRequest[];
     myRequests: RegistrationRequest[];
+    registrationParentChurches: ParentChurch[];
     mainDomain: string;
 }>();
 
@@ -94,6 +101,7 @@ const communityForm = ref({
 });
 const churchForm = ref({
     community_id: props.userCommunityId ?? '',
+    parent_church_id: '',
     name: '',
     slug: '',
     description: '',
@@ -655,6 +663,16 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         {{ item.community.name }} ·
                                         {{ item.domain }}
                                     </p>
+                                    <p
+                                        v-if="item.requested_parent_church"
+                                        class="mt-1 text-xs font-bold text-indigo-700"
+                                    >
+                                        {{
+                                            t('portal.review.requested_parent', {
+                                                name: item.requested_parent_church.name,
+                                            })
+                                        }}
+                                    </p>
                                 </div>
                                 <span
                                     class="h-fit rounded-full px-2 py-1 text-[10px] font-black uppercase"
@@ -703,6 +721,16 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         {{ item.requester?.name }} ({{
                                             item.requester?.email
                                         }})
+                                    </p>
+                                    <p
+                                        v-if="item.requested_parent_church"
+                                        class="mt-2 text-xs font-bold text-indigo-700"
+                                    >
+                                        {{
+                                            t('portal.review.requested_parent', {
+                                                name: item.requested_parent_church.name,
+                                            })
+                                        }}
                                     </p>
                                     <p
                                         class="mt-3 max-w-3xl text-sm text-slate-600"
@@ -815,6 +843,33 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         {{ community.name }}
                     </option>
                 </select>
+                <div>
+                    <label
+                        for="registration-parent-church"
+                        class="mb-1.5 block text-sm font-bold text-slate-700"
+                    >
+                        {{ t('portal.fields.parent_church') }}
+                    </label>
+                    <select
+                        id="registration-parent-church"
+                        v-model="churchForm.parent_church_id"
+                        class="w-full rounded-xl border-slate-300"
+                    >
+                        <option value="">
+                            {{ t('portal.onboarding.community_approval') }}
+                        </option>
+                        <option
+                            v-for="church in registrationParentChurches"
+                            :key="church.id"
+                            :value="church.id"
+                        >
+                            {{ church.name }}
+                        </option>
+                    </select>
+                    <p class="mt-1.5 text-xs text-slate-500">
+                        {{ t('portal.onboarding.parent_church_hint') }}
+                    </p>
+                </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <input
                         v-model="churchForm.name"
@@ -936,7 +991,11 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     />
                 </label>
                 <p class="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
-                    {{ t('portal.onboarding.approval_notice') }}
+                    {{
+                        churchForm.parent_church_id
+                            ? t('portal.onboarding.parent_approval_notice')
+                            : t('portal.onboarding.approval_notice')
+                    }}
                 </p>
                 <p v-if="errorMessage" class="text-sm font-bold text-rose-600">
                     {{ errorMessage }}
