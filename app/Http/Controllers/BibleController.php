@@ -71,7 +71,12 @@ class BibleController extends Controller
 
     private function allowedVersion(string $version): string
     {
-        abort_unless(in_array($version, $this->access->forChurch($this->church())['versions'], true), 404);
+        $church = $this->context->church();
+        $allowed = $church instanceof Church
+            ? in_array($version, $this->access->forChurch($church)['versions'], true)
+            : collect($this->bible->versions())->contains('id', $version);
+
+        abort_unless($allowed, 404);
 
         return $version;
     }
@@ -81,13 +86,6 @@ class BibleController extends Controller
         abort_unless(collect($this->bible->books($version))->contains('slug', $book), 404);
     }
 
-    private function church(): Church
-    {
-        $church = $this->context->church();
-        abort_unless($church instanceof Church, 404);
-
-        return $church;
-    }
 
     /** @param callable(): array<string, mixed> $callback */
     private function respond(callable $callback): JsonResponse
