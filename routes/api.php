@@ -191,7 +191,9 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
         Route::apiResource('communities', CommunityController::class)->except(['index', 'show']);
         Route::apiResource('users', UserController::class);
         Route::apiResource('settings', SettingController::class);
-        Route::apiResource('networks', NetworkController::class);
+        Route::post('networks/requests/{networkRequest}/accept', [NetworkController::class, 'accept']);
+        Route::post('networks/requests/{networkRequest}/reject', [NetworkController::class, 'reject']);
+        Route::apiResource('networks', NetworkController::class)->except('show');
     });
 });
 
