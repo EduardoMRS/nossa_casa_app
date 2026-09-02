@@ -44,13 +44,13 @@ final readonly class LibraryQuery
         ]);
     }
 
-    public function bible(Church $church): CanonicalData
+    public function bible(?Church $church): CanonicalData
     {
-        $access = $this->access->forChurch($church);
+        $access = $church ? $this->access->forChurch($church) : null;
 
         try {
             $versions = collect($this->bible->versions())
-                ->whereIn('id', $access['versions'])
+                ->when($access, fn ($versions) => $versions->whereIn('id', $access['versions']))
                 ->map(fn (array $version): array => [
                     ...$version,
                     'offline_url' => $version['offline_available']
@@ -66,7 +66,7 @@ final readonly class LibraryQuery
 
         return new CanonicalData([
             'versions' => $versions,
-            'defaultVersion' => $access['default_version'],
+            'defaultVersion' => $access['default_version'] ?? ($versions[0]['id'] ?? null),
         ]);
     }
 
