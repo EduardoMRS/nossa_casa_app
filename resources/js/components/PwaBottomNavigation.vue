@@ -41,6 +41,18 @@ const standalone = ref(false);
 const mediaQueries: MediaQueryList[] = [];
 
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+const hasUserChurch = computed(() =>
+    Boolean(
+        (
+            page.props.churchContext as
+                | { userChurch?: { id?: string } | null }
+                | undefined
+        )?.userChurch,
+    ),
+);
+const restrictChurchContent = computed(
+    () => isAuthenticated.value && !hasUserChurch.value,
+);
 const currentPath = computed(() => page.url.split(/[?#]/, 1)[0]);
 const isPublicShell = computed(() => publicShellComponents.has(page.component));
 const shouldShow = computed(
@@ -87,24 +99,28 @@ const items = computed(() => [
         label: t('nav.bible'),
         href: bibleRoute(),
         icon: BookOpen,
+        disabled: false,
     },
     {
         key: 'news' as const,
         label: t('nav.news'),
         href: publicPostsIndex(),
         icon: Newspaper,
+        disabled: restrictChurchContent.value,
     },
     {
         key: 'events' as const,
         label: t('nav.events'),
         href: eventsIndex(),
         icon: CalendarDays,
+        disabled: restrictChurchContent.value,
     },
     {
         key: 'profile' as const,
         label: t('nav.profile'),
         href: profileHref.value,
         icon: UserRound,
+        disabled: false,
     },
 ]);
 
@@ -180,33 +196,37 @@ onBeforeUnmount(() => {
         :style="{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }"
     >
         <div class="mx-auto grid h-16 max-w-md grid-cols-4 px-2">
-            <Link
+            <component
+                :is="item.disabled ? 'span' : Link"
                 v-for="item in items"
                 :key="item.key"
-                :href="item.href"
+                :href="item.disabled ? undefined : item.href"
                 class="relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-bold transition active:scale-95"
                 :class="
-                    activeKey === item.key
-                        ? 'bg-indigo-50 text-indigo-700'
-                        : 'text-slate-500'
+                    item.disabled
+                        ? 'cursor-not-allowed text-slate-300 opacity-55'
+                        : activeKey === item.key
+                          ? 'bg-indigo-50 text-indigo-700'
+                          : 'text-slate-500'
                 "
                 :style="
-                    activeKey === item.key
+                    activeKey === item.key && !item.disabled
                         ? { color: 'var(--church-primary, #342f87)' }
                         : undefined
                 "
                 :aria-current="activeKey === item.key ? 'page' : undefined"
+                :aria-disabled="item.disabled ? 'true' : undefined"
             >
                 <component :is="item.icon" class="size-5" />
                 <span class="max-w-full truncate">{{ item.label }}</span>
                 <span
-                    v-if="activeKey === item.key"
+                    v-if="activeKey === item.key && !item.disabled"
                     class="absolute top-0 h-0.5 w-8 rounded-full"
                     :style="{
                         backgroundColor: 'var(--church-primary, #342f87)',
                     }"
                 />
-            </Link>
+            </component>
         </div>
     </nav>
 </template>

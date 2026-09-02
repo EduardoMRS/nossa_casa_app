@@ -207,6 +207,11 @@ onMounted(() => {
                 'ncapp_portal_location',
                 JSON.stringify(location),
             );
+            window.dispatchEvent(
+                new CustomEvent('ncapp:location-updated', {
+                    detail: location,
+                }),
+            );
             requestNearbyCommunities(location.latitude, location.longitude);
         },
         () => {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
 use App\Models\Church;
 use App\Models\Setting;
+use App\Services\ChurchNetworkSettingsData;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
@@ -24,6 +25,7 @@ class BrandingController extends Controller
         private ChurchTerminology $terminology,
         private ChurchBrandingResolver $brandingResolver,
         private ChurchDomainContext $domainContext,
+        private ChurchNetworkSettingsData $networkSettings,
     ) {}
 
     public function edit(Request $request): Response
@@ -72,6 +74,7 @@ class BrandingController extends Controller
                 ? $setting->options['currency']
                 : 'BRL',
             'mainDomain' => $this->domainContext->mainHost(),
+            'networkSettings' => $this->networkSettings->forChurch($church),
             'mailSettings' => [
                 'enabled' => $mailSetting?->enabled ?? false,
                 'allow_branches' => $mailSetting?->allow_branches ?? false,

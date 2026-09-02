@@ -14,6 +14,7 @@ import {
 import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
+import ChurchNetworkSettings from '@/components/ChurchNetworkSettings.vue';
 import InputError from '@/components/InputError.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import TemplateVariantPreview from '@/components/TemplateVariantPreview.vue';
@@ -22,6 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
 import { edit } from '@/routes/admin/branding';
+import type { ChurchNetworkSettingsData } from '@/types/church-network';
 
 type BrandingData = {
     domain: string;
@@ -119,6 +121,7 @@ const props = defineProps<{
     currency: string;
     mainDomain: string;
     mailSettings: MailSettings;
+    networkSettings: ChurchNetworkSettingsData;
 }>();
 const useOwnMailServer = ref(props.mailSettings.enabled);
 const colors = ref({
@@ -256,6 +259,7 @@ const resolvedDomain = computed(() =>
                 v-for="section in [
                     'identity',
                     'domain',
+                    'network',
                     'communication',
                     'location',
                     'templates',

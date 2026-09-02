@@ -141,7 +141,9 @@
         "no": "Não",
         "update": "Atualizar",
         "upload": "Enviar",
-        "delete": "Excluir"
+        "delete": "Excluir",
+        "accept": "Aceitar",
+        "reject": "Recusar"
     },
     "dialogs": {
         "confirm": {
@@ -499,7 +501,8 @@
                 "communication": "Comunicação",
                 "location": "Localização",
                 "templates": "Modelos",
-                "schedule": "Agenda"
+                "schedule": "Agenda",
+                "network": "Rede"
             },
             "mail_title": "Servidor de email personalizado",
             "mail_description": "Use uma conta SMTP para mensagens enviadas nesta igreja. Sem uma, o padrão do aplicativo é usado.",
@@ -570,6 +573,38 @@
                 "classic": "Cards em camadas, profundidade suave e cores da marca em destaque.",
                 "editorial": "Composição ampla, títulos serifados e divisórias de revista.",
                 "minimal": "Leitura focada, superfícies discretas e quase nenhuma sombra."
+            },
+            "network": {
+                "title": "Matrizes e filiais",
+                "description": "Gerencie a relação desta igreja com matrizes e filiais da mesma comunidade.",
+                "select_placeholder": "Selecione uma igreja",
+                "parent": {
+                    "title": "Igreja matriz",
+                    "none": "Esta igreja ainda não possui matriz.",
+                    "select": "Escolha uma matriz",
+                    "request": "Solicitar vínculo"
+                },
+                "children": {
+                    "title": "Filiais diretas",
+                    "none": "Nenhuma filial aprovada ainda.",
+                    "select": "Escolha uma igreja",
+                    "invite": "Convidar como filial"
+                },
+                "requests": {
+                    "title": "Solicitações pendentes",
+                    "link": "{parent} como matriz de {child}",
+                    "pending": "Aguardando aprovação: {parent} → {child}"
+                },
+                "reorganize": {
+                    "title": "Reorganizar filiais",
+                    "description": "Mova igrejas dentro da sua hierarquia inferior sem uma nova aprovação.",
+                    "branch": "Igreja que será movida",
+                    "parent": "Nova matriz",
+                    "action": "Mover igreja"
+                },
+                "errors": {
+                    "generic": "Não foi possível atualizar a rede. Tente novamente."
+                }
             }
         },
         "categories": {
@@ -1754,5 +1789,13 @@
             "lock": "Bloquear",
             "delete": "Excluir"
         }
+    },
+    "church_proximity": {
+        "title": "Você está distante da sua igreja",
+        "description": "Você parece estar a cerca de {distance} km da {church}. Deseja encontrar outra igreja da mesma comunidade por perto?",
+        "distance": "A {distance} km",
+        "no_alternatives": "Nenhuma igreja da mesma comunidade foi encontrada em um raio de 30 km.",
+        "continue_own": "Continuar para minha igreja",
+        "view_nearby": "Ver igrejas próximas"
     }
 }
