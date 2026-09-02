@@ -6,29 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
 
-type ChurchOption = { id: string; name: string };
-type NetworkRow = {
-    id: string;
-    parent: ChurchOption | null;
-    child: ChurchOption | null;
-};
-type NetworkRequest = {
-    id: string;
-    direction: 'incoming' | 'outgoing';
-    requesting_church: ChurchOption | null;
-    parent: ChurchOption | null;
-    child: ChurchOption | null;
-};
-type NetworkSettings = {
-    church: ChurchOption & { community_id: string | null };
-    parent: ChurchOption | null;
-    children: ChurchOption[];
-    availableChurches: ChurchOption[];
-    networks: NetworkRow[];
-    requests: NetworkRequest[];
-};
+import type { ChurchNetworkOption, ChurchNetworkSettingsData } from '@/types/church-network';
 
-const props = defineProps<{ settings: NetworkSettings }>();
+const props = defineProps<{ settings: ChurchNetworkSettingsData }>();
 const { t } = useI18n();
 const selectedParentId = ref('');
 const selectedChildId = ref('');
@@ -52,7 +32,7 @@ const moveParentOptions = computed(() => {
         props.settings.church,
         ...props.settings.networks
             .map((network) => network.child)
-            .filter((church): church is ChurchOption => church !== null),
+            .filter((church): church is ChurchNetworkOption => church !== null),
     ].filter((church) => church.id !== childId);
 });
 
