@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { configureEcho } from '@laravel/echo-vue';
 import axios from 'axios';
 import { createApp, Fragment, h } from 'vue';
+import ChurchDistancePrompt from '@/components/ChurchDistancePrompt.vue';
 import ConfirmDialogHost from '@/components/ConfirmDialogHost.vue';
 import PwaBottomNavigation from '@/components/PwaBottomNavigation.vue';
 import { initializeTheme } from '@/composables/useAppearance';
@@ -89,6 +90,7 @@ createInertiaApp({
                 h(Fragment, [
                     h(App, props),
                     h(PwaBottomNavigation),
+                    h(ChurchDistancePrompt),
                     h(ConfirmDialogHost),
                 ]),
         });
