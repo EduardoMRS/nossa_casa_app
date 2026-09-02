@@ -118,7 +118,8 @@
         "bible": "Bible",
         "news": "News",
         "profile": "Profile",
-        "pwa_navigation": "Main app navigation"
+        "pwa_navigation": "Main app navigation",
+        "network": "Network"
     },
     "navigation": {
         "menu": "Navigation menu",
@@ -1163,21 +1164,21 @@
             }
         },
         "church_network": {
-            "kicker": "Organizational structure",
-            "title": "Church network",
-            "description": "View the headquarters chain and the complete branch structure linked to this church.",
+            "kicker": "{headquartersPlural} and {branchPlural} structure",
+            "title": "{headquarters} network",
+            "description": "View the {headquartersPlural} chain and the complete {branchPlural} structure linked to this unit.",
             "manage": "Manage relationships",
-            "current": "Current church",
-            "parent_chain": "Headquarters chain",
-            "parent_chain_description": "From the main headquarters to the church you are managing.",
-            "no_parent": "This church has no linked headquarters.",
-            "direct_branches": "Direct branches",
-            "all_branches": "All branches",
+            "current": "Current unit",
+            "parent_chain": "{headquartersPlural} chain",
+            "parent_chain_description": "From the main unit to the unit you are managing.",
+            "no_parent": "This unit has no linked {headquarters}.",
+            "direct_branches": "Direct {branchPlural}",
+            "all_branches": "All {branchPlural}",
             "levels": "Levels below",
-            "hierarchy": "Branch tree",
-            "hierarchy_description": "The complete structure reporting to the current church.",
-            "empty": "No approved branch has been linked yet.",
-            "branch_count": "{count} branch | {count} branches"
+            "hierarchy": "{branchPlural} tree",
+            "hierarchy_description": "The complete structure reporting to the current unit.",
+            "empty": "No approved {branch} has been linked yet.",
+            "branch_count": "{count} {unit}"
         }
     },
     "library": {
@@ -1820,5 +1821,22 @@
         "no_alternatives": "No church from the same community was found within 30 km.",
         "continue_own": "Continue to my church",
         "view_nearby": "View nearby churches"
+    },
+    "church_network_public": {
+        "meta_title": "{name} network",
+        "kicker": "{branchPlural} network",
+        "title": "How {name} is organized",
+        "description": "Explore the {headquartersPlural} chain and {branchPlural} connected to this unit.",
+        "direct": "Direct {branchPlural}",
+        "total": "Total {branchPlural}",
+        "levels": "Levels below",
+        "parent_chain": "{headquartersPlural} chain",
+        "parent_chain_hint": "From the main unit to the current {headquarters}.",
+        "no_parent": "This unit has no linked {headquarters}.",
+        "tree": "{branchPlural} tree",
+        "tree_hint": "See how the {branchPlural} are organized below this unit.",
+        "current": "Current unit",
+        "branch_count": "{count} {unit}",
+        "empty": "No approved {branchPlural} are linked yet."
     }
 }

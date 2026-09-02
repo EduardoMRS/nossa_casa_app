@@ -10,6 +10,7 @@ import {
 import { computed } from 'vue';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import { useI18n } from '@/lib/i18n';
+import { useTerminology } from '@/composables/useTerminology';
 import { edit as brandingEdit } from '@/routes/admin/branding';
 import type {
     ChurchNetworkSettingsData,
@@ -21,6 +22,15 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const { unitLabel } = useTerminology();
+const terminology = computed(() => ({
+    headquarters: unitLabel('headquarters'),
+    headquartersPlural: unitLabel('headquarters', 'plural'),
+    branch: unitLabel('branch'),
+    branchPlural: unitLabel('branch', 'plural'),
+}));
+const branchLabel = (count: number): string =>
+    unitLabel('branch', count === 1 ? 'singular' : 'plural');
 
 type TreeRow = ChurchNetworkTreeNode & { depth: number };
 
@@ -39,20 +49,20 @@ const settingsUrl = computed(
 </script>
 
 <template>
-    <Head :title="t('admin.church_network.title')" />
+    <Head :title="t('admin.church_network.title', terminology)" />
 
     <main class="space-y-6">
         <AdminPageHeader
-            :kicker="t('admin.church_network.kicker')"
-            :title="t('admin.church_network.title')"
-            :description="t('admin.church_network.description')"
+            :kicker="t('admin.church_network.kicker', terminology)"
+            :title="t('admin.church_network.title', terminology)"
+            :description="t('admin.church_network.description', terminology)"
         >
             <Link
                 :href="settingsUrl"
                 class="inline-flex items-center gap-2 rounded-xl bg-primary-foreground px-4 py-3 text-sm font-black text-primary shadow-sm transition hover:opacity-90"
             >
                 <Settings2 class="size-4" />
-                {{ t('admin.church_network.manage') }}
+                {{ t('admin.church_network.manage', terminology) }}
             </Link>
         </AdminPageHeader>
 
@@ -75,7 +85,7 @@ const settingsUrl = computed(
                 <p
                     class="text-xs font-bold tracking-[0.14em] text-muted-foreground uppercase"
                 >
-                    {{ t(`admin.church_network.${stat.key}`) }}
+                    {{ t(`admin.church_network.${stat.key}`, terminology) }}
                 </p>
                 <p class="mt-2 text-3xl font-black">{{ stat.value }}</p>
             </article>
@@ -93,12 +103,13 @@ const settingsUrl = computed(
                     </div>
                     <div>
                         <h2 class="font-black">
-                            {{ t('admin.church_network.parent_chain') }}
+                            {{ t('admin.church_network.parent_chain', terminology) }}
                         </h2>
                         <p class="mt-1 text-sm text-muted-foreground">
                             {{
                                 t(
                                     'admin.church_network.parent_chain_description',
+                                    terminology,
                                 )
                             }}
                         </p>
@@ -132,7 +143,7 @@ const settingsUrl = computed(
                     v-else
                     class="mt-6 rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground"
                 >
-                    {{ t('admin.church_network.no_parent') }}
+                    {{ t('admin.church_network.no_parent', terminology) }}
                 </p>
             </article>
 
@@ -147,7 +158,7 @@ const settingsUrl = computed(
                 <p
                     class="mt-5 text-xs font-bold tracking-[0.14em] text-primary uppercase"
                 >
-                    {{ t('admin.church_network.current') }}
+                    {{ t('admin.church_network.current', terminology) }}
                 </p>
                 <h2 class="mt-2 text-2xl font-black">
                     {{ network.church.name }}
@@ -156,6 +167,7 @@ const settingsUrl = computed(
                     {{
                         t('admin.church_network.branch_count', {
                             count: network.children.length,
+                            unit: branchLabel(network.children.length),
                         })
                     }}
                 </p>
@@ -171,10 +183,10 @@ const settingsUrl = computed(
                 </div>
                 <div>
                     <h2 class="font-black">
-                        {{ t('admin.church_network.hierarchy') }}
+                        {{ t('admin.church_network.hierarchy', terminology) }}
                     </h2>
                     <p class="mt-1 text-sm text-muted-foreground">
-                        {{ t('admin.church_network.hierarchy_description') }}
+                        {{ t('admin.church_network.hierarchy_description', terminology) }}
                     </p>
                 </div>
             </div>
@@ -212,7 +224,7 @@ const settingsUrl = computed(
                                 v-if="row.id === network.church.id"
                                 class="text-xs text-primary"
                             >
-                                {{ t('admin.church_network.current') }}
+                                {{ t('admin.church_network.current', terminology) }}
                             </p>
                         </div>
                     </div>
@@ -223,6 +235,7 @@ const settingsUrl = computed(
                         {{
                             t('admin.church_network.branch_count', {
                                 count: row.children.length,
+                                unit: branchLabel(row.children.length),
                             })
                         }}
                     </span>
@@ -233,7 +246,7 @@ const settingsUrl = computed(
                 v-if="network.tree.children.length === 0"
                 class="mt-4 rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground"
             >
-                {{ t('admin.church_network.empty') }}
+                {{ t('admin.church_network.empty', terminology) }}
             </p>
         </section>
     </main>

@@ -118,7 +118,8 @@
         "bible": "Bíblia",
         "news": "Notícias",
         "profile": "Perfil",
-        "pwa_navigation": "Navegação principal do aplicativo"
+        "pwa_navigation": "Navegação principal do aplicativo",
+        "network": "Rede"
     },
     "navigation": {
         "menu": "Menu de navegação",
@@ -1163,21 +1164,21 @@
             }
         },
         "church_network": {
-            "kicker": "Estrutura organizacional",
-            "title": "Rede da church",
-            "description": "Visualize a cadeia de matrizes e toda a estrutura de filiais vinculada a esta church.",
+            "kicker": "Estrutura de {headquartersPlural} e {branchPlural}",
+            "title": "Rede de {headquarters}",
+            "description": "Visualize a cadeia de {headquartersPlural} e toda a estrutura de {branchPlural} vinculada a esta unidade.",
             "manage": "Gerenciar vínculos",
-            "current": "Church atual",
-            "parent_chain": "Cadeia de matrizes",
-            "parent_chain_description": "Da matriz principal até a church que você está administrando.",
-            "no_parent": "Esta church não possui uma matriz vinculada.",
-            "direct_branches": "Filiais diretas",
-            "all_branches": "Todas as filiais",
+            "current": "Unidade atual",
+            "parent_chain": "Cadeia de {headquartersPlural}",
+            "parent_chain_description": "Da unidade principal até a unidade que você está administrando.",
+            "no_parent": "Esta unidade não possui {headquarters} vinculada.",
+            "direct_branches": "{branchPlural} diretas",
+            "all_branches": "Todas as {branchPlural}",
             "levels": "Níveis abaixo",
-            "hierarchy": "Árvore de filiais",
-            "hierarchy_description": "A estrutura completa subordinada à church atual.",
-            "empty": "Nenhuma filial aprovada foi vinculada ainda.",
-            "branch_count": "{count} filial | {count} filiais"
+            "hierarchy": "Árvore de {branchPlural}",
+            "hierarchy_description": "A estrutura completa subordinada à unidade atual.",
+            "empty": "Nenhuma {branch} aprovada foi vinculada ainda.",
+            "branch_count": "{count} {unit}"
         }
     },
     "library": {
@@ -1820,5 +1821,22 @@
         "no_alternatives": "Nenhuma igreja da mesma comunidade foi encontrada em um raio de 30 km.",
         "continue_own": "Continuar para minha igreja",
         "view_nearby": "Ver igrejas próximas"
+    },
+    "church_network_public": {
+        "meta_title": "Rede de {name}",
+        "kicker": "Rede de {branchPlural}",
+        "title": "Como {name} está organizada",
+        "description": "Conheça a cadeia de {headquartersPlural} e {branchPlural} conectadas a esta unidade.",
+        "direct": "{branchPlural} diretas",
+        "total": "Total de {branchPlural}",
+        "levels": "Níveis abaixo",
+        "parent_chain": "Cadeia de {headquartersPlural}",
+        "parent_chain_hint": "Da unidade principal até a {headquarters} atual.",
+        "no_parent": "Esta unidade não possui {headquarters} vinculada.",
+        "tree": "Árvore de {branchPlural}",
+        "tree_hint": "Veja como as {branchPlural} estão organizadas abaixo desta unidade.",
+        "current": "Unidade atual",
+        "branch_count": "{count} {unit}",
+        "empty": "Nenhuma {branchPlural} aprovada está vinculada ainda."
     }
 }

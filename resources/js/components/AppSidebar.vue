@@ -35,6 +35,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useI18n } from '@/lib/i18n';
+import { useTerminology } from '@/composables/useTerminology';
 import { dashboard, home } from '@/routes';
 import { edit as brandingEdit } from '@/routes/admin/branding';
 import { index as adminCategoriesIndex } from '@/routes/admin/categories';
@@ -56,6 +57,7 @@ import { ui as apiDocs } from '@/routes/scramble/docs';
 import type { NavItem } from '@/types';
 
 const { t } = useI18n();
+const { unitLabel } = useTerminology();
 const brandingSection = (section: string): string =>
     `${brandingEdit().url}#settings-${section}`;
 
@@ -246,7 +248,12 @@ const administrationNavItems = computed<NavItem[]>(() => [
         icon: FolderGit2,
     },
     {
-        title: t('admin.church_network.title'),
+        title: t('admin.church_network.title', {
+            headquarters: unitLabel('headquarters'),
+            headquartersPlural: unitLabel('headquarters', 'plural'),
+            branch: unitLabel('branch'),
+            branchPlural: unitLabel('branch', 'plural'),
+        }),
         href: adminChurchNetworkIndex(),
         icon: NetworkIcon,
     },

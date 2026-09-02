@@ -24,13 +24,16 @@ export type ChurchNetworkStats = {
     levels: number;
 };
 
-export type ChurchNetworkSettingsData = {
+export type ChurchNetworkOverviewData = {
     church: ChurchNetworkOption & { community_id: string | null };
     parent: ChurchNetworkOption | null;
     children: ChurchNetworkOption[];
     ancestors: ChurchNetworkOption[];
     tree: ChurchNetworkTreeNode;
     stats: ChurchNetworkStats;
+};
+
+export type ChurchNetworkSettingsData = ChurchNetworkOverviewData & {
     availableChurches: ChurchNetworkOption[];
     networks: ChurchNetworkRow[];
     requests: ChurchNetworkRequest[];

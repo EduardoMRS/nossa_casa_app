@@ -12,7 +12,7 @@ final readonly class ChurchNetworkSettingsData
     public function __construct(private ChurchNetworkService $networks) {}
 
     /** @return array<string, mixed> */
-    public function forChurch(Church $church): array
+    public function overviewForChurch(Church $church): array
     {
         $churchIds = [$church->id, ...$this->networks->descendantIds($church)];
         $parentNetwork = Network::query()
@@ -25,7 +25,6 @@ final readonly class ChurchNetworkSettingsData
             ->with(['parentChurch:id,name', 'childChurch:id,name'])
             ->orderBy('created_at')
             ->get();
-
         $ancestors = collect();
         $visitedChurchIds = [$church->id];
         $ancestorChurchId = $church->id;
@@ -71,6 +70,36 @@ final readonly class ChurchNetworkSettingsData
             return 1 + max(array_map($treeDepth, $node['children']));
         };
 
+        return [
+            'church' => $church->only(['id', 'name', 'community_id']),
+            'parent' => $parentNetwork?->parentChurch?->only(['id', 'name']),
+            'children' => $networkRows
+                ->where('parent_church_id', $church->id)
+                ->pluck('childChurch')
+                ->filter()
+                ->map->only(['id', 'name'])
+                ->values(),
+            'ancestors' => $ancestors->values(),
+            'tree' => $tree,
+            'stats' => [
+                'direct_branches' => $networkRows->where('parent_church_id', $church->id)->count(),
+                'all_branches' => $networkRows->count(),
+                'levels' => $treeDepth($tree),
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function forChurch(Church $church): array
+    {
+        $overview = $this->overviewForChurch($church);
+        $churchIds = [$church->id, ...$this->networks->descendantIds($church)];
+        $networkRows = Network::query()
+            ->whereIn('parent_church_id', $churchIds)
+            ->whereIn('child_church_id', $churchIds)
+            ->with(['parentChurch:id,name', 'childChurch:id,name'])
+            ->orderBy('created_at')
+            ->get();
         $pendingRequests = ChurchNetworkRequest::query()
             ->where('status', ChurchNetworkRequestStatus::PENDING)
             ->where(function ($query) use ($church): void {
@@ -93,21 +122,7 @@ final readonly class ChurchNetworkSettingsData
             ->get();
 
         return [
-            'church' => $church->only(['id', 'name', 'community_id']),
-            'parent' => $parentNetwork?->parentChurch?->only(['id', 'name']),
-            'children' => $networkRows
-                ->where('parent_church_id', $church->id)
-                ->pluck('childChurch')
-                ->filter()
-                ->map->only(['id', 'name'])
-                ->values(),
-            'ancestors' => $ancestors->values(),
-            'tree' => $tree,
-            'stats' => [
-                'direct_branches' => $networkRows->where('parent_church_id', $church->id)->count(),
-                'all_branches' => $networkRows->count(),
-                'levels' => $treeDepth($tree),
-            ],
+            ...$overview,
             'availableChurches' => Church::query()
                 ->where('community_id', $church->community_id)
                 ->whereKeyNot($church->id)
