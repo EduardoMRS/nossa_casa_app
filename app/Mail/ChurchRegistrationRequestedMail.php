@@ -70,6 +70,16 @@ class ChurchRegistrationRequestedMail extends BrandedMailable implements ShouldQ
             ]);
         }
 
+        if ($this->registrationRequest->address) {
+            $lines[] = __('mail.church_registration_request.address', [
+                'address' => $this->registrationRequest->address,
+            ]);
+        }
+
+        $lines[] = __('mail.church_registration_request.language', [
+            'language' => __('mail.church_registration_request.languages.'.($this->registrationRequest->locale ?: 'pt')),
+        ]);
+
         return new Content(
             view: 'mail.branded',
             text: 'mail.branded-text',

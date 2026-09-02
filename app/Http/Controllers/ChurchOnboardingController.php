@@ -33,15 +33,35 @@ class ChurchOnboardingController extends Controller
     public function storeCommunity(Request $request): JsonResponse
     {
         abort_if(! $this->context->isMainDomain(), 404);
+        $request->merge([
+            'default_locale' => $request->input('default_locale') ?: app()->getLocale(),
+        ]);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('communities')],
             'description' => ['required', 'string', 'max:5000'],
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'default_locale' => ['required', Rule::in(['pt', 'en'])],
+            'address' => ['nullable', 'string', 'max:1000'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
         ]);
 
         $community = DB::transaction(function () use ($request, $validated): Community {
-            $community = Community::query()->create([...$validated, 'owner_id' => $request->user()->id]);
+            $address = collect($validated)->only(['address', 'latitude', 'longitude'])->all();
+            $community = Community::query()->create([
+                ...collect($validated)->except(['address', 'latitude', 'longitude'])->all(),
+                'owner_id' => $request->user()->id,
+            ]);
+
+            if (filled($address['address'] ?? null) || isset($address['latitude'], $address['longitude'])) {
+                $community->address()->create([
+                    'street' => $address['address'] ?? null,
+                    'latitude' => $address['latitude'] ?? null,
+                    'longitude' => $address['longitude'] ?? null,
+                ]);
+            }
+
             $request->user()->profile()->updateOrCreate(
                 ['user_id' => $request->user()->id],
                 ['community_id' => $community->id],
@@ -56,9 +76,12 @@ class ChurchOnboardingController extends Controller
     public function storeChurchRequest(Request $request): JsonResponse
     {
         abort_if(! $this->context->isMainDomain(), 404);
-        $request->merge(['domain' => ChurchDomainContext::normalizeDomain($request->string('domain')->toString())]);
         $communityId = $request->string('community_id')->toString();
-        $this->ensureCommunityMembership($request, $communityId);
+        $communityLocale = Community::query()->whereKey($communityId)->value('default_locale');
+        $request->merge([
+            'domain' => ChurchDomainContext::normalizeDomain($request->string('domain')->toString()),
+            'locale' => $request->input('locale') ?: $communityLocale ?: app()->getLocale(),
+        ]);
         $validated = $request->validate([
             'community_id' => ['required', 'string', 'exists:communities,id'],
             'parent_church_id' => [
@@ -76,6 +99,9 @@ class ChurchOnboardingController extends Controller
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+            'locale' => ['required', Rule::in(['pt', 'en'])],
             'proof_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'mimetypes:application/pdf,image/jpeg,image/png,image/webp', 'max:10240'],
         ]);
         $proofDocument = $request->file('proof_document');
@@ -127,6 +153,19 @@ class ChurchOnboardingController extends Controller
                 'found_date' => $registrationRequest->found_date,
                 'status' => ChurchStatus::ACTIVE,
             ]);
+
+            if ($registrationRequest->address || ($registrationRequest->latitude !== null && $registrationRequest->longitude !== null)) {
+                $church->address()->create([
+                    'street' => $registrationRequest->address,
+                    'latitude' => $registrationRequest->latitude,
+                    'longitude' => $registrationRequest->longitude,
+                ]);
+            }
+
+            $setting = $church->settings()->firstOrFail();
+            $options = is_array($setting->options) ? $setting->options : [];
+            $options['default_locale'] = $registrationRequest->locale;
+            $setting->update(['options' => $options]);
             if ($registrationRequest->requested_parent_church_id) {
                 $parentChurch = Church::query()
                     ->whereKey($registrationRequest->requested_parent_church_id)
@@ -221,13 +260,6 @@ class ChurchOnboardingController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home');
-    }
-
-    private function ensureCommunityMembership(Request $request, string $communityId): void
-    {
-        $userCommunityId = $request->user()->profile?->community_id ?? $request->user()->church?->community_id;
-        $ownsCommunity = Community::query()->whereKey($communityId)->where('owner_id', $request->user()->id)->exists();
-        abort_unless($request->user()->role === UserRole::SYSTEM || $userCommunityId === $communityId || $ownsCommunity, 403);
     }
 
     private function ensureCanReview(Request $request, ChurchRegistrationRequest $registrationRequest): void

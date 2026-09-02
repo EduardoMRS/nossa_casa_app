@@ -46,7 +46,7 @@ class PortalController extends Controller
         $latitude = isset($location['latitude']) ? (float) $location['latitude'] : null;
         $longitude = isset($location['longitude']) ? (float) $location['longitude'] : null;
         $communities = Community::query()
-            ->with(['churches' => fn ($query) => $query
+            ->with(['address', 'churches' => fn ($query) => $query
                 ->where('status', ChurchStatus::ACTIVE)
                 ->with(['address', 'settings'])
                 ->withExists(['liveStreams as is_live' => fn ($liveStreams) => $liveStreams
@@ -58,6 +58,17 @@ class PortalController extends Controller
             ->orderBy('name')
             ->get()
             ->map(function (Community $community) use ($latitude, $longitude): array {
+                $communityDistance = $latitude !== null
+                    && $longitude !== null
+                    && $community->address?->latitude !== null
+                    && $community->address?->longitude !== null
+                        ? $this->geoDistance->between(
+                            $latitude,
+                            $longitude,
+                            (float) $community->address->latitude,
+                            (float) $community->address->longitude,
+                        )
+                        : null;
                 $churches = $community->churches->map(function ($church) use ($latitude, $longitude): array {
                     $address = $church->address->first();
                     $branding = $church->settings?->options['branding'] ?? [];
@@ -84,8 +95,9 @@ class PortalController extends Controller
                     'slug' => $community->slug,
                     'url' => route('communities.show', $community),
                     'description' => $community->description,
+                    'default_locale' => $community->default_locale ?? 'pt',
                     'churches_count' => $community->churches_count,
-                    'distance_km' => $churches->pluck('distance_km')->filter(fn ($distance) => $distance !== null)->min(),
+                    'distance_km' => $churches->pluck('distance_km')->filter(fn ($distance) => $distance !== null)->min() ?? $communityDistance,
                     'churches' => $churches,
                 ];
             });
@@ -98,19 +110,11 @@ class PortalController extends Controller
 
         $reviewableRequests = collect();
         $myRequests = collect();
-        $registrationParentChurches = collect();
 
         if ($request->user()) {
             $user = $request->user();
             $communityId = $user->profile?->community_id ?? $user->church?->community_id;
             $ownedCommunityIds = Community::query()->where('owner_id', $user->id)->pluck('id');
-            $registrationParentChurches = $communityId
-                ? Church::query()
-                    ->where('community_id', $communityId)
-                    ->where('status', ChurchStatus::ACTIVE)
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                : collect();
             $reviewableRequests = ChurchRegistrationRequest::query()
                 ->where('status', 'pending')
                 ->when(! in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), function ($query) use ($user, $communityId, $ownedCommunityIds): void {
@@ -166,7 +170,6 @@ class PortalController extends Controller
             'mainDomain' => $this->context->mainHost(),
             'reviewableRequests' => $reviewableRequests,
             'myRequests' => $myRequests,
-            'registrationParentChurches' => $registrationParentChurches,
         ]);
     }
 

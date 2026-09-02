@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 
 class Community extends Model
@@ -26,6 +27,7 @@ class Community extends Model
         'logo_path',
         'bible_versions',
         'default_bible_version',
+        'default_locale',
     ];
 
     protected $casts = [
@@ -41,6 +43,12 @@ class Community extends Model
     public function churches(): HasMany
     {
         return $this->hasMany(Church::class, 'community_id');
+    }
+
+    /** @return MorphOne<Address, $this> */
+    public function address(): MorphOne
+    {
+        return $this->morphOne(Address::class, 'addressable');
     }
 
     public function owner()

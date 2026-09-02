@@ -30,6 +30,12 @@ return [
         'community' => 'Community: :community',
         'parent_church' => 'Requested parent church: :church',
         'contact' => 'Contact email: :email',
+        'address' => 'Address: :address',
+        'language' => 'Default language: :language',
+        'languages' => [
+            'pt' => 'Portuguese',
+            'en' => 'English',
+        ],
         'action' => 'Review request',
         'outro' => 'Open the portal to review the information and approve or reject this request.',
     ],

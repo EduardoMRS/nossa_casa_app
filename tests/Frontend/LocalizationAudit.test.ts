@@ -83,3 +83,25 @@ test('known user-facing literals are not embedded in Vue components', () => {
     assert.doesNotMatch(source, />\s*Close\s*</);
     assert.doesNotMatch(source, /}}\s+km\b/);
 });
+
+test('portal onboarding exposes the complete light-theme registration flow', () => {
+    const source = readFileSync(
+        join(projectRoot, 'resources/js/pages/Portal/Index.vue'),
+        'utf8',
+    );
+
+    for (const binding of [
+        'churchForm.community_id',
+        'churchForm.parent_church_id',
+        'churchForm.address',
+        'churchForm.locale',
+        'communityForm.address',
+        'communityForm.default_locale',
+    ]) {
+        assert.equal(source.includes(`v-model="${binding}"`), true, binding);
+    }
+
+    assert.match(source, /content-class="[^"]*bg-white[^"]*text-slate-950/);
+    assert.match(source, /v-if="onboardingMode === 'new_community'"/);
+    assert.match(source, /<form v-else/);
+});

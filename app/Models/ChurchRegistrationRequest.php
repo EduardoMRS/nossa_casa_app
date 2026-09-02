@@ -26,6 +26,9 @@ class ChurchRegistrationRequest extends Model
         'contact_email',
         'contact_phone',
         'address',
+        'latitude',
+        'longitude',
+        'locale',
         'status',
         'review_notes',
         'reviewed_at',
@@ -37,6 +40,8 @@ class ChurchRegistrationRequest extends Model
     protected $casts = [
         'found_date' => 'date',
         'reviewed_at' => 'datetime',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     public function requester()
