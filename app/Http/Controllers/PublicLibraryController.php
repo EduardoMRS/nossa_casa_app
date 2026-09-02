@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Church;
 use App\Queries\LibraryQuery;
 use App\Support\ChurchDomainContext;
 use Inertia\Inertia;
@@ -22,9 +21,9 @@ final class PublicLibraryController extends Controller
 
     public function bible(): Response
     {
-        $church = $this->context->church();
-        abort_unless($church instanceof Church, 404);
-
-        return Inertia::render('Library/Bible', $this->library->bible($church)->toArray());
+        return Inertia::render(
+            'Library/Bible',
+            $this->library->bible($this->context->church())->toArray(),
+        );
     }
 }
