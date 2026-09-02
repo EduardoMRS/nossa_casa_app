@@ -226,7 +226,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrl
         $filePath = $payload['path'] ?? null;
         $diskName = $payload['disk'] ?? null;
     } catch (Throwable) {
-        abort(403, 'Invalid or corrupted file link.');
+        abort(403, __('common.errors.invalid_file_link'));
     }
 
     abort_if(

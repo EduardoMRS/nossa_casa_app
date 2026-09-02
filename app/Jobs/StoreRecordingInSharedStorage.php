@@ -34,7 +34,7 @@ class StoreRecordingInSharedStorage implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         if (! File::isFile($this->segmentPath)) {
-            throw new RuntimeException('Recording segment is not available on the media node.');
+            throw new RuntimeException(__('media.recording_segment_unavailable'));
         }
 
         $disk = (string) config('media.archive_disk');
@@ -45,7 +45,7 @@ class StoreRecordingInSharedStorage implements ShouldBeUnique, ShouldQueue
             $stream = fopen($this->segmentPath, 'rb');
 
             if (! is_resource($stream)) {
-                throw new RuntimeException('Recording segment could not be opened.');
+                throw new RuntimeException(__('media.recording_segment_open_failed'));
             }
 
             try {
@@ -55,12 +55,12 @@ class StoreRecordingInSharedStorage implements ShouldBeUnique, ShouldQueue
             }
 
             if (! $stored) {
-                throw new RuntimeException('Recording segment could not be stored.');
+                throw new RuntimeException(__('media.recording_segment_store_failed'));
             }
         }
 
         if (! $storage->exists($destination) || $storage->size($destination) !== $this->size) {
-            throw new RuntimeException('Recording segment could not be verified in shared storage.');
+            throw new RuntimeException(__('media.recording_segment_verify_failed'));
         }
 
         Http::baseUrl(rtrim((string) config('media.core_url'), '/'))

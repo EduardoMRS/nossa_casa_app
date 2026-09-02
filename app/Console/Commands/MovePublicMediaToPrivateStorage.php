@@ -42,7 +42,7 @@ class MovePublicMediaToPrivateStorage extends Command
             $stream = $publicDisk->readStream($path);
 
             if (! is_resource($stream)) {
-                throw new RuntimeException("Could not read public file: {$path}");
+                throw new RuntimeException(__('media.public_file_read_failed', ['path' => $path]));
             }
 
             try {
@@ -52,7 +52,7 @@ class MovePublicMediaToPrivateStorage extends Command
             }
 
             if (! $stored) {
-                throw new RuntimeException("Could not store private file: {$path}");
+                throw new RuntimeException(__('media.private_file_store_failed', ['path' => $path]));
             }
 
             $publicDisk->delete($path);

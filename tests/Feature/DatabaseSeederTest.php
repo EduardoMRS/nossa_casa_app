@@ -27,6 +27,10 @@ test('database seeder includes development data outside production', function ()
 });
 
 test('database seeder excludes development data in production', function () {
+    Storage::fake((string) config('media.disk'));
+    config()->set('app.system_user.email', 'system@nossacasa.test');
+    config()->set('app.system_user.password', 'password');
+
     $originalEnvironment = app()->environment();
     app()->detectEnvironment(fn (): string => 'production');
 
@@ -39,7 +43,7 @@ test('database seeder excludes development data in production', function () {
         app()->detectEnvironment(fn (): string => $originalEnvironment);
     }
 
-    expect(User::query()->exists())->toBeFalse()
+    expect(User::query()->where('email', 'system@nossacasa.test')->where('role', UserRole::SYSTEM)->exists())->toBeTrue()
         ->and(Church::query()->exists())->toBeFalse()
         ->and(Community::query()->exists())->toBeFalse()
         ->and(AiModel::query()->where('model_id', 'inclusionai/ling-3.0-flash:free')->exists())->toBeTrue();

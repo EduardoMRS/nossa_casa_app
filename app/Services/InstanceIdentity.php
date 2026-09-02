@@ -20,7 +20,7 @@ final class InstanceIdentity
 
         if ($configuredId !== '') {
             if (! Str::isUlid($configuredId)) {
-                throw new RuntimeException('NATIVE_INSTANCE_ID must be a valid ULID.');
+                throw new RuntimeException(__('api.errors.invalid_instance_id'));
             }
 
             return $this->resolvedId = $configuredId;

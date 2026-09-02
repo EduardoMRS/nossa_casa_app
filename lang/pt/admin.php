@@ -56,6 +56,11 @@ return [
             'participant' => 'Inscrito :number',
             'project_reference' => 'Nossa Casa - projeto open source',
         ],
+        'errors' => [
+            'create_export_file' => 'Não foi possível criar o arquivo de exportação.',
+            'create_spreadsheet_archive' => 'Não foi possível criar o pacote da planilha.',
+            'read_spreadsheet_export' => 'Não foi possível ler a planilha exportada.',
+        ],
         'statuses' => [
             'pending' => 'Pendente',
             'approved' => 'Aprovada',

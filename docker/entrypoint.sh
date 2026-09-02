@@ -115,7 +115,7 @@ if [ "$use_prebuilt_frontend" != "true" ] && [ "${SKIP_NODE_INSTALL:-false}" != 
     printf '%s' "$node_manifest_hash" > node_modules/.node-manifest.sha256
 fi
 
-if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
+if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && { [ "${RUN_MIGRATIONS:-true}" != "false" ] || [ "${RUN_SEEDERS:-true}" != "false" ]; }; then
     migration_attempt=1
     migration_max_attempts="${MIGRATION_MAX_ATTEMPTS:-12}"
     database_ready_command='require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $app->make("db")->connection()->getPdo();'
@@ -132,8 +132,15 @@ if [ "$1" = "php-fpm" ] && [ "$app_environment" = "production" ] && [ "${RUN_MIG
         sleep 5
     done
 
-    echo "Aplicando migrations pendentes..."
-    php artisan migrate --force --no-interaction
+    if [ "${RUN_MIGRATIONS:-true}" != "false" ]; then
+        echo "Aplicando migrations pendentes..."
+        php artisan migrate --force --no-interaction
+    fi
+
+    if [ "${RUN_SEEDERS:-true}" != "false" ]; then
+        echo "Executando seeders de produção..."
+        php artisan db:seed --force --no-interaction
+    fi
 fi
 
 if [ "$1" = "php-fpm" ]; then

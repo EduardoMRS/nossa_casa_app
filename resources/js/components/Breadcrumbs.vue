@@ -17,10 +17,11 @@ type Props = {
 
 defineProps<Props>();
 const { t } = useI18n();
-const localized = (value: string): string =>
-    ['settings.', 'admin.'].some((prefix) => value.startsWith(prefix))
-        ? t(value)
-        : value;
+const localized = (value: string): string => {
+    const translated = t(value);
+
+    return translated === value ? value : translated;
+};
 </script>
 
 <template>

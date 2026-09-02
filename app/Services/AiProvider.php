@@ -37,7 +37,10 @@ class AiProvider
     public function setProvider(string $provider, string $model = null): self
     {
         if (!isset(config('services.ia')[$provider])) {
-            throw new InvalidArgumentException("Provedor '$provider' não suportado. Provedores disponíveis: " . implode(', ', array_keys(config('services.ia'))));
+            throw new InvalidArgumentException(__('aimodel.provider_not_supported', [
+                'provider' => $provider,
+                'providers' => implode(', ', array_keys(config('services.ia'))),
+            ]));
         }
 
         $this->provider = $provider;
@@ -66,7 +69,7 @@ class AiProvider
 
         // Se ainda estiver vazio, não há o que fazer
         if (empty($this->models)) {
-            throw new \RuntimeException("Nenhum modelo disponível para o provider '{$provider}'.");
+            throw new \RuntimeException(__('aimodel.no_models_available', ['provider' => $provider]));
         }
 
         // Modelo padrão
@@ -158,11 +161,15 @@ class AiProvider
     public function setModel(string $model): self
     {
         if (!isset(config("services.ia")[$this->provider])) {
-            throw new InvalidArgumentException("Provedor '{$this->provider}' não encontrado");
+            throw new InvalidArgumentException(__('aimodel.provider_not_found', ['provider' => $this->provider]));
         }
 
         if (!in_array($model, $this->models)) {
-            throw new InvalidArgumentException("Modelo '$model' não suportado pelo provedor '{$this->provider}'. Modelos disponíveis: " . implode(', ', $this->models));
+            throw new InvalidArgumentException(__('aimodel.model_not_supported', [
+                'model' => $model,
+                'provider' => $this->provider,
+                'models' => implode(', ', $this->models),
+            ]));
         }
 
         $this->model = $model;
@@ -190,7 +197,7 @@ class AiProvider
                 $this->setupGeminiHeaders();
                 break;
             default:
-                throw new InvalidArgumentException("Headers não configurados para o provedor: " . $this->provider);
+                throw new InvalidArgumentException(__('aimodel.headers_not_configured', ['provider' => $this->provider]));
         }
     }
 
@@ -487,7 +494,7 @@ class AiProvider
                     "messages" => $this->messages
                 ]);
             default:
-                throw new InvalidArgumentException("Formato de body não implementado para o provedor: " . $this->provider);
+                throw new InvalidArgumentException(__('aimodel.body_format_not_implemented', ['provider' => $this->provider]));
         }
     }
 
@@ -640,7 +647,7 @@ class AiProvider
     {
         $models = AiModel::provider($provider);
         if (empty($models)) {
-            throw new InvalidArgumentException("Provedor '$provider' não encontrado ou não possui modelos ativos");
+            throw new InvalidArgumentException(__('aimodel.provider_without_active_models', ['provider' => $provider]));
         }
 
         return $models;

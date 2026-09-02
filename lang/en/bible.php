@@ -14,4 +14,14 @@ return [
     ],
     'service_unavailable' => 'The Bible service is temporarily unavailable. Please try again shortly.',
     'version_not_available' => 'This Bible version is not available for this church.',
+    'errors' => [
+        'invalid_versions_response' => 'The Bible versions response is invalid.',
+        'chapter_not_found' => 'The requested Bible chapter was not found.',
+        'verse_not_found' => 'The requested Bible verse was not found.',
+        'offline_bundle_unavailable' => 'The requested Bible version does not provide an offline bundle.',
+        'invalid_offline_response' => 'The offline Bible response is invalid.',
+        'online_version_not_configured' => 'The requested Bible version is not configured for online reading.',
+        'invalid_online_response' => 'The online Bible response is invalid.',
+        'book_not_found' => 'The requested Bible book was not found.',
+    ],
 ];

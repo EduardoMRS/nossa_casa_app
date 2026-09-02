@@ -14,4 +14,14 @@ return [
     ],
     'service_unavailable' => 'O serviço de Bíblia está temporariamente indisponível. Tente novamente em instantes.',
     'version_not_available' => 'Esta versão bíblica não está disponível para esta igreja.',
+    'errors' => [
+        'invalid_versions_response' => 'A resposta com as versões bíblicas é inválida.',
+        'chapter_not_found' => 'O capítulo bíblico solicitado não foi encontrado.',
+        'verse_not_found' => 'O versículo bíblico solicitado não foi encontrado.',
+        'offline_bundle_unavailable' => 'A versão bíblica solicitada não oferece um pacote offline.',
+        'invalid_offline_response' => 'A resposta da Bíblia offline é inválida.',
+        'online_version_not_configured' => 'A versão bíblica solicitada não está configurada para leitura online.',
+        'invalid_online_response' => 'A resposta da Bíblia online é inválida.',
+        'book_not_found' => 'O livro bíblico solicitado não foi encontrado.',
+    ],
 ];

@@ -202,11 +202,11 @@ const submit = () => {
                 <div class="grid gap-3 sm:grid-cols-2">
                     <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
                         <input v-model="form.comments_enabled" type="checkbox" class="rounded border-input" />
-                        Permitir comentários
+                        {{ t('posts.form.allow_comments') }}
                     </label>
                     <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
                         <input v-model="form.reactions_enabled" type="checkbox" class="rounded border-input" />
-                        Permitir reações
+                        {{ t('posts.form.allow_reactions') }}
                     </label>
                 </div>
 

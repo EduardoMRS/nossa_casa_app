@@ -60,7 +60,7 @@ const { t } = useI18n();
                     v-if="node.distance_km != null"
                     class="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black text-sky-700"
                 >
-                    {{ node.distance_km }} km
+                    {{ node.distance_km }} {{ t('units.kilometers_short') }}
                 </span>
                 <a
                     v-if="node.url"
