@@ -22,6 +22,17 @@ return [
         'action' => 'Create new password',
         'outro' => 'If you did not request a password reset, you can safely ignore this email.',
     ],
+    'church_registration_request' => [
+        'subject' => 'New church registration request: :church',
+        'preheader' => 'A new church registration request is waiting for review.',
+        'heading' => 'New registration request',
+        'introduction' => ':requester requested the registration of :church.',
+        'community' => 'Community: :community',
+        'parent_church' => 'Requested parent church: :church',
+        'contact' => 'Contact email: :email',
+        'action' => 'Review request',
+        'outro' => 'Open the portal to review the information and approve or reject this request.',
+    ],
     'footer' => [
         'application' => 'Nossa Casa · Technology serving communities of faith.',
         'church' => ':brand uses Nossa Casa to stay closer to its community.',

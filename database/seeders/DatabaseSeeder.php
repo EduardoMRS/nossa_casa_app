@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             InitialAiModelSeeder::class,
             SystemUserSeeder::class,
+            InitialCommunitySeeder::class,
             StarterKitSeeder::class,
         ]);
 
