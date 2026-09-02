@@ -7,16 +7,18 @@ import AppModal from '@/components/AppModal.vue';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/i18n';
 
-type NearbyChurch = {
+type ChurchLink = {
     id: string;
     name: string;
     url: string;
+};
+type NearbyChurch = ChurchLink & {
     distance_km: number;
 };
 type ProximityResponse = {
     should_prompt: boolean;
     distance_km?: number | null;
-    own_church?: NearbyChurch;
+    own_church?: ChurchLink;
     source?: 'network' | 'community';
     alternatives: NearbyChurch[];
 };
