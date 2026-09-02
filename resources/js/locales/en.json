@@ -141,7 +141,9 @@
         "no": "No",
         "update": "Update",
         "upload": "Upload",
-        "delete": "Delete"
+        "delete": "Delete",
+        "accept": "Accept",
+        "reject": "Reject"
     },
     "dialogs": {
         "confirm": {
@@ -499,7 +501,8 @@
                 "communication": "Communication",
                 "location": "Location",
                 "templates": "Templates",
-                "schedule": "Schedule"
+                "schedule": "Schedule",
+                "network": "Network"
             },
             "mail_title": "Custom email server",
             "mail_description": "Use an SMTP account for messages sent in this church. Without one, the application default is used.",
@@ -570,6 +573,38 @@
                 "classic": "Layered cards, soft depth and stronger brand colors.",
                 "editorial": "Wide composition, serif headlines and magazine-like dividers.",
                 "minimal": "Focused reading, restrained surfaces and almost no shadows."
+            },
+            "network": {
+                "title": "Headquarters and branches",
+                "description": "Manage the relationship between this church, its headquarters and branches in the same community.",
+                "select_placeholder": "Select a church",
+                "parent": {
+                    "title": "Headquarters",
+                    "none": "This church has no headquarters.",
+                    "select": "Choose a headquarters",
+                    "request": "Request affiliation"
+                },
+                "children": {
+                    "title": "Direct branches",
+                    "none": "No approved branches yet.",
+                    "select": "Choose a church",
+                    "invite": "Invite as branch"
+                },
+                "requests": {
+                    "title": "Pending requests",
+                    "link": "{parent} as headquarters of {child}",
+                    "pending": "Waiting for approval: {parent} → {child}"
+                },
+                "reorganize": {
+                    "title": "Reorganize branches",
+                    "description": "Move churches within your descendant hierarchy without a new approval.",
+                    "branch": "Church to move",
+                    "parent": "New headquarters",
+                    "action": "Move church"
+                },
+                "errors": {
+                    "generic": "The network could not be updated. Try again."
+                }
             }
         },
         "categories": {
@@ -1754,5 +1789,13 @@
             "lock": "Lock",
             "delete": "Delete"
         }
+    },
+    "church_proximity": {
+        "title": "You are far from your church",
+        "description": "You appear to be about {distance} km from {church}. Would you like to find another church in the same community nearby?",
+        "distance": "{distance} km away",
+        "no_alternatives": "No church from the same community was found within 30 km.",
+        "continue_own": "Continue to my church",
+        "view_nearby": "View nearby churches"
     }
 }
