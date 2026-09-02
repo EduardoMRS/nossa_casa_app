@@ -22,8 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/lib/i18n';
-import { edit }
-import type { ChurchNetworkSettingsData } from '@/types/church-network'; from '@/routes/admin/branding';
+import { edit } from '@/routes/admin/branding';
+import type { ChurchNetworkSettingsData } from '@/types/church-network';
 
 type BrandingData = {
     domain: string;
