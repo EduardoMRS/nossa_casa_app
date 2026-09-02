@@ -71,7 +71,10 @@ class BibleController extends Controller
 
     private function allowedVersion(string $version): string
     {
-        $church = $this->context->church();
+        $user = request()->user();
+        $church = $user !== null && $user->church === null
+            ? null
+            : $this->context->church();
         $allowed = $church instanceof Church
             ? in_array($version, $this->access->forChurch($church)['versions'], true)
             : collect($this->bible->versions())->contains('id', $version);
