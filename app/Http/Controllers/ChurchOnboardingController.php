@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
+use App\Models\Network;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -57,6 +58,13 @@ class ChurchOnboardingController extends Controller
         $this->ensureCommunityMembership($request, $communityId);
         $validated = $request->validate([
             'community_id' => ['required', 'string', 'exists:communities,id'],
+            'parent_church_id' => [
+                'nullable',
+                'string',
+                Rule::exists('churches', 'id')->where(fn ($query) => $query
+                    ->where('community_id', $communityId)
+                    ->where('status', ChurchStatus::ACTIVE->value)),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
             'domain' => ['required', 'string', 'max:255', 'not_in:'.$this->context->mainHost(), 'regex:/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
@@ -68,7 +76,8 @@ class ChurchOnboardingController extends Controller
             'proof_document' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'mimetypes:application/pdf,image/jpeg,image/png,image/webp', 'max:10240'],
         ]);
         $proofDocument = $request->file('proof_document');
-        unset($validated['proof_document']);
+        $requestedParentChurchId = $validated['parent_church_id'] ?? null;
+        unset($validated['proof_document'], $validated['parent_church_id']);
 
         if ($proofDocument) {
             $validated['proof_document_path'] = $proofDocument->store('church-registration-proofs', 'local');
@@ -79,6 +88,7 @@ class ChurchOnboardingController extends Controller
         $registrationRequest = ChurchRegistrationRequest::query()->create([
             ...$validated,
             'requester_id' => $request->user()->id,
+            'requested_parent_church_id' => $requestedParentChurchId,
             'status' => 'pending',
         ]);
 
@@ -112,6 +122,22 @@ class ChurchOnboardingController extends Controller
                 'found_date' => $registrationRequest->found_date,
                 'status' => ChurchStatus::ACTIVE,
             ]);
+            if ($registrationRequest->requested_parent_church_id) {
+                $parentChurch = Church::query()
+                    ->whereKey($registrationRequest->requested_parent_church_id)
+                    ->where('community_id', $registrationRequest->community_id)
+                    ->where('status', ChurchStatus::ACTIVE)
+                    ->lockForUpdate()
+                    ->first();
+                abort_unless($parentChurch, 422);
+
+                Network::query()->create([
+                    'parent_church_id' => $parentChurch->id,
+                    'child_church_id' => $church->id,
+                    'community_id' => $registrationRequest->community_id,
+                ]);
+            }
+
             $registrationRequest->requester->profile()->updateOrCreate(
                 ['user_id' => $registrationRequest->requester_id],
                 ['community_id' => $registrationRequest->community_id, 'church_id' => $church->id],
@@ -202,6 +228,15 @@ class ChurchOnboardingController extends Controller
     private function ensureCanReview(Request $request, ChurchRegistrationRequest $registrationRequest): void
     {
         if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+            return;
+        }
+
+        if ($registrationRequest->requested_parent_church_id) {
+            $reviewerChurchId = $request->user()->profile?->church_id ?? $request->user()->church?->id;
+            $isSelectedParentLeader = $reviewerChurchId === $registrationRequest->requested_parent_church_id
+                && $request->user()->role === UserRole::CHURCH_LEADER;
+            abort_unless($isSelectedParentLeader, 403);
+
             return;
         }
 

@@ -98,23 +98,45 @@ class PortalController extends Controller
 
         $reviewableRequests = collect();
         $myRequests = collect();
+        $registrationParentChurches = collect();
 
         if ($request->user()) {
             $user = $request->user();
             $communityId = $user->profile?->community_id ?? $user->church?->community_id;
             $ownedCommunityIds = Community::query()->where('owner_id', $user->id)->pluck('id');
+            $registrationParentChurches = $communityId
+                ? Church::query()
+                    ->where('community_id', $communityId)
+                    ->where('status', ChurchStatus::ACTIVE)
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                : collect();
             $reviewableRequests = ChurchRegistrationRequest::query()
                 ->where('status', 'pending')
                 ->when(! in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), function ($query) use ($user, $communityId, $ownedCommunityIds): void {
                     $allowedCommunityIds = $ownedCommunityIds;
 
-                    if ($communityId && in_array($user->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)) {
+                    if ($communityId && $user->role === UserRole::CHURCH_LEADER) {
                         $allowedCommunityIds = $allowedCommunityIds->push($communityId);
                     }
 
-                    $query->whereIn('community_id', $allowedCommunityIds->unique());
+                    $query->where(function ($visibility) use ($user, $allowedCommunityIds): void {
+                        $visibility->where(function ($communityRequests) use ($allowedCommunityIds): void {
+                            $communityRequests
+                                ->whereNull('requested_parent_church_id')
+                                ->whereIn('community_id', $allowedCommunityIds->unique());
+                        });
+
+                        if ($user->role === UserRole::CHURCH_LEADER && $user->church?->id) {
+                            $visibility->orWhere('requested_parent_church_id', $user->church->id);
+                        }
+                    });
                 })
-                ->with(['community:id,name', 'requester:id,first_name,last_name,email'])
+                ->with([
+                    'community:id,name',
+                    'requestedParentChurch:id,name',
+                    'requester:id,first_name,last_name,email',
+                ])
                 ->latest()
                 ->get()
                 ->map(fn (ChurchRegistrationRequest $registrationRequest): array => [
@@ -125,7 +147,7 @@ class PortalController extends Controller
                 ]);
             $myRequests = ChurchRegistrationRequest::query()
                 ->where('requester_id', $user->id)
-                ->with('community:id,name')
+                ->with(['community:id,name', 'requestedParentChurch:id,name'])
                 ->latest()
                 ->get();
         }
@@ -144,6 +166,7 @@ class PortalController extends Controller
             'mainDomain' => $this->context->mainHost(),
             'reviewableRequests' => $reviewableRequests,
             'myRequests' => $myRequests,
+            'registrationParentChurches' => $registrationParentChurches,
         ]);
     }
 
