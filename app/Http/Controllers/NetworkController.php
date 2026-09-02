@@ -40,6 +40,23 @@ class NetworkController extends Controller
         return response()->json($networks);
     }
 
+    public function show(Request $request, Network $network): JsonResponse
+    {
+        $actorChurch = $this->actorChurch($request);
+        abort_unless($actorChurch, Response::HTTP_FORBIDDEN);
+        $allowedChurchIds = [$actorChurch->id, ...$this->networks->relatedIds($actorChurch)];
+
+        abort_unless(
+            in_array($network->parent_church_id, $allowedChurchIds, true)
+                && in_array($network->child_church_id, $allowedChurchIds, true),
+            Response::HTTP_FORBIDDEN,
+        );
+
+        return response()->json(
+            $network->load(['parentChurch:id,name', 'childChurch:id,name']),
+        );
+    }
+
     public function store(StoreChurchNetworkRequest $request): JsonResponse
     {
         $actorChurch = $request->actorChurch();
