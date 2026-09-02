@@ -1,11 +1,14 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Church;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
+use App\Models\Network;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config(['app.url' => 'http://platform.test']);
@@ -132,4 +135,115 @@ test('unrelated user cannot approve a church request', function () {
     $this->actingAs($outsider)
         ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
         ->assertForbidden();
+});
+
+
+test('selected parent church exclusively reviews and receives the approved church as a branch', function () {
+    $communityOwner = User::factory()->create();
+    $requester = User::factory()->create();
+    $parentLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $otherLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $community = Community::factory()->create(['owner_id' => $communityOwner->id]);
+    $parentChurch = Church::factory()->create(['community_id' => $community->id]);
+    $otherChurch = Church::factory()->create(['community_id' => $community->id]);
+
+    $requester->profile()->create(['community_id' => $community->id]);
+    $parentLeader->profile()->create([
+        'community_id' => $community->id,
+        'church_id' => $parentChurch->id,
+    ]);
+    $otherLeader->profile()->create([
+        'community_id' => $community->id,
+        'church_id' => $otherChurch->id,
+    ]);
+
+    $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'parent_church_id' => $parentChurch->id,
+        'name' => 'Requested Branch',
+        'slug' => 'requested-branch',
+        'domain' => 'requested-branch.platform.test',
+    ])->assertCreated();
+
+    $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
+    expect($registrationRequest->requested_parent_church_id)->toBe($parentChurch->id);
+
+    $this->actingAs($communityOwner)
+        ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
+        ->assertForbidden();
+    $this->actingAs($otherLeader)
+        ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
+        ->assertForbidden();
+
+    $this->actingAs($parentLeader)
+        ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
+        ->assertOk();
+
+    $approvedChurchId = $registrationRequest->fresh()->approved_church_id;
+    expect(Network::query()
+        ->where('parent_church_id', $parentChurch->id)
+        ->where('child_church_id', $approvedChurchId)
+        ->where('community_id', $community->id)
+        ->exists())->toBeTrue();
+});
+
+test('parent-directed registration is shown only to the selected parent church', function () {
+    $communityOwner = User::factory()->create();
+    $requester = User::factory()->create();
+    $parentLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $otherLeader = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $community = Community::factory()->create(['owner_id' => $communityOwner->id]);
+    $parentChurch = Church::factory()->create(['community_id' => $community->id]);
+    $otherChurch = Church::factory()->create(['community_id' => $community->id]);
+
+    $requester->profile()->create(['community_id' => $community->id]);
+    $parentLeader->profile()->create([
+        'community_id' => $community->id,
+        'church_id' => $parentChurch->id,
+    ]);
+    $otherLeader->profile()->create([
+        'community_id' => $community->id,
+        'church_id' => $otherChurch->id,
+    ]);
+    ChurchRegistrationRequest::factory()->create([
+        'requester_id' => $requester->id,
+        'community_id' => $community->id,
+        'requested_parent_church_id' => $parentChurch->id,
+        'status' => 'pending',
+    ]);
+
+    $this->actingAs($parentLeader)
+        ->get('http://platform.test/')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->has('reviewableRequests', 1)
+            ->where('reviewableRequests.0.requested_parent_church.id', $parentChurch->id));
+
+    $this->actingAs($otherLeader)
+        ->get('http://platform.test/')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->has('reviewableRequests', 0));
+
+    $this->actingAs($communityOwner)
+        ->get('http://platform.test/')
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Portal/Index')
+            ->has('reviewableRequests', 0));
+});
+
+test('registration rejects a parent church from another community', function () {
+    $requester = User::factory()->create();
+    $community = Community::factory()->create(['owner_id' => $requester->id]);
+    $otherCommunity = Community::factory()->create();
+    $foreignChurch = Church::factory()->create(['community_id' => $otherCommunity->id]);
+    $requester->profile()->create(['community_id' => $community->id]);
+
+    $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'parent_church_id' => $foreignChurch->id,
+        'name' => 'Invalid Branch',
+        'slug' => 'invalid-branch',
+        'domain' => 'invalid-branch.platform.test',
+    ])->assertUnprocessable()->assertJsonValidationErrors('parent_church_id');
 });
