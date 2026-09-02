@@ -21,9 +21,14 @@ final class PublicLibraryController extends Controller
 
     public function bible(): Response
     {
+        $user = request()->user();
+        $church = $user !== null && $user->church === null
+            ? null
+            : $this->context->church();
+
         return Inertia::render(
             'Library/Bible',
-            $this->library->bible($this->context->church())->toArray(),
+            $this->library->bible($church)->toArray(),
         );
     }
 }
