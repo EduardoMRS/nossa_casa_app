@@ -60,7 +60,9 @@ final readonly class ChurchNetworkSettingsData
                 ->where('community_id', $church->community_id)
                 ->whereKeyNot($church->id)
                 ->orderBy('name')
-                ->get(['id', 'name']),
+                ->get(['id', 'name'])
+                ->map->only(['id', 'name'])
+                ->values(),
             'networks' => $networkRows->map(fn (Network $network): array => [
                 'id' => $network->id,
                 'parent' => $network->parentChurch?->only(['id', 'name']),
