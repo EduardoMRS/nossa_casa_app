@@ -297,7 +297,7 @@ const personFor = (item: Relationship): Person | undefined =>
 
             <section
                 v-if="activeTab === 'profile'"
-                class="mt-6 w-full min-w-0 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
+                class="mt-6 w-full max-w-3xl min-w-0 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
             >
                 <h2 class="text-xl font-black">
                     {{ t('settings.workspace.profile') }}

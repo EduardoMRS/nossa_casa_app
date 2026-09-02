@@ -125,7 +125,7 @@ const changeCountry = (): void => {
 
 <template>
     <div
-        class="phone-input flex h-9 w-full max-w-full min-w-0 overflow-hidden rounded-md border border-slate-300 px-0 py-0 text-base shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 md:text-sm mt-1"
+        class="phone-input flex h-9 w-full min-w-0 max-w-full overflow-hidden rounded-md border border-slate-300 px-0 py-0 text-base shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 md:text-sm mt-1"
     >
         <select
             v-model="selectedCode"

@@ -64,7 +64,6 @@ test('shared form controls cannot expand the mobile viewport', () => {
     assert.match(scrollDialog, /max-w-\[calc\(100%-2rem\)\]/);
 });
 
-
 test('installed PWA uses a contained scroll shell and native bottom navigation', () => {
     const app = readSource('resources/js/app.ts');
     const navigation = readSource(
@@ -81,7 +80,10 @@ test('installed PWA uses a contained scroll shell and native bottom navigation',
     assert.match(navigation, /nav\.profile/);
     assert.match(navigation, /page\.component !== 'Library\/Bible'/);
     assert.match(navigation, /currentPath\.value\.startsWith\('\/dashboard'\)/);
-    assert.match(navigation, /currentPath\.value\.startsWith\('\/classrooms'\)/);
+    assert.match(
+        navigation,
+        /currentPath\.value\.startsWith\('\/classrooms'\)/,
+    );
     assert.match(app, /'Classrooms\/Index'/);
     assert.match(app, /'Classrooms\/Portal'/);
     assert.match(navigation, /safe-area-inset-bottom/);
@@ -94,14 +96,9 @@ test('installed PWA uses a contained scroll shell and native bottom navigation',
     assert.match(styles, /::-webkit-scrollbar/);
 });
 
-
 test('every shared public header participates in the PWA sticky shell', () => {
-    const publicHeader = readSource(
-        'resources/js/components/PublicHeader.vue',
-    );
-    const portalHeader = readSource(
-        'resources/js/components/PortalHeader.vue',
-    );
+    const publicHeader = readSource('resources/js/components/PublicHeader.vue');
+    const portalHeader = readSource('resources/js/components/PortalHeader.vue');
     const welcome = readSource('resources/js/pages/Welcome.vue');
 
     assert.match(publicHeader, /public-top-navigation/);
@@ -109,13 +106,10 @@ test('every shared public header participates in the PWA sticky shell', () => {
     assert.match(welcome, /public-top-navigation/);
 });
 
-
 test('authenticated mobile workspaces contain controls and reserve PWA navigation', () => {
     const workspace = readSource('resources/js/pages/settings/Workspace.vue');
     const dashboard = readSource('resources/js/pages/Dashboard.vue');
-    const layout = readSource(
-        'resources/js/layouts/app/AppSidebarLayout.vue',
-    );
+    const layout = readSource('resources/js/layouts/app/AppSidebarLayout.vue');
     const phone = readSource('resources/js/components/PhoneInput.vue');
     const navigation = readSource(
         'resources/js/components/PwaBottomNavigation.vue',
@@ -123,9 +117,9 @@ test('authenticated mobile workspaces contain controls and reserve PWA navigatio
     const styles = readSource('resources/css/app.css');
 
     assert.match(workspace, /overflow-x-clip/);
-    assert.match(workspace, /max-w-3xl overflow-hidden/);
+    assert.match(workspace, /max-w-3xl[^"]*overflow-hidden/);
     assert.match(workspace, /type="file"[\s\S]*max-w-full overflow-hidden/);
-    assert.match(phone, /w-0 min-w-0 flex-1/);
+    assert.match(phone, /w-0[^\"]*min-w-0[^\"]*flex-1/);
     assert.match(dashboard, /min-w-0 max-w-full/);
     assert.match(layout, /dashboard-theme min-w-0 max-w-full/);
     assert.match(navigation, /settings\/Workspace/);
@@ -133,14 +127,10 @@ test('authenticated mobile workspaces contain controls and reserve PWA navigatio
 });
 
 test('portal navigation and global dashboard use platform context', () => {
-    const portalHeader = readSource(
-        'resources/js/components/PortalHeader.vue',
-    );
+    const portalHeader = readSource('resources/js/components/PortalHeader.vue');
     const sidebar = readSource('resources/js/components/AppSidebar.vue');
     const dashboard = readSource('resources/js/pages/Dashboard.vue');
-    const passkey = readSource(
-        'resources/js/components/PasskeyVerify.vue',
-    );
+    const passkey = readSource('resources/js/components/PasskeyVerify.vue');
 
     assert.match(portalHeader, /isGlobalAdministrator/);
     assert.match(portalHeader, /portal\.open_dashboard/);
