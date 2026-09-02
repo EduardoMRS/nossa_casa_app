@@ -29,6 +29,8 @@ final class ChurchNetworkService
         }
 
         return DB::transaction(function () use ($actorChurch, $parentChurch, $childChurch, $user): ChurchNetworkRequest {
+            Church::query()->whereKey($childChurch->id)->lockForUpdate()->firstOrFail();
+
             ChurchNetworkRequest::query()
                 ->where('child_church_id', $childChurch->id)
                 ->where('status', ChurchNetworkRequestStatus::PENDING)
@@ -70,6 +72,12 @@ final class ChurchNetworkService
         }
 
         return DB::transaction(function () use ($request, $parentChurch, $childChurch, $user): Network {
+            $lockedRequest = ChurchNetworkRequest::query()
+                ->whereKey($request->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $this->ensurePending($lockedRequest);
+            Church::query()->whereKey($childChurch->id)->lockForUpdate()->firstOrFail();
             Network::query()->where('child_church_id', $childChurch->id)->delete();
 
             $network = Network::query()->create([
@@ -78,14 +86,14 @@ final class ChurchNetworkService
                 'community_id' => $parentChurch->community_id,
             ]);
 
-            $request->update([
+            $lockedRequest->update([
                 'status' => ChurchNetworkRequestStatus::ACCEPTED,
                 'responded_by_id' => $user->id,
                 'responded_at' => now(),
             ]);
 
             ChurchNetworkRequest::query()
-                ->whereKeyNot($request->id)
+                ->whereKeyNot($lockedRequest->id)
                 ->where('child_church_id', $childChurch->id)
                 ->where('status', ChurchNetworkRequestStatus::PENDING)
                 ->update([
@@ -110,11 +118,18 @@ final class ChurchNetworkService
             ]);
         }
 
-        $request->update([
-            'status' => ChurchNetworkRequestStatus::REJECTED,
-            'responded_by_id' => $user->id,
-            'responded_at' => now(),
-        ]);
+        DB::transaction(function () use ($request, $user): void {
+            $lockedRequest = ChurchNetworkRequest::query()
+                ->whereKey($request->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $this->ensurePending($lockedRequest);
+            $lockedRequest->update([
+                'status' => ChurchNetworkRequestStatus::REJECTED,
+                'responded_by_id' => $user->id,
+                'responded_at' => now(),
+            ]);
+        });
     }
 
     public function moveDescendant(Church $actorChurch, Church $childChurch, Church $newParentChurch): Network
@@ -136,6 +151,7 @@ final class ChurchNetworkService
         }
 
         return DB::transaction(function () use ($childChurch, $newParentChurch): Network {
+            Church::query()->whereKey($childChurch->id)->lockForUpdate()->firstOrFail();
             Network::query()->where('child_church_id', $childChurch->id)->delete();
 
             return Network::query()->create([
