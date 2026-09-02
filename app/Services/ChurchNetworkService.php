@@ -7,7 +7,6 @@ use App\Models\Church;
 use App\Models\ChurchNetworkRequest;
 use App\Models\Network;
 use App\Models\User;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
