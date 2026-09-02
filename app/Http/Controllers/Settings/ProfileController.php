@@ -47,12 +47,6 @@ class ProfileController extends Controller
             'status' => $request->session()->get('status'),
             'workspaceUser' => $user,
             'prayerRequests' => PrayerRequest::query()->where('user_id', $user->id)->latest()->get(),
-            'churchMembers' => User::query()
-                ->where('id', '!=', $user->id)
-                ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
-                ->with('profile:user_id,gender,avatar_path')
-                ->orderBy('first_name')
-                ->get(['id', 'first_name', 'last_name', 'birth_date']),
             'communities' => Community::query()
                 ->with(['churches' => fn ($query) => $query->orderBy('name')->select(['id', 'community_id', 'name', 'slug'])])
                 ->orderBy('name')

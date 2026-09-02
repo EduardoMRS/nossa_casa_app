@@ -13,6 +13,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('settings/relationships/{user}', [UserRelationshipController::class, 'store'])->name('profile.relationships.store');
     Route::delete('settings/relationships/{relationship}', [UserRelationshipController::class, 'destroy'])->name('profile.relationships.destroy');
+    Route::post('settings/family-members', [UserRelationshipController::class, 'storeFamilyMember'])->name('profile.family-members.store');
     Route::post('settings/children', [UserRelationshipController::class, 'storeChild'])->name('profile.children.store');
 });
 

@@ -118,7 +118,8 @@
         "bible": "Bíblia",
         "news": "Notícias",
         "profile": "Perfil",
-        "pwa_navigation": "Navegação principal do aplicativo"
+        "pwa_navigation": "Navegação principal do aplicativo",
+        "network": "Rede"
     },
     "navigation": {
         "menu": "Menu de navegação",
@@ -317,16 +318,16 @@
             "new_prayer": "Novo pedido de intercessão",
             "prayer_placeholder": "Compartilhe seu pedido de oração...",
             "send_prayer": "Enviar pedido",
-            "family_management": "Gerenciamento de Família e Ministério de Crianças",
-            "family_management_hint": "Registre membros da família, responsáveis e crianças para facilitar o check-in e a retirada segura.",
+            "family_management": "Família e cuidado",
+            "family_management_hint": "Vincule familiares com conta pelo e-mail ou cadastre pessoas sem contato para organizar responsáveis, dependentes e retiradas seguras.",
             "authorized_adults": "Adultos autorizados",
             "no_authorized_adults": "Sem outros adultos autorizados.",
             "authorize_adult": "Autorizar adulto ou responsável",
             "authorize": "Autorizar",
-            "registered_children": "Meus filhos registrados",
+            "registered_children": "Filhos e dependentes",
             "checkout_pin": "Código de retirada",
             "checked_in": "Check-in realizado",
-            "no_children": "Nenhum filho registrado.",
+            "no_children": "Nenhum filho ou dependente registrado.",
             "add_child": "Registrar um filho na família",
             "first_name": "Nome",
             "last_name": "Sobrenome",
@@ -340,8 +341,8 @@
             "family_member": "Pessoa",
             "select_person": "Selecionar uma pessoa",
             "relationship": "Relação",
-            "responsible_for": "Eu sou responsável por este filho",
-            "child_of": "Esta pessoa é meu guardião",
+            "responsible_for": "É meu filho ou dependente",
+            "child_of": "É meu responsável, pai ou mãe",
             "add": "Adicionar relação",
             "remove_relationship_confirm": "Remover esta relação?",
             "relationship_types": {
@@ -351,7 +352,13 @@
                 "friend": "Amigo",
                 "follower": "Seguidor",
                 "blocked": "Bloqueado"
-            }
+            },
+            "family_members": "Minha família",
+            "no_family_members": "Nenhum outro familiar vinculado.",
+            "add_family_by_email": "Adicionar familiar com conta",
+            "family_email": "E-mail da pessoa",
+            "add_family_without_contact": "Cadastrar familiar sem conta ou contato",
+            "register_family_member": "Cadastrar familiar"
         },
         "security": {
             "nav": "Segurança",
@@ -1155,6 +1162,23 @@
                     "Ir para o painel"
                 ]
             }
+        },
+        "church_network": {
+            "kicker": "Estrutura de {headquartersPlural} e {branchPlural}",
+            "title": "Rede de {headquarters}",
+            "description": "Visualize a cadeia de {headquartersPlural} e toda a estrutura de {branchPlural} vinculada a esta unidade.",
+            "manage": "Gerenciar vínculos",
+            "current": "Unidade atual",
+            "parent_chain": "Cadeia de {headquartersPlural}",
+            "parent_chain_description": "Da unidade principal até a unidade que você está administrando.",
+            "no_parent": "Esta unidade não possui {headquarters} vinculada.",
+            "direct_branches": "{branchPlural} diretas",
+            "all_branches": "Todas as {branchPlural}",
+            "levels": "Níveis abaixo",
+            "hierarchy": "Árvore de {branchPlural}",
+            "hierarchy_description": "A estrutura completa subordinada à unidade atual.",
+            "empty": "Nenhuma {branch} aprovada foi vinculada ainda.",
+            "branch_count": "{count} {unit}"
         }
     },
     "library": {
@@ -1797,5 +1821,22 @@
         "no_alternatives": "Nenhuma igreja da mesma comunidade foi encontrada em um raio de 30 km.",
         "continue_own": "Continuar para minha igreja",
         "view_nearby": "Ver igrejas próximas"
+    },
+    "church_network_public": {
+        "meta_title": "Rede de {name}",
+        "kicker": "Rede de {branchPlural}",
+        "title": "Como {name} está organizada",
+        "description": "Conheça a cadeia de {headquartersPlural} e {branchPlural} conectadas a esta unidade.",
+        "direct": "{branchPlural} diretas",
+        "total": "Total de {branchPlural}",
+        "levels": "Níveis abaixo",
+        "parent_chain": "Cadeia de {headquartersPlural}",
+        "parent_chain_hint": "Da unidade principal até a {headquarters} atual.",
+        "no_parent": "Esta unidade não possui {headquarters} vinculada.",
+        "tree": "Árvore de {branchPlural}",
+        "tree_hint": "Veja como as {branchPlural} estão organizadas abaixo desta unidade.",
+        "current": "Unidade atual",
+        "branch_count": "{count} {unit}",
+        "empty": "Nenhuma {branchPlural} aprovada está vinculada ainda."
     }
 }

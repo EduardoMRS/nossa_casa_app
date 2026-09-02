@@ -8,6 +8,7 @@ import {
     LibraryBig,
     Menu,
     Newspaper,
+    Network as NetworkIcon,
     Radio,
     X,
     Users,
@@ -31,7 +32,7 @@ import { index as galleryIndex } from '@/routes/gallery';
 import { index as libraryIndex } from '@/routes/library';
 import { index as publicPostsIndex } from '@/routes/posts/public';
 
-type PublicNavKey = 'home' | 'posts' | 'events' | 'gallery' | 'library' | 'classrooms';
+type PublicNavKey = 'home' | 'network' | 'posts' | 'events' | 'gallery' | 'library' | 'classrooms';
 
 const props = withDefaults(
     defineProps<{ active?: PublicNavKey; showLocale?: boolean }>(),
@@ -44,6 +45,12 @@ const page = usePage();
 const mobileOpen = ref(false);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 const user = computed(() => page.props.auth?.user);
+const hasChurchContext = computed(() =>
+    Boolean(
+        (page.props.churchContext as { church?: { id: string } | null })
+            ?.church,
+    ),
+);
 const { t } = useI18n();
 const branding = computed(
     () => (page.props.branding ?? {}) as Record<string, string>,
@@ -86,6 +93,16 @@ const navItems = computed(() => [
         href: home(),
         icon: BookOpen,
     },
+    ...(hasChurchContext.value
+        ? [
+              {
+                  key: 'network' as const,
+                  label: t('nav.network'),
+                  href: '/network',
+                  icon: NetworkIcon,
+              },
+          ]
+        : []),
     {
         key: 'posts' as const,
         label: t('nav.posts'),

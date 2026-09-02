@@ -21,6 +21,7 @@ use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\EventPrivateAreaController;
 use App\Http\Controllers\PortalCommunityController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\PublicChurchNetworkController;
 use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\PublicLibraryController;
 use App\Http\Controllers\PublicLiveStreamController;
@@ -82,6 +83,7 @@ Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
 Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
 Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
+Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
 Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
 Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
 Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
@@ -394,6 +396,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::redirect('/branding', '/dashboard/church-settings');
             Route::get('/church-settings', [BrandingController::class, 'edit'])->name('branding.edit');
             Route::put('/church-settings', [BrandingController::class, 'update'])->name('branding.update');
+            Route::get('/church-network', [BrandingController::class, 'network'])->name('churchNetwork.index');
             Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
             Route::get('/highlights', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');

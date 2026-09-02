@@ -72,3 +72,33 @@ test('church hierarchy rejects cycles and cross community links', function () {
     expect(fn () => $service->request($headquarters, $headquarters, $outsider, $leader))
         ->toThrow(ValidationException::class);
 });
+
+
+test('church network overview exposes ancestors and the descendant tree', function () {
+    $community = Community::factory()->create();
+    $headquarters = Church::factory()->for($community)->create();
+    $regional = Church::factory()->for($community)->create();
+    $branch = Church::factory()->for($community)->create();
+    Network::query()->create([
+        'parent_church_id' => $headquarters->id,
+        'child_church_id' => $regional->id,
+        'community_id' => $community->id,
+    ]);
+    Network::query()->create([
+        'parent_church_id' => $regional->id,
+        'child_church_id' => $branch->id,
+        'community_id' => $community->id,
+    ]);
+
+    $overview = app(\App\Services\ChurchNetworkSettingsData::class)->forChurch($regional);
+
+    expect($overview['ancestors'])->toHaveCount(1)
+        ->and($overview['ancestors'][0]['id'])->toBe($headquarters->id)
+        ->and($overview['tree']['id'])->toBe($regional->id)
+        ->and($overview['tree']['children'][0]['id'])->toBe($branch->id)
+        ->and($overview['stats'])->toMatchArray([
+            'direct_branches' => 1,
+            'all_branches' => 1,
+            'levels' => 1,
+        ]);
+});

@@ -118,7 +118,8 @@
         "bible": "Bible",
         "news": "News",
         "profile": "Profile",
-        "pwa_navigation": "Main app navigation"
+        "pwa_navigation": "Main app navigation",
+        "network": "Network"
     },
     "navigation": {
         "menu": "Navigation menu",
@@ -317,16 +318,16 @@
             "new_prayer": "New intercession request",
             "prayer_placeholder": "Share your prayer request...",
             "send_prayer": "Send request",
-            "family_management": "Family and Kids Ministry management",
-            "family_management_hint": "Register family members, guardians, and children for easier check-in and secure pickup.",
+            "family_management": "Family and care",
+            "family_management_hint": "Link relatives who have an account by email, or register people without contact information to organize guardians, dependents, and secure pickup.",
             "authorized_adults": "Authorized adults",
             "no_authorized_adults": "No other authorized adults.",
             "authorize_adult": "Authorize adult or guardian",
             "authorize": "Authorize",
-            "registered_children": "My registered children",
+            "registered_children": "Children and dependents",
             "checkout_pin": "Pickup PIN",
             "checked_in": "Checked in",
-            "no_children": "No children registered.",
+            "no_children": "No child or dependent has been registered.",
             "add_child": "Register a child in the family",
             "first_name": "First name",
             "last_name": "Last name",
@@ -340,8 +341,8 @@
             "family_member": "Person",
             "select_person": "Select a person",
             "relationship": "Relationship",
-            "responsible_for": "I am responsible for this child",
-            "child_of": "This person is my guardian",
+            "responsible_for": "Is my child or dependent",
+            "child_of": "Is my guardian or parent",
             "add": "Add relationship",
             "remove_relationship_confirm": "Remove this relationship?",
             "relationship_types": {
@@ -351,7 +352,13 @@
                 "friend": "Friend",
                 "follower": "Follower",
                 "blocked": "Blocked"
-            }
+            },
+            "family_members": "My family",
+            "no_family_members": "No other relative is linked.",
+            "add_family_by_email": "Add relative with an account",
+            "family_email": "Person's email",
+            "add_family_without_contact": "Register relative without an account or contact",
+            "register_family_member": "Register relative"
         },
         "security": {
             "nav": "Security",
@@ -1155,6 +1162,23 @@
                     "Go to dashboard"
                 ]
             }
+        },
+        "church_network": {
+            "kicker": "{headquartersPlural} and {branchPlural} structure",
+            "title": "{headquarters} network",
+            "description": "View the {headquartersPlural} chain and the complete {branchPlural} structure linked to this unit.",
+            "manage": "Manage relationships",
+            "current": "Current unit",
+            "parent_chain": "{headquartersPlural} chain",
+            "parent_chain_description": "From the main unit to the unit you are managing.",
+            "no_parent": "This unit has no linked {headquarters}.",
+            "direct_branches": "Direct {branchPlural}",
+            "all_branches": "All {branchPlural}",
+            "levels": "Levels below",
+            "hierarchy": "{branchPlural} tree",
+            "hierarchy_description": "The complete structure reporting to the current unit.",
+            "empty": "No approved {branch} has been linked yet.",
+            "branch_count": "{count} {unit}"
         }
     },
     "library": {
@@ -1797,5 +1821,22 @@
         "no_alternatives": "No church from the same community was found within 30 km.",
         "continue_own": "Continue to my church",
         "view_nearby": "View nearby churches"
+    },
+    "church_network_public": {
+        "meta_title": "{name} network",
+        "kicker": "{branchPlural} network",
+        "title": "How {name} is organized",
+        "description": "Explore the {headquartersPlural} chain and {branchPlural} connected to this unit.",
+        "direct": "Direct {branchPlural}",
+        "total": "Total {branchPlural}",
+        "levels": "Levels below",
+        "parent_chain": "{headquartersPlural} chain",
+        "parent_chain_hint": "From the main unit to the current {headquarters}.",
+        "no_parent": "This unit has no linked {headquarters}.",
+        "tree": "{branchPlural} tree",
+        "tree_hint": "See how the {branchPlural} are organized below this unit.",
+        "current": "Current unit",
+        "branch_count": "{count} {unit}",
+        "empty": "No approved {branchPlural} are linked yet."
     }
 }
