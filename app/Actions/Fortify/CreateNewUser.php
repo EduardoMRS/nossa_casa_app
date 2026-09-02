@@ -4,8 +4,11 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Mail\WelcomeMail;
 use App\Models\User;
+use App\Support\ChurchDomainContext;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -13,6 +16,8 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
+
+    public function __construct(private ChurchDomainContext $domainContext) {}
 
     /**
      * Validate and create a newly registered user.
@@ -30,7 +35,7 @@ class CreateNewUser implements CreatesNewUsers
 
         $nameParts = explode(' ', Str::squish($validated['name']), 2);
 
-        return DB::transaction(function () use ($validated, $nameParts): User {
+        $user = DB::transaction(function () use ($validated, $nameParts): User {
             $user = User::create([
                 'first_name' => $nameParts[0],
                 'last_name' => $nameParts[1] ?? '',
@@ -48,5 +53,11 @@ class CreateNewUser implements CreatesNewUsers
 
             return $user;
         });
+
+        Mail::to($user)
+            ->locale($user->preferredLocale())
+            ->send(new WelcomeMail($user, $this->domainContext->church()));
+
+        return $user;
     }
 }

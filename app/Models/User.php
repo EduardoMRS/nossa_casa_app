@@ -5,7 +5,9 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRelationships;
 use App\Enums\UserRole;
+use App\Notifications\BrandedResetPasswordNotification;
 use App\Observers\UserObserver;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,13 +17,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 #[ObservedBy(UserObserver::class)]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements HasLocalePreference, PasskeyUser
 {
     use HasApiTokens, HasFactory, HasUlids, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
@@ -195,6 +198,21 @@ class User extends Authenticatable implements PasskeyUser
     public function isMember(): bool
     {
         return $this->hasRole(UserRole::MEMBER);
+    }
+
+    public function preferredLocale(): string
+    {
+        $locale = (string) ($this->profile?->location_lang ?? config('app.locale'));
+
+        return Str::before(str_replace('_', '-', $locale), '-');
+    }
+
+    /**
+     * @param  string  $token
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new BrandedResetPasswordNotification($token));
     }
 
     public function getDetailsAttribute()

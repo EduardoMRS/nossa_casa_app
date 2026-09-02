@@ -1,5 +1,7 @@
 <?php
 
+use App\Mail\WelcomeMail;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -13,6 +15,8 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register with optional profile details and a simple eight character password', function () {
+    Mail::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -28,13 +32,21 @@ test('new users can register with optional profile details and a simple eight ch
     $this->assertAuthenticated();
     $response->assertRedirect(route('home', absolute: false));
 
-    $user = auth()->user()?->load('profile');
+    $user = \App\Models\User::query()
+        ->where('email', 'test@example.com')
+        ->with('profile')
+        ->firstOrFail();
 
-    expect($user)->not->toBeNull()
-        ->and($user->birth_date?->format('Y-m-d'))->toBe('1990-05-20')
+    expect($user->birth_date?->format('Y-m-d'))->toBe('1990-05-20')
         ->and($user->profile?->phone)->toBe('+55 (69) 99999-9999')
         ->and($user->profile?->gender)->toBe('other')
         ->and($user->profile?->location_lang)->toBe('pt-BR');
+
+    Mail::assertQueued(
+        WelcomeMail::class,
+        fn (WelcomeMail $mail): bool => $mail->hasTo($user->email)
+            && $mail->locale === 'pt',
+    );
 });
 
 test('registration rejects passwords shorter than eight characters', function () {
