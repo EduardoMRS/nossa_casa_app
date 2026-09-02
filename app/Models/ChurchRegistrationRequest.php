@@ -15,6 +15,7 @@ class ChurchRegistrationRequest extends Model
     protected $fillable = [
         'requester_id',
         'community_id',
+        'requested_parent_church_id',
         'reviewed_by',
         'approved_church_id',
         'name',
@@ -46,6 +47,11 @@ class ChurchRegistrationRequest extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
+    }
+
+    public function requestedParentChurch()
+    {
+        return $this->belongsTo(Church::class, 'requested_parent_church_id');
     }
 
     public function reviewer()
