@@ -41,10 +41,21 @@ test('database stays internal and gates dependent containers by health', () => {
 
     assert.match(databaseService, /mysqladmin ping/);
     assert.doesNotMatch(databaseService, /\n\s+ports:/);
-    assert.equal(
-        (compose.match(/db:\n\s+condition: service_healthy/g) ?? []).length,
-        3,
-    );
+
+    for (const service of ['app', 'queue-worker', 'media-worker', 'scheduler']) {
+        const serviceDefinition =
+            compose.match(
+                new RegExp(
+                    `\\n  ${service}:\\n([\\s\\S]*?)(?=\\n  [a-z][a-z0-9-]*:\\n|\\nvolumes:)`,
+                ),
+            )?.[1] ?? '';
+
+        assert.match(
+            serviceDefinition,
+            /depends_on:[\s\S]*?db:\n\s+condition: service_healthy/,
+            `${service} must wait for a healthy database`,
+        );
+    }
 });
 
 test('Bible version changes preserve the canonical book and chapter', () => {
