@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
                           : 'text-slate-500'
                 "
                 :style="
-                    activeKey === item.key
+                    activeKey === item.key && !item.disabled
                         ? { color: 'var(--church-primary, #342f87)' }
                         : undefined
                 "
