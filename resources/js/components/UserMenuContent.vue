@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowRightLeft,
     Bell,
+    BookOpen,
     CircleAlert,
     House,
     LayoutDashboard,
@@ -11,6 +12,7 @@ import {
     Undo2,
 } from '@lucide/vue';
 import { computed } from 'vue';
+import ClassroomPortalController from '@/actions/App/Http/Controllers/ClassroomPortalController';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -176,6 +178,16 @@ const transferMembership = async (): Promise<void> => {
                 <House v-if="isDashboard" class="mr-2 size-4" />
                 <LayoutDashboard v-else class="mr-2 size-4" />
                 {{ isDashboard ? t('nav.home') : t('nav.dashboard') }}
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link
+                class="block w-full cursor-pointer"
+                :href="ClassroomPortalController.index.url()"
+                prefetch
+            >
+                <BookOpen class="mr-2 size-4" />
+                {{ t('nav.classrooms') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { ChevronsUpDown } from '@lucide/vue';
+import { ChevronsUpDown, CircleAlert } from '@lucide/vue';
 import { computed } from 'vue';
 import {
     DropdownMenu,
@@ -18,6 +18,11 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const isForeignChurch = computed(
+    () =>
+        (page.props.churchContext as { isForeignChurch?: boolean } | undefined)
+            ?.isForeignChurch === true,
+);
 const { isMobile, state } = useSidebar();
 </script>
 
@@ -31,7 +36,19 @@ const { isMobile, state } = useSidebar();
                         class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                         data-test="sidebar-menu-button"
                     >
-                        <UserInfo :user="user" />
+                        <UserInfo
+                            :user="user"
+                            :show-name="!isMobile"
+                            :first-name-only="true"
+                            :avatar-on-right="true"
+                        >
+                            <template #before-avatar>
+                                <CircleAlert
+                                    v-if="isForeignChurch"
+                                    class="size-4 shrink-0 text-sky-600"
+                                />
+                            </template>
+                        </UserInfo>
                         <ChevronsUpDown class="ml-auto size-4" />
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>

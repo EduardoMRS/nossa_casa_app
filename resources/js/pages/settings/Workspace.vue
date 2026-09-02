@@ -297,7 +297,7 @@ const personFor = (item: Relationship): Person | undefined =>
 
             <section
                 v-if="activeTab === 'profile'"
-                class="mt-6 w-full min-w-0 max-w-3xl overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
+                class="mt-6 w-full min-w-0 overflow-hidden rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
             >
                 <h2 class="text-xl font-black">
                     {{ t('settings.workspace.profile') }}
@@ -490,7 +490,7 @@ const personFor = (item: Relationship): Person | undefined =>
 
             <section
                 v-else-if="activeTab === 'prayers'"
-                class="mt-6 max-w-4xl space-y-3"
+                class="mt-6 space-y-3"
             >
                 <form
                     class="rounded-2xl border bg-white p-5 shadow-sm"

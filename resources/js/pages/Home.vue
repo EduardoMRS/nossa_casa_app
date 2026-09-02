@@ -9,6 +9,7 @@ import {
     HeartHandshake,
     Mail,
     MapPin,
+    Network as NetworkIcon,
     Play,
     Phone,
     Send,
@@ -16,6 +17,7 @@ import {
     ExternalLink,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import PublicChurchNetworkController from '@/actions/App/Http/Controllers/PublicChurchNetworkController';
 import AppModal from '@/components/AppModal.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -156,6 +158,14 @@ const scheduleGroups = computed(() => {
     }));
 });
 const authenticatedUser = computed(() => page.props.auth?.user);
+const hasChurchContext = computed(() =>
+    Boolean(
+        (
+            page.props.churchContext as
+                { church?: { id: string } | null } | undefined
+        )?.church,
+    ),
+);
 const prayerContent = ref('');
 const prayerAnonymous = ref(false);
 const prayerProcessing = ref(false);
@@ -382,7 +392,9 @@ const submitPrayer = async (): Promise<void> => {
                     class="relative z-10 flex flex-col justify-center"
                     :class="{ 'md:col-span-2': !nextEvent }"
                 >
-                    <div class="mb-3 flex items-center gap-2.5 sm:mb-7 sm:gap-3">
+                    <div
+                        class="mb-3 flex items-center gap-2.5 sm:mb-7 sm:gap-3"
+                    >
                         <span
                             class="grid size-10 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black shadow-lg backdrop-blur sm:size-12 sm:rounded-2xl sm:text-lg"
                         >
@@ -425,7 +437,9 @@ const submitPrayer = async (): Promise<void> => {
                         }}
                     </p>
 
-                    <div class="mt-4 grid gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3">
+                    <div
+                        class="mt-4 grid gap-2 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3"
+                    >
                         <Link
                             :href="eventsIndex()"
                             class="inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-indigo-950 shadow-lg transition hover:-translate-y-0.5 sm:px-5 sm:py-3"
@@ -911,22 +925,22 @@ const submitPrayer = async (): Promise<void> => {
                 <div v-if="selectedCalendarItems.length" class="grid gap-2">
                     <component
                         :is="item.slug ? Link : 'div'"
-                            v-for="item in selectedCalendarItems"
-                            :key="item.id"
-                            :href="
-                                item.slug
-                                    ? eventsShow({ event: item.slug })
-                                    : undefined
-                            "
-                            class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm"
-                        >
-                            <span class="min-w-0">
-                                <strong class="block break-words">{{
-                                    item.title
-                                }}</strong>
-                                <small class="text-slate-500">{{
-                                    item.recurring
-                                        ? t('home.calendar.weekly')
+                        v-for="item in selectedCalendarItems"
+                        :key="item.id"
+                        :href="
+                            item.slug
+                                ? eventsShow({ event: item.slug })
+                                : undefined
+                        "
+                        class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm"
+                    >
+                        <span class="min-w-0">
+                            <strong class="block break-words">{{
+                                item.title
+                            }}</strong>
+                            <small class="text-slate-500">{{
+                                item.recurring
+                                    ? t('home.calendar.weekly')
                                     : t('home.calendar.event')
                             }}</small>
                         </span>
@@ -934,9 +948,9 @@ const submitPrayer = async (): Promise<void> => {
                             {{ formatScheduleTime(item.start_time) }}–{{
                                 formatScheduleTime(item.end_time)
                             }}
-                            </span>
-                        </component>
-                    </div>
+                        </span>
+                    </component>
+                </div>
                 <p v-else class="text-sm text-slate-500">
                     {{ t('home.calendar.empty') }}
                 </p>
@@ -957,6 +971,18 @@ const submitPrayer = async (): Promise<void> => {
                     <h2 class="mt-1 text-2xl font-black">
                         {{ t('home.visit.title') }}
                     </h2>
+
+                    <Link
+                        v-if="hasChurchContext"
+                        :href="PublicChurchNetworkController.url()"
+                        class="mt-5 flex items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-indigo-950 transition hover:border-indigo-300 hover:bg-indigo-100"
+                    >
+                        <NetworkIcon class="size-5 shrink-0 text-indigo-600" />
+                        <span class="min-w-0 flex-1 text-sm font-black">{{
+                            t('nav.network')
+                        }}</span>
+                        <ArrowRight class="size-4 shrink-0" />
+                    </Link>
 
                     <div class="mt-5 grid gap-3 text-sm text-slate-600">
                         <p

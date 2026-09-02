@@ -709,8 +709,10 @@ textarea {
     :where(
         input:not([type='checkbox']):not([type='radio']):not(
                 [type='range']
-            ):not([type='color']),
-        select,
+            ):not([type='color']):not([type='hidden']):not(
+                .phone-input__number
+            ),
+        select:not(.phone-input__country),
         textarea
     ) {
         width: 100%;
@@ -725,7 +727,9 @@ textarea {
     :where(
         input:not([type='checkbox']):not([type='radio']):not(
                 [type='range']
-            ):not([type='color']),
+            ):not([type='color']):not([type='hidden']):not(
+                .phone-input__number
+            ),
         textarea
     )::placeholder {
         color: var(--muted-foreground);
@@ -734,8 +738,10 @@ textarea {
     :where(
         input:not([type='checkbox']):not([type='radio']):not(
                 [type='range']
-            ):not([type='color']),
-        select,
+            ):not([type='color']):not([type='hidden']):not(
+                .phone-input__number
+            ),
+        select:not(.phone-input__country),
         textarea
     ):focus {
         border-color: var(--ring);
@@ -746,8 +752,10 @@ textarea {
     :where(
         input:not([type='checkbox']):not([type='radio']):not(
                 [type='range']
-            ):not([type='color']),
-        select,
+            ):not([type='color']):not([type='hidden']):not(
+                .phone-input__number
+            ),
+        select:not(.phone-input__country),
         textarea
     ):disabled {
         cursor: not-allowed;

@@ -14,6 +14,7 @@ import {
     Users,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
+import PublicChurchNetworkController from '@/actions/App/Http/Controllers/PublicChurchNetworkController';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -104,7 +105,7 @@ const navItems = computed(() => [
               {
                   key: 'network' as const,
                   label: t('nav.network'),
-                  href: '/network',
+                  href: PublicChurchNetworkController.url(),
                   icon: NetworkIcon,
               },
           ]
@@ -133,17 +134,10 @@ const navItems = computed(() => [
         href: libraryIndex(),
         icon: LibraryBig,
     },
-    ...(isAuthenticated.value
-        ? [
-              {
-                  key: 'classrooms' as const,
-                  label: t('nav.classrooms'),
-                  href: '/classrooms',
-                  icon: Users,
-              },
-          ]
-        : []),
 ]);
+const desktopNavItems = computed(() =>
+    navItems.value.filter((item) => item.key !== 'network'),
+);
 
 const navClass = (key: PublicNavKey): string =>
     props.active === key
@@ -187,7 +181,7 @@ const navClass = (key: PublicNavKey): string =>
 
             <nav class="hidden items-center gap-1 md:flex">
                 <Link
-                    v-for="item in navItems"
+                    v-for="item in desktopNavItems"
                     :key="item.key"
                     :href="item.href"
                     :class="navClass(item.key)"
@@ -204,14 +198,23 @@ const navClass = (key: PublicNavKey): string =>
                     <DropdownMenuTrigger :as-child="true">
                         <Button
                             variant="ghost"
-                            class="hidden h-10 gap-2 rounded-full border border-indigo-700 p-0 pl-2 text-white hover:bg-indigo-950 hover:text-white md:flex"
+                            class="p-0 pr-0 pl-2 hidden h-10 gap-2 rounded-full border border-indigo-700 text-white hover:bg-indigo-950 hover:text-white md:flex"
                         >
-                            <UserInfo :user="user" />
-                            <CircleAlert
-                                v-if="isForeignChurch"
-                                class="size-4 shrink-0 text-sky-300"
-                                :aria-label="t('membership.foreign_indicator')"
-                            />
+                            <UserInfo
+                                :user="user"
+                                :first-name-only="true"
+                                :avatar-on-right="true"
+                            >
+                                <template #before-avatar>
+                                    <CircleAlert
+                                        v-if="isForeignChurch"
+                                        class="size-4 shrink-0 text-sky-300"
+                                        :aria-label="
+                                            t('membership.foreign_indicator')
+                                        "
+                                    />
+                                </template>
+                            </UserInfo>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-56"
@@ -287,12 +290,22 @@ const navClass = (key: PublicNavKey): string =>
                             variant="ghost"
                             class="h-auto w-full justify-start gap-3 rounded-lg border border-indigo-800 px-3 py-2.5 text-white hover:bg-indigo-900 hover:text-white"
                         >
-                            <UserInfo :user="user" :show-email="true" />
-                            <CircleAlert
-                                v-if="isForeignChurch"
-                                class="size-4 shrink-0 text-sky-300"
-                                :aria-label="t('membership.foreign_indicator')"
-                            />
+                            <UserInfo
+                                :user="user"
+                                :show-email="true"
+                                :first-name-only="true"
+                                :avatar-on-right="true"
+                            >
+                                <template #before-avatar>
+                                    <CircleAlert
+                                        v-if="isForeignChurch"
+                                        class="size-4 shrink-0 text-sky-300"
+                                        :aria-label="
+                                            t('membership.foreign_indicator')
+                                        "
+                                    />
+                                </template>
+                            </UserInfo>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

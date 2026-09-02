@@ -32,9 +32,7 @@ const hasUser = computed(() => Boolean(page.props.auth?.user));
             </template>
         </div>
         <div class="ml-auto flex items-center gap-2">
-            <div v-if="hasUser" class="w-56 max-w-[55vw]">
-                <NavUser />
-            </div>
+            <NavUser />
         </div>
     </header>
 </template>

@@ -125,13 +125,13 @@ const changeCountry = (): void => {
 
 <template>
     <div
-        class="phone-input flex h-9 w-full min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 dark:bg-input/30"
+        class="phone-input flex h-9 w-full max-w-full min-w-0 overflow-hidden rounded-md border border-input bg-transparent px-0 py-0 text-base shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 md:text-sm dark:bg-input/30"
     >
         <select
             v-model="selectedCode"
             :disabled="disabled"
             :aria-label="t('phone.country')"
-            class="phone-input__country h-full w-24 shrink-0 rounded-l-md border-0 border-r border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-0 disabled:opacity-50 sm:w-22"
+            class="phone-input__country h-full w-24 shrink-0 rounded-l-md border-0 bg-transparent px-3 py-1 text-base text-foreground outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 sm:w-22 md:text-sm"
             @change="changeCountry"
         >
             <option
@@ -152,7 +152,7 @@ const changeCountry = (): void => {
             :required="required"
             :disabled="disabled"
             :placeholder="placeholder ?? t('phone.placeholder')"
-            class="phone-input__number h-full w-0 min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-3 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 disabled:opacity-50"
+            class="phone-input__number h-full w-0 max-w-full min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-3 py-1 text-base text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
         />
         <input v-if="name" type="hidden" :name="name" :value="completeValue" />
     </div>
