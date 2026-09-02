@@ -11,7 +11,6 @@ import {
     Network as NetworkIcon,
     Radio,
     X,
-    Users,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
 import PublicChurchNetworkController from '@/actions/App/Http/Controllers/PublicChurchNetworkController';
@@ -52,11 +51,10 @@ const page = usePage();
 const mobileOpen = ref(false);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 const user = computed(() => page.props.auth?.user);
-const hasChurchContext = computed(() =>
-    Boolean(
-        (page.props.churchContext as { church?: { id: string } | null })
-            ?.church,
-    ),
+const hasNetworkConnections = computed(
+    () =>
+        (page.props.network as { hasConnections?: boolean } | undefined)
+            ?.hasConnections === true,
 );
 const { t } = useI18n();
 const branding = computed(
@@ -100,7 +98,7 @@ const navItems = computed(() => [
         href: home(),
         icon: BookOpen,
     },
-    ...(hasChurchContext.value
+    ...(hasNetworkConnections.value
         ? [
               {
                   key: 'network' as const,
@@ -198,7 +196,7 @@ const navClass = (key: PublicNavKey): string =>
                     <DropdownMenuTrigger :as-child="true">
                         <Button
                             variant="ghost"
-                            class="p-0 pr-0 pl-2 hidden h-10 gap-2 rounded-full border border-indigo-700 text-white hover:bg-indigo-950 hover:text-white md:flex"
+                            class="hidden h-10 gap-2 rounded-full border border-indigo-700 p-0 pr-0 pl-2 text-white hover:bg-indigo-950 hover:text-white md:flex"
                         >
                             <UserInfo
                                 :user="user"

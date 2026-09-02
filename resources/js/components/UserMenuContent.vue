@@ -70,6 +70,11 @@ const canAccessDashboard = computed(
             ?.accessDashboard === true,
 );
 const isDashboard = computed(() => page.url.startsWith('/dashboard'));
+const hasClassroomAccess = computed(
+    () =>
+        (page.props.classrooms as { hasAccess?: boolean } | undefined)
+            ?.hasAccess === true,
+);
 
 const transferMembership = async (): Promise<void> => {
     if (
@@ -180,7 +185,7 @@ const transferMembership = async (): Promise<void> => {
                 {{ isDashboard ? t('nav.home') : t('nav.dashboard') }}
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
+        <DropdownMenuItem v-if="hasClassroomAccess" :as-child="true">
             <Link
                 class="block w-full cursor-pointer"
                 :href="ClassroomPortalController.index.url()"

@@ -6,6 +6,7 @@ use App\Enums\LiveStreamStatus;
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\LiveStream;
+use App\Models\Network;
 use App\Models\Setting;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
@@ -66,6 +67,25 @@ class HandleInertiaRequests extends Middleware
             && $user->profile?->church_id === $currentChurch->id)
             || $isUnassignedChurchDashboard;
         $classroomChurchId = $currentChurch?->id ?? $user?->profile?->church_id ?? $user?->church?->id;
+        $hasAccessibleClassrooms = $user !== null && Classroom::query()
+            ->where('portal_enabled', true)
+            ->where(function ($query) use ($user): void {
+                $query->where('teacher_id', $user->id)
+                    ->orWhereHas('members', fn ($members) => $members->whereKey($user->id));
+
+                if ($user->role->value === 'system') {
+                    $query->orWhereNotNull('id');
+                } elseif (in_array($user->role->value, ['leader', 'church_leader', 'superadmin'], true)) {
+                    $query->orWhere('church_id', $user->church?->id);
+                }
+            })
+            ->exists();
+        $hasNetworkConnections = $currentChurch !== null && Network::query()
+            ->where(function ($query) use ($currentChurch): void {
+                $query->where('parent_church_id', $currentChurch->id)
+                    ->orWhere('child_church_id', $currentChurch->id);
+            })
+            ->exists();
 
         $branding = [
             'brand_name' => config('app.name'),
@@ -181,9 +201,13 @@ class HandleInertiaRequests extends Middleware
                     && in_array($role, ['church_leader', 'superadmin', 'system'], true),
             ],
             'classrooms' => [
+                'hasAccess' => $hasAccessibleClassrooms,
                 'hasKids' => $classroomChurchId
                     ? Classroom::query()->where('church_id', $classroomChurchId)->where('is_kids', true)->exists()
                     : false,
+            ],
+            'network' => [
+                'hasConnections' => $hasNetworkConnections,
             ],
             'separateKidsMinistry' => (bool) data_get(
                 Setting::query()->where('church_id', $classroomChurchId)->value('options'),

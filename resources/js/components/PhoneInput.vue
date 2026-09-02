@@ -125,7 +125,7 @@ const changeCountry = (): void => {
 
 <template>
     <div
-        class="phone-input flex h-9 w-full max-w-full min-w-0 overflow-hidden rounded-md border border-input bg-transparent px-0 py-0 text-base shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 md:text-sm dark:bg-input/30"
+        class="phone-input flex h-9 w-full max-w-full min-w-0 overflow-hidden rounded-md border border-slate-300 px-0 py-0 text-base shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 md:text-sm mt-1"
     >
         <select
             v-model="selectedCode"
@@ -170,5 +170,15 @@ const changeCountry = (): void => {
     -webkit-text-fill-color: var(--foreground);
     box-shadow: 0 0 0 1000px transparent inset;
     transition: background-color 9999s ease-out;
+}
+.phone-input {
+    & * {
+        color: var(--color-slate-600);
+    }
+    & input {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
 }
 </style>

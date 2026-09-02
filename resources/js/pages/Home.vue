@@ -158,13 +158,10 @@ const scheduleGroups = computed(() => {
     }));
 });
 const authenticatedUser = computed(() => page.props.auth?.user);
-const hasChurchContext = computed(() =>
-    Boolean(
-        (
-            page.props.churchContext as
-                { church?: { id: string } | null } | undefined
-        )?.church,
-    ),
+const hasNetworkConnections = computed(
+    () =>
+        (page.props.network as { hasConnections?: boolean } | undefined)
+            ?.hasConnections === true,
 );
 const prayerContent = ref('');
 const prayerAnonymous = ref(false);
@@ -973,7 +970,7 @@ const submitPrayer = async (): Promise<void> => {
                     </h2>
 
                     <Link
-                        v-if="hasChurchContext"
+                        v-if="hasNetworkConnections"
                         :href="PublicChurchNetworkController.url()"
                         class="mt-5 flex items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-indigo-950 transition hover:border-indigo-300 hover:bg-indigo-100"
                     >
