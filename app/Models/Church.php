@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy(ChurchObserver::class)]
@@ -125,14 +126,40 @@ class Church extends Model
         return $this->hasOne(ChurchMailSetting::class);
     }
 
-    public function parentChurch()
+    /** @return HasOne<Network, $this> */
+    public function parentNetwork(): HasOne
     {
-        return $this->hasOne(Church::class, 'id', 'parent_church_id');
+        return $this->hasOne(Network::class, 'child_church_id');
     }
 
-    public function childrenChurches()
+    /** @return BelongsToMany<Church, $this> */
+    public function parentChurches(): BelongsToMany
+    {
+        return $this->belongsToMany(Church::class, 'networks', 'child_church_id', 'parent_church_id');
+    }
+
+    /** @return BelongsToMany<Church, $this> */
+    public function childrenChurches(): BelongsToMany
     {
         return $this->belongsToMany(Church::class, 'networks', 'parent_church_id', 'child_church_id');
+    }
+
+    /** @return HasMany<ChurchNetworkRequest, $this> */
+    public function requestedNetworkLinks(): HasMany
+    {
+        return $this->hasMany(ChurchNetworkRequest::class, 'requesting_church_id');
+    }
+
+    /** @return HasMany<ChurchNetworkRequest, $this> */
+    public function incomingParentRequests(): HasMany
+    {
+        return $this->hasMany(ChurchNetworkRequest::class, 'parent_church_id');
+    }
+
+    /** @return HasMany<ChurchNetworkRequest, $this> */
+    public function incomingChildRequests(): HasMany
+    {
+        return $this->hasMany(ChurchNetworkRequest::class, 'child_church_id');
     }
 
     /** @return BelongsTo<Community, $this> */
