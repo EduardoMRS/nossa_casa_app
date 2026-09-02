@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\Churches\TransferChurchMembership;
 use App\Enums\ChurchStatus;
 use App\Enums\UserRole;
+use App\Mail\ChurchRegistrationRequestedMail;
 use App\Models\Church;
 use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
 use App\Models\Network;
+use App\Models\User;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -91,6 +94,8 @@ class ChurchOnboardingController extends Controller
             'requested_parent_church_id' => $requestedParentChurchId,
             'status' => 'pending',
         ]);
+
+        $this->notifyRegistrationReviewers($registrationRequest);
 
         return response()->json($registrationRequest, 201);
     }
@@ -244,5 +249,39 @@ class ChurchOnboardingController extends Controller
             || $request->user()->church?->community_id === $registrationRequest->community_id;
         $ownsCommunity = $registrationRequest->community()->where('owner_id', $request->user()->id)->exists();
         abort_unless($ownsCommunity || ($sameCommunity && in_array($request->user()->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)), 403);
+    }
+
+    private function notifyRegistrationReviewers(ChurchRegistrationRequest $registrationRequest): void
+    {
+        $registrationRequest->loadMissing(['community', 'requestedParentChurch', 'requester']);
+
+        $reviewers = User::query()
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->when(
+                $registrationRequest->requested_parent_church_id,
+                fn ($query, string $parentChurchId) => $query
+                    ->where('role', UserRole::CHURCH_LEADER)
+                    ->whereHas('profile', fn ($profile) => $profile->where('church_id', $parentChurchId)),
+                fn ($query) => $query->where(function ($reviewers) use ($registrationRequest): void {
+                    $reviewers
+                        ->whereKey($registrationRequest->community->owner_id)
+                        ->orWhere(function ($communityLeaders) use ($registrationRequest): void {
+                            $communityLeaders
+                                ->where('role', UserRole::CHURCH_LEADER)
+                                ->whereHas('profile', fn ($profile) => $profile
+                                    ->where('community_id', $registrationRequest->community_id));
+                        });
+                }),
+            )
+            ->get()
+            ->unique('email');
+
+        foreach ($reviewers as $reviewer) {
+            Mail::to($reviewer)->queue(
+                (new ChurchRegistrationRequestedMail($registrationRequest))
+                    ->locale($reviewer->preferredLocale()),
+            );
+        }
     }
 }

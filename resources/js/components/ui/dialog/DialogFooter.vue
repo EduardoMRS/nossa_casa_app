@@ -2,7 +2,10 @@
 import type { HTMLAttributes } from "vue"
 import { DialogClose } from "reka-ui"
 import { cn } from "@/lib/utils"
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
+import { useI18n } from "@/lib/i18n"
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   class?: HTMLAttributes["class"]
@@ -20,7 +23,7 @@ const props = withDefaults(defineProps<{
     <slot />
     <DialogClose v-if="showCloseButton" as-child>
       <Button variant="outline">
-        Close
+        {{ t('a11y.close') }}
       </Button>
     </DialogClose>
   </div>

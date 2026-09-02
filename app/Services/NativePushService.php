@@ -52,7 +52,7 @@ final readonly class NativePushService
     private function validateMessage(PushMessage $message): void
     {
         if (! str_starts_with($message->deepLink, '/') && ! str_starts_with($message->deepLink, 'nossacasa://')) {
-            throw new InvalidArgumentException('Push deep links must be relative or use the Nossa Casa scheme.');
+            throw new InvalidArgumentException(__('api.push.invalid_deep_link'));
         }
 
         $encoded = json_encode([
@@ -62,7 +62,7 @@ final readonly class NativePushService
         ], JSON_THROW_ON_ERROR);
 
         if (strlen($encoded) > 2048) {
-            throw new InvalidArgumentException('Push payload exceeds the 2 KB application limit.');
+            throw new InvalidArgumentException(__('api.push.payload_too_large'));
         }
     }
 }

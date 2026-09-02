@@ -16,13 +16,13 @@ class EventRegistrationExporter
         $temporaryPath = tempnam(sys_get_temp_dir(), 'event-registrations-');
 
         if ($temporaryPath === false) {
-            throw new RuntimeException('Unable to create an export file.');
+            throw new RuntimeException(__('admin.event_registrations.errors.create_export_file'));
         }
 
         $archive = new ZipArchive;
 
         if ($archive->open($temporaryPath, ZipArchive::OVERWRITE) !== true) {
-            throw new RuntimeException('Unable to create the spreadsheet archive.');
+            throw new RuntimeException(__('admin.event_registrations.errors.create_spreadsheet_archive'));
         }
 
         $archive->addFromString('[Content_Types].xml', $this->contentTypesXml());
@@ -36,7 +36,7 @@ class EventRegistrationExporter
         unlink($temporaryPath);
 
         if ($contents === false) {
-            throw new RuntimeException('Unable to read the spreadsheet export.');
+            throw new RuntimeException(__('admin.event_registrations.errors.read_spreadsheet_export'));
         }
 
         return $contents;
@@ -59,12 +59,12 @@ class EventRegistrationExporter
         array $fieldLayout = [],
     ): string {
         $branding = array_merge([
-            'name' => 'Nossa Casa',
+            'name' => (string) config('app.name'),
             'tagline' => '',
             'primary_color' => '#342f87',
             'accent_color' => '#5eead4',
-            'participant_label' => 'Inscrito :number',
-            'project_reference' => 'Nossa Casa - tecnologia aberta para comunidades',
+            'participant_label' => __('admin.event_registrations.pdf.participant'),
+            'project_reference' => __('admin.event_registrations.pdf.project_reference'),
         ], $branding);
         $pageWidth = 595.0;
         $pageHeight = 842.0;

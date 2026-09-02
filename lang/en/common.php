@@ -25,6 +25,7 @@ return [
         'forbidden' => 'Forbidden',
         'many_requests' => 'Too Many Requests',
         'server_error' => 'Server Error',
+        'invalid_file_link' => 'The file link is invalid or corrupted.',
     ],
     'notifications' => [
         'category_created' => 'Category created successfully.',

@@ -18,6 +18,7 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { useI18n } from '@/lib/i18n';
 import type { NavItem } from '@/types';
 
 defineProps<{
@@ -26,11 +27,12 @@ defineProps<{
 }>();
 
 const { isCurrentUrl } = useCurrentUrl();
+const { t } = useI18n();
 </script>
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>{{ label ?? 'Platform' }}</SidebarGroupLabel>
+        <SidebarGroupLabel>{{ label ?? t('navigation.menu') }}</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem
                 v-for="item in items"

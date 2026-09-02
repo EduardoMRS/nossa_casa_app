@@ -56,6 +56,11 @@ return [
             'participant' => 'Participant :number',
             'project_reference' => 'Nossa Casa - open source project',
         ],
+        'errors' => [
+            'create_export_file' => 'Unable to create the export file.',
+            'create_spreadsheet_archive' => 'Unable to create the spreadsheet archive.',
+            'read_spreadsheet_export' => 'Unable to read the spreadsheet export.',
+        ],
         'statuses' => [
             'pending' => 'Pending',
             'approved' => 'Approved',

@@ -457,7 +457,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black text-sky-700"
                                 >
                                     <MapPin class="size-3" />
-                                    {{ community.distance_km }} km
+                                    {{ community.distance_km }} {{ t('units.kilometers_short') }}
                                 </span>
                             </div>
                             <div class="mt-4 space-y-2">
@@ -481,7 +481,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         v-if="church.distance_km != null"
                                         class="ml-2 shrink-0 whitespace-nowrap text-slate-400"
                                     >
-                                        {{ church.distance_km }} km
+                                        {{ church.distance_km }} {{ t('units.kilometers_short') }}
                                     </span>
                                 </a>
                             </div>

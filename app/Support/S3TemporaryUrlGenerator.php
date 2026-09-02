@@ -20,13 +20,13 @@ class S3TemporaryUrlGenerator
         $config = config("filesystems.disks.{$diskName}");
 
         if (! is_array($config) || ($config['driver'] ?? null) !== 's3') {
-            throw new InvalidArgumentException("The [{$diskName}] disk is not an S3 disk.");
+            throw new InvalidArgumentException(__('media.temporary_url_not_s3', ['disk' => $diskName]));
         }
 
         $endpoint = $config['temporary_url'] ?? $config['endpoint'] ?? null;
 
         if (! is_string($endpoint) || $endpoint === '') {
-            throw new InvalidArgumentException("The [{$diskName}] disk has no temporary URL endpoint.");
+            throw new InvalidArgumentException(__('media.temporary_url_endpoint_missing', ['disk' => $diskName]));
         }
 
         $clientConfig = [

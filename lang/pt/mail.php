@@ -22,6 +22,17 @@ return [
         'action' => 'Criar nova senha',
         'outro' => 'Se você não solicitou a redefinição de senha, pode ignorar este e-mail com segurança.',
     ],
+    'church_registration_request' => [
+        'subject' => 'Nova solicitação de registro: :church',
+        'preheader' => 'Uma nova solicitação de registro de igreja aguarda análise.',
+        'heading' => 'Nova solicitação de registro',
+        'introduction' => ':requester solicitou o registro de :church.',
+        'community' => 'Comunidade: :community',
+        'parent_church' => 'Igreja matriz solicitada: :church',
+        'contact' => 'E-mail para contato: :email',
+        'action' => 'Analisar solicitação',
+        'outro' => 'Acesse o portal para conferir as informações e aprovar ou rejeitar esta solicitação.',
+    ],
     'footer' => [
         'application' => 'Nossa Casa · Tecnologia a serviço de comunidades de fé.',
         'church' => ':brand utiliza o Nossa Casa para estar mais perto de sua comunidade.',

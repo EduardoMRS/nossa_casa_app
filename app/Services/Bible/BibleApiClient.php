@@ -21,7 +21,7 @@ class BibleApiClient
                 $payload = $this->cdn()->get('bibles.json')->throw()->json();
 
                 if (! is_array($payload)) {
-                    throw new RuntimeException('The Bible versions response is invalid.');
+                    throw new RuntimeException(__('bible.errors.invalid_versions_response'));
                 }
 
                 return array_values(collect($payload)
@@ -131,7 +131,7 @@ class BibleApiClient
                 ->firstWhere('chapter', $chapter);
 
             if (! is_array($matchingChapter)) {
-                throw new RuntimeException('The requested Bible chapter was not found.');
+                throw new RuntimeException(__('bible.errors.chapter_not_found'));
             }
 
             return $matchingChapter['verses'];
@@ -142,7 +142,7 @@ class BibleApiClient
                 ->firstWhere('chapter', $chapter);
 
             if (! is_array($matchingChapter)) {
-                throw new RuntimeException('The requested Bible chapter was not found.');
+                throw new RuntimeException(__('bible.errors.chapter_not_found'));
             }
 
             return $matchingChapter['verses'];
@@ -175,7 +175,7 @@ class BibleApiClient
         $matchingVerse = collect($this->chapter($version, $book, $chapter))->firstWhere('verse', $verse);
 
         if (! is_array($matchingVerse)) {
-            throw new RuntimeException('The requested Bible verse was not found.');
+            throw new RuntimeException(__('bible.errors.verse_not_found'));
         }
 
         return $matchingVerse;
@@ -192,7 +192,7 @@ class BibleApiClient
         $configuration = $this->offlineVersions()[$version] ?? null;
 
         if (! is_array($configuration)) {
-            throw new RuntimeException('The requested Bible version does not provide an offline bundle.');
+            throw new RuntimeException(__('bible.errors.offline_bundle_unavailable'));
         }
 
         $cacheKey = "bible-api.offline.{$version}.v1.".app()->getLocale();
@@ -204,10 +204,10 @@ class BibleApiClient
                 ->retry(2, 150)
                 ->get((string) $configuration['source_url'])
                 ->throw();
-            $payload = $this->decodeJsonResponse($response, 'The offline Bible response is invalid.');
+            $payload = $this->decodeJsonResponse($response, __('bible.errors.invalid_offline_response'));
 
             if (! is_array($payload['books'] ?? null)) {
-                throw new RuntimeException('The offline Bible response is invalid.');
+                throw new RuntimeException(__('bible.errors.invalid_offline_response'));
             }
 
             $books = collect($payload['books'])
@@ -261,7 +261,7 @@ class BibleApiClient
         $configuration = $this->onlineVersions()[$version] ?? null;
 
         if (! is_array($configuration)) {
-            throw new RuntimeException('The requested Bible version is not configured for online reading.');
+            throw new RuntimeException(__('bible.errors.online_version_not_configured'));
         }
 
         return Cache::remember("bible-api.online.{$version}.v1", $this->cacheTtl(), function () use ($configuration, $version): array {
@@ -271,7 +271,7 @@ class BibleApiClient
                 ->retry(2, 150)
                 ->get((string) $configuration['source_url'])
                 ->throw();
-            $payload = $this->decodeJsonResponse($response, 'The online Bible response is invalid.');
+            $payload = $this->decodeJsonResponse($response, __('bible.errors.invalid_online_response'));
 
             $configuredBookNames = is_array($configuration['book_names'] ?? null)
                 ? array_values($configuration['book_names'])
@@ -419,7 +419,7 @@ class BibleApiClient
         $matchingBook = collect($this->offlineBundle($version)['books'])->firstWhere('slug', $book);
 
         if (! is_array($matchingBook)) {
-            throw new RuntimeException('The requested Bible book was not found.');
+            throw new RuntimeException(__('bible.errors.book_not_found'));
         }
 
         return $matchingBook;
@@ -431,7 +431,7 @@ class BibleApiClient
         $matchingBook = collect($this->onlineBundle($version)['books'])->firstWhere('slug', $book);
 
         if (! is_array($matchingBook)) {
-            throw new RuntimeException('The requested Bible book was not found.');
+            throw new RuntimeException(__('bible.errors.book_not_found'));
         }
 
         return $matchingBook;

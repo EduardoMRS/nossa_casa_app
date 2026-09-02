@@ -19,6 +19,9 @@
         "currency": "Currency",
         "placeholder": "0.00"
     },
+    "units": {
+        "kilometers_short": "km"
+    },
     "editor": {
         "label": "Rich content editor",
         "embeds": {
@@ -1499,7 +1502,9 @@
             "save": "Publish post",
             "update": "Update post",
             "category_title": "Post categories",
-            "category_hint": "Select categories from this church"
+            "category_hint": "Select categories from this church",
+            "allow_comments": "Allow comments",
+            "allow_reactions": "Allow reactions"
         }
     },
     "dashboard": {
@@ -1806,6 +1811,7 @@
             "instructions": "Instructions",
             "available_until": "Available until",
             "attempts": "Attempts",
+            "attempt_count": "{count} attempt(s)",
             "create_activity": "Create activity",
             "add_material": "Add material",
             "link": "Link",
