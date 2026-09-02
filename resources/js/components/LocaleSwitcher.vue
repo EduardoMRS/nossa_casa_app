@@ -17,7 +17,7 @@ const selectedLocale = computed({
 
 <template>
     <label
-        class="inline-flex items-center gap-1 rounded-lg border border-[#c5d3df] bg-white px-2 py-1 text-xs font-semibold text-[#21364b] sm:gap-2 sm:rounded-full sm:px-3 sm:py-1.5"
+        class="cursor-pointer inline-flex items-center gap-1 rounded-lg border border-[#c5d3df] bg-white px-2 py-1 text-xs font-semibold text-[#21364b] sm:gap-2 sm:rounded-full sm:px-3 sm:py-1.5"
     >
         <span class="sr-only sm:not-sr-only">{{ t('locale.switcher') }}</span>
         <select

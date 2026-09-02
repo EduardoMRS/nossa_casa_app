@@ -102,9 +102,9 @@ test('portal onboarding exposes the complete light-theme registration flow', () 
     }
 
     assert.match(source, /content-class="[^"]*bg-white[^"]*text-slate-950/);
-    assert.match(source, /content-class="[^"]*max-h-\\[90dvh\\][^"]*overflow-hidden/);
+    assert.match(source, /content-class="[^"]*max-h-\[90dvh\][^"]*overflow-hidden/);
     assert.equal((source.match(/overflow-y-auto/g) ?? []).length >= 2, true);
-    assert.match(source, /<PhoneInput[\\s\\S]*?class="[^"]*!bg-white/);
+    assert.match(source, /<PhoneInput[\s\S]*?class="[^"]*!bg-white/);
     assert.match(source, /v-if="onboardingMode === 'new_community'"/);
-    assert.match(source, /<form\\s+v-else/);
+    assert.match(source, /<form\s+v-else/);
 });

@@ -1045,7 +1045,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
-                    <div class="space-y-3 sm:col-span-2">
+                    <div class="space-y-3 sm:col-span-2 sm:contents">
                         <div class="grid gap-2 sm:grid-cols-2">
                             <label
                                 v-for="mode in domainModes"

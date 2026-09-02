@@ -131,7 +131,7 @@ const changeCountry = (): void => {
             v-model="selectedCode"
             :disabled="disabled"
             :aria-label="t('phone.country')"
-            class="phone-input__country h-full w-24 shrink-0 rounded-l-md border-0 border-r border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-0 disabled:opacity-50 sm:w-28"
+            class="phone-input__country h-full w-24 shrink-0 rounded-l-md border-0 border-r border-input bg-transparent px-2 text-sm text-foreground outline-none focus:ring-0 disabled:opacity-50 sm:w-22"
             @change="changeCountry"
         >
             <option

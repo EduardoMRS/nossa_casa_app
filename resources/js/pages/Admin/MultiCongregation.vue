@@ -454,7 +454,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </article>
             <p
                 v-if="!churches.length"
-                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
             >
                 {{
                     t('admin.multicongregation.empty_units', {
@@ -518,7 +518,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </article>
             <p
                 v-if="!props.networks.length"
-                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
             >
                 {{ t('admin.multicongregation.empty_networks') }}
             </p>
@@ -587,7 +587,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </article>
             <p
                 v-if="!props.registrationRequests.length"
-                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
             >
                 {{ t('admin.multicongregation.empty_requests') }}
             </p>

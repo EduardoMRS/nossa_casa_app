@@ -455,7 +455,7 @@ const personFor = (item: Relationship): Person | undefined =>
                 >
                 <p
                     v-if="!workspaceUser.registered_events.length"
-                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
                 >
                     {{ t('settings.workspace.no_events') }}
                 </p>
@@ -482,7 +482,7 @@ const personFor = (item: Relationship): Person | undefined =>
                 </article>
                 <p
                     v-if="!workspaceUser.classrooms.length"
-                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
                 >
                     {{ t('settings.workspace.no_classrooms') }}
                 </p>
@@ -537,7 +537,7 @@ const personFor = (item: Relationship): Person | undefined =>
                 </article>
                 <p
                     v-if="!prayerRequests.length"
-                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500"
+                    class="rounded-2xl border border-dashed p-10 text-center text-sm text-slate-500 md:col-span-2 xl:col-span-3"
                 >
                     {{ t('settings.workspace.no_prayers') }}
                 </p>

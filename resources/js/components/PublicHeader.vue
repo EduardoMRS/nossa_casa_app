@@ -15,15 +15,14 @@ import {
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { getInitials } from '@/composables/useInitials';
 import { applyBranding } from '@/lib/branding';
 import { useI18n } from '@/lib/i18n';
 import { home, login } from '@/routes';
@@ -32,7 +31,14 @@ import { index as galleryIndex } from '@/routes/gallery';
 import { index as libraryIndex } from '@/routes/library';
 import { index as publicPostsIndex } from '@/routes/posts/public';
 
-type PublicNavKey = 'home' | 'network' | 'posts' | 'events' | 'gallery' | 'library' | 'classrooms';
+type PublicNavKey =
+    | 'home'
+    | 'network'
+    | 'posts'
+    | 'events'
+    | 'gallery'
+    | 'library'
+    | 'classrooms';
 
 const props = withDefaults(
     defineProps<{ active?: PublicNavKey; showLocale?: boolean }>(),
@@ -128,12 +134,14 @@ const navItems = computed(() => [
         icon: LibraryBig,
     },
     ...(isAuthenticated.value
-        ? [{
-              key: 'classrooms' as const,
-              label: t('nav.classrooms'),
-              href: '/classrooms',
-              icon: Users,
-          }]
+        ? [
+              {
+                  key: 'classrooms' as const,
+                  label: t('nav.classrooms'),
+                  href: '/classrooms',
+                  icon: Users,
+              },
+          ]
         : []),
 ]);
 
@@ -196,34 +204,14 @@ const navClass = (key: PublicNavKey): string =>
                     <DropdownMenuTrigger :as-child="true">
                         <Button
                             variant="ghost"
-                            class="hidden h-10 gap-2 rounded-full border border-indigo-700 px-1.5 pr-3 text-white hover:bg-indigo-950 hover:text-white md:flex"
+                            class="hidden h-10 gap-2 rounded-full border border-indigo-700 p-0 pl-2 text-white hover:bg-indigo-950 hover:text-white md:flex"
                         >
-                            <span class="hidden items-center gap-1.5 lg:flex">
-                                <span
-                                    class="max-w-36 truncate text-xs font-semibold"
-                                    >{{ user.name }}</span
-                                >
-                                <CircleAlert
-                                    v-if="isForeignChurch"
-                                    class="size-4 shrink-0 text-sky-300"
-                                    :aria-label="
-                                        t('membership.foreign_indicator')
-                                    "
-                                />
-                            </span>
-                            <Avatar class="size-8 ring-2 ring-amber-400/70">
-                                <AvatarImage
-                                    v-if="user.avatar"
-                                    :src="user.avatar"
-                                    :alt="user.name"
-                                />
-                                <AvatarFallback
-                                    class="bg-indigo-950 text-white"
-                                    >{{
-                                        getInitials(user.name)
-                                    }}</AvatarFallback
-                                >
-                            </Avatar>
+                            <UserInfo :user="user" />
+                            <CircleAlert
+                                v-if="isForeignChurch"
+                                class="size-4 shrink-0 text-sky-300"
+                                :aria-label="t('membership.foreign_indicator')"
+                            />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" class="w-56"
@@ -299,29 +287,7 @@ const navClass = (key: PublicNavKey): string =>
                             variant="ghost"
                             class="h-auto w-full justify-start gap-3 rounded-lg border border-indigo-800 px-3 py-2.5 text-white hover:bg-indigo-900 hover:text-white"
                         >
-                            <Avatar class="size-8 ring-2 ring-amber-400/70">
-                                <AvatarImage
-                                    v-if="user.avatar"
-                                    :src="user.avatar"
-                                    :alt="user.name"
-                                />
-                                <AvatarFallback
-                                    class="bg-indigo-900 text-white"
-                                >
-                                    {{ getInitials(user.name) }}
-                                </AvatarFallback>
-                            </Avatar>
-                            <span class="min-w-0 flex-1 text-left">
-                                <strong class="block truncate text-sm">
-                                    {{ user.name }}
-                                </strong>
-                                <small
-                                    v-if="user.email"
-                                    class="block truncate text-[10px] text-indigo-200"
-                                >
-                                    {{ user.email }}
-                                </small>
-                            </span>
+                            <UserInfo :user="user" :show-email="true" />
                             <CircleAlert
                                 v-if="isForeignChurch"
                                 class="size-4 shrink-0 text-sky-300"
