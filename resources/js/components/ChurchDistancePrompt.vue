@@ -2,7 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { Church, MapPin, Navigation } from '@lucide/vue';
 import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/i18n';
@@ -64,7 +64,7 @@ const openChurch = (church: NearbyChurch): void => {
     window.location.assign(church.url);
 };
 
-onMounted(async () => {
+const checkLocation = async (latitude: number, longitude: number): Promise<void> => {
     if (
         !page.props.auth?.user ||
         !userChurch.value ||
@@ -74,6 +74,30 @@ onMounted(async () => {
         return;
     }
 
+    try {
+        const response = await axios.get<ProximityResponse>(
+            '/api/church-proximity',
+            { params: { latitude, longitude } },
+        );
+
+        result.value = response.data;
+        open.value = response.data.should_prompt;
+    } catch {
+        // Proximity is optional and must not block navigation.
+    }
+};
+
+const handleLocationUpdated = (event: Event): void => {
+    const location = (event as CustomEvent<{ latitude: number; longitude: number }>)
+        .detail;
+
+    if (location) {
+        void checkLocation(location.latitude, location.longitude);
+    }
+};
+
+onMounted(() => {
+    window.addEventListener('ncapp:location-updated', handleLocationUpdated);
     const storedLocation = window.localStorage.getItem('ncapp_portal_location');
 
     if (!storedLocation) {
@@ -95,21 +119,14 @@ onMounted(async () => {
             return;
         }
 
-        const response = await axios.get<ProximityResponse>(
-            '/api/church-proximity',
-            {
-                params: {
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                },
-            },
-        );
-
-        result.value = response.data;
-        open.value = response.data.should_prompt;
+        void checkLocation(location.latitude, location.longitude);
     } catch {
-        // Proximity is an optional enhancement and must not block navigation.
+        // Invalid legacy location data is ignored.
     }
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('ncapp:location-updated', handleLocationUpdated);
 });
 </script>
 
