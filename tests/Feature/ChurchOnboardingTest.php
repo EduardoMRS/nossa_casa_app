@@ -7,14 +7,28 @@ use App\Models\Community;
 use App\Models\Network;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     config(['app.url' => 'http://platform.test']);
+    config(['services.geocoding.enabled' => false]);
     Storage::fake('local');
     $this->withoutVite();
 });
+
+function requiredChurchAddress(): array
+{
+    return [
+        'street' => 'Main Street',
+        'neighborhood' => 'Center',
+        'city' => 'Manaus',
+        'state' => 'AM',
+        'zipcode' => '69000-000',
+        'country' => 'Brasil',
+    ];
+}
 
 test('church request accepts a private proof document visible only to reviewers', function () {
     $owner = User::factory()->create();
@@ -28,6 +42,7 @@ test('church request accepts a private proof document visible only to reviewers'
         'name' => 'Documented Church',
         'slug' => 'documented-church',
         'domain' => 'documented.platform.test',
+        ...requiredChurchAddress(),
         'proof_document' => UploadedFile::fake()->create('authorization.pdf', 120, 'application/pdf'),
     ])->assertCreated();
 
@@ -55,7 +70,82 @@ test('church request rejects a domain already reserved by a pending request', fu
         'name' => 'Duplicate Church',
         'slug' => 'duplicate-church',
         'domain' => 'reserved.platform.test',
+        ...requiredChurchAddress(),
     ])->assertUnprocessable()->assertJsonValidationErrors('domain');
+});
+
+test('church request geocodes structured address and falls back to manual coordinates', function () {
+    config(['services.geocoding.enabled' => true]);
+    Http::fake([
+        'nominatim.openstreetmap.org/*' => Http::response([
+            ['lat' => '-22.9068', 'lon' => '-43.1729'],
+        ]),
+    ]);
+    config(['services.geocoding.url' => 'https://nominatim.openstreetmap.org/search']);
+
+    $requester = User::factory()->create();
+    $community = Community::factory()->create(['owner_id' => $requester->id]);
+    $requester->profile()->create(['community_id' => $community->id]);
+
+    $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'name' => 'Mapped Church',
+        'slug' => 'mapped-church',
+        'domain' => 'mapped.platform.test',
+        'street' => 'Rua da Paz',
+        'number' => '100',
+        'neighborhood' => 'Centro',
+        'city' => 'Rio de Janeiro',
+        'state' => 'RJ',
+        'zipcode' => '20000-000',
+        'country' => 'Brasil',
+    ])->assertCreated();
+
+    $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
+    expect($registrationRequest->latitude)->toBe(-22.9068)
+        ->and($registrationRequest->longitude)->toBe(-43.1729);
+
+    Http::fake(['nominatim.openstreetmap.org/*' => Http::failedConnection()]);
+    $fallbackRequest = $this->actingAs($requester)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'name' => 'Manual Church',
+        'slug' => 'manual-church',
+        'domain' => 'manual.platform.test',
+        'street' => 'Rua Manual',
+        'neighborhood' => 'Center',
+        'city' => 'Rio de Janeiro',
+        'state' => 'RJ',
+        'zipcode' => '20000-000',
+        'country' => 'Brasil',
+        'latitude' => '-23.55',
+        'longitude' => '-46.63',
+    ])->assertCreated();
+
+    expect($fallbackRequest->json('latitude'))->toBe(-23.55)
+        ->and($fallbackRequest->json('longitude'))->toBe(-46.63);
+});
+
+test('superadmin church requests are approved immediately, including a selected parent', function () {
+    $admin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $community = Community::factory()->create();
+    $parentChurch = Church::factory()->for($community)->create();
+
+    $response = $this->actingAs($admin)->postJson('http://platform.test/onboarding/churches', [
+        'community_id' => $community->id,
+        'parent_church_id' => $parentChurch->id,
+        'name' => 'Immediate Branch',
+        'slug' => 'immediate-branch',
+        'domain' => 'immediate.platform.test',
+        ...requiredChurchAddress(),
+    ])->assertOk();
+
+    $churchId = $response->json('church.id');
+    expect($response->json('request.status'))->toBe('approved')
+        ->and($churchId)->not->toBeNull();
+    expect(Network::query()
+        ->where('parent_church_id', $parentChurch->id)
+        ->where('child_church_id', $churchId)
+        ->exists())->toBeTrue();
 });
 
 test('church registration requires authentication', function () {
@@ -96,20 +186,39 @@ test('community member can request a church and community owner can approve it',
         'domain' => 'https://requested.test/welcome',
         'description' => 'Church awaiting community review.',
         'contact_email' => 'contact@requested.test',
-        'address' => '123 Faith Street',
+        'street' => 'Faith Street',
+        'number' => '123',
+        'neighborhood' => 'Central',
+        'city' => 'Springfield',
+        'state' => 'SP',
+        'zipcode' => '01000-000',
+        'country' => 'Brasil',
+        'complement' => 'Room 2',
     ])->assertCreated();
 
     $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
-    expect($registrationRequest->domain)->toBe('requested.test')
+    expect($registrationRequest->domain)->toBe('rcspr.platform.test')
         ->and($registrationRequest->status)->toBe('pending');
 
     $this->actingAs($owner)
         ->postJson("http://platform.test/onboarding/churches/{$registrationRequest->id}/approve")
         ->assertOk()
-        ->assertJsonPath('church.domain', 'requested.test');
+        ->assertJsonPath('church.domain', 'rcspr.platform.test');
 
     expect($registrationRequest->fresh()->status)->toBe('approved')
         ->and($registrationRequest->fresh()->approvedChurch)->not->toBeNull()
+        ->and($registrationRequest->fresh()->approvedChurch->address()->first()->only([
+            'street', 'number', 'neighborhood', 'city', 'state', 'zipcode', 'country', 'complement',
+        ]))->toMatchArray([
+            'street' => 'Faith Street',
+            'number' => '123',
+            'neighborhood' => 'Central',
+            'city' => 'Springfield',
+            'state' => 'SP',
+            'zipcode' => '01000-000',
+            'country' => 'Brasil',
+            'complement' => 'Room 2',
+        ])
         ->and($requester->fresh()->profile->church_id)->toBe($registrationRequest->fresh()->approved_church_id)
         ->and($requester->fresh()->role)->toBe(UserRole::CHURCH_LEADER);
 });
@@ -163,6 +272,7 @@ test('selected parent church exclusively reviews and receives the approved churc
         'name' => 'Requested Branch',
         'slug' => 'requested-branch',
         'domain' => 'requested-branch.platform.test',
+        ...requiredChurchAddress(),
     ])->assertCreated();
 
     $registrationRequest = ChurchRegistrationRequest::query()->firstOrFail();
@@ -245,5 +355,6 @@ test('registration rejects a parent church from another community', function () 
         'name' => 'Invalid Branch',
         'slug' => 'invalid-branch',
         'domain' => 'invalid-branch.platform.test',
+        ...requiredChurchAddress(),
     ])->assertUnprocessable()->assertJsonValidationErrors('parent_church_id');
 });

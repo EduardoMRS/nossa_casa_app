@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,7 +87,35 @@ class BrandingController extends Controller
                 'from_name' => $mailSetting?->from_name ?? $church->name,
                 'has_password' => filled($mailSetting?->password),
             ],
+            'registrationProof' => $this->registrationProofData($church),
         ]);
+    }
+
+    public function registrationProof(Request $request): BinaryFileResponse
+    {
+        $church = $this->churchForRequest($request);
+        abort_unless($church, 403);
+        $setting = Setting::query()->where('church_id', $church->id)->first();
+        $proof = $setting?->options['registration_proof'] ?? null;
+
+        abort_unless(is_array($proof) && is_string($proof['path'] ?? null), 404);
+        abort_unless(Storage::disk('local')->exists($proof['path']), 404);
+
+        return response()->file(Storage::disk('local')->path($proof['path']), [
+            'Content-Type' => $proof['mime'] ?? 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="'.basename((string) ($proof['name'] ?? 'registration-proof')).'"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /** @return array{name: string, url: string}|null */
+    private function registrationProofData(Church $church): ?array
+    {
+        $proof = Setting::query()->where('church_id', $church->id)->first()?->options['registration_proof'] ?? null;
+
+        return is_array($proof) && is_string($proof['name'] ?? null)
+            ? ['name' => $proof['name'], 'url' => route('admin.branding.registrationProof')]
+            : null;
     }
 
     public function network(Request $request): Response

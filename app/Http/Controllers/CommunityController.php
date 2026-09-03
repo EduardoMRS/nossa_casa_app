@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\Community;
+use App\Services\UniqueSlugger;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule; // Importando a trait
@@ -13,6 +14,8 @@ use Illuminate\Validation\Rule; // Importando a trait
 class CommunityController extends Controller
 {
     use UploadsMedia; // Usando a trait
+
+    public function __construct(private readonly UniqueSlugger $slugs) {}
 
     public function index()
     {
@@ -29,7 +32,7 @@ class CommunityController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:communities',
+            'slug' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'found_date' => 'nullable|date',
             'logo_path' => 'sometimes|nullable', // Aceita arquivo, null ou string
@@ -39,6 +42,8 @@ class CommunityController extends Controller
             $file = $request->file('logo_path') ?? $request->input('logo_path');
             $validated['logo_path'] = $this->handleMediaUpload($file, 'communities/logos');
         }
+
+        $validated['slug'] = $this->slugs->make($validated['name'], 'communities');
 
         $community = Community::create($validated);
 

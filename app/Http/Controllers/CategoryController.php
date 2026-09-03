@@ -9,12 +9,15 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
+use App\Services\UniqueSlugger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
+    public function __construct(private readonly UniqueSlugger $slugs) {}
+
     public function index(Request $request)
     {
         $churchId = $request->user()?->church?->id;
@@ -39,13 +42,19 @@ class CategoryController extends Controller
         $churchId = $request->user()?->church?->id;
         abort_unless($churchId !== null, 422, __('church.membership_category_manage_required'));
 
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255'],
+            'type' => ['required', Rule::enum(CategoryType::class)],
+        ]);
+        $validated['slug'] = $this->slugs->make($validated['name'], 'categories', scope: [
+            'church_id' => $churchId,
+            'type' => (string) $validated['type'],
+        ]);
+
         $category = Category::create([
             'church_id' => $churchId,
-            ...$request->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'slug' => ['required', 'string', 'max:255'],
-                'type' => ['required', Rule::enum(CategoryType::class)],
-            ]),
+            ...$validated,
         ]);
 
         if ($request->header('X-Inertia')) {

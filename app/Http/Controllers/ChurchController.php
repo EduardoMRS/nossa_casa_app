@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\ChurchStatus;
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Models\Network;
 use App\Models\Setting;
+use App\Services\AddressGeocoder;
+use App\Services\ChurchIdentity;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +18,11 @@ use Illuminate\Validation\Rule;
 
 class ChurchController extends Controller
 {
+    public function __construct(
+        private readonly AddressGeocoder $addressGeocoder,
+        private readonly ChurchIdentity $churchIdentity,
+    ) {}
+
     public function index(): JsonResponse
     {
         $churches = Church::with('community')
@@ -41,31 +49,53 @@ class ChurchController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:churches',
+            'slug' => 'nullable|string|max:255',
             'domain' => [
                 'nullable',
                 'string',
                 'max:255',
                 'not_in:'.app(ChurchDomainContext::class)->mainHost(),
-                Rule::unique('churches'),
-                Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),
             ],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',
             'community_id' => 'nullable|string|exists:communities,id',
+            'parent_church_id' => [
+                'nullable',
+                'string',
+                Rule::exists('churches', 'id')->where(fn ($query) => $query
+                    ->where('community_id', $request->input('community_id'))
+                    ->where('status', ChurchStatus::ACTIVE->value)),
+            ],
+            ...$this->addressRules(),
             'founder_id' => 'nullable|string|exists:users,id',
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'icon' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
-        unset($validated['logo'], $validated['icon']);
+        $parentChurchId = $validated['parent_church_id'] ?? null;
+        unset($validated['logo'], $validated['icon'], $validated['address_id'], $validated['parent_church_id']);
 
         if (! $this->canChangeCommunity($request)) {
             $validated['community_id'] = $this->managedCommunityId($request);
         }
 
+        $validated['slug'] = $this->churchIdentity->slug($validated['name']);
+        $validated['domain'] = $this->churchIdentity->domain(
+            $validated['name'],
+            $validated['city'] ?? null,
+            app(ChurchDomainContext::class)->mainHost(),
+        );
+
         $church = Church::create($validated);
+        $this->storeAddress($church, $validated);
+        if ($parentChurchId && $this->canChangeCommunity($request)) {
+            Network::query()->create([
+                'parent_church_id' => $parentChurchId,
+                'child_church_id' => $church->id,
+                'community_id' => $church->community_id,
+            ]);
+        }
         $this->storeBrandingAssets($church, $request->file('logo'), $request->file('icon'));
 
         return response()->json($church, 201);
@@ -100,12 +130,13 @@ class ChurchController extends Controller
             'status' => ['sometimes', 'required', Rule::enum(ChurchStatus::class)],
             'found_date' => 'nullable|date',
             'community_id' => 'nullable|string|exists:communities,id',
+            ...$this->addressRules(),
             'founder_id' => 'nullable|string|exists:users,id',
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'icon' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
-        unset($validated['logo'], $validated['icon']);
+        unset($validated['logo'], $validated['icon'], $validated['address_id']);
 
         if (! $this->canChangeCommunity($request)) {
             if ($request->has('community_id')) {
@@ -116,6 +147,7 @@ class ChurchController extends Controller
         }
 
         $church->update($validated);
+        $this->storeAddress($church, $validated);
         $this->storeBrandingAssets($church, $request->file('logo'), $request->file('icon'));
 
         return response()->json($church);
@@ -156,6 +188,41 @@ class ChurchController extends Controller
     private function canChangeCommunity(Request $request): bool
     {
         return in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+    }
+
+    /** @return array<string, array<int, string>> */
+    private function addressRules(): array
+    {
+        return [
+            'country' => ['nullable', 'string', 'max:255', 'required_with:street,city,state,zipcode,latitude,longitude'],
+            'state' => ['nullable', 'string', 'max:2', 'required_with:street,city,country,zipcode,latitude,longitude'],
+            'city' => ['nullable', 'string', 'max:255', 'required_with:street,state,country,zipcode,latitude,longitude'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
+            'street' => ['nullable', 'string', 'max:255', 'required_with:city,state,country,zipcode,latitude,longitude'],
+            'number' => ['nullable', 'string', 'max:50'],
+            'complement' => ['nullable', 'string', 'max:255'],
+            'zipcode' => ['nullable', 'string', 'max:20', 'required_with:street,city,state,country,latitude,longitude'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+        ];
+    }
+
+    /** @param  array<string, mixed>  $validated */
+    private function storeAddress(Church $church, array $validated): void
+    {
+        $address = collect($validated)->only([
+            'country', 'state', 'city', 'neighborhood', 'street', 'number', 'complement', 'zipcode', 'latitude', 'longitude',
+        ])->all();
+
+        if (blank($address['street'] ?? null)) {
+            return;
+        }
+
+        $coordinates = $this->addressGeocoder->coordinates($address);
+        $church->address()->updateOrCreate([], [
+            ...$address,
+            ...($coordinates ?? []),
+        ]);
     }
 
     private function storeBrandingAssets(

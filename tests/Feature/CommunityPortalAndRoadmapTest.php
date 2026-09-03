@@ -80,14 +80,17 @@ test('community pages prioritize local churches and expose the organizational tr
 });
 
 test('portal community cards link to their public detail page', function () {
-    Community::factory()->create([
+    $community = Community::factory()->create([
         'name' => 'Linked Community',
         'slug' => 'linked-community',
     ]);
+    Church::factory()->for($community)->create();
+    Community::factory()->create(['name' => 'Empty Community', 'slug' => 'empty-community']);
 
     $this->get('/')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Portal/Index')
+            ->has('communities', 1)
             ->where('communities.0.url', route('communities.show', 'linked-community')));
 });

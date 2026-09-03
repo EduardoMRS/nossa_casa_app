@@ -548,6 +548,7 @@
             "latitude": "Latitude",
             "longitude": "Longitude",
             "coordinates_hint": "As coordenadas permitem que o portal principal destaque comunidades próximas. Use a localização da entrada da igreja.",
+            "registration_proof": "Ver comprovante de registro",
             "templates_title": "Modelos de página pública",
             "templates_description": "Escolha a composição visual usada por cada experiência pública sem alterar seu conteúdo.",
             "templates_preview_hint": "Selecione uma prévia para aplicar esse estilo visual à página. A prévia segue as cores escolhidas acima.",
@@ -1638,7 +1639,7 @@
         "open_my_church": "Abrir minha igreja",
         "create_account": "Criar conta",
         "hero": {
-            "badge": "Abra a tecnologia para comunidades de fé",
+            "badge": "Abra a tecnologia para sua comunidades",
             "title": "Um lar digital para cada comunidade.",
             "description": "Conecte congregações, membros, eventos e ministérios por meio de uma plataforma segura e personalizada pronta para crescer com sua comunidade.",
             "explore": "Explorar comunidades",
@@ -1711,6 +1712,9 @@
             "invalid": "Insira um domínio válido sem espaços ou caminhos.",
             "main_forbidden": "O domínio principal da plataforma não pode ser usado."
         },
+        "identity": {
+            "preview_empty": "Gerado a partir do nome da igreja"
+        },
         "review": {
             "title": "Solicitações aguardando sua revisão",
             "description": "Revise os detalhes de registro antes de aprovar a relação com a comunidade.",
@@ -1735,6 +1739,14 @@
             "contact_email": "E‑mail de contato",
             "contact_phone": "Telefone de contato",
             "address": "Endereço completo",
+            "street": "Rua",
+            "number": "Número",
+            "neighborhood": "Bairro",
+            "city": "Cidade",
+            "state": "Estado",
+            "zipcode": "CEP",
+            "country": "País",
+            "complement": "Complemento",
             "proof_document": "Comprovante de existência da igreja ou autorização",
             "proof_document_hint": "PDF, JPG, PNG ou WebP até 10 MB (opcional)",
             "parent_church": "Igreja matriz inicial (opcional)",

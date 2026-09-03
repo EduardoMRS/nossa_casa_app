@@ -10,6 +10,7 @@ use App\Http\Requests\Event\UpdateEventRequest;
 use App\Models\Event;
 use App\Models\Form;
 use App\Models\User;
+use App\Services\UniqueSlugger;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ class EventController extends Controller
 {
     use ManagesChurchCategories;
     use UploadsMedia;
+
+    public function __construct(private readonly UniqueSlugger $slugs) {}
 
     public function index()
     {
@@ -42,6 +45,7 @@ class EventController extends Controller
         $data['church_id'] = $user->church->id ?? null;
         $data['author_id'] = $user->id;
         abort_unless($data['church_id'], 422, __('church.membership_event_create_required'));
+        $data['slug'] = $this->slugs->make($data['title'], 'events');
 
         if (array_key_exists('cover_path', $data)) {
             $file = $request->file('cover_path') ?? $request->input('cover_path');

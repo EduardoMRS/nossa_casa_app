@@ -60,6 +60,14 @@ type RegistrationRequest = {
     domain: string;
     description?: string | null;
     address?: string | null;
+    country?: string | null;
+    state?: string | null;
+    city?: string | null;
+    neighborhood?: string | null;
+    street?: string | null;
+    number?: string | null;
+    complement?: string | null;
+    zipcode?: string | null;
     contact_email?: string | null;
     contact_phone?: string | null;
     locale?: 'pt' | 'en' | null;
@@ -93,8 +101,6 @@ const processing = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const locating = ref(false);
-const domainMode = ref<'subdomain' | 'external'>('subdomain');
-const domainInput = ref('');
 const proofDocument = ref<File | null>(null);
 const communityForm = ref({
     name: '',
@@ -115,46 +121,44 @@ const churchForm = ref({
     found_date: '',
     contact_email: '',
     contact_phone: '',
-    address: '',
+    country: 'Brasil',
+    state: '',
+    city: '',
+    neighborhood: '',
+    street: '',
+    number: '',
+    complement: '',
+    zipcode: '',
     latitude: '',
     longitude: '',
     locale: locale.value,
 });
 
-const normalizedDomainInput = computed(() =>
-    domainInput.value
-        .trim()
+const normalizeIdentity = (value: string): string =>
+    value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase();
+const generatedChurchSlug = computed(() =>
+    normalizeIdentity(churchForm.value.name)
         .toLowerCase()
-        .replace(/^https?:\/\//, '')
-        .split('/')[0]
-        .replace(/\.$/, ''),
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, ''),
 );
+const generatedChurchDomain = computed(() => {
+    const ignored = new Set(['A', 'AS', 'DA', 'DAS', 'DE', 'DO', 'DOS', 'E', 'EM']);
+    const nameWords = normalizeIdentity(churchForm.value.name)
+        .split(/\s+/)
+        .filter((word) => word && !ignored.has(word));
+    const cityWords = normalizeIdentity(churchForm.value.city)
+        .split(/\s+/)
+        .filter((word) => word && !ignored.has(word));
+    const acronym = nameWords.map((word) => word[0]).join('') || 'CH';
+    const cityCode = cityWords.length === 1
+        ? cityWords[0].slice(0, 3)
+        : cityWords.map((word) => word[0]).join('');
 
-const requestedDomain = computed(() =>
-    domainMode.value === 'subdomain'
-        ? `${normalizedDomainInput.value}.${props.mainDomain}`
-        : normalizedDomainInput.value,
-);
-const domainModes = ['subdomain', 'external'] as const;
-
-const domainError = computed(() => {
-    if (!normalizedDomainInput.value) {
-        return t('portal.domain.required');
-    }
-
-    if (requestedDomain.value === props.mainDomain) {
-        return t('portal.domain.main_forbidden');
-    }
-
-    if (
-        !/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(
-            requestedDomain.value,
-        )
-    ) {
-        return t('portal.domain.invalid');
-    }
-
-    return '';
+    return `${acronym}${cityCode || 'BR'}`.toLowerCase();
 });
 
 const availableCommunities = computed(() => props.communities);
@@ -305,12 +309,6 @@ const saveCommunity = async (): Promise<void> => {
 };
 
 const requestChurch = async (): Promise<void> => {
-    if (domainError.value) {
-        errorMessage.value = domainError.value;
-
-        return;
-    }
-
     processing.value = true;
     errorMessage.value = '';
 
@@ -319,7 +317,8 @@ const requestChurch = async (): Promise<void> => {
 
         Object.entries({
             ...churchForm.value,
-            domain: requestedDomain.value,
+            slug: generatedChurchSlug.value,
+            domain: `${generatedChurchDomain.value}.${props.mainDomain}`,
         }).forEach(([key, value]) => payload.append(key, value));
 
         if (proofDocument.value) {
@@ -786,10 +785,23 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         {{ item.description }}
                                     </p>
                                     <p
-                                        v-if="item.address"
+                                        v-if="item.address || item.street"
                                         class="mt-2 text-xs text-slate-500"
                                     >
-                                        {{ item.address }}
+                                        {{
+                                            [
+                                                item.street,
+                                                item.number,
+                                                item.neighborhood,
+                                                item.city,
+                                                item.state,
+                                                item.zipcode,
+                                                item.country,
+                                                item.complement,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(', ') || item.address
+                                        }}
                                     </p>
                                     <p
                                         v-if="item.locale"
@@ -1039,74 +1051,15 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.slug') }}
-                        <input
-                            v-model="churchForm.slug"
-                            required
-                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                        />
+                        <output class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-600">
+                            {{ generatedChurchSlug || t('portal.identity.preview_empty') }}
+                        </output>
                     </label>
-                    <div class="space-y-3 sm:col-span-2 sm:contents">
-                        <div class="grid gap-2 sm:grid-cols-2">
-                            <label
-                                v-for="mode in domainModes"
-                                :key="mode"
-                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-slate-800"
-                                :class="{
-                                    'border-indigo-500 bg-indigo-50':
-                                        domainMode === mode,
-                                }"
-                            >
-                                <input
-                                    v-model="domainMode"
-                                    type="radio"
-                                    :value="mode"
-                                    class="mt-1"
-                                />
-                                <span>
-                                    <strong class="block text-sm">{{
-                                        t(`portal.domain.${mode}`)
-                                    }}</strong>
-                                    <span class="text-xs text-slate-500">{{
-                                        t(`portal.domain.${mode}_description`)
-                                    }}</span>
-                                </span>
-                            </label>
-                        </div>
-                        <div
-                            class="flex overflow-hidden rounded-xl border border-slate-300 bg-white"
-                        >
-                            <input
-                                v-model="domainInput"
-                                required
-                                class="min-w-0 flex-1 border-0 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-0"
-                                :placeholder="
-                                    domainMode === 'subdomain'
-                                        ? t(
-                                              'portal.domain.subdomain_placeholder',
-                                          )
-                                        : t('portal.fields.domain')
-                                "
-                            />
-                            <span
-                                v-if="domainMode === 'subdomain'"
-                                class="flex items-center border-l border-slate-200 bg-slate-50 px-3 text-sm text-slate-500"
-                                >.{{ mainDomain }}</span
-                            >
-                        </div>
-                        <p class="text-xs text-slate-500">
-                            {{
-                                domainMode === 'subdomain'
-                                    ? requestedDomain ||
-                                      t('portal.domain.preview_empty')
-                                    : t('portal.domain.external_hint')
-                            }}
-                        </p>
-                        <p
-                            v-if="domainError"
-                            class="text-xs font-bold text-rose-600"
-                        >
-                            {{ domainError }}
-                        </p>
+                    <div class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.domain') }}
+                        <output class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm font-normal text-slate-600">
+                            {{ generatedChurchDomain }}.{{ mainDomain }}
+                        </output>
                     </div>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.found_date') }}
@@ -1151,15 +1104,40 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                     />
                 </label>
-                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
-                    {{ t('portal.fields.address') }}
-                    <textarea
-                        v-model="churchForm.address"
-                        rows="2"
-                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                        :placeholder="t('portal.fields.address_hint')"
-                    />
-                </label>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.street') }}
+                        <input v-model="churchForm.street" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.number') }}
+                        <input v-model="churchForm.number" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.neighborhood') }}
+                        <input v-model="churchForm.neighborhood" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.city') }}
+                        <input v-model="churchForm.city" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.state') }}
+                        <input v-model="churchForm.state" required maxlength="2" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 uppercase shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.zipcode') }}
+                        <input v-model="churchForm.zipcode" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.country') }}
+                        <input v-model="churchForm.country" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.complement') }}
+                        <input v-model="churchForm.complement" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                    </label>
+                </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.latitude') }}

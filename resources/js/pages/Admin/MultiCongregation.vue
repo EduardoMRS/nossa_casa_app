@@ -4,6 +4,7 @@ import {
     Building2,
     Check,
     ClipboardCheck,
+    LocateFixed,
     Network as NetworkIcon,
     Pencil,
     Plus,
@@ -12,7 +13,7 @@ import {
     X,
 } from '@lucide/vue';
 import axios from 'axios';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useTerminology } from '@/composables/useTerminology';
@@ -32,10 +33,23 @@ type Church = {
     slug: string;
     domain: string | null;
     status: string;
+    found_date: string | null;
     community?: { id: string; name: string } | null;
     members_count: number;
     logo_url?: string | null;
     icon_url?: string | null;
+    address?: {
+        country: string | null;
+        state: string | null;
+        city: string | null;
+        neighborhood: string | null;
+        street: string | null;
+        number: string | null;
+        complement: string | null;
+        zipcode: string | null;
+        latitude: number | null;
+        longitude: number | null;
+    }[];
 };
 
 type RegistrationRequest = {
@@ -86,8 +100,28 @@ const churchForm = ref({
     domain: '',
     status: 'active',
     community_id: '',
+    parent_church_id: '',
+    found_date: '',
+    country: 'Brasil',
+    state: '',
+    city: '',
+    neighborhood: '',
+    street: '',
+    number: '',
+    complement: '',
+    zipcode: '',
+    latitude: '',
+    longitude: '',
 });
 const communityForm = ref({ name: '', slug: '', description: '' });
+const parentChurches = computed(() =>
+    churches.value.filter(
+        (church) =>
+            church.status === 'active' &&
+            church.community?.id === churchForm.value.community_id &&
+            church.id !== editingChurch.value?.id,
+    ),
+);
 
 const openChurchEditor = (church?: Church): void => {
     editingChurch.value = church ?? null;
@@ -98,6 +132,18 @@ const openChurchEditor = (church?: Church): void => {
               domain: church.domain ?? '',
               status: church.status,
               community_id: church.community?.id ?? '',
+              parent_church_id: '',
+              found_date: church.found_date?.slice(0, 10) ?? '',
+              country: church.address?.[0]?.country ?? 'Brasil',
+              state: church.address?.[0]?.state ?? '',
+              city: church.address?.[0]?.city ?? '',
+              neighborhood: church.address?.[0]?.neighborhood ?? '',
+              street: church.address?.[0]?.street ?? '',
+              number: church.address?.[0]?.number ?? '',
+              complement: church.address?.[0]?.complement ?? '',
+              zipcode: church.address?.[0]?.zipcode ?? '',
+              latitude: church.address?.[0]?.latitude?.toString() ?? '',
+              longitude: church.address?.[0]?.longitude?.toString() ?? '',
           }
         : {
               name: '',
@@ -107,6 +153,18 @@ const openChurchEditor = (church?: Church): void => {
               community_id: props.canManageCommunities
                   ? ''
                   : (communities.value[0]?.id ?? ''),
+              parent_church_id: '',
+              found_date: '',
+              country: 'Brasil',
+              state: '',
+              city: '',
+              neighborhood: '',
+              street: '',
+              number: '',
+              complement: '',
+              zipcode: '',
+              latitude: '',
+              longitude: '',
           };
     errorMessage.value = '';
     churchLogo.value = null;
@@ -148,9 +206,26 @@ const saveChurch = async (): Promise<void> => {
         payload.append('slug', churchForm.value.slug);
         payload.append('domain', churchForm.value.domain);
         payload.append('status', churchForm.value.status);
+        payload.append('found_date', churchForm.value.found_date);
+
+        for (const field of [
+            'country',
+            'state',
+            'city',
+            'neighborhood',
+            'street',
+            'number',
+            'complement',
+            'zipcode',
+            'latitude',
+            'longitude',
+        ] as const) {
+            payload.append(field, churchForm.value[field]);
+        }
 
         if (props.canChangeChurchCommunity) {
             payload.append('community_id', churchForm.value.community_id);
+            payload.append('parent_church_id', churchForm.value.parent_church_id);
         }
 
         if (churchLogo.value) {
@@ -175,6 +250,17 @@ const saveChurch = async (): Promise<void> => {
     } catch (error) {
         errorMessage.value = requestError(error);
     }
+};
+
+const useCurrentLocation = (): void => {
+    if (!('geolocation' in navigator)) {
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+        churchForm.value.latitude = String(coords.latitude);
+        churchForm.value.longitude = String(coords.longitude);
+    });
 };
 
 const selectChurchLogo = (event: Event): void => {
@@ -654,6 +740,74 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         {{ community.name }}
                     </option>
                 </select>
+                <select
+                    v-if="props.canChangeChurchCommunity && !editingChurch"
+                    v-model="churchForm.parent_church_id"
+                    class="w-full rounded-lg border-slate-300"
+                >
+                    <option value="">
+                        {{ t('portal.onboarding.community_approval') }}
+                    </option>
+                    <option
+                        v-for="parentChurch in parentChurches"
+                        :key="parentChurch.id"
+                        :value="parentChurch.id"
+                    >
+                        {{ parentChurch.name }}
+                    </option>
+                </select>
+                <input
+                    v-model="churchForm.found_date"
+                    type="date"
+                    class="w-full rounded-lg border-slate-300"
+                    :placeholder="t('portal.fields.found_date')"
+                />
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="space-y-1 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.street') }}
+                        <input v-model="churchForm.street" :required="!editingChurch" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.number') }}
+                        <input v-model="churchForm.number" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.neighborhood') }}
+                        <input v-model="churchForm.neighborhood" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.city') }}
+                        <input v-model="churchForm.city" :required="!editingChurch" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.state') }}
+                        <input v-model="churchForm.state" maxlength="2" :required="!editingChurch" class="w-full rounded-lg border-slate-300 uppercase" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.zipcode') }}
+                        <input v-model="churchForm.zipcode" :required="!editingChurch" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700">
+                        {{ t('portal.fields.country') }}
+                        <input v-model="churchForm.country" :required="!editingChurch" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                    <label class="space-y-1 text-sm font-bold text-slate-700 sm:col-span-2">
+                        {{ t('portal.fields.complement') }}
+                        <input v-model="churchForm.complement" class="w-full rounded-lg border-slate-300" />
+                    </label>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <input v-model="churchForm.latitude" type="number" step="0.0000001" min="-90" max="90" class="w-full rounded-lg border-slate-300" :placeholder="t('portal.fields.latitude')" />
+                    <input v-model="churchForm.longitude" type="number" step="0.0000001" min="-180" max="180" class="w-full rounded-lg border-slate-300" :placeholder="t('portal.fields.longitude')" />
+                </div>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-bold text-indigo-700"
+                    @click="useCurrentLocation"
+                >
+                    <LocateFixed class="size-4" />
+                    {{ t('portal.fields.use_current_location') }}
+                </button>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <label class="space-y-2 text-sm font-bold text-slate-700">
                         <span>{{ t('admin.multicongregation.logo') }}</span>

@@ -11,6 +11,9 @@ use App\Models\ChurchRegistrationRequest;
 use App\Models\Community;
 use App\Models\Network;
 use App\Models\User;
+use App\Services\AddressGeocoder;
+use App\Services\ChurchIdentity;
+use App\Services\UniqueSlugger;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -28,6 +31,9 @@ class ChurchOnboardingController extends Controller
     public function __construct(
         private readonly ChurchDomainContext $context,
         private readonly TransferChurchMembership $transferChurchMembership,
+        private readonly AddressGeocoder $addressGeocoder,
+        private readonly ChurchIdentity $churchIdentity,
+        private readonly UniqueSlugger $slugs,
     ) {}
 
     public function storeCommunity(Request $request): JsonResponse
@@ -38,7 +44,7 @@ class ChurchOnboardingController extends Controller
         ]);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('communities')],
+            'slug' => ['nullable', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:5000'],
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'default_locale' => ['required', Rule::in(['pt', 'en'])],
@@ -47,6 +53,7 @@ class ChurchOnboardingController extends Controller
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
         ]);
 
+        $validated['slug'] = $this->slugs->make($validated['name'], 'communities');
         $community = DB::transaction(function () use ($request, $validated): Community {
             $address = collect($validated)->only(['address', 'latitude', 'longitude'])->all();
             $community = Community::query()->create([
@@ -92,13 +99,21 @@ class ChurchOnboardingController extends Controller
                     ->where('status', ChurchStatus::ACTIVE->value)),
             ],
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
-            'domain' => ['required', 'string', 'max:255', 'not_in:'.$this->context->mainHost(), 'regex:/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/', Rule::unique('churches'), Rule::unique('church_registration_requests')->where('status', 'pending')],
+            'slug' => ['nullable', 'string', 'max:255'],
+            'domain' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'country' => ['required', 'string', 'max:255'],
+            'state' => ['required', 'string', 'max:2'],
+            'city' => ['required', 'string', 'max:255'],
+            'neighborhood' => ['required', 'string', 'max:255'],
+            'street' => ['required', 'string', 'max:255'],
+            'number' => ['nullable', 'string', 'max:50'],
+            'complement' => ['nullable', 'string', 'max:255'],
+            'zipcode' => ['required', 'string', 'max:20'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'locale' => ['required', Rule::in(['pt', 'en'])],
@@ -107,6 +122,12 @@ class ChurchOnboardingController extends Controller
         $proofDocument = $request->file('proof_document');
         $requestedParentChurchId = $validated['parent_church_id'] ?? null;
         unset($validated['proof_document'], $validated['parent_church_id']);
+
+        $coordinates = $this->addressGeocoder->coordinates($validated);
+        if ($coordinates) {
+            $validated['latitude'] = $coordinates['latitude'];
+            $validated['longitude'] = $coordinates['longitude'];
+        }
 
         if ($proofDocument) {
             $validated['proof_document_path'] = $proofDocument->store('church-registration-proofs', 'local');
@@ -120,6 +141,10 @@ class ChurchOnboardingController extends Controller
             'requested_parent_church_id' => $requestedParentChurchId,
             'status' => 'pending',
         ]);
+
+        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+            return $this->approve($request, $registrationRequest);
+        }
 
         $this->notifyRegistrationReviewers($registrationRequest);
 
@@ -154,9 +179,16 @@ class ChurchOnboardingController extends Controller
                 'status' => ChurchStatus::ACTIVE,
             ]);
 
-            if ($registrationRequest->address || ($registrationRequest->latitude !== null && $registrationRequest->longitude !== null)) {
+            if ($registrationRequest->address || $registrationRequest->street || $registrationRequest->city || $registrationRequest->zipcode || ($registrationRequest->latitude !== null && $registrationRequest->longitude !== null)) {
                 $church->address()->create([
-                    'street' => $registrationRequest->address,
+                    'country' => $registrationRequest->country,
+                    'state' => $registrationRequest->state,
+                    'city' => $registrationRequest->city,
+                    'neighborhood' => $registrationRequest->neighborhood,
+                    'street' => $registrationRequest->street ?: $registrationRequest->address,
+                    'number' => $registrationRequest->number,
+                    'complement' => $registrationRequest->complement,
+                    'zipcode' => $registrationRequest->zipcode,
                     'latitude' => $registrationRequest->latitude,
                     'longitude' => $registrationRequest->longitude,
                 ]);
@@ -165,6 +197,17 @@ class ChurchOnboardingController extends Controller
             $setting = $church->settings()->firstOrFail();
             $options = is_array($setting->options) ? $setting->options : [];
             $options['default_locale'] = $registrationRequest->locale;
+            if ($registrationRequest->proof_document_path
+                && Storage::disk('local')->exists($registrationRequest->proof_document_path)) {
+                $extension = strtolower(pathinfo((string) $registrationRequest->proof_document_name, PATHINFO_EXTENSION));
+                $proofPath = "church/{$church->id}/registration-proof.{$extension}";
+                Storage::disk('local')->copy($registrationRequest->proof_document_path, $proofPath);
+                $options['registration_proof'] = [
+                    'path' => $proofPath,
+                    'name' => $registrationRequest->proof_document_name,
+                    'mime' => $registrationRequest->proof_document_mime,
+                ];
+            }
             $setting->update(['options' => $options]);
             if ($registrationRequest->requested_parent_church_id) {
                 $parentChurch = Church::query()
@@ -317,3 +360,10 @@ class ChurchOnboardingController extends Controller
         }
     }
 }
+
+        $validated['slug'] = $this->churchIdentity->slug($validated['name']);
+        $validated['domain'] = $this->churchIdentity->domain(
+            $validated['name'],
+            $validated['city'],
+            $this->context->mainHost(),
+        );

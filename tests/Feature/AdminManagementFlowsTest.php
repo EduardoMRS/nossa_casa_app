@@ -102,6 +102,52 @@ it('scopes multicongregation management to the administrators community', functi
             ->where('communities.0.id', $community->id));
 });
 
+it('allows global administrators to create a structured branch with a parent church', function () {
+    config(['services.geocoding.enabled' => false]);
+    $admin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $community = Community::factory()->create();
+    $parentChurch = Church::factory()->for($community)->create();
+
+    $this->actingAs($admin)->postJson('/api/churches', [
+        'name' => 'Admin Branch',
+        'slug' => 'admin-branch',
+        'status' => 'active',
+        'community_id' => $community->id,
+        'parent_church_id' => $parentChurch->id,
+        'found_date' => '2020-01-01',
+        'street' => 'Admin Street',
+        'number' => '10',
+        'neighborhood' => 'Center',
+        'city' => 'Manaus',
+        'state' => 'AM',
+        'zipcode' => '69000-000',
+        'country' => 'Brasil',
+        'complement' => 'Room 1',
+        'latitude' => '-3.1190',
+        'longitude' => '-60.0217',
+    ])->assertCreated();
+
+    $branch = Church::query()->where('slug', 'admin-branch')->firstOrFail();
+    expect($branch->address()->first()->only([
+        'street', 'number', 'neighborhood', 'city', 'state', 'zipcode', 'country', 'complement', 'latitude', 'longitude',
+    ]))->toMatchArray([
+        'street' => 'Admin Street',
+        'number' => '10',
+        'neighborhood' => 'Center',
+        'city' => 'Manaus',
+        'state' => 'AM',
+        'zipcode' => '69000-000',
+        'country' => 'Brasil',
+        'complement' => 'Room 1',
+        'latitude' => -3.119,
+        'longitude' => -60.0217,
+    ]);
+    expect(Network::query()
+        ->where('parent_church_id', $parentChurch->id)
+        ->where('child_church_id', $branch->id)
+        ->exists())->toBeTrue();
+});
+
 it('prevents administrators from managing churches outside their community', function () {
     $community = Community::query()->create(['name' => 'Managed', 'slug' => 'managed', 'description' => 'Managed community']);
     $otherCommunity = Community::query()->create(['name' => 'Restricted', 'slug' => 'restricted', 'description' => 'Restricted community']);

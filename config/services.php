@@ -41,6 +41,12 @@ return [
         'subject' => env('VAPID_SUBJECT', env('APP_URL')),
     ],
 
+    'geocoding' => [
+        'enabled' => env('GEOCODING_ENABLED', true),
+        'url' => env('GEOCODING_URL', 'https://nominatim.openstreetmap.org/search'),
+        'user_agent' => env('GEOCODING_USER_AGENT', env('APP_NAME', 'Laravel').'/geocoder'),
+    ],
+
     'native_push' => [
         'default' => env('NATIVE_PUSH_PROVIDER', 'null'),
         'fcm' => [

@@ -548,6 +548,7 @@
             "latitude": "Latitude",
             "longitude": "Longitude",
             "coordinates_hint": "Coordinates allow the main portal to highlight nearby communities. Use the church entrance location.",
+            "registration_proof": "View registration proof",
             "templates_title": "Public page templates",
             "templates_description": "Choose the visual composition used by each public experience without changing its content.",
             "templates_preview_hint": "Select a preview to apply that visual style to the page. The preview follows the colors chosen above.",
@@ -1638,7 +1639,7 @@
         "open_my_church": "Open my church",
         "create_account": "Create account",
         "hero": {
-            "badge": "Open technology for faith communities",
+            "badge": "Open technology for your community",
             "title": "A digital home for every community.",
             "description": "Connect congregations, members, events, and ministries through a secure, personalized platform ready to grow with your community.",
             "explore": "Explore communities",
@@ -1711,6 +1712,9 @@
             "invalid": "Enter a valid domain without spaces or paths.",
             "main_forbidden": "The platform's main domain cannot be used."
         },
+        "identity": {
+            "preview_empty": "Generated from the church name"
+        },
         "review": {
             "title": "Requests awaiting your review",
             "description": "Review the registration details before approving the community relationship.",
@@ -1735,6 +1739,14 @@
             "contact_email": "Contact email",
             "contact_phone": "Contact phone",
             "address": "Full address",
+            "street": "Street",
+            "number": "Number",
+            "neighborhood": "Neighborhood",
+            "city": "City",
+            "state": "State",
+            "zipcode": "ZIP code",
+            "country": "Country",
+            "complement": "Complement",
             "proof_document": "Proof of church existence or authorization",
             "proof_document_hint": "PDF, JPG, PNG, or WebP up to 10 MB (optional)",
             "parent_church": "Initial parent church (optional)",

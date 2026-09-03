@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\CategoryType;
 use App\Models\Form;
 use App\Models\Post;
+use App\Services\UniqueSlugger;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +14,8 @@ use Inertia\Inertia;
 class PostController extends Controller
 {
     use ManagesChurchCategories;
+
+    public function __construct(private readonly UniqueSlugger $slugs) {}
 
     public function index()
     {
@@ -43,7 +46,7 @@ class PostController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:posts',
+            'slug' => 'nullable|string|max:255',
             'content' => 'required|string',
             'published_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after:published_at',
@@ -57,6 +60,7 @@ class PostController extends Controller
         $validated['author_id'] = $request->user()->id;
         $validated['church_id'] = $request->user()->church?->id;
         abort_unless($validated['church_id'], 422, __('church.membership_post_create_required'));
+        $validated['slug'] = $this->slugs->make($validated['title'], 'posts');
 
         $post = Post::create($validated);
         $post->categories()->sync($this->syncChurchCategories($request, CategoryType::POST->value, $validated['church_id']));

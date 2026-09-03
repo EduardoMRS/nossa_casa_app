@@ -396,6 +396,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::redirect('/branding', '/dashboard/church-settings');
             Route::get('/church-settings', [BrandingController::class, 'edit'])->name('branding.edit');
             Route::put('/church-settings', [BrandingController::class, 'update'])->name('branding.update');
+            Route::get('/church-settings/registration-proof', [BrandingController::class, 'registrationProof'])->name('branding.registrationProof');
             Route::get('/church-network', [BrandingController::class, 'network'])->name('churchNetwork.index');
             Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 

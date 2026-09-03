@@ -397,7 +397,7 @@ class AdminWorkspaceController extends Controller
                 });
             });
 
-        $churches = (clone $churchQuery)->with(['community:id,name', 'settings'])->withCount('members')->orderBy('name')->get();
+        $churches = (clone $churchQuery)->with(['community:id,name', 'settings', 'address'])->withCount('members')->orderBy('name')->get();
         $churches->each(function (Church $church): void {
             $branding = $church->settings?->options['branding'] ?? [];
             $church->setAttribute('logo_url', is_array($branding) && filled($branding['logo_path'] ?? null)

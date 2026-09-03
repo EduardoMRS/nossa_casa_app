@@ -122,6 +122,7 @@ const props = defineProps<{
     mainDomain: string;
     mailSettings: MailSettings;
     networkSettings: ChurchNetworkSettingsData;
+    registrationProof: { name: string; url: string } | null;
 }>();
 const useOwnMailServer = ref(props.mailSettings.enabled);
 const colors = ref({
@@ -1003,6 +1004,19 @@ const resolvedDomain = computed(() =>
                     <p class="text-xs text-muted-foreground">
                         {{ t('admin.branding.coordinates_hint') }}
                     </p>
+                    <a
+                        v-if="props.registrationProof"
+                        :href="props.registrationProof.url"
+                        target="_blank"
+                        rel="noreferrer"
+                        class="inline-flex w-fit items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold"
+                    >
+                        <MapPinned class="size-4" />
+                        {{ t('admin.branding.registration_proof') }}
+                        <span class="font-normal text-muted-foreground">
+                            {{ props.registrationProof.name }}
+                        </span>
+                    </a>
                 </section>
 
                 <section
