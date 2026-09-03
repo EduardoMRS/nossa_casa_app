@@ -66,10 +66,10 @@ class SearchIndexController extends Controller
             ->oldest('created_at')
             ->get(['slug', 'updated_at'])
             ->each(function (Community $community) use (&$urls, $portalUrl): void {
-                $urls[] = [
+                $urls->push([
                     'location' => $portalUrl.'/'.route('communities.show', $community, absolute: false),
                     'last_modified' => $community->updated_at?->toAtomString(),
-                ];
+                ]);
             });
 
         Church::query()
@@ -79,13 +79,13 @@ class SearchIndexController extends Controller
             ->oldest('created_at')
             ->get(['domain', 'updated_at'])
             ->each(function (Church $church) use (&$urls, $context): void {
-                $urls[] = [
+                $urls->push([
                     'location' => $context->churchUrl($church),
                     'last_modified' => $church->updated_at?->toAtomString(),
-                ];
+                ]);
             });
 
-        return $urls;
+        return $urls->all();
     }
 
     /** @return array<int, array{location: string, last_modified: string|null}> */
