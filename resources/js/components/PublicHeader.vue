@@ -68,6 +68,15 @@ const activeLiveStream = computed(
             started_at: string | null;
         } | null,
 );
+const hasChurchContext = computed( () => 
+    Boolean(
+        (
+            page.props.churchContext as
+                | { church?: { id?: string } | null }
+                | undefined
+        )?.church,
+    ),
+);
 const isForeignChurch = computed(() =>
     Boolean(
         (page.props.churchContext as { isForeignChurch?: boolean })
@@ -177,7 +186,7 @@ const navClass = (key: PublicNavKey): string =>
                 </span>
             </Link>
 
-            <nav class="hidden items-center gap-1 md:flex">
+            <nav v-if="hasChurchContext" class="hidden items-center gap-1 md:flex">
                 <Link
                     v-for="item in desktopNavItems"
                     :key="item.key"
@@ -225,7 +234,7 @@ const navClass = (key: PublicNavKey): string =>
                     class="hidden rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950 shadow-sm sm:px-4 md:inline-flex"
                     >{{ t('nav.login') }}</Link
                 >
-                <button
+                <button v-if="hasChurchContext"
                     class="rounded-lg p-2 text-indigo-100 hover:bg-indigo-800 md:hidden"
                     :aria-label="t('nav.menu')"
                     @click="mobileOpen = !mobileOpen"
@@ -260,68 +269,70 @@ const navClass = (key: PublicNavKey): string =>
             }}</span>
         </Link>
 
-        <nav
-            v-if="mobileOpen"
-            class="border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
-        >
-            <div class="grid grid-cols-2 gap-2">
-                <Link
-                    v-for="item in navItems"
-                    :key="item.key"
-                    :href="item.href"
-                    :class="navClass(item.key)"
-                    class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold"
-                    @click="mobileOpen = false"
-                >
-                    <component :is="item.icon" class="size-4" />
-                    {{ item.label }}
-                </Link>
-            </div>
-
-            <div
-                class="mt-3 border-t border-white/15 pt-3"
-                data-test="mobile-account-section"
+        <template v-if="hasChurchContext">
+            <nav
+                v-if="mobileOpen"
+                class="border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
             >
-                <DropdownMenu v-if="isAuthenticated && user">
-                    <DropdownMenuTrigger :as-child="true">
-                        <Button
-                            variant="ghost"
-                            class="h-auto w-full justify-start gap-3 rounded-lg border border-indigo-800 px-3 py-2.5 text-white hover:bg-indigo-900 hover:text-white"
-                        >
-                            <UserInfo
-                                :user="user"
-                                :show-email="true"
-                                :first-name-only="true"
-                                :avatar-on-right="true"
-                            >
-                                <template #before-avatar>
-                                    <CircleAlert
-                                        v-if="isForeignChurch"
-                                        class="size-4 shrink-0 text-sky-300"
-                                        :aria-label="
-                                            t('membership.foreign_indicator')
-                                        "
-                                    />
-                                </template>
-                            </UserInfo>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                        align="end"
-                        class="w-[calc(100vw-1.5rem)] max-w-sm"
+                <div class="grid grid-cols-2 gap-2">
+                    <Link
+                        v-for="item in navItems"
+                        :key="item.key"
+                        :href="item.href"
+                        :class="navClass(item.key)"
+                        class="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold"
+                        @click="mobileOpen = false"
                     >
-                        <UserMenuContent :user="user" />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Link
-                    v-else
-                    :href="login({ query: { redirect: page.url } })"
-                    class="flex w-full items-center justify-center rounded-lg border border-indigo-800 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-900"
-                    @click="mobileOpen = false"
+                        <component :is="item.icon" class="size-4" />
+                        {{ item.label }}
+                    </Link>
+                </div>
+    
+                <div
+                    class="mt-3 border-t border-white/15 pt-3"
+                    data-test="mobile-account-section"
                 >
-                    {{ t('nav.login') }}
-                </Link>
-            </div>
-        </nav>
+                    <DropdownMenu v-if="isAuthenticated && user">
+                        <DropdownMenuTrigger :as-child="true">
+                            <Button
+                                variant="ghost"
+                                class="h-auto w-full justify-start gap-3 rounded-lg border border-indigo-800 px-3 py-2.5 text-white hover:bg-indigo-900 hover:text-white"
+                            >
+                                <UserInfo
+                                    :user="user"
+                                    :show-email="true"
+                                    :first-name-only="true"
+                                    :avatar-on-right="true"
+                                >
+                                    <template #before-avatar>
+                                        <CircleAlert
+                                            v-if="isForeignChurch"
+                                            class="size-4 shrink-0 text-sky-300"
+                                            :aria-label="
+                                                t('membership.foreign_indicator')
+                                            "
+                                        />
+                                    </template>
+                                </UserInfo>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            class="w-[calc(100vw-1.5rem)] max-w-sm"
+                        >
+                            <UserMenuContent :user="user" />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Link
+                        v-else
+                        :href="login({ query: { redirect: page.url } })"
+                        class="flex w-full items-center justify-center rounded-lg border border-indigo-800 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-900"
+                        @click="mobileOpen = false"
+                    >
+                        {{ t('nav.login') }}
+                    </Link>
+                </div>
+            </nav>
+        </template>
     </header>
 </template>

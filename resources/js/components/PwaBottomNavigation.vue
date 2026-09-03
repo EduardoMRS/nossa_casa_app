@@ -50,8 +50,15 @@ const hasUserChurch = computed(() =>
         )?.userChurch,
     ),
 );
-const restrictChurchContent = computed(
-    () => isAuthenticated.value && !hasUserChurch.value,
+
+const hasChurchContext = computed( () => 
+    Boolean(
+        (
+            page.props.churchContext as
+                | { church?: { id?: string } | null }
+                | undefined
+        )?.church,
+    ),
 );
 const currentPath = computed(() => page.url.split(/[?#]/, 1)[0]);
 const isPublicShell = computed(() => publicShellComponents.has(page.component));
@@ -106,19 +113,19 @@ const items = computed(() => [
         label: t('nav.news'),
         href: publicPostsIndex(),
         icon: Newspaper,
-        disabled: restrictChurchContent.value,
+        disabled: !hasChurchContext.value,
     },
     {
         key: 'events' as const,
         label: t('nav.events'),
         href: eventsIndex(),
         icon: CalendarDays,
-        disabled: restrictChurchContent.value,
+        disabled: !hasChurchContext.value,
     },
     {
         key: 'profile' as const,
         label: t('nav.profile'),
-        href: profileHref.value,
+        href: isAuthenticated.value ? profileHref.value : login({ query: { redirect: page.url } }),
         icon: UserRound,
         disabled: false,
     },
