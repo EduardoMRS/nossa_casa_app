@@ -17,8 +17,6 @@ return new class extends Migration
             $table->string('number')->nullable()->after('street');
             $table->string('complement')->nullable()->after('number');
             $table->string('zipcode', 20)->nullable()->after('complement');
-            $table->decimal('latitude', 10, 7)->nullable()->after('zipcode');
-            $table->decimal('longitude', 10, 7)->nullable()->after('latitude');
         });
     }
 
@@ -34,8 +32,6 @@ return new class extends Migration
                 'number',
                 'complement',
                 'zipcode',
-                'latitude',
-                'longitude',
             ]);
         });
     }
