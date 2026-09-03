@@ -34,8 +34,6 @@ class SearchIndexController extends Controller
             'Disallow: /api/',
             'Disallow: /dashboard',
             'Disallow: /settings',
-            'Disallow: /login',
-            'Disallow: /register',
             'Disallow: /auth/',
             '',
             'Sitemap: '.$sitemapUrl,
@@ -52,10 +50,16 @@ class SearchIndexController extends Controller
     private function portalUrls(ChurchDomainContext $context): array
     {
         $portalUrl = rtrim((string) config('app.url'), '/');
-        $urls = [[
-            'location' => $portalUrl.'/',
-            'last_modified' => null,
-        ]];
+        $urls = collect([
+            ['path' => $portalUrl.'/', 'last_modified' => null],
+            ['path' => $portalUrl.'/'.route('login', absolute: false), 'last_modified' => null],
+            ['path' => $portalUrl.'/'.route('register', absolute: false), 'last_modified' => null],
+            ['path' => $portalUrl.'/'.route('password.request', absolute: false), 'last_modified' => null],
+            ['path' => $portalUrl.'/'.route('legal.privacy', absolute: false), 'last_modified' => null],
+        ])->map(fn (array $url): array => [
+            'location' => $portalUrl.$url['path'],
+            'last_modified' => $url['last_modified'],
+        ]);
 
         Community::query()
             ->whereHas('churches', fn ($query) => $query->where('status', ChurchStatus::ACTIVE))
@@ -63,7 +67,7 @@ class SearchIndexController extends Controller
             ->get(['slug', 'updated_at'])
             ->each(function (Community $community) use (&$urls, $portalUrl): void {
                 $urls[] = [
-                    'location' => $portalUrl.route('communities.show', $community, absolute: false),
+                    'location' => $portalUrl.'/'.route('communities.show', $community, absolute: false),
                     'last_modified' => $community->updated_at?->toAtomString(),
                 ];
             });
@@ -90,11 +94,15 @@ class SearchIndexController extends Controller
         $baseUrl = $request->getSchemeAndHttpHost();
         $urls = collect([
             ['path' => '/', 'last_modified' => $church->updated_at?->toAtomString()],
-            ['path' => route('events.index', absolute: false), 'last_modified' => null],
-            ['path' => route('posts.public.index', absolute: false), 'last_modified' => null],
-            ['path' => route('library.index', absolute: false), 'last_modified' => null],
-            ['path' => route('library.bible', absolute: false), 'last_modified' => null],
-            ['path' => route('gallery.index', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('events.index', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('posts.public.index', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('library.index', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('library.bible', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('gallery.index', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('login', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('register', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('password.request', absolute: false), 'last_modified' => null],
+            ['path' => $baseUrl.'/'.route('legal.privacy', absolute: false), 'last_modified' => null],
         ])->map(fn (array $url): array => [
             'location' => $baseUrl.$url['path'],
             'last_modified' => $url['last_modified'],
@@ -106,7 +114,7 @@ class SearchIndexController extends Controller
             ->get(['slug', 'updated_at'])
             ->each(function (Event $event) use ($urls, $baseUrl): void {
                 $urls->push([
-                    'location' => $baseUrl.route('events.show', $event, absolute: false),
+                    'location' => $baseUrl.'/'.route('events.show', $event, absolute: false),
                     'last_modified' => $event->updated_at?->toAtomString(),
                 ]);
             });
@@ -118,7 +126,7 @@ class SearchIndexController extends Controller
             ->get(['slug', 'updated_at'])
             ->each(function (Post $post) use ($urls, $baseUrl): void {
                 $urls->push([
-                    'location' => $baseUrl.route('posts.public.show', $post->slug, absolute: false),
+                    'location' => $baseUrl.'/'.route('posts.public.show', $post->slug, absolute: false),
                     'last_modified' => $post->updated_at?->toAtomString(),
                 ]);
             });
