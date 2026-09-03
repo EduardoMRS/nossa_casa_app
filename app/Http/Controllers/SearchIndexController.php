@@ -51,11 +51,11 @@ class SearchIndexController extends Controller
     {
         $portalUrl = rtrim((string) config('app.url'), '/');
         $urls = collect([
-            ['path' => $portalUrl.'/', 'last_modified' => null],
-            ['path' => $portalUrl.'/'.route('login', absolute: false), 'last_modified' => null],
-            ['path' => $portalUrl.'/'.route('register', absolute: false), 'last_modified' => null],
-            ['path' => $portalUrl.'/'.route('password.request', absolute: false), 'last_modified' => null],
-            ['path' => $portalUrl.'/'.route('legal.privacy', absolute: false), 'last_modified' => null],
+            ['path' => '/', 'last_modified' => null],
+            ['path' => '/'.route('login', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('register', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('password.request', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('legal.privacy', absolute: false), 'last_modified' => null],
         ])->map(fn (array $url): array => [
             'location' => $portalUrl.$url['path'],
             'last_modified' => $url['last_modified'],
@@ -94,15 +94,15 @@ class SearchIndexController extends Controller
         $baseUrl = $request->getSchemeAndHttpHost();
         $urls = collect([
             ['path' => '/', 'last_modified' => $church->updated_at?->toAtomString()],
-            ['path' => $baseUrl.'/'.route('events.index', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('posts.public.index', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('library.index', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('library.bible', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('gallery.index', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('login', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('register', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('password.request', absolute: false), 'last_modified' => null],
-            ['path' => $baseUrl.'/'.route('legal.privacy', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('events.index', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('posts.public.index', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('library.index', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('library.bible', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('gallery.index', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('login', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('register', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('password.request', absolute: false), 'last_modified' => null],
+            ['path' => '/'.route('legal.privacy', absolute: false), 'last_modified' => null],
         ])->map(fn (array $url): array => [
             'location' => $baseUrl.$url['path'],
             'last_modified' => $url['last_modified'],
