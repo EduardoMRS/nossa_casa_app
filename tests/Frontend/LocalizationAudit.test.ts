@@ -93,7 +93,7 @@ test('portal onboarding exposes the complete light-theme registration flow', () 
     for (const binding of [
         'churchForm.community_id',
         'churchForm.parent_church_id',
-        'churchForm.address',
+        'churchForm.street',
         'churchForm.locale',
         'communityForm.address',
         'communityForm.default_locale',

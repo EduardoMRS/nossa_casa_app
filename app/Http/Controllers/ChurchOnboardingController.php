@@ -360,10 +360,3 @@ class ChurchOnboardingController extends Controller
         }
     }
 }
-
-        $validated['slug'] = $this->churchIdentity->slug($validated['name']);
-        $validated['domain'] = $this->churchIdentity->domain(
-            $validated['name'],
-            $validated['city'],
-            $this->context->mainHost(),
-        );

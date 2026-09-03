@@ -101,8 +101,10 @@ fi
 
 if [ "$created_project_env" = "true" ] || grep -Eq '^APP_KEY=$' .env; then
     php artisan key:generate --no-interaction
-    php artisan wayfinder:generate --with-form --no-interaction
 fi
+php artisan route:clear
+php artisan config:clear
+php artisan wayfinder:generate --with-form --no-interaction
 
 node_manifest="package-lock.json"
 [ -f "$node_manifest" ] || node_manifest="package.json"
