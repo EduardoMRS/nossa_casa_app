@@ -155,7 +155,7 @@ jobs:
             --no-interaction
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nossa-casa-main-android-${{ github.run_number }}
           path: dist/android/**/*.apk
@@ -279,7 +279,7 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app_path"
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nossa-casa-main-ios-${{ github.run_number }}
           path: dist/ios/**/*.ipa

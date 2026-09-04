@@ -178,7 +178,7 @@ jobs:
           php artisan native:package "${package_args[@]}"
 
       - name: Upload Android artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nossa-casa-${{ github.event.release.tag_name }}-android
           path: |
@@ -318,7 +318,7 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$app_path"
 
       - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nossa-casa-${{ github.event.release.tag_name }}-ios
           path: dist/ios/**/*.ipa
