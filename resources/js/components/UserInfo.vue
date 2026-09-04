@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { getInitials } = useInitials();
 
 const showAvatar = computed(
-    () => props.user.avatar && props.user.avatar !== '',
+    () => props.user?.avatar !== '',
 );
 const displayName = computed(() => {
     if (!props.firstNameOnly) {
@@ -30,8 +30,8 @@ const displayName = computed(() => {
     }
 
     return (
-        String(props.user.first_name ?? '').trim() ||
-        props.user.name.split(/\s+/)[0]
+        String(props.user?.first_name ?? '').trim() ||
+        props.user?.name?.split(/\s+/)[0] || ''
     );
 });
 </script>
@@ -50,7 +50,7 @@ const displayName = computed(() => {
             >
         </div>
         <slot name="before-avatar" />
-        <Avatar
+        <Avatar v-if="user"
             class="size-8 overflow-hidden rounded-full ring-2 ring-amber-400/70"
         >
             <AvatarImage

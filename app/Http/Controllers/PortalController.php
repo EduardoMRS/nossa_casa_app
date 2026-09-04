@@ -46,7 +46,6 @@ class PortalController extends Controller
         $latitude = isset($location['latitude']) ? (float) $location['latitude'] : null;
         $longitude = isset($location['longitude']) ? (float) $location['longitude'] : null;
         $communities = Community::query()
-            ->whereHas('churches', fn ($query) => $query->where('status', ChurchStatus::ACTIVE))
             ->with(['address', 'churches' => fn ($query) => $query
                 ->where('status', ChurchStatus::ACTIVE)
                 ->with(['address', 'settings'])

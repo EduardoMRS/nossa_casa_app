@@ -101,6 +101,10 @@ const processing = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 const locating = ref(false);
+const domainMode = ref<'subdomain' | 'external'>('subdomain');
+const domainInput = ref('');
+const domainManuallyEdited = ref(false);
+const churchSlugManuallyEdited = ref(false);
 const proofDocument = ref<File | null>(null);
 const communityForm = ref({
     name: '',
@@ -161,7 +165,93 @@ const generatedChurchDomain = computed(() => {
     return `${acronym}${cityCode || 'BR'}`.toLowerCase();
 });
 
+watch(
+    generatedChurchSlug,
+    (generatedSlug) => {
+        if (!churchSlugManuallyEdited.value) {
+            churchForm.value.slug = generatedSlug;
+        }
+    },
+    { immediate: true },
+);
+
+watch(
+    generatedChurchDomain,
+    (generatedDomain) => {
+        if (domainMode.value === 'subdomain' && !domainManuallyEdited.value) {
+            domainInput.value = generatedDomain;
+        }
+    },
+    { immediate: true },
+);
+
+watch(domainMode, (mode) => {
+    if (mode === 'subdomain') {
+        domainManuallyEdited.value = false;
+        domainInput.value = generatedChurchDomain.value;
+        return;
+    }
+
+    domainManuallyEdited.value = false;
+    domainInput.value = '';
+});
+
+const handleChurchSlugInput = (): void => {
+    churchSlugManuallyEdited.value =
+        churchForm.value.slug !== generatedChurchSlug.value;
+};
+
+const handleDomainInput = (): void => {
+    if (domainMode.value === 'subdomain') {
+        domainManuallyEdited.value =
+            domainInput.value !== generatedChurchDomain.value;
+    }
+};
+
+
+const normalizedDomainInput = computed(() =>
+    domainInput.value
+        .trim()
+        .toLowerCase()
+        .replace(/^https?:\/\//, '')
+        .split('/')[0]
+        .replace(/\.$/, ''),
+);
+
+const requestedDomain = computed(() =>
+    domainMode.value === 'subdomain'
+        ? `${normalizedDomainInput.value}.${props.mainDomain}`
+        : normalizedDomainInput.value,
+);
+
+const domainModes = ['subdomain', 'external'] as const;
+
+const domainError = computed(() => {
+    if (!normalizedDomainInput.value) {
+        return t('portal.domain.required');
+    }
+
+    if (requestedDomain.value === props.mainDomain) {
+        return t('portal.domain.main_forbidden');
+    }
+
+    if (
+        !/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(
+            requestedDomain.value,
+        )
+    ) {
+        return t('portal.domain.invalid');
+    }
+
+    return '';
+});
+
 const availableCommunities = computed(() => props.communities);
+const notEmptyCommunities = computed(() => 
+    props.communities.filter(
+        (community) => (community.churches_count || 0) >= 1
+    )
+);
 const selectedCommunity = computed(() =>
     props.communities.find(
         (community) => community.id === churchForm.value.community_id,
@@ -309,6 +399,11 @@ const saveCommunity = async (): Promise<void> => {
 };
 
 const requestChurch = async (): Promise<void> => {
+    if (domainError.value) {
+        errorMessage.value = domainError.value;
+        return;
+    }
+
     processing.value = true;
     errorMessage.value = '';
 
@@ -318,7 +413,7 @@ const requestChurch = async (): Promise<void> => {
         Object.entries({
             ...churchForm.value,
             slug: generatedChurchSlug.value,
-            domain: `${generatedChurchDomain.value}.${props.mainDomain}`,
+            domain: requestedDomain.value,
         }).forEach(([key, value]) => payload.append(key, value));
 
         if (proofDocument.value) {
@@ -575,7 +670,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 </div>
                 <div class="mt-8 grid gap-5 lg:grid-cols-2">
                     <article
-                        v-for="community in communities"
+                        v-for="community in notEmptyCommunities"
                         :key="community.id"
                         class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
                     >
@@ -890,7 +985,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
             <form
                 v-if="onboardingMode === 'new_community'"
-                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]"
                 @submit.prevent="saveCommunity"
             >
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -990,7 +1085,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </form>
             <form
                 v-else
-                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-1 [scrollbar-gutter:stable]"
                 @submit.prevent="requestChurch"
             >
                 <label class="block space-y-1.5 text-sm font-bold text-slate-700">
@@ -1041,7 +1136,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </p>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
                         {{ t('portal.fields.name') }}
                         <input
                             v-model="churchForm.name"
@@ -1049,17 +1144,79 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700">
+                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
                         {{ t('portal.fields.slug') }}
-                        <output class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-600">
-                            {{ generatedChurchSlug || t('portal.identity.preview_empty') }}
-                        </output>
+                        <input
+                            v-model="churchForm.slug"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-mono text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            :placeholder="generatedChurchSlug || t('portal.identity.preview_empty')"
+                            @input="handleChurchSlugInput"
+                        />
                     </label>
-                    <div class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
-                        {{ t('portal.fields.domain') }}
-                        <output class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm font-normal text-slate-600">
-                            {{ generatedChurchDomain }}.{{ mainDomain }}
-                        </output>
+                    <div class="space-y-3 sm:col-span-2">
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <label
+                                v-for="mode in domainModes"
+                                :key="mode"
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-slate-800"
+                                :class="{
+                                    'border-indigo-500 bg-indigo-50':
+                                        domainMode === mode,
+                                }"
+                            >
+                                <input
+                                    v-model="domainMode"
+                                    type="radio"
+                                    :value="mode"
+                                    class="mt-1"
+                                />
+                                <span>
+                                    <strong class="block text-sm">{{
+                                        t(`portal.domain.${mode}`)
+                                    }}</strong>
+                                    <span class="text-xs text-slate-500">{{
+                                        t(`portal.domain.${mode}_description`)
+                                    }}</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div
+                            class="flex overflow-hidden rounded-xl border border-slate-300 bg-white"
+                        >
+                            <input
+                                v-model="domainInput"
+                                required
+                                @input="handleDomainInput"
+                                class="min-w-0 flex-1 border-0 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-0"
+                                :placeholder="
+                                    domainMode === 'subdomain'
+                                        ? t('portal.domain.subdomain_placeholder')
+                                        : t('portal.fields.domain')
+                                "
+                            />
+                            <span
+                                v-if="domainMode === 'subdomain'"
+                                class="flex items-center border-l border-slate-200 bg-slate-50 px-3 text-sm text-slate-500"
+                                >.{{ mainDomain }}</span
+                            >
+                        </div>
+
+                        <p class="text-xs text-slate-500">
+                            {{
+                                domainMode === 'subdomain'
+                                    ? requestedDomain ||
+                                      t('portal.domain.preview_empty')
+                                    : t('portal.domain.external_hint')
+                            }}
+                        </p>
+                        <p
+                            v-if="domainError"
+                            class="text-xs font-bold text-rose-600"
+                        >
+                            {{ domainError }}
+                        </p>
                     </div>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.found_date') }}

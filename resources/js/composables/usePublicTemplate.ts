@@ -10,7 +10,8 @@ export type PublicTemplateSection =
     | 'events_show'
     | 'form'
     | 'library'
-    | 'gallery';
+    | 'gallery'
+    | 'network';
 export type PublicTemplateVariant = 'classic' | 'editorial' | 'minimal';
 
 export const usePublicTemplate = (

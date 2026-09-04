@@ -60,6 +60,7 @@ createInertiaApp({
             'Classrooms/Portal',
             'Posts/PublicIndex',
             'Posts/PublicShow',
+            'Church/Network',
             'Admin/ClassroomLabels',
             'Gallery/Index',
             'Library/Index',

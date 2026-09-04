@@ -9,6 +9,7 @@ import {
 import { computed } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useTerminology } from '@/composables/useTerminology';
 import { useI18n } from '@/lib/i18n';
 import type {
@@ -39,6 +40,8 @@ const flattenTree = (
     { ...node, depth },
     ...node.children.flatMap((child) => flattenTree(child, depth + 1)),
 ];
+
+const publicTemplate = usePublicTemplate('network');
 const treeRows = computed(() => flattenTree(props.network.tree));
 </script>
 
@@ -51,8 +54,13 @@ const treeRows = computed(() => flattenTree(props.network.tree));
         "
     />
 
-    <div
-        class="flex min-h-screen min-w-0 max-w-full flex-col overflow-x-clip bg-[var(--church-surface,#f4f7fb)] text-slate-950"
+     <div
+        class="public-template-page flex min-h-screen flex-col text-slate-950"
+        :data-public-template="publicTemplate"
+        :style="{
+            backgroundColor: 'var(--church-surface, #f8fafc)',
+            fontFamily: 'var(--church-font, Manrope, ui-sans-serif)',
+        }"
     >
         <PublicHeader active="network" show-locale />
 
@@ -60,7 +68,7 @@ const treeRows = computed(() => flattenTree(props.network.tree));
             class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-6 sm:px-6 sm:py-9 lg:px-8"
         >
             <header
-                class="overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-700 p-6 text-white shadow-xl sm:p-9"
+                class="overflow-hidden rounded-3xl p-6 text-white shadow-xl sm:p-9"
                 :style="{
                     background: `linear-gradient(135deg, var(--church-primary, #312e81), var(--church-secondary, #6d28d9))`,
                 }"
@@ -133,7 +141,12 @@ const treeRows = computed(() => flattenTree(props.network.tree));
             >
                 <div class="flex items-start gap-3">
                     <span
-                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl"
+                        :style="{
+                            backgroundColor:
+                                'color-mix(in srgb, var(--church-primary) 12%, white)',
+                            color: 'var(--church-primary)',
+                        }"
                     >
                         <GitBranch class="size-5" />
                     </span>
@@ -172,7 +185,8 @@ const treeRows = computed(() => flattenTree(props.network.tree));
                         <ChevronRight class="size-4 text-slate-400" />
                     </template>
                     <span
-                        class="rounded-xl bg-indigo-700 px-3 py-2 text-sm font-black text-white"
+                        class="rounded-xl px-3 py-2 text-sm font-black text-white"
+                        :style="{ backgroundColor: 'var(--church-primary)' }"
                     >
                         {{ network.church.name }}
                     </span>
@@ -194,7 +208,12 @@ const treeRows = computed(() => flattenTree(props.network.tree));
             >
                 <div class="flex items-start gap-3">
                     <span
-                        class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl"
+                        :style="{
+                            backgroundColor:
+                                'color-mix(in srgb, var(--church-primary) 12%, white)',
+                            color: 'var(--church-primary)',
+                        }"
                     >
                         <Building2 class="size-5" />
                     </span>
@@ -223,11 +242,18 @@ const treeRows = computed(() => flattenTree(props.network.tree));
                         class="flex min-w-0 items-center justify-between gap-3 rounded-xl border p-3.5"
                         :class="
                             row.id === network.church.id
-                                ? 'border-indigo-300 bg-indigo-50'
+                                ? ''
                                 : 'border-slate-200 bg-slate-50'
                         "
                         :style="{
                             marginInlineStart: `${Math.min(row.depth, 5) * 0.75}rem`,
+                            ...(row.id === network.church.id
+                                ? {
+                                      borderColor: 'var(--church-primary)',
+                                      backgroundColor:
+                                          'color-mix(in srgb, var(--church-primary) 7%, white)',
+                                  }
+                                : {}),
                         }"
                     >
                         <div class="flex min-w-0 items-center gap-3">
@@ -235,8 +261,16 @@ const treeRows = computed(() => flattenTree(props.network.tree));
                                 class="flex size-9 shrink-0 items-center justify-center rounded-lg"
                                 :class="
                                     row.id === network.church.id
-                                        ? 'bg-indigo-700 text-white'
+                                        ? 'text-white'
                                         : 'bg-white text-slate-500'
+                                "
+                                :style="
+                                    row.id === network.church.id
+                                        ? {
+                                              backgroundColor:
+                                                  'var(--church-primary)',
+                                          }
+                                        : undefined
                                 "
                             >
                                 <Building2 class="size-4" />
@@ -247,7 +281,8 @@ const treeRows = computed(() => flattenTree(props.network.tree));
                                 </p>
                                 <p
                                     v-if="row.id === network.church.id"
-                                    class="text-xs font-semibold text-indigo-700"
+                                    class="text-xs font-semibold"
+                                    :style="{ color: 'var(--church-primary)' }"
                                 >
                                     {{ t('church_network_public.current') }}
                                 </p>
