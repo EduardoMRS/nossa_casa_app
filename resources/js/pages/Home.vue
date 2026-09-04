@@ -27,7 +27,7 @@ import { useRepositories } from '@/lib/repositories';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 import { show as publicPostShow } from '@/routes/posts/public';
-import { createWebHydratedStore } from '@shared/platform/web';
+import { createWebHydratedStore } from '@/shared/platform/web';
 
 type EventCard = {
     id: string;

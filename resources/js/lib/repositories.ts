@@ -1,6 +1,6 @@
-import { createWebPlatform } from '@shared/platform/web.ts';
-import { createRepositories } from '@shared/repositories/createRepositories.ts';
-import type { Repositories } from '@shared/repositories/createRepositories.ts';
+import { createWebPlatform } from '@/shared/platform/web.ts';
+import { createRepositories } from '@/shared/repositories/createRepositories.ts';
+import type { Repositories } from '@/shared/repositories/createRepositories.ts';
 
 let repositories: Repositories | undefined;
 

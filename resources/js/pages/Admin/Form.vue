@@ -7,7 +7,7 @@ import PhoneInput from '@/components/PhoneInput.vue';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 import { index } from '@/routes/admin/forms';
-import { ApiError } from '@shared/http/FetchHttpClient';
+import { ApiError } from '@/shared/http/FetchHttpClient';
 
 type Linkable = { id: string; title: string };
 type Category = { id: string; name: string; slug: string; type: string };

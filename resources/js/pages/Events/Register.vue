@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 import { login } from '@/routes';
 import { show as showEvent } from '@/routes/events';
-import { ApiError } from '@shared/http/FetchHttpClient';
+import { ApiError } from '@/shared/http/FetchHttpClient';
 
 interface SchemaOption {
     label: string;

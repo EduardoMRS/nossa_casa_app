@@ -19,13 +19,13 @@ import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 import { index as galleryIndex } from '@/routes/gallery';
-import { replaceWebQuery } from '@shared/platform/web';
-import { queryFromPaginationLink } from '@shared/repositories/content/types';
+import { replaceWebQuery } from '@/shared/platform/web';
+import { queryFromPaginationLink } from '@/shared/repositories/content/types';
 import type {
     PaginatedPayload,
     PaginationLink,
-} from '@shared/repositories/content/types';
-import { createRequestState, runRequest } from '@shared/stores/RequestState';
+} from '@/shared/repositories/content/types';
+import { createRequestState, runRequest } from '@/shared/stores/RequestState';
 
 interface Person {
     id: string;

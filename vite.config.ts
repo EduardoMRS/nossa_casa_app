@@ -8,6 +8,7 @@ import { bunny } from 'laravel-vite-plugin/fonts';
 import { rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
+import path from 'path';
 
 const productionMarker = '.production';
 const forbiddenProductionModules = [
@@ -82,15 +83,36 @@ function productionSecurityGuard(): Plugin {
     };
 }
 
-export default defineConfig({
+export default defineConfig({ 
+    resolve: {
+        alias: {
+            '@/*': path.resolve(import.meta.dirname, '../resources/js/*'),
+            '@shared': path.resolve(import.meta.dirname, '../resources/js/shared'),
+        },
+    }, 
+    define: {
+        __VUE_PROD_DEVTOOLS__: process.env.VITE_APP_ENV === 'local' ? true : false,
+    },
+    server: {
+        host: process.env.VITE_HOST ? process.env.VITE_HOST : '0.0.0.0',
+        port: process.env.VITE_APP_PORT ? parseInt(process.env.VITE_APP_PORT) : 5173,
+        cors: true,
+        hmr: {
+            host: process.env.VITE_HMR_HOST ? process.env.VITE_HMR_HOST : 'localhost',
+        },
+        watch: {
+            usePolling: process.env.VITE_USE_POLLING === 'true',
+            ignored: ['**/storage/**', '**/vendor/**', '**/node_modules/**', '**/.git/**'],
+        },
+    },
     build: {
         chunkSizeWarningLimit: 600,
         rolldownOptions: {
             output: {
                 minify: {
                     compress: {
-                        dropConsole: true,
-                        dropDebugger: true,
+                        dropConsole: false,
+                        dropDebugger: false,
                     },
                 },
             },

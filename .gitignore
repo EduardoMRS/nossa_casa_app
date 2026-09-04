@@ -46,3 +46,4 @@ docs/api.json
 public/
 laravel
 public/build/
+storage/framework/

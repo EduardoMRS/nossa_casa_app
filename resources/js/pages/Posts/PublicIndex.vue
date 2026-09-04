@@ -20,16 +20,16 @@ import { show as publicPostShow } from '@/routes/posts/public';
 import {
     createWebHydratedStore,
     replaceWebQuery,
-} from '@shared/platform/web';
-import { queryFromPaginationLink } from '@shared/repositories/content/types';
+} from '@/shared/platform/web';
+import { queryFromPaginationLink } from '@/shared/repositories/content/types';
 import type {
     PaginatedPayload,
     PaginationLink,
-} from '@shared/repositories/content/types';
+} from '@/shared/repositories/content/types';
 import {
     createRequestState,
     runRequest,
-} from '@shared/stores/RequestState';
+} from '@/shared/stores/RequestState';
 
 type PublicPost = {
     id: string;

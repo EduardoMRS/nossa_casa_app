@@ -11,16 +11,16 @@ import { show as showEvent } from '@/routes/events';
 import {
     createWebHydratedStore,
     replaceWebQuery,
-} from '@shared/platform/web';
-import { queryFromPaginationLink } from '@shared/repositories/content/types';
+} from '@/shared/platform/web';
+import { queryFromPaginationLink } from '@/shared/repositories/content/types';
 import type {
     PaginatedPayload,
     PaginationLink,
-} from '@shared/repositories/content/types';
+} from '@/shared/repositories/content/types';
 import {
     createRequestState,
     runRequest,
-} from '@shared/stores/RequestState';
+} from '@/shared/stores/RequestState';
 
 interface EventItem {
     id: string;
