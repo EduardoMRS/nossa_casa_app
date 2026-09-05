@@ -38,4 +38,38 @@ class Address extends Model
     {
         return $this->morphTo();
     }
+
+    public function getToStringAttribute()
+    {
+        $address = $this->address?->first();
+
+        if (!$address) {
+            return null;
+        }
+
+        if (
+            blank($address->street) ||
+            blank($address->city) ||
+            blank($address->state) ||
+            blank($address->zip_code) ||
+            blank($address->country)
+        ) {
+            return null;
+        }
+
+        $street = collect([
+            $address->street,
+            $address->number,
+        ])->filter(fn ($value) => filled($value))->implode(' ');
+
+        return collect([
+            $street,
+            $address->complement,
+            $address->neighborhood,
+            $address->city,
+            $address->state,
+            $address->zip_code,
+            $address->country,
+        ])->filter(fn ($value) => filled($value))->implode(', ');
+    }
 }

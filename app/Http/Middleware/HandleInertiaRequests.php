@@ -122,6 +122,7 @@ class HandleInertiaRequests extends Middleware
             if (is_array($savedBranding)) {
                 $branding = array_merge($branding, $savedBranding);
             }
+            $branding['address'] = $brandingChurch?->address?->first()?->to_string ?? $branding['address'];
         }
 
         $branding = array_merge($branding, $this->brandingResolver->sharedLogo($brandingChurch));

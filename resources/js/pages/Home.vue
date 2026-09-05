@@ -518,7 +518,7 @@ const submitPrayer = async (): Promise<void> => {
             </section>
 
             <section class="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-                <div>
+                <div v-if="props.featuredEvents.length">
                     <div class="mb-4 flex items-end justify-between">
                         <div>
                             <p
@@ -590,7 +590,7 @@ const submitPrayer = async (): Promise<void> => {
                     </div>
                 </div>
 
-                <div>
+                <div v-if="props.latestPosts.length">
                     <div class="mb-4">
                         <p
                             class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"

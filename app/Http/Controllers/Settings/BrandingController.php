@@ -54,19 +54,17 @@ class BrandingController extends Controller
                 $this->brandingResolver->sharedLogo($church),
             );
         }
-        $address = $church->address()->first();
+        $address = $church->address;
         $mailSetting = $church->mailSetting()->first();
-
-        if ($address) {
-            $branding['latitude'] ??= $address->latitude;
-            $branding['longitude'] ??= $address->longitude;
-        }
 
         return Inertia::render('Admin/Branding', [
             'branding' => array_merge(
                 $this->defaultBranding(),
                 is_array($branding) ? $branding : [],
-                ['domain' => $defaultDomain],
+                [
+                    'domain' => $defaultDomain,
+                    'address' => $address
+                ],
             ),
             'templates' => array_merge($this->defaultTemplates(), is_array($templates) ? $templates : []),
             'terminology' => $this->terminology->selections(is_array($savedTerminology) ? $savedTerminology : []),
