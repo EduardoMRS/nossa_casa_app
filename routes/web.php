@@ -78,147 +78,156 @@ if (! function_exists('categoriesForChurchAndType')) {
     }
 }
 
-Route::get('/', [PortalController::class, 'index'])->name('home');
-Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
-Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
-Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
-Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
-Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
-Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
-Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
-Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
-Route::get('/branding/icon.svg', [BrandingAssetController::class, 'icon'])->name('branding.icon');
-Route::get('/favicon.ico', [BrandingAssetController::class, 'icon'])->name('branding.favicon');
-Route::get('/favicon.svg', [BrandingAssetController::class, 'icon'])->name('branding.favicon-svg');
-Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->name('branding.apple-touch-icon');
+// TODO: finalizar construção de rotas com locale fixo para sso
+// Route::group(['prefix' => '{locale}'], function () use($isWayfinderGeneration){
+//         $locales = array_map(function ($locale) {
+//             $parts = explode('_', $locale)[0];
+//             $parts = explode('-', $locale)[0];
+//             return mb_strtolower(trim($parts));
+//         }, config('app.locales'));
 
-Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('classrooms.index');
-    Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('classrooms.show');
-    Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store'])->name('classrooms.activities.submit');
-    Route::get('/classrooms/{classroom:slug}/materials/{material}', ClassroomMaterialDownloadController::class)->name('classrooms.materials.download');
-    Route::post('/classrooms/{classroom:slug}/discussions', [ClassroomDiscussionController::class, 'store'])->name('classrooms.discussions.store');
-    Route::post('/classrooms/{classroom:slug}/discussions/{discussion}/replies', [ClassroomDiscussionController::class, 'reply'])->name('classrooms.discussions.replies.store');
-
-    Route::prefix('dashboard/classrooms/{classroom}/content')
-        ->name('admin.classrooms.content.')
-        ->group(function () {
-            Route::get('/', [ClassroomContentController::class, 'index'])->name('index');
-            Route::put('/settings', [ClassroomContentController::class, 'updateSettings'])->name('settings.update');
-            Route::post('/posts', [ClassroomContentController::class, 'storePost'])->name('posts.store');
-            Route::put('/posts/{post}', [ClassroomContentController::class, 'updatePost'])->name('posts.update');
-            Route::delete('/posts/{post}', [ClassroomContentController::class, 'destroyPost'])->name('posts.destroy');
-            Route::post('/activities', [ClassroomContentController::class, 'storeActivity'])->name('activities.store');
-            Route::delete('/activities/{activity}', [ClassroomContentController::class, 'destroyActivity'])->name('activities.destroy');
-            Route::post('/materials', [ClassroomContentController::class, 'storeMaterial'])->name('materials.store');
-            Route::delete('/materials/{material}', [ClassroomContentController::class, 'destroyMaterial'])->name('materials.destroy');
-            Route::put('/discussions/{discussion}', [ClassroomContentController::class, 'moderateDiscussion'])->name('discussions.update');
-            Route::delete('/discussions/{discussion}', [ClassroomContentController::class, 'destroyDiscussion'])->name('discussions.destroy');
+        Route::get('/', [PortalController::class, 'index'])->name('home');
+        Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
+        Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
+        Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
+        Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
+        Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
+        Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
+        Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
+        Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
+        Route::get('/branding/icon.svg', [BrandingAssetController::class, 'icon'])->name('branding.icon');
+        Route::get('/favicon.ico', [BrandingAssetController::class, 'icon'])->name('branding.favicon');
+        Route::get('/favicon.svg', [BrandingAssetController::class, 'icon'])->name('branding.favicon-svg');
+        Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->name('branding.apple-touch-icon');
+        
+        Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
+        
+        Route::middleware('auth')->group(function () {
+            Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('classrooms.index');
+            Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('classrooms.show');
+            Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store'])->name('classrooms.activities.submit');
+            Route::get('/classrooms/{classroom:slug}/materials/{material}', ClassroomMaterialDownloadController::class)->name('classrooms.materials.download');
+            Route::post('/classrooms/{classroom:slug}/discussions', [ClassroomDiscussionController::class, 'store'])->name('classrooms.discussions.store');
+            Route::post('/classrooms/{classroom:slug}/discussions/{discussion}/replies', [ClassroomDiscussionController::class, 'reply'])->name('classrooms.discussions.replies.store');
+        
+            Route::prefix('dashboard/classrooms/{classroom}/content')
+                ->name('admin.classrooms.content.')
+                ->group(function () {
+                    Route::get('/', [ClassroomContentController::class, 'index'])->name('index');
+                    Route::put('/settings', [ClassroomContentController::class, 'updateSettings'])->name('settings.update');
+                    Route::post('/posts', [ClassroomContentController::class, 'storePost'])->name('posts.store');
+                    Route::put('/posts/{post}', [ClassroomContentController::class, 'updatePost'])->name('posts.update');
+                    Route::delete('/posts/{post}', [ClassroomContentController::class, 'destroyPost'])->name('posts.destroy');
+                    Route::post('/activities', [ClassroomContentController::class, 'storeActivity'])->name('activities.store');
+                    Route::delete('/activities/{activity}', [ClassroomContentController::class, 'destroyActivity'])->name('activities.destroy');
+                    Route::post('/materials', [ClassroomContentController::class, 'storeMaterial'])->name('materials.store');
+                    Route::delete('/materials/{material}', [ClassroomContentController::class, 'destroyMaterial'])->name('materials.destroy');
+                    Route::put('/discussions/{discussion}', [ClassroomContentController::class, 'moderateDiscussion'])->name('discussions.update');
+                    Route::delete('/discussions/{discussion}', [ClassroomContentController::class, 'destroyDiscussion'])->name('discussions.destroy');
+                });
+            Route::post('/api/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+            Route::delete('/api/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+            Route::post('/onboarding/communities', [ChurchOnboardingController::class, 'storeCommunity'])->name('onboarding.communities.store');
+            Route::post('/onboarding/churches', [ChurchOnboardingController::class, 'storeChurchRequest'])->name('onboarding.churches.store');
+            Route::post('/onboarding/churches/{registrationRequest}/approve', [ChurchOnboardingController::class, 'approve'])->name('onboarding.churches.approve');
+            Route::post('/onboarding/churches/{registrationRequest}/reject', [ChurchOnboardingController::class, 'reject'])->name('onboarding.churches.reject');
+            Route::get('/onboarding/churches/{registrationRequest}/proof', [ChurchOnboardingController::class, 'proofDocument'])->name('onboarding.churches.proof');
+            Route::post('/church-membership/switch', [ChurchOnboardingController::class, 'switchMembership'])->name('church.membership.switch');
+            Route::post('/church-membership/decline', [ChurchOnboardingController::class, 'declineMembership'])->name('church.membership.decline');
         });
-    Route::post('/api/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
-    Route::delete('/api/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
-    Route::post('/onboarding/communities', [ChurchOnboardingController::class, 'storeCommunity'])->name('onboarding.communities.store');
-    Route::post('/onboarding/churches', [ChurchOnboardingController::class, 'storeChurchRequest'])->name('onboarding.churches.store');
-    Route::post('/onboarding/churches/{registrationRequest}/approve', [ChurchOnboardingController::class, 'approve'])->name('onboarding.churches.approve');
-    Route::post('/onboarding/churches/{registrationRequest}/reject', [ChurchOnboardingController::class, 'reject'])->name('onboarding.churches.reject');
-    Route::get('/onboarding/churches/{registrationRequest}/proof', [ChurchOnboardingController::class, 'proofDocument'])->name('onboarding.churches.proof');
-    Route::post('/church-membership/switch', [ChurchOnboardingController::class, 'switchMembership'])->name('church.membership.switch');
-    Route::post('/church-membership/decline', [ChurchOnboardingController::class, 'declineMembership'])->name('church.membership.decline');
-});
-
-Route::get('churches/{church_id}/library/{file_path}', function ($church_id, $file_path) {
-    $domainChurchId = app(ChurchDomainContext::class)->churchId();
-    abort_if($domainChurchId && $domainChurchId !== $church_id, 404);
-    $filePathFull = "church/{$church_id}/library/{$file_path}";
-    $library = Church::find($church_id)->library()->where('file_path', $filePathFull)
-        ->firstOrFail();
-
-    $library->localize();
-
-    return redirect()->to(genUrl($library->getRawOriginal('file_path')));
-})->name('library.show');
-
-Route::get('/events', function (EventQuery $events) {
-    return Inertia::render('Events/Index', $events->index(
-        app(ChurchDomainContext::class)->churchId(),
-    )->toArray());
-})->name('events.index');
-
-Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public.index');
-
-Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.public.show');
-
-Route::get('/library', [PublicLibraryController::class, 'index'])->name('library.index');
-Route::get('/library/bible', [PublicLibraryController::class, 'bible'])->name('library.bible');
-if (! $isWayfinderGeneration) {
-    Route::get('/biblioteca', [PublicLibraryController::class, 'index']);
-    Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible']);
-}
-
-Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
-    abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
-    $event->load('church:id,name,slug', 'church.settings');
-    $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description', 'forms.schema'])->first();
-
-    abort_if($registrationForm === null, 404);
-
-    $event->localize(relations: ['church']);
-    $registrationForm->localize();
-
-    $existingResponse = null;
-
-    if ($request->user()) {
-        $existingResponse = $registrationForm->responses()
-            ->where('user_id', $request->user()->id)
-            ->first();
-    }
-
-    return Inertia::render('Events/Register', [
-        'event' => [
-            'id' => $event->id,
-            'title' => $event->title,
-            'slug' => $event->slug,
-            'description' => $event->description,
-            'description_html' => app(ContentEmbedRenderer::class)->render($event->description ?? '', $event->church_id),
-            'start_time' => $event->start_time,
-            'end_time' => $event->end_time,
-            'cover_path' => $event->cover_url,
-            'church' => $event->church,
-            'currency' => $event->church?->settings?->options['currency'] ?? 'BRL',
-        ],
-        'form' => [
-            'id' => $registrationForm->id,
-            'title' => $registrationForm->title,
-            'description' => $registrationForm->description,
-            'schema' => $registrationForm->schema,
-        ],
-        'existingAnswers' => $existingResponse?->answers,
-        'alreadyRegistered' => $request->user()
-            ? $event->users()->where('users.id', $request->user()->id)->exists()
-            : false,
-    ]);
-})->name('events.register');
-
-Route::get('/events/{event:slug}/area', EventPrivateAreaController::class)
-    ->middleware(['auth', 'verified'])
-    ->name('events.private-area');
-
-Route::get('/events/{event:slug}', function (Event $event, Request $request, EventQuery $events) {
-    return Inertia::render('Events/Show', $events->show(
-        $event->slug,
-        app(ChurchDomainContext::class)->churchId(),
-        $request->user(),
-    )->toArray());
-})->name('events.show');
-
-Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
-Route::get('/gallery/{media}/download', [PublicGalleryController::class, 'download'])->name('gallery.download');
-Route::get('/live-streams/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
-if (! $isWayfinderGeneration) {
-    Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show']);
-}
+        
+        Route::get('churches/{church_id}/library/{file_path}', function ($church_id, $file_path) {
+            $domainChurchId = app(ChurchDomainContext::class)->churchId();
+            abort_if($domainChurchId && $domainChurchId !== $church_id, 404);
+            $filePathFull = "church/{$church_id}/library/{$file_path}";
+            $library = Church::find($church_id)->library()->where('file_path', $filePathFull)
+                ->firstOrFail();
+        
+            $library->localize();
+        
+            return redirect()->to(genUrl($library->getRawOriginal('file_path')));
+        })->name('library.show');
+        
+        Route::get('/events', function (EventQuery $events) {
+            return Inertia::render('Events/Index', $events->index(
+                app(ChurchDomainContext::class)->churchId(),
+            )->toArray());
+        })->name('events.index');
+        
+        Route::get('/posts', [PublicPostController::class, 'index'])->name('posts.public.index');
+        
+        Route::get('/posts/{slug}', [PublicPostController::class, 'show'])->name('posts.public.show');
+        
+        Route::get('/library', [PublicLibraryController::class, 'index'])->name('library.index');
+        Route::get('/library/bible', [PublicLibraryController::class, 'bible'])->name('library.bible');
+        if (! $isWayfinderGeneration) {
+            Route::get('/biblioteca', [PublicLibraryController::class, 'index']);
+            Route::get('/biblioteca/biblia', [PublicLibraryController::class, 'bible']);
+        }
+        
+        Route::get('/events/{event:slug}/register', function (Event $event, Request $request) {
+            abort_if(app(ChurchDomainContext::class)->churchId() && $event->church_id !== app(ChurchDomainContext::class)->churchId(), 404);
+            $event->load('church:id,name,slug', 'church.settings');
+            $registrationForm = $event->forms()->select(['forms.id', 'forms.title', 'forms.description', 'forms.schema'])->first();
+        
+            abort_if($registrationForm === null, 404);
+        
+            $event->localize(relations: ['church']);
+            $registrationForm->localize();
+        
+            $existingResponse = null;
+        
+            if ($request->user()) {
+                $existingResponse = $registrationForm->responses()
+                    ->where('user_id', $request->user()->id)
+                    ->first();
+            }
+        
+            return Inertia::render('Events/Register', [
+                'event' => [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'slug' => $event->slug,
+                    'description' => $event->description,
+                    'description_html' => app(ContentEmbedRenderer::class)->render($event->description ?? '', $event->church_id),
+                    'start_time' => $event->start_time,
+                    'end_time' => $event->end_time,
+                    'cover_path' => $event->cover_url,
+                    'church' => $event->church,
+                    'currency' => $event->church?->settings?->options['currency'] ?? 'BRL',
+                ],
+                'form' => [
+                    'id' => $registrationForm->id,
+                    'title' => $registrationForm->title,
+                    'description' => $registrationForm->description,
+                    'schema' => $registrationForm->schema,
+                ],
+                'existingAnswers' => $existingResponse?->answers,
+                'alreadyRegistered' => $request->user()
+                    ? $event->users()->where('users.id', $request->user()->id)->exists()
+                    : false,
+            ]);
+        })->name('events.register');
+        
+        Route::get('/events/{event:slug}/area', EventPrivateAreaController::class)
+            ->middleware(['auth', 'verified'])
+            ->name('events.private-area');
+        
+        Route::get('/events/{event:slug}', function (Event $event, Request $request, EventQuery $events) {
+            return Inertia::render('Events/Show', $events->show(
+                $event->slug,
+                app(ChurchDomainContext::class)->churchId(),
+                $request->user(),
+            )->toArray());
+        })->name('events.show');
+        
+        Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery.index');
+        Route::get('/gallery/{media}/download', [PublicGalleryController::class, 'download'])->name('gallery.download');
+        Route::get('/live-streams/{liveStream}', [PublicLiveStreamController::class, 'show'])->name('live-streams.show');
+        if (! $isWayfinderGeneration) {
+            Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show']);
+        }
+// });
 
 Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrlGenerator $temporaryUrlGenerator) {
     try {
