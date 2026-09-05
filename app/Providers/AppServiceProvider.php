@@ -17,6 +17,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -74,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
             if (! $domainContext->isResolved()) {
                 $domainContext->resolve($response->request, failWhenUnknown: false);
             }
+            Log::error('Show ErrorPage, erro: '. $response->exception->getMessage(), ['exception' => $response->exception]);
 
             return $response
                 ->render('ErrorPage', ['status' => $status])

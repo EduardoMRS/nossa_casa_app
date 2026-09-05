@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 const { getInitials } = useInitials();
 
 const showAvatar = computed(
-    () => props.user?.avatar !== '',
+    () => props.user?.avatar !== '' && props.user?.avatar !== null && props.user?.avatar !== undefined,
 );
 const displayName = computed(() => {
     if (!props.firstNameOnly) {

@@ -33,11 +33,10 @@ const themeStyle = computed(() => {
 
 <template>
     <AppShell variant="sidebar" :style="themeStyle">
-        <AppSidebar :style="themeStyle" />
+        <AppSidebar />
         <AppContent
             variant="sidebar"
             class="dashboard-theme min-w-0 max-w-full overflow-x-clip bg-background text-foreground"
-            :style="themeStyle"
         >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <slot />

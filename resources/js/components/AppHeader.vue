@@ -56,6 +56,13 @@ const rightNavItems = computed<NavItem[]>(() => [
         icon: BookOpen,
     },
 ]);
+const showAvatar = computed(() => {
+    return (
+        auth.value.user?.avatar !== '' &&
+        auth.value.user?.avatar !== null &&
+        auth.value.user?.avatar !== undefined
+    );
+});
 </script>
 
 <template>
@@ -169,12 +176,12 @@ const rightNavItems = computed<NavItem[]>(() => [
                                 size="icon"
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
                             >
-                                <Avatar
+                                <Avatar v-if="auth?.user"
                                     class="size-8 overflow-hidden rounded-full"
                                 >
                                     <AvatarImage
-                                        v-if="auth.user.avatar"
-                                        :src="auth.user.avatar"
+                                        v-if="showAvatar"
+                                        :src="auth.user.avatar!"
                                         :alt="auth.user.name"
                                     />
                                     <AvatarFallback
