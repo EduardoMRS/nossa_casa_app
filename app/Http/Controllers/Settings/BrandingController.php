@@ -54,7 +54,7 @@ class BrandingController extends Controller
                 $this->brandingResolver->sharedLogo($church),
             );
         }
-        $address = $church->address;
+        $address = $church->address()->first();
         $mailSetting = $church->mailSetting()->first();
 
         return Inertia::render('Admin/Branding', [
@@ -63,7 +63,18 @@ class BrandingController extends Controller
                 is_array($branding) ? $branding : [],
                 [
                     'domain' => $defaultDomain,
-                    'address' => $address
+                    'address' => [
+                        'country' => (string) ($address?->country ?? ''),
+                        'state' => (string) ($address?->state ?? ''),
+                        'city' => (string) ($address?->city ?? ''),
+                        'neighborhood' => (string) ($address?->neighborhood ?? ''),
+                        'street' => (string) ($address?->street ?? ''),
+                        'number' => (string) ($address?->number ?? ''),
+                        'complement' => (string) ($address?->complement ?? ''),
+                        'zipcode' => (string) ($address?->zipcode ?? ''),
+                        'latitude' => $address?->latitude,
+                        'longitude' => $address?->longitude,
+                    ],
                 ],
             ),
             'templates' => array_merge($this->defaultTemplates(), is_array($templates) ? $templates : []),
@@ -136,6 +147,7 @@ class BrandingController extends Controller
         $terminology = Arr::pull($validated, 'terminology', []);
         $currency = Arr::pull($validated, 'currency');
         $mail = Arr::pull($validated, 'mail');
+        $address = Arr::pull($validated, 'address', []);
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
         Arr::forget($validated, 'logo');
         $validated['map_embed'] = $this->sanitizeMapEmbed($validated['map_embed'] ?? null);
@@ -151,7 +163,13 @@ class BrandingController extends Controller
             $this->defaultBranding(),
             is_array($options['branding'] ?? null) ? $options['branding'] : [],
         );
-        Arr::forget($currentBranding, 'contact_website');
+        Arr::forget($currentBranding, [
+            'contact_website',
+            // Remove legacy location data that used to live inside branding JSON.
+            'address',
+            'latitude',
+            'longitude',
+        ]);
 
         if ($removeLogo) {
             $this->deleteStoredLogo($currentBranding['logo_path'] ?? null);
@@ -171,10 +189,18 @@ class BrandingController extends Controller
         $options['terminology'] = $this->terminology->selections($terminology);
         $options['currency'] = $currency ?? $options['currency'] ?? 'BRL';
 
-        $church->address()->first()?->update([
-            'latitude' => $validated['latitude'] ?? null,
-            'longitude' => $validated['longitude'] ?? null,
-        ]);
+        $addressData = array_merge(
+            $this->defaultAddress(),
+            is_array($address) ? $address : [],
+        );
+
+        if (collect($addressData)->contains(fn (mixed $value): bool => filled($value))) {
+            $addressModel = $church->address()->first() ?? $church->address()->make();
+            $addressModel->fill($addressData);
+            $addressModel->save();
+        } else {
+            $church->address()->delete();
+        }
 
         $church->update(['domain' => $domain]);
         $setting->update(['options' => $options]);
@@ -217,12 +243,39 @@ class BrandingController extends Controller
             'contact_email' => '',
             'contact_phone' => '',
             'contact_whatsapp' => '',
-            'address' => '',
-            'latitude' => null,
-            'longitude' => null,
             'map_embed' => '',
             'weekly_schedule' => [],
             'social_links' => [],
+        ];
+    }
+
+    /**
+     * @return array{
+     *     country: string,
+     *     state: string,
+     *     city: string,
+     *     neighborhood: string,
+     *     street: string,
+     *     number: string,
+     *     complement: string,
+     *     zipcode: string,
+     *     latitude: float|null,
+     *     longitude: float|null
+     * }
+     */
+    private function defaultAddress(): array
+    {
+        return [
+            'country' => '',
+            'state' => '',
+            'city' => '',
+            'neighborhood' => '',
+            'street' => '',
+            'number' => '',
+            'complement' => '',
+            'zipcode' => '',
+            'latitude' => null,
+            'longitude' => null,
         ];
     }
 

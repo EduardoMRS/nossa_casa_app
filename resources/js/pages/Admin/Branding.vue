@@ -25,6 +25,19 @@ import { useI18n } from '@/lib/i18n';
 import { edit } from '@/routes/admin/branding';
 import type { ChurchNetworkSettingsData } from '@/types/church-network';
 
+type AddressData = {
+    country: string;
+    state: string;
+    city: string;
+    neighborhood: string;
+    street: string;
+    number: string;
+    complement: string;
+    zipcode: string;
+    latitude: number | null;
+    longitude: number | null;
+};
+
 type BrandingData = {
     domain: string;
     brand_name: string;
@@ -45,9 +58,7 @@ type BrandingData = {
     contact_email: string;
     contact_phone: string;
     contact_whatsapp: string;
-    address: string;
-    latitude: number | null;
-    longitude: number | null;
+    address: AddressData;
     map_embed: string;
     weekly_schedule: WeeklySchedule[];
     social_links: Record<SocialNetwork, string>;
@@ -935,75 +946,189 @@ const resolvedDomain = computed(() =>
                         </div>
                     </div>
 
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="grid gap-2">
-                            <Label for="address">{{
-                                t('admin.branding.address')
+                    <div
+                        class="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 md:grid-cols-2"
+                    >
+                        <div class="grid gap-2 md:col-span-2">
+                            <Label for="address_street">{{
+                                t('portal.fields.street')
                             }}</Label>
-                            <textarea
-                                id="address"
-                                name="address"
-                                rows="4"
-                                class="rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
-                                :value="props.branding.address"
+                            <Input
+                                id="address_street"
+                                name="address[street]"
+                                :default-value="props.branding.address.street"
                             />
-                            <InputError :message="errors.address" />
+                            <InputError
+                                :message="errors['address.street']"
+                            />
                         </div>
+
                         <div class="grid gap-2">
-                            <Label for="map_embed">{{
-                                t('admin.branding.map_embed')
+                            <Label for="address_number">{{
+                                t('portal.fields.number')
                             }}</Label>
-                            <textarea
-                                id="map_embed"
-                                name="map_embed"
-                                rows="4"
-                                class="rounded-xl border border-input bg-background px-3 py-2 font-mono text-xs text-foreground"
-                                :value="props.branding.map_embed"
-                                :placeholder="
-                                    t('admin.branding.map_embed_placeholder')
+                            <Input
+                                id="address_number"
+                                name="address[number]"
+                                :default-value="props.branding.address.number"
+                            />
+                            <InputError
+                                :message="errors['address.number']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="address_complement">{{
+                                t('portal.fields.complement')
+                            }}</Label>
+                            <Input
+                                id="address_complement"
+                                name="address[complement]"
+                                :default-value="
+                                    props.branding.address.complement
                                 "
                             />
-                            <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.map_embed_hint') }}
-                            </p>
-                            <InputError :message="errors.map_embed" />
+                            <InputError
+                                :message="errors['address.complement']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="address_neighborhood">{{
+                                t('portal.fields.neighborhood')
+                            }}</Label>
+                            <Input
+                                id="address_neighborhood"
+                                name="address[neighborhood]"
+                                :default-value="
+                                    props.branding.address.neighborhood
+                                "
+                            />
+                            <InputError
+                                :message="errors['address.neighborhood']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="address_city">{{
+                                t('portal.fields.city')
+                            }}</Label>
+                            <Input
+                                id="address_city"
+                                name="address[city]"
+                                :default-value="props.branding.address.city"
+                            />
+                            <InputError
+                                :message="errors['address.city']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="address_state">{{
+                                t('portal.fields.state')
+                            }}</Label>
+                            <Input
+                                id="address_state"
+                                name="address[state]"
+                                :default-value="props.branding.address.state"
+                            />
+                            <InputError
+                                :message="errors['address.state']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="address_zipcode">{{
+                                t('portal.fields.zipcode')
+                            }}</Label>
+                            <Input
+                                id="address_zipcode"
+                                name="address[zipcode]"
+                                :default-value="props.branding.address.zipcode"
+                            />
+                            <InputError
+                                :message="errors['address.zipcode']"
+                            />
+                        </div>
+
+                        <div class="grid gap-2 md:col-span-2">
+                            <Label for="address_country">{{
+                                t('portal.fields.country')
+                            }}</Label>
+                            <Input
+                                id="address_country"
+                                name="address[country]"
+                                :default-value="props.branding.address.country"
+                            />
+                            <InputError
+                                :message="errors['address.country']"
+                            />
                         </div>
                     </div>
+
                     <div class="grid gap-4 md:grid-cols-2">
                         <div class="grid gap-2">
-                            <Label for="latitude">{{
+                            <Label for="address_latitude">{{
                                 t('admin.branding.latitude')
                             }}</Label>
                             <Input
-                                id="latitude"
-                                name="latitude"
+                                id="address_latitude"
+                                name="address[latitude]"
                                 type="number"
                                 step="0.0000001"
                                 min="-90"
                                 max="90"
-                                :default-value="props.branding.latitude ?? ''"
+                                :default-value="
+                                    props.branding.address.latitude ?? ''
+                                "
                             />
-                            <InputError :message="errors.latitude" />
+                            <InputError
+                                :message="errors['address.latitude']"
+                            />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="longitude">{{
+                            <Label for="address_longitude">{{
                                 t('admin.branding.longitude')
                             }}</Label>
                             <Input
-                                id="longitude"
-                                name="longitude"
+                                id="address_longitude"
+                                name="address[longitude]"
                                 type="number"
                                 step="0.0000001"
                                 min="-180"
                                 max="180"
-                                :default-value="props.branding.longitude ?? ''"
+                                :default-value="
+                                    props.branding.address.longitude ?? ''
+                                "
                             />
-                            <InputError :message="errors.longitude" />
+                            <InputError
+                                :message="errors['address.longitude']"
+                            />
                         </div>
                     </div>
                     <p class="text-xs text-muted-foreground">
                         {{ t('admin.branding.coordinates_hint') }}
                     </p>
+
+                    <div class="grid gap-2">
+                        <Label for="map_embed">{{
+                            t('admin.branding.map_embed')
+                        }}</Label>
+                        <textarea
+                            id="map_embed"
+                            name="map_embed"
+                            rows="4"
+                            class="rounded-xl border border-input bg-background px-3 py-2 font-mono text-xs text-foreground"
+                            :value="props.branding.map_embed"
+                            :placeholder="
+                                t('admin.branding.map_embed_placeholder')
+                            "
+                        />
+                        <p class="text-xs text-muted-foreground">
+                            {{ t('admin.branding.map_embed_hint') }}
+                        </p>
+                        <InputError :message="errors.map_embed" />
+                    </div>
                     <a
                         v-if="props.registrationProof"
                         :href="props.registrationProof.url"
