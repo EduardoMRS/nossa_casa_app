@@ -134,18 +134,21 @@ class LibraryVerseController extends Controller
 
             return back()->withErrors(['bible' => __('bible.service_unavailable')]);
         }
+
         $validated = $request->validate([
             'scope' => ['required', Rule::in(['community', 'church'])],
-            'versions' => ['required', 'array', 'min:1'],
-            'versions.*' => ['required', 'string', Rule::in($catalogIds)],
+            'versions' => ['required', 'array'],
+            'versions.*' => ['required', 'string'],
             'default_version' => ['required', 'string', Rule::in($catalogIds)],
         ]);
-        $versions = array_values(array_unique($validated['versions']));
 
-        abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
+        $versions = array_values(array_intersect(array_unique($validated['versions']), $catalogIds));
 
         if ($validated['scope'] === 'community') {
             abort_unless($church->community !== null && $this->bibleAccess->canManageCommunity($request->user(), $church), 403);
+            
+            abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
+
             $church->community->update([
                 'bible_versions' => $versions,
                 'default_bible_version' => $validated['default_version'],
@@ -155,7 +158,10 @@ class LibraryVerseController extends Controller
         }
 
         $communityVersions = $this->bibleAccess->forChurch($church)['community_versions'];
-        abort_unless(array_diff($versions, $communityVersions) === [], 422, __('bible.church_versions_invalid'));
+        
+        $versions = array_values(array_intersect($versions, $communityVersions));
+
+        abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
 
         $setting = Setting::query()->firstOrCreate(['church_id' => $church->id], ['options' => []]);
         $options = $setting->options ?? [];
