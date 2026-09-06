@@ -49,7 +49,7 @@ class BibleApiClient
             return strtolower(explode('-', (explode('_', $l)[0]))[0]);
         }, (request()?->getLanguages() ?: []))));
 
-        return collect($remoteVersions)
+        $data =  collect($remoteVersions)
             ->keyBy('id')
             ->merge(collect($this->onlineVersions())->mapWithKeys(
                 fn (array $version, string $id): array => [$id => $this->configuredVersionMetadata($id, $version, false)],
@@ -81,9 +81,11 @@ class BibleApiClient
                 
                 // 3º Critério: Ordem alfabética pelo nome da versão
                 ['name', 'asc'],
-            ])
+        ])
             ->values()
             ->all();
+        // $laguagesAvailable = $data->pluck('language')->unique()->values();
+        return $data;
     }
 
     /** @return list<array{slug: string, name: string}> */
