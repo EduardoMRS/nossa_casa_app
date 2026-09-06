@@ -7,16 +7,20 @@ ARG GID=1000
 RUN apk add --no-cache \
     curl \
     libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
     libzip-dev \
     libxml2-dev \
     sqlite-dev \
+    icu-dev \
     zip \
     unzip \
     git \
     nodejs=~22 \
     npm
 
-RUN docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl zip
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+    docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl zip intl   
 
 # Run PHP-FPM with the project user so bind-mounted files remain editable on
 # the host without making storage world-writable.

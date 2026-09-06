@@ -3,10 +3,20 @@ import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import PwaActions from '@/components/PwaActions.vue';
 import { useI18n } from '@/lib/i18n';
 import { privacy } from '@/routes/legal';
+import { computed } from 'vue';
 
 withDefaults(defineProps<{ showLocale?: boolean }>(), {
     showLocale: true,
 });
+
+// type StandaloneNavigator = Navigator & {
+//     standalone?: boolean;
+// };
+
+// const shouldShow = computed(
+//     () =>
+//         standalone.value &&
+// );
 
 const { t } = useI18n();
 </script>

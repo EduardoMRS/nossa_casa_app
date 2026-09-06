@@ -14,7 +14,7 @@ use Throwable;
 class BibleApiClient
 {
     /** @return list<array{id: string, name: string, abbreviation: string, language: string, language_code: string, scope: string, copyright: string, offline_available: bool}> */
-    public function versions(): array
+    public function versions($language = null): array
     {
         try {
             $remoteVersions = Cache::remember('bible-api.versions.v2', $this->cacheTtl(), function (): array {
@@ -44,6 +44,11 @@ class BibleApiClient
             $remoteVersions = [];
         }
 
+        // Extrai e normaliza os idiomas da requisição para minúsculo
+        $requestLanguages = array_values(array_unique(array_map(function($l) {
+            return strtolower(explode('-', (explode('_', $l)[0]))[0]);
+        }, (request()?->getLanguages() ?: []))));
+
         return collect($remoteVersions)
             ->keyBy('id')
             ->merge(collect($this->onlineVersions())->mapWithKeys(
@@ -53,7 +58,28 @@ class BibleApiClient
                 fn (array $version, string $id): array => [$id => $this->configuredVersionMetadata($id, $version, true)],
             ))
             ->sortBy([
+                // 1º Critério: Prioridade baseada no idioma da requisição
+                [function ($item) use ($requestLanguages) {
+                    $langCode = strtolower($item['language_code'] ?? '');
+                    $langName = strtolower($item['language'] ?? '');
+                    
+                    // Busca correpondencia atraves do idioma do usuário
+                    foreach ($requestLanguages as $index => $reqLang) {
+                        if (class_exists('Locale') && ($langName !== '' || $langCode !== '')) {
+                            $originLanguage = strtolower(\Locale::getDisplayLanguage($reqLang, 'en'));
+                            if ($originLanguage === $langName || substr($originLanguage, 0) === $langName) {
+                                return $index;
+                            }
+                        }
+                    }
+                    
+                    return 9999;
+                }, 'asc'],
+                
+                // 2º Critério: Ordem alfabética pelo idioma principal
                 ['language', 'asc'],
+                
+                // 3º Critério: Ordem alfabética pelo nome da versão
                 ['name', 'asc'],
             ])
             ->values()

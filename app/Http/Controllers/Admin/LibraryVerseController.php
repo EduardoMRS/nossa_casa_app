@@ -9,6 +9,7 @@ use App\Models\Library;
 use App\Models\Setting;
 use App\Services\Bible\BibleAccessResolver;
 use App\Services\Bible\BibleApiClient;
+use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\RedirectResponse;
@@ -240,7 +241,8 @@ class LibraryVerseController extends Controller
 
     private function currentChurch(Request $request): Church
     {
-        $church = $request->user()?->church()->first();
+        $domainContext = app(ChurchDomainContext::class);
+        $church = $domainContext->church();
         abort_unless($church instanceof Church, 422, __('church.membership_library_manage_required'));
 
         return $church;
