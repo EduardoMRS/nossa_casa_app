@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureHttpsInProduction;
+use App\Http\Middleware\EnsureLocaleInUrl;
 use App\Http\Middleware\EnsureMediaWorkerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -58,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'church.context' => ResolveApiChurchContext::class,
             'role' => UserRole::class,
             'push.gateway' => ValidatePushGatewaySignature::class,
+            'ensure.locale' => EnsureLocaleInUrl::class,
         ]);
 
         $middleware->trustProxies(

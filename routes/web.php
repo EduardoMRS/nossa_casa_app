@@ -78,14 +78,10 @@ if (! function_exists('categoriesForChurchAndType')) {
     }
 }
 
-// TODO: finalizar construção de rotas com locale fixo para sso
-// Route::group(['prefix' => '{locale}'], function () use($isWayfinderGeneration){
-//         $locales = array_map(function ($locale) {
-//             $parts = explode('_', $locale)[0];
-//             $parts = explode('-', $locale)[0];
-//             return mb_strtolower(trim($parts));
-//         }, config('app.locales'));
 
+// Route::get('/', [PortalController::class, 'index'])->middleware('ensure.locale');
+// // TODO: finalizar construção de rotas com locale fixo para sso
+// Route::group(['middleware' => 'ensure.locale', 'prefix' => '{locale}'], function () use($isWayfinderGeneration){
         Route::get('/', [PortalController::class, 'index'])->name('home');
         Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
         Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');

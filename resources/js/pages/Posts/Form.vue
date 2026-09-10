@@ -182,9 +182,6 @@ const submit = () => {
                         <label class="text-sm font-bold text-foreground">{{
                             t('posts.form.content')
                         }}</label>
-                        <span class="text-xs text-muted-foreground">{{
-                            t('posts.form.content_hint')
-                        }}</span>
                     </div>
                     <MarkdownWysiwyg v-model="form.content" />
                     <p v-if="form.errors.content" class="text-xs text-red-600">

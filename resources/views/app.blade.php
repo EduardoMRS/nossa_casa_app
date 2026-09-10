@@ -56,12 +56,54 @@
             'telephone' => data_get($branding, 'contact_phone'),
         ], static fn (mixed $value): bool => $value !== null && $value !== '')
         : null;
+
+
+    // // Locale links
+    // $locales = collect(config('app.locales'))
+    //     ->map(function ($locale) {
+    //         return mb_strtolower(
+    //             explode('-', explode('_', $locale)[0])[0]
+    //         );
+    //     })
+    //     ->unique();
+
+    // $currentLocale = request()->route('locale')
+    //     ?? app()->getLocale();
+
+    // $currentRoute = request()->route()?->getName();
+
+    // $routeParameters = request()->route()?->parameters() ?? [];
+    // unset($routeParameters['locale']);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="{{ $brandingStyle }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+        @if (request()->route('locale'))
+            <link rel="canonical" href="{{ $canonicalUrl }}">
+            @foreach ($locales as $locale)
+                @php
+                    try {
+                        $localizedUrl = route($currentRoute, [
+                            ...$routeParameters,
+                            'locale' => $locale,
+                        ]);
+                    } catch (\Throwable $e) {
+                        $localizedUrl = null;
+                    }
+                @endphp
+
+                @if ($localizedUrl)
+                    <link
+                        rel="alternate"
+                        hreflang="{{ $locale }}"
+                        href="{{ $localizedUrl }}"
+                    >
+                @endif
+            @endforeach
+        @endif
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

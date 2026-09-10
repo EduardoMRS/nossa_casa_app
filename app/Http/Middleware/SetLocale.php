@@ -6,6 +6,7 @@ use App\Support\ChurchDomainContext;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetLocale
@@ -32,6 +33,10 @@ class SetLocale
         if ($supportedLocales->contains($locale)) {
             App::setLocale($locale);
         }
+
+        // URL::defaults([
+        //     'locale' => $locale,
+        // ]);
 
         return $next($request);
     }
