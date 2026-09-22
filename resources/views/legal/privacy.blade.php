@@ -1,3 +1,10 @@
+@php
+    $locales = collect(config('app.locales', ['en']))
+        ->map(fn (string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
+        ->unique()
+        ->values();
+    $canonicalUrl = url()->current();
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -5,6 +12,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ __('legal.title') }} · {{ config('app.name') }}</title>
         <meta name="description" content="{{ __('legal.meta_description') }}">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+        @foreach ($locales as $locale)
+            <link rel="alternate" hreflang="{{ $locale }}" href="{{ route('legal.privacy', ['locale' => $locale]) }}">
+        @endforeach
+        <link rel="alternate" hreflang="x-default" href="{{ route('legal.privacy', ['locale' => $locales->first()]) }}">
         @vite(['resources/css/app.css'])
     </head>
     <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">

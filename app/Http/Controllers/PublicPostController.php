@@ -32,7 +32,7 @@ final class PublicPostController extends Controller
         )->toArray());
     }
 
-    public function show(Request $request, string $slug): Response
+    public function show(Request $request, string $locale, string $slug): Response
     {
         return Inertia::render('Posts/PublicShow', $this->posts->show(
             $slug,

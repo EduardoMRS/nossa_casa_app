@@ -42,7 +42,14 @@ configureEcho({
 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName =
+    typeof document !== 'undefined'
+        ? document
+              .querySelector('meta[name="app-name"]')
+              ?.getAttribute('content') ||
+          import.meta.env.VITE_APP_NAME ||
+          'Laravel'
+        : import.meta.env.VITE_APP_NAME || 'Laravel';
 
 setUrlDefaults(() => {
     const firstSegment = browserLocation?.pathname.split('/').filter(Boolean)[0];

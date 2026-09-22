@@ -74,6 +74,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta name="portal-host" content="{{ parse_url((string) config('app.url'), PHP_URL_HOST) }}">
+        <meta name="app-name" content="{{ config('app.name', 'Laravel') }}">
 
         @if ($hasLocalizedRoute)
             @foreach ($locales as $locale)

@@ -60,7 +60,7 @@ test('community pages prioritize local churches and expose the organizational tr
         'end_time' => now()->addWeek()->addHours(2),
     ]);
 
-    $this->get('/communities/regional-community?latitude=-3.1200&longitude=-60.0200')
+    $this->get('/en/communities/regional-community?latitude=-3.1200&longitude=-60.0200')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Portal/CommunityShow')
@@ -76,7 +76,7 @@ test('community pages prioritize local churches and expose the organizational tr
             ->where('locationApplied', true));
 
     $this->get('http://nearby-tree.test/communities/regional-community')
-        ->assertRedirect(rtrim((string) config('app.url'), '/').'/communities/regional-community');
+        ->assertRedirect(rtrim((string) config('app.url'), '/').'/en/communities/regional-community');
 });
 
 test('portal community cards link to their public detail page', function () {
@@ -87,7 +87,7 @@ test('portal community cards link to their public detail page', function () {
     Church::factory()->for($community)->create();
     Community::factory()->create(['name' => 'Empty Community', 'slug' => 'empty-community']);
 
-    $this->get('/')
+    $this->get('/en')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Portal/Index')

@@ -31,13 +31,13 @@ test('church home exposes its active transmission widget and guests can watch co
         'content' => 'Welcome to the service!',
     ]);
 
-    $this->get('http://live-church.test/')
+    $this->get('http://live-church.test/en')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Home')
             ->where('activeLiveStream.id', $liveStream->id));
 
-    $this->get("http://live-church.test/transmissoes/{$liveStream->id}")
+    $this->get("http://live-church.test/en/transmissoes/{$liveStream->id}")
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('LiveStreams/Show')

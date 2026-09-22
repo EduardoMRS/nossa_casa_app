@@ -95,6 +95,8 @@ class ResolveChurchDomain
             'home',
             'sitemap',
             'robots',
+            'legacy.legal.privacy',
+            'legacy.communities.show',
             'communities.show',
             'events.index',
             'events.show',

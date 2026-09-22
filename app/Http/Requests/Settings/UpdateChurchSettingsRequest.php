@@ -31,7 +31,7 @@ class UpdateChurchSettingsRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'not_in:'.$mainDomain,
+                Rule::notIn([$mainDomain, 'www.'.$mainDomain]),
                 'regex:/^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/',
                 Rule::unique('churches', 'domain')->ignore($church?->id),
                 Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),

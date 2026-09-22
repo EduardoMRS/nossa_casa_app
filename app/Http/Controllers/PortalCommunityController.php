@@ -25,10 +25,10 @@ final class PortalCommunityController extends Controller
         private readonly GeoDistance $geoDistance,
     ) {}
 
-    public function __invoke(Request $request, Community $community): Response|RedirectResponse
+    public function __invoke(Request $request, string $locale, Community $community): Response|RedirectResponse
     {
         if (! $this->context->isMainDomain()) {
-            return redirect()->away($this->communityUrl($community));
+            return redirect()->away($this->communityUrl($community, $locale));
         }
 
         $location = $request->validate([
@@ -99,9 +99,12 @@ final class PortalCommunityController extends Controller
         ]);
     }
 
-    private function communityUrl(Community $community): string
+    private function communityUrl(Community $community, string $locale): string
     {
-        return rtrim((string) config('app.url'), '/').'/communities/'.$community->slug;
+        return rtrim((string) config('app.url'), '/').route('communities.show', [
+            'locale' => $locale,
+            'community' => $community,
+        ], absolute: false);
     }
 
     /** @return array<string, mixed> */

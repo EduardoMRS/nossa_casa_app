@@ -16,7 +16,7 @@ final class PublicLiveStreamController extends Controller
         private readonly LiveStreamQuery $liveStreams,
     ) {}
 
-    public function show(Request $request, LiveStream $liveStream): Response
+    public function show(Request $request, string $locale, LiveStream $liveStream): Response
     {
         $churchId = $this->context->churchId();
         abort_unless($churchId, 404);

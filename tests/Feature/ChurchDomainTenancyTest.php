@@ -55,6 +55,11 @@ test('main application domain renders the institutional portal', function () {
             ->where('communities.1.churches.0.is_live', false));
 });
 
+test('www alias redirects to the main portal without becoming a church domain', function () {
+    $this->get('http://www.platform.test/pt/communities/example?source=legacy')
+        ->assertRedirect('http://platform.test/pt/communities/example?source=legacy');
+});
+
 test('custom domain renders only content from its church', function () {
     $alpha = createDomainChurch('Alpha Church', 'alpha.test');
     $beta = createDomainChurch('Beta Church', 'beta.test');
@@ -201,6 +206,12 @@ test('system administrator can configure a normalized custom church domain', fun
     $this->actingAs($system)
         ->putJson("http://platform.test/api/church/{$church->id}", [
             'domain' => 'platform.test',
+        ])
+        ->assertUnprocessable();
+
+    $this->actingAs($system)
+        ->putJson("http://platform.test/api/church/{$church->id}", [
+            'domain' => 'www.platform.test',
         ])
         ->assertUnprocessable();
 });

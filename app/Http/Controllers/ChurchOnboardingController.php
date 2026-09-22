@@ -100,7 +100,15 @@ class ChurchOnboardingController extends Controller
             ],
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
-            'domain' => ['nullable', 'string', 'max:255'],
+            'domain' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::notIn([
+                    $this->context->mainHost(),
+                    'www.'.$this->context->mainHost(),
+                ]),
+            ],
             'description' => ['nullable', 'string', 'max:5000'],
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'contact_email' => ['nullable', 'email', 'max:255'],

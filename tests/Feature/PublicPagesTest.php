@@ -65,13 +65,13 @@ test('home links to a public post page with rendered markdown', function () {
         'published_at' => now()->subMinute(),
     ]);
 
-    $this->get('http://publishing.test/')
+    $this->get('http://publishing.test/en')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('latestPosts.0.slug', $post->slug)
             ->where('latestPosts.0.excerpt', 'Main heading A strong update.alert(1)'));
 
-    $this->get('http://publishing.test/posts')
+    $this->get('http://publishing.test/en/posts')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Posts/PublicIndex')
@@ -79,7 +79,7 @@ test('home links to a public post page with rendered markdown', function () {
             ->where('posts.data.0.comments_count', 0)
             ->where('posts.data.0.reactions_count', 0));
 
-    $this->get('http://publishing.test/posts/'.$post->slug)
+    $this->get('http://publishing.test/en/posts/'.$post->slug)
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Posts/PublicShow')

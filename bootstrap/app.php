@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureLocaleInUrl;
 use App\Http\Middleware\EnsureMediaWorkerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RedirectWwwHost;
 use App\Http\Middleware\ResolveApiChurchContext;
 use App\Http\Middleware\ResolveChurchDomain;
 use App\Http\Middleware\SetLocale;
@@ -40,7 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'dashboard/logs-metricas*',
         ]);
 
-        $middleware->web(append: [
+        $middleware->web(prepend: [
+            RedirectWwwHost::class,
+        ], append: [
             SetLocale::class,
             ResolveChurchDomain::class,
             HandleAppearance::class,

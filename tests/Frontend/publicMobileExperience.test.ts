@@ -32,6 +32,14 @@ test('locale switching replaces the URL segment and supplies Wayfinder defaults'
     assert.doesNotMatch(localeSwitcher, /router\.reload\(\)/);
 });
 
+test('Inertia uses the server-configured application name for document titles', () => {
+    const app = readSource('resources/js/app.ts');
+    const shell = readSource('resources/views/app.blade.php');
+
+    assert.match(app, /meta\[name="app-name"\]/);
+    assert.match(shell, /meta name="app-name" content=/);
+});
+
 test('standalone PWA keeps cross-origin church navigation outside its installed origin', () => {
     const pwa = readSource('resources/js/lib/pwa.ts');
     const serviceWorker = readSource('resources/pwa/sw.js');

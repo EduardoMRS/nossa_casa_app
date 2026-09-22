@@ -30,7 +30,7 @@ final class PublicGalleryController extends Controller
         )->toArray());
     }
 
-    public function download(Media $media): StreamedResponse
+    public function download(string $locale, Media $media): StreamedResponse
     {
         $churchId = $this->context->churchId();
         abort_unless($media->status === MediaStatus::APPROVED && $media->gallery, 404);

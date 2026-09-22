@@ -47,6 +47,8 @@ class ChurchController extends Controller
             $request->merge(['domain' => ChurchDomainContext::normalizeDomain($request->string('domain')->toString())]);
         }
 
+        $reservedDomains = $this->reservedDomains();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255',
@@ -54,7 +56,7 @@ class ChurchController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'not_in:'.app(ChurchDomainContext::class)->mainHost(),
+                Rule::notIn($reservedDomains),
             ],
             'address_id' => 'nullable|string|exists:addresses,id',
             'status' => ['required', Rule::enum(ChurchStatus::class)],
@@ -114,6 +116,8 @@ class ChurchController extends Controller
             ]);
         }
 
+        $reservedDomains = $this->reservedDomains();
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('churches')->ignore($church->id)],
@@ -122,7 +126,7 @@ class ChurchController extends Controller
                 'nullable',
                 'string',
                 'max:255',
-                'not_in:'.app(ChurchDomainContext::class)->mainHost(),
+                Rule::notIn($reservedDomains),
                 Rule::unique('churches')->ignore($church->id),
                 Rule::unique('church_registration_requests', 'domain')->where('status', 'pending'),
             ],
@@ -169,6 +173,14 @@ class ChurchController extends Controller
         }
 
         abort_unless($church->community_id === $this->managedCommunityId($request), 403);
+    }
+
+    /** @return array<int, string> */
+    private function reservedDomains(): array
+    {
+        $mainDomain = app(ChurchDomainContext::class)->mainHost();
+
+        return [$mainDomain, 'www.'.$mainDomain];
     }
 
     private function managedCommunityId(Request $request): string

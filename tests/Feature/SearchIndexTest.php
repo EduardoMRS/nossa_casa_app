@@ -98,3 +98,15 @@ test('localized public routes expose canonical and alternate language URLs', fun
         ->assertSee('hreflang="x-default"', false)
         ->assertSee('canonical" href="http://platform.test/pt"', false);
 });
+
+test('localized privacy page exposes indexable metadata and legacy URLs redirect', function () {
+    $this->get('http://platform.test/privacy-and-terms')
+        ->assertRedirect('/en/privacy-and-terms');
+
+    $this->get('http://platform.test/pt/privacy-and-terms')
+        ->assertSuccessful()
+        ->assertSee('<meta name="robots" content="index, follow">', false)
+        ->assertSee('<link rel="canonical" href="http://platform.test/pt/privacy-and-terms">', false)
+        ->assertSee('hreflang="en"', false)
+        ->assertSee('hreflang="pt"', false);
+});

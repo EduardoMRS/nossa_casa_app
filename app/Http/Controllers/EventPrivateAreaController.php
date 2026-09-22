@@ -15,7 +15,7 @@ class EventPrivateAreaController extends Controller
 {
     public function __construct(private readonly ContentEmbedRenderer $embedRenderer) {}
 
-    public function __invoke(Request $request, Event $event): Response
+    public function __invoke(Request $request, string $locale, Event $event): Response
     {
         $churchId = app(ChurchDomainContext::class)->churchId();
         abort_if($churchId && $event->church_id !== $churchId, 404);
