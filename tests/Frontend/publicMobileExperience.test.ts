@@ -17,6 +17,21 @@ test('public mobile shell keeps the hero and locale selector compact', () => {
     assert.match(localeSwitcher, /sm:rounded-full/);
 });
 
+test('locale switching replaces the URL segment and supplies Wayfinder defaults', () => {
+    const app = readSource('resources/js/app.ts');
+    const i18n = readSource('resources/js/lib/i18n.ts');
+    const localeSwitcher = readSource(
+        'resources/js/components/LocaleSwitcher.vue',
+    );
+
+    assert.match(app, /setUrlDefaults\(\(\) =>/);
+    assert.match(app, /document\.documentElement\.lang/);
+    assert.match(i18n, /segments\[0\] = nextLocale/);
+    assert.match(i18n, /segments\.unshift\(nextLocale\)/);
+    assert.match(localeSwitcher, /router\.visit\(localizedPath\(value\)/);
+    assert.doesNotMatch(localeSwitcher, /router\.reload\(\)/);
+});
+
 test('public mobile navigation owns the account action', () => {
     const header = readSource('resources/js/components/PublicHeader.vue');
 

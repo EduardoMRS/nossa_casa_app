@@ -18,6 +18,10 @@
         '--font-sans: '.$fontFamily,
     ]);
     $component = data_get($page, 'component', '');
+    $locales = collect(config('app.locales', ['en']))
+        ->map(fn (string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
+        ->unique()
+        ->values();
     $indexableComponents = [
         'Home',
         'Portal/Index',
@@ -58,22 +62,11 @@
         : null;
 
 
-    // // Locale links
-    // $locales = collect(config('app.locales'))
-    //     ->map(function ($locale) {
-    //         return mb_strtolower(
-    //             explode('-', explode('_', $locale)[0])[0]
-    //         );
-    //     })
-    //     ->unique();
-
-    // $currentLocale = request()->route('locale')
-    //     ?? app()->getLocale();
-
-    // $currentRoute = request()->route()?->getName();
-
-    // $routeParameters = request()->route()?->parameters() ?? [];
-    // unset($routeParameters['locale']);
+    $currentRoute = request()->route()?->getName();
+    $routeParameters = request()->route()?->parameters() ?? [];
+    unset($routeParameters['locale']);
+    $hasLocalizedRoute = $currentRoute !== null && request()->route()?->uri() !== null
+        && str_starts_with(request()->route()->uri(), '{locale}');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="{{ $brandingStyle }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
@@ -81,8 +74,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
-        @if (request()->route('locale'))
-            <link rel="canonical" href="{{ $canonicalUrl }}">
+        @if ($hasLocalizedRoute)
             @foreach ($locales as $locale)
                 @php
                     try {
@@ -103,6 +95,7 @@
                     >
                 @endif
             @endforeach
+            <link rel="alternate" hreflang="x-default" href="{{ route($currentRoute, [...$routeParameters, 'locale' => $locales->first()]) }}">
         @endif
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}

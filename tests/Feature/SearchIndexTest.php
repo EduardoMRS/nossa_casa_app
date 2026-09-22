@@ -26,9 +26,10 @@ test('portal sitemap indexes public communities and active church domains', func
     $this->get('http://platform.test/sitemap.xml')
         ->assertSuccessful()
         ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
-        ->assertSee('<loc>http://platform.test/</loc>', false)
-        ->assertSee('<loc>http://platform.test/communities/indexed-community</loc>', false)
-        ->assertSee('<loc>https://indexed-church.test/</loc>', false)
+        ->assertSee('<loc>http://platform.test/en</loc>', false)
+        ->assertSee('<loc>http://platform.test/pt</loc>', false)
+        ->assertSee('<loc>http://platform.test/en/communities/indexed-community</loc>', false)
+        ->assertSee('<loc>https://indexed-church.test/en</loc>', false)
         ->assertDontSee('inactive-church.test');
 
     $this->get('http://platform.test/robots.txt')
@@ -67,10 +68,10 @@ test('church sitemap indexes public sections events and published posts', functi
 
     $this->get('http://search-church.test/sitemap.xml')
         ->assertSuccessful()
-        ->assertSee('<loc>http://search-church.test/events</loc>', false)
-        ->assertSee('<loc>http://search-church.test/events/'.$event->slug.'</loc>', false)
-        ->assertSee('<loc>http://search-church.test/posts/indexed-post</loc>', false)
-        ->assertSee('<loc>http://search-church.test/biblioteca</loc>', false)
+        ->assertSee('<loc>http://search-church.test/en/events</loc>', false)
+        ->assertSee('<loc>http://search-church.test/en/events/'.$event->slug.'</loc>', false)
+        ->assertSee('<loc>http://search-church.test/en/posts/indexed-post</loc>', false)
+        ->assertSee('<loc>http://search-church.test/en/library</loc>', false)
         ->assertDontSee('draft-post');
 });
 
@@ -80,10 +81,20 @@ test('public pages expose canonical organization metadata', function () {
         'domain' => 'metadata-church.test',
     ]);
 
-    $this->get('http://metadata-church.test/')
+    $this->get('http://metadata-church.test/en')
         ->assertSuccessful()
         ->assertSee('<link rel="canonical" href="http://metadata-church.test">', false)
         ->assertSee('<meta name="robots" content="index, follow">', false)
         ->assertSee('application/ld+json', false)
         ->assertSee('Metadata Church');
+});
+
+test('localized public routes expose canonical and alternate language URLs', function () {
+    $this->get('http://platform.test/pt')
+        ->assertSuccessful()
+        ->assertSee('<html lang="pt"', false)
+        ->assertSee('hreflang="en"', false)
+        ->assertSee('hreflang="pt"', false)
+        ->assertSee('hreflang="x-default"', false)
+        ->assertSee('canonical" href="http://platform.test/pt"', false);
 });

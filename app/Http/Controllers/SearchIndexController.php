@@ -27,7 +27,7 @@ class SearchIndexController extends Controller
 
     public function robots(Request $request): Response
     {
-        $sitemapUrl = $request->getSchemeAndHttpHost().route('sitemap', absolute: false);
+        $sitemapUrl = $request->getSchemeAndHttpHost().'/sitemap.xml';
         $content = implode("\n", [
             'User-agent: *',
             'Allow: /',
@@ -50,15 +50,9 @@ class SearchIndexController extends Controller
     private function portalUrls(ChurchDomainContext $context): array
     {
         $portalUrl = rtrim((string) config('app.url'), '/');
-        $urls = collect([
-            ['path' => '/', 'last_modified' => null],
-            ['path' => route('login', absolute: false), 'last_modified' => null],
-            ['path' => route('register', absolute: false), 'last_modified' => null],
-            ['path' => route('password.request', absolute: false), 'last_modified' => null],
-            ['path' => route('legal.privacy', absolute: false), 'last_modified' => null],
-        ])->map(fn (array $url): array => [
-            'location' => $portalUrl.$url['path'],
-            'last_modified' => $url['last_modified'],
+        $urls = collect($this->locales())->flatMap(fn (string $locale): array => [
+            ['location' => $portalUrl.$this->localizedPath('home', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('legal.privacy', $locale), 'last_modified' => null],
         ]);
 
         Community::query()
@@ -66,10 +60,12 @@ class SearchIndexController extends Controller
             ->oldest('created_at')
             ->get(['slug', 'updated_at'])
             ->each(function (Community $community) use (&$urls, $portalUrl): void {
-                $urls->push([
-                    'location' => $portalUrl.'/'.route('communities.show', $community, absolute: false),
-                    'last_modified' => $community->updated_at?->toAtomString(),
-                ]);
+                foreach ($this->locales() as $locale) {
+                    $urls->push([
+                        'location' => $portalUrl.$this->localizedPath('communities.show', $locale, ['community' => $community->slug]),
+                        'last_modified' => $community->updated_at?->toAtomString(),
+                    ]);
+                }
             });
 
         Church::query()
@@ -79,10 +75,12 @@ class SearchIndexController extends Controller
             ->oldest('created_at')
             ->get(['domain', 'updated_at'])
             ->each(function (Church $church) use (&$urls, $context): void {
-                $urls->push([
-                    'location' => $context->churchUrl($church),
-                    'last_modified' => $church->updated_at?->toAtomString(),
-                ]);
+                foreach ($this->locales() as $locale) {
+                    $urls->push([
+                        'location' => $context->churchUrl($church, $locale),
+                        'last_modified' => $church->updated_at?->toAtomString(),
+                    ]);
+                }
             });
 
         return $urls->all();
@@ -92,31 +90,32 @@ class SearchIndexController extends Controller
     private function churchUrls(Request $request, Church $church): array
     {
         $baseUrl = $request->getSchemeAndHttpHost();
-        $urls = collect([
-            ['path' => '/', 'last_modified' => $church->updated_at?->toAtomString()],
-            ['path' => route('events.index', absolute: false), 'last_modified' => null],
-            ['path' => route('posts.public.index', absolute: false), 'last_modified' => null],
-            ['path' => route('library.index', absolute: false), 'last_modified' => null],
-            ['path' => route('library.bible', absolute: false), 'last_modified' => null],
-            ['path' => route('gallery.index', absolute: false), 'last_modified' => null],
-            ['path' => route('login', absolute: false), 'last_modified' => null],
-            ['path' => route('register', absolute: false), 'last_modified' => null],
-            ['path' => route('password.request', absolute: false), 'last_modified' => null],
-            ['path' => route('legal.privacy', absolute: false), 'last_modified' => null],
-        ])->map(fn (array $url): array => [
-            'location' => $baseUrl.$url['path'],
-            'last_modified' => $url['last_modified'],
-        ]);
+        $urls = collect($this->locales())->flatMap(function (string $locale) use ($church): array {
+            return collect([
+                ['name' => 'home', 'parameters' => [], 'last_modified' => $church->updated_at?->toAtomString()],
+                ['name' => 'events.index', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'posts.public.index', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'library.index', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'library.bible', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'gallery.index', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'legal.privacy', 'parameters' => [], 'last_modified' => null],
+            ])->map(fn (array $url): array => [
+                'location' => $this->localizedPath($url['name'], $locale, $url['parameters']),
+                'last_modified' => $url['last_modified'],
+            ])->all();
+        });
 
         Event::query()
             ->whereBelongsTo($church)
             ->oldest('start_time')
             ->get(['slug', 'updated_at'])
-            ->each(function (Event $event) use ($urls, $baseUrl): void {
-                $urls->push([
-                    'location' => $baseUrl.'/'.route('events.show', $event, absolute: false),
-                    'last_modified' => $event->updated_at?->toAtomString(),
-                ]);
+            ->each(function (Event $event) use (&$urls): void {
+                foreach ($this->locales() as $locale) {
+                    $urls->push([
+                        'location' => $this->localizedPath('events.show', $locale, ['event' => $event->slug]),
+                        'last_modified' => $event->updated_at?->toAtomString(),
+                    ]);
+                }
             });
 
         Post::query()
@@ -124,13 +123,34 @@ class SearchIndexController extends Controller
             ->published()
             ->latest('published_at')
             ->get(['slug', 'updated_at'])
-            ->each(function (Post $post) use ($urls, $baseUrl): void {
-                $urls->push([
-                    'location' => $baseUrl.'/'.route('posts.public.show', $post->slug, absolute: false),
-                    'last_modified' => $post->updated_at?->toAtomString(),
-                ]);
+            ->each(function (Post $post) use (&$urls): void {
+                foreach ($this->locales() as $locale) {
+                    $urls->push([
+                        'location' => $this->localizedPath('posts.public.show', $locale, ['slug' => $post->slug]),
+                        'last_modified' => $post->updated_at?->toAtomString(),
+                    ]);
+                }
             });
 
-        return $urls->all();
+        return $urls->map(fn (array $url): array => [
+            'location' => $baseUrl.$url['location'],
+            'last_modified' => $url['last_modified'],
+        ])->all();
+    }
+
+    /** @return array<int, string> */
+    private function locales(): array
+    {
+        return collect(config('app.locales', ['en']))
+            ->map(fn (string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /** @param array<string, mixed> $parameters */
+    private function localizedPath(string $name, string $locale, array $parameters = []): string
+    {
+        return '/'.ltrim(route($name, [...$parameters, 'locale' => $locale], absolute: false), '/');
     }
 }

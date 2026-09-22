@@ -49,6 +49,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 $isWayfinderGeneration = in_array('wayfinder:generate', $_SERVER['argv'] ?? [], true);
@@ -79,13 +80,30 @@ if (! function_exists('categoriesForChurchAndType')) {
 }
 
 
-// Route::get('/', [PortalController::class, 'index'])->middleware('ensure.locale');
-// // TODO: finalizar construção de rotas com locale fixo para sso
-// Route::group(['middleware' => 'ensure.locale', 'prefix' => '{locale}'], function () use($isWayfinderGeneration){
+Route::get('/', function (Request $request) {
+    $locale = $request->getPreferredLanguage(config('app.locales', ['en'])) ?: config('app.locale');
+
+    return redirect()->to('/'.strtolower(explode('-', str_replace('_', '-', $locale))[0]));
+})->name('root');
+
+Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
+
+URL::defaults([
+    'locale' => mb_strtolower(explode('-', str_replace('_', '-', (string) config('app.locale', 'en')))[0]),
+]);
+
+Route::group([
+    'middleware' => 'ensure.locale',
+    'prefix' => '{locale?}',
+    'defaults' => ['locale' => mb_strtolower(explode('-', str_replace('_', '-', (string) config('app.locale', 'en')))[0])],
+    'where' => ['locale' => implode('|', collect(config('app.locales', ['en']))
+        ->map(fn (string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
+        ->unique()
+        ->all())],
+], function () use ($isWayfinderGeneration) {
         Route::get('/', [PortalController::class, 'index'])->name('home');
         Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
-        Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
-        Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
         Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
         Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
         Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
@@ -223,7 +241,7 @@ if (! function_exists('categoriesForChurchAndType')) {
         if (! $isWayfinderGeneration) {
             Route::get('/transmissoes/{liveStream}', [PublicLiveStreamController::class, 'show']);
         }
-// });
+});
 
 Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrlGenerator $temporaryUrlGenerator) {
     try {

@@ -107,7 +107,7 @@ test('public index and show responses use the requested content locale', functio
     ['event' => $event] = createLocalizedEventFixtures();
 
     $this->withUnencryptedCookie('ncapp_locale', 'pt')
-        ->get('/events')
+        ->get('/pt/events')
         ->assertSuccessful()
         ->assertSee('<html lang="pt"', false)
         ->assertInertia(fn (Assert $page) => $page
@@ -127,7 +127,7 @@ test('registration page localizes form schema while edit pages keep original con
     ['leader' => $leader, 'event' => $event] = createLocalizedEventFixtures();
 
     $this->withUnencryptedCookie('ncapp_locale', 'pt')
-        ->get("/events/{$event->slug}/register")
+        ->get("/pt/events/{$event->slug}/register")
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->where('event.title', 'Evento traduzido')

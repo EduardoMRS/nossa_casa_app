@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { useI18n } from '@/lib/i18n';
+import { localizedPath, useI18n } from '@/lib/i18n';
 import type { SupportedLocale } from '@/lib/i18n';
 
 const { locale, setLocale, t } = useI18n();
@@ -10,7 +10,9 @@ const selectedLocale = computed({
     get: () => locale.value,
     set: (value: SupportedLocale) => {
         setLocale(value);
-        router.reload();
+        router.visit(localizedPath(value), {
+            preserveScroll: true,
+        });
     },
 });
 </script>

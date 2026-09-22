@@ -12,7 +12,8 @@ import ReaderLayout from '@/layouts/ReaderLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
-import { installI18n } from '@/lib/i18n';
+import { installI18n, supportedLocales } from '@/lib/i18n';
+import { setUrlDefaults } from '@/wayfinder';
 import { initializePwa } from '@/lib/pwa';
 
 const browserLocation =
@@ -42,6 +43,24 @@ configureEcho({
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+setUrlDefaults(() => {
+    const firstSegment = browserLocation?.pathname.split('/').filter(Boolean)[0];
+    const candidates = [
+        firstSegment,
+        typeof document !== 'undefined' ? document.documentElement.lang : null,
+        typeof localStorage !== 'undefined'
+            ? localStorage.getItem('ncapp.locale')
+            : null,
+    ];
+    const locale = candidates
+        .map((candidate) => candidate?.toLowerCase().split(/[-_]/)[0])
+        .find((candidate): candidate is (typeof supportedLocales)[number] =>
+            supportedLocales.includes(candidate as (typeof supportedLocales)[number]),
+        );
+
+    return { locale: locale ?? 'en' };
+});
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

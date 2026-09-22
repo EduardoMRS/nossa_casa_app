@@ -15,6 +15,8 @@ interface I18nContext {
 
 export type SupportedLocale = 'en' | 'pt';
 
+export const supportedLocales: readonly SupportedLocale[] = ['pt', 'en'];
+
 const localeStorageKey = 'ncapp.locale';
 const localeCookieKey = 'ncapp_locale';
 const i18nKey: InjectionKey<I18nContext> = Symbol('ncapp-i18n');
@@ -131,3 +133,22 @@ export const installI18n = (app: App, locale: unknown): void => {
 };
 
 export const useI18n = (): I18nContext => inject(i18nKey, fallbackContext);
+
+export const localizedPath = (nextLocale: SupportedLocale): string => {
+    if (typeof window === 'undefined') {
+        return `/${nextLocale}`;
+    }
+
+    const url = new URL(window.location.href);
+    const segments = url.pathname.split('/').filter(Boolean);
+
+    if (supportedLocales.includes(segments[0] as SupportedLocale)) {
+        segments[0] = nextLocale;
+    } else {
+        segments.unshift(nextLocale);
+    }
+
+    url.pathname = `/${segments.join('/')}`;
+
+    return `${url.pathname}${url.search}${url.hash}`;
+};

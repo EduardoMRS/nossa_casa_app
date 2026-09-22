@@ -22,7 +22,8 @@ class SetLocale
             ->church()
             ?->community
             ?->default_locale;
-        $requestedLocale = $request->header('X-Locale')
+        $requestedLocale = $request->route('locale')
+            ?? $request->header('X-Locale')
             ?? $request->cookie('ncapp_locale')
             ?? $request->user()?->profile?->location_lang
             ?? $churchDefaultLocale
@@ -32,11 +33,8 @@ class SetLocale
 
         if ($supportedLocales->contains($locale)) {
             App::setLocale($locale);
+            URL::defaults(['locale' => $locale]);
         }
-
-        // URL::defaults([
-        //     'locale' => $locale,
-        // ]);
 
         return $next($request);
     }
