@@ -86,6 +86,7 @@ const props = defineProps<{
     canOnboard: boolean;
     userCommunityId?: string | null;
     userChurchUrl?: string | null;
+    userChurchId?: string | null;
     reviewableRequests: RegistrationRequest[];
     myRequests: RegistrationRequest[];
     mainDomain: string;
@@ -471,7 +472,10 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 <template>
     <Head :title="t('portal.meta_title')" />
     <div class="min-h-screen min-w-0 overflow-x-clip bg-[#f7f8fc] text-slate-950">
-        <PortalHeader :user-church-url="userChurchUrl" />
+        <PortalHeader
+            :user-church-url="userChurchUrl"
+            :user-church-id="userChurchId"
+        />
 
         <main>
             <section
@@ -610,6 +614,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                     )"
                                     :key="church.id"
                                     :href="church.url ?? undefined"
+                                    :data-church-id="church.id"
                                     class="flex min-w-0 items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-indigo-100"
                                     :class="{
                                         'pointer-events-none opacity-60':
@@ -710,6 +715,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                 <a
                                     v-if="church.url"
                                     :href="church.url"
+                                    :data-church-id="church.id"
                                     class="group flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 hover:border-indigo-200 hover:bg-indigo-50"
                                     ><span class="flex items-center gap-3"
                                         ><ChurchIcon

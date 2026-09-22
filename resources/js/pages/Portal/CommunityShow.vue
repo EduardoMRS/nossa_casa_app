@@ -51,6 +51,7 @@ const props = defineProps<{
     tree: CommunityTreeNodeData[];
     locationApplied: boolean;
     userChurchUrl?: string | null;
+    userChurchId?: string | null;
 }>();
 
 const { locale, t } = useI18n();
@@ -138,7 +139,10 @@ onMounted(() => {
 <template>
     <Head :title="t('portal.community.meta_title', { name: community.name })" />
     <div class="min-h-screen bg-[#f7f8fc] text-slate-950">
-        <PortalHeader :user-church-url="userChurchUrl" />
+        <PortalHeader
+            :user-church-url="userChurchUrl"
+            :user-church-id="userChurchId"
+        />
 
         <main>
             <section
@@ -315,6 +319,7 @@ onMounted(() => {
                         <a
                             v-if="church.url"
                             :href="church.url"
+                            :data-church-id="church.id"
                             class="mt-5 inline-flex items-center gap-2 self-end text-xs font-black text-indigo-700"
                         >
                             {{

@@ -118,6 +118,11 @@ createInertiaApp({
         app.use(plugin);
         installI18n(app, props.initialPage.props.locale);
         applyBranding(props.initialPage.props.branding);
+        initializePwa(
+            (props.initialPage.props.churchContext as
+                | { church?: { id?: string } | null }
+                | undefined)?.church?.id,
+        );
         app.mount(el as HTMLElement);
     },
 });
@@ -127,5 +132,3 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
-
-initializePwa();

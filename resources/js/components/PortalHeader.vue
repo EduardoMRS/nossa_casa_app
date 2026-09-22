@@ -4,7 +4,10 @@ import { computed } from 'vue';
 import { useI18n } from '@/lib/i18n';
 import { dashboard, home, login, register } from '@/routes';
 
-defineProps<{ userChurchUrl?: string | null }>();
+defineProps<{
+    userChurchUrl?: string | null;
+    userChurchId?: string | null;
+}>();
 
 const page = usePage<{
     auth?: {
@@ -42,7 +45,11 @@ const branding = computed(
         <div
             class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:h-18 sm:px-5 lg:px-8"
         >
-            <Link :href="home()" class="flex items-center gap-3">
+            <Link
+                :href="home()"
+                data-pwa-clear-church
+                class="flex items-center gap-3"
+            >
                 <span
                     class="grid size-9 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 p-1 sm:size-11"
                 >
@@ -72,6 +79,7 @@ const branding = computed(
                 <a
                     v-else-if="userChurchUrl"
                     :href="userChurchUrl"
+                    :data-church-id="userChurchId"
                     class="rounded-xl bg-white px-3 py-2.5 text-xs font-black text-indigo-950 sm:px-4"
                     >{{ t('portal.open_my_church') }}</a
                 >

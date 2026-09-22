@@ -32,6 +32,28 @@ test('locale switching replaces the URL segment and supplies Wayfinder defaults'
     assert.doesNotMatch(localeSwitcher, /router\.reload\(\)/);
 });
 
+test('standalone PWA keeps cross-origin church navigation outside its installed origin', () => {
+    const pwa = readSource('resources/js/lib/pwa.ts');
+    const serviceWorker = readSource('resources/pwa/sw.js');
+
+    assert.match(pwa, /display-mode: standalone/);
+    assert.match(pwa, /target\.origin !== window\.location\.origin/);
+    assert.match(pwa, /window\.open\(target\.toString\(\), '_blank'/);
+    assert.match(serviceWorker, /sameOriginTarget/);
+});
+
+test('PWA church context stays on the portal origin and is sent with requests', () => {
+    const pwa = readSource('resources/js/lib/pwa.ts');
+    const context = readSource('app/Support/ChurchContext.php');
+    const manifest = readSource('app/Http/Controllers/PwaController.php');
+
+    assert.match(pwa, /searchParams\.set\('church_id', churchId\)/);
+    assert.match(pwa, /'X-Church-ID': churchId/);
+    assert.match(context, /header\('X-Church-ID'\)/);
+    assert.match(context, /query\('church_id'\)/);
+    assert.match(manifest, /'start_url' => '\/\?pwa=1'/);
+});
+
 test('public mobile navigation owns the account action', () => {
     const header = readSource('resources/js/components/PublicHeader.vue');
 

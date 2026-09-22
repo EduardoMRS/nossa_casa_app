@@ -105,9 +105,12 @@ self.addEventListener('notificationclick', (event) => {
         self.clients
             .matchAll({ type: 'window', includeUncontrolled: true })
             .then((clients) => {
-                const matchingClient = clients.find((client) =>
-                    client.url.startsWith(self.location.origin),
-                );
+                const sameOriginTarget = new URL(targetUrl).origin === self.location.origin;
+                const matchingClient = sameOriginTarget
+                    ? clients.find((client) =>
+                          client.url.startsWith(self.location.origin),
+                      )
+                    : null;
 
                 if (matchingClient) {
                     matchingClient.navigate(targetUrl);
@@ -399,7 +402,7 @@ async function cachedHtmlPage(cache, request) {
 
 async function networkFirstPage(request) {
     try {
-        const response = await fetch(request);
+        const response = await fetch(withPwaHeaders(request));
 
         if (isHtmlPageResponse(response)) {
             const cache = await caches.open(PAGE_CACHE);
@@ -432,6 +435,13 @@ async function networkFirstPage(request) {
             },
         );
     }
+}
+
+function withPwaHeaders(request) {
+    const headers = new Headers(request.headers);
+    headers.set('X-PWA-APP', '1');
+
+    return new Request(request, { headers });
 }
 
 function escapeHtml(value) {

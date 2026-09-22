@@ -32,9 +32,9 @@ class PortalController extends Controller
 
     public function index(Request $request): Response
     {
-        return $this->context->isMainDomain()
-            ? $this->platformHome($request)
-            : $this->churchHome();
+        return $this->context->church()
+            ? $this->churchHome()
+            : $this->platformHome($request);
     }
 
     private function platformHome(Request $request): Response
@@ -167,6 +167,7 @@ class PortalController extends Controller
                 && $request->user()->church?->domain
                     ? $this->context->churchUrl($request->user()->church)
                     : null,
+            'userChurchId' => $request->user()?->church?->id,
             'mainDomain' => $this->context->mainHost(),
             'reviewableRequests' => $reviewableRequests,
             'myRequests' => $myRequests,

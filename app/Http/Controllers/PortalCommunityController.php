@@ -95,6 +95,7 @@ final class PortalCommunityController extends Controller
             'userChurchUrl' => $request->user()?->church?->domain
                 ? $this->context->churchUrl($request->user()->church)
                 : null,
+            'userChurchId' => $request->user()?->church?->id,
         ]);
     }
 

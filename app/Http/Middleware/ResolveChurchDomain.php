@@ -30,6 +30,13 @@ class ResolveChurchDomain
 
         $this->context->resolve($request);
         $church = $this->context->church();
+
+        if ($this->context->isMainDomain()
+            && $church
+            && ($request->boolean('pwa') || $request->header('X-PWA-APP') === '1')) {
+            cookie()->queue(cookie('ncapp_pwa_church_id', $church->id, 60 * 24 * 365));
+        }
+
         $church
             ? $this->mailManager->configureFor($church)
             : $this->mailManager->reset();

@@ -30,6 +30,22 @@ class ChurchContext
         $this->source = 'domain';
 
         if ($this->mainDomain) {
+            $isPwaRequest = $request->boolean('pwa') || $request->header('X-PWA-APP') === '1';
+            $requestedChurchId = $request->header('X-Church-ID')
+                ?? ($isPwaRequest
+                    ? $request->query('church_id') ?? $request->cookie('ncapp_pwa_church_id')
+                    : null);
+
+            if (is_string($requestedChurchId) && Str::isUlid($requestedChurchId)) {
+                $this->church = $this->activeChurchQuery()->find($requestedChurchId);
+                $this->source = $request->header('X-Church-ID') ? 'header' : 'pwa';
+            } elseif ($isPwaRequest && $request->user() instanceof User) {
+                $this->church = $request->user()->church?->loadMissing(
+                    'community:id,owner_id,name,slug,bible_versions,default_bible_version',
+                );
+                $this->source = $this->church ? 'membership' : 'pwa';
+            }
+
             return;
         }
 

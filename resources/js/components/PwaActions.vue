@@ -4,7 +4,7 @@ import { BellRing, Download } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import { useI18n } from '@/lib/i18n';
-import { usePwa } from '@/lib/pwa';
+import { isPortalOrigin, usePwa } from '@/lib/pwa';
 
 const page = usePage();
 const { t } = useI18n();
@@ -33,6 +33,7 @@ const isIos = computed(() => {
 
     return iosDevice && !standalone;
 });
+const canUsePortalPwa = computed(() => isPortalOrigin());
 
 const installApp = async (): Promise<void> => {
     if (isIos.value && !canInstall.value) {
@@ -57,7 +58,7 @@ const enablePush = async (): Promise<void> => {
 
 <template>
     <div
-        v-if="canInstall || isIos || canEnablePush"
+        v-if="canUsePortalPwa && (canInstall || isIos || canEnablePush)"
         class="flex flex-wrap items-center justify-center gap-2"
     >
         <button

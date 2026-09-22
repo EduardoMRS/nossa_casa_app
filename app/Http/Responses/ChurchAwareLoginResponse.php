@@ -26,6 +26,18 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
 
         $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
 
+        if ($request->header('X-PWA-APP') === '1') {
+            $query = array_filter([
+                'pwa' => '1',
+                'church_id' => $userChurch?->id,
+            ]);
+
+            return $this->response(
+                $request,
+                route('home', ['locale' => app()->getLocale()], absolute: false).'?'.http_build_query($query),
+            );
+        }
+
         if ($domainChurch && $user && ! $isGlobalAdministrator && $userChurch?->id !== $domainChurch->id) {
             return $userChurch?->domain
                 ? $this->handoffResponse($request, $user, $userChurch)

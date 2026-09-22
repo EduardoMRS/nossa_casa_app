@@ -83,11 +83,22 @@ if (! function_exists('categoriesForChurchAndType')) {
 Route::get('/', function (Request $request) {
     $locale = $request->getPreferredLanguage(config('app.locales', ['en'])) ?: config('app.locale');
 
-    return redirect()->to('/'.strtolower(explode('-', str_replace('_', '-', $locale))[0]));
+    $path = '/'.strtolower(explode('-', str_replace('_', '-', $locale))[0]);
+    $query = $request->getQueryString();
+
+    return redirect()->to($path.($query ? '?'.$query : ''));
 })->name('root');
 
 Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
+Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
+Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
+Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
+Route::get('/branding/icon.svg', [BrandingAssetController::class, 'icon'])->name('branding.icon');
+Route::get('/favicon.ico', [BrandingAssetController::class, 'icon'])->name('branding.favicon');
+Route::get('/favicon.svg', [BrandingAssetController::class, 'icon'])->name('branding.favicon-svg');
+Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->name('branding.apple-touch-icon');
+Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
 
 URL::defaults([
     'locale' => mb_strtolower(explode('-', str_replace('_', '-', (string) config('app.locale', 'en')))[0]),
@@ -106,16 +117,6 @@ Route::group([
         Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
         Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
         Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
-        Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
-        Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
-        Route::get('/branding/logo', [BrandingAssetController::class, 'logo'])->name('branding.logo');
-        Route::get('/branding/icon.svg', [BrandingAssetController::class, 'icon'])->name('branding.icon');
-        Route::get('/favicon.ico', [BrandingAssetController::class, 'icon'])->name('branding.favicon');
-        Route::get('/favicon.svg', [BrandingAssetController::class, 'icon'])->name('branding.favicon-svg');
-        Route::get('/apple-touch-icon.png', [BrandingAssetController::class, 'logo'])->name('branding.apple-touch-icon');
-        
-        Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->name('church.auth.handoff');
-        
         Route::middleware('auth')->group(function () {
             Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('classrooms.index');
             Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('classrooms.show');

@@ -6,6 +6,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/lib/i18n';
+import { navigatePwaChurchUrl } from '@/lib/pwa';
 
 type ChurchLink = {
     id: string;
@@ -53,17 +54,17 @@ const continueToOwnChurch = (): void => {
     closeForSession();
 
     if (url) {
-        const target = new URL(url, window.location.origin);
+        const churchId = result.value?.own_church?.id ?? userChurch.value?.id;
 
-        if (target.host !== window.location.host) {
-            window.location.assign(target.toString());
+        if (churchId) {
+            navigatePwaChurchUrl(url, churchId);
         }
     }
 };
 
 const openChurch = (church: NearbyChurch): void => {
     closeForSession();
-    window.location.assign(church.url);
+    navigatePwaChurchUrl(church.url, church.id);
 };
 
 const checkLocation = async (latitude: number, longitude: number): Promise<void> => {

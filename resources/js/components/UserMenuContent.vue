@@ -123,6 +123,7 @@ const transferMembership = async (): Promise<void> => {
             <a
                 class="block w-full cursor-pointer"
                 :href="churchContext.userChurch.url"
+                :data-church-id="churchContext.userChurch.id"
             >
                 <Undo2 class="mr-2 size-4" />
                 {{ t('membership.return_to_own_church') }}

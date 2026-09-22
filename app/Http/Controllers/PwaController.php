@@ -21,7 +21,7 @@ class PwaController extends Controller
             'name' => $name,
             'short_name' => mb_substr((string) $name, 0, 24),
             'description' => __('pwa.description', ['name' => $name]),
-            'start_url' => '/',
+            'start_url' => '/?pwa=1',
             'scope' => '/',
             'display' => 'standalone',
             'orientation' => 'any',

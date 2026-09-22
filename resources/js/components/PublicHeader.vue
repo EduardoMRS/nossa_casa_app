@@ -161,7 +161,11 @@ const navClass = (key: PublicNavKey): string =>
         <div
             class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:px-8"
         >
-            <Link :href="home()" class="group flex shrink-0 items-center gap-3">
+            <Link
+                :href="home()"
+                data-pwa-clear-church
+                class="group flex shrink-0 items-center gap-3"
+            >
                 <span
                     class="grid size-9 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black transition group-hover:scale-105 sm:size-10 sm:text-lg"
                 >
