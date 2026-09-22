@@ -154,6 +154,25 @@
         "copied": "Link copiado para a área de transferência.",
         "unavailable": "O compartilhamento não está disponível neste navegador."
     },
+    "pwa_church": {
+        "initial": {
+            "title": "Abrir sempre esta igreja?",
+            "description": "Você está visualizando {church}. Definir esta igreja como inicial do PWA por 15 dias?"
+        },
+        "switch": {
+            "title": "Trocar a igreja inicial?",
+            "description": "Você está visualizando {church}. Definir esta igreja como inicial por 15 dias?"
+        },
+        "membership": {
+            "title": "Tornar-se membro desta igreja?",
+            "description": "Sua igreja inicial vence em até 3 dias. Deseja tornar-se membro de {church} ou mantê-la como inicial por mais 30 dias?",
+            "login": "Entrar para participar",
+            "register": "Cadastrar para participar",
+            "join": "Tornar-me membro",
+            "continue": "Manter por 30 dias"
+        },
+        "keep": "Usar como igreja inicial"
+    },
     "dialogs": {
         "confirm": {
             "title": "Confirmar ação",

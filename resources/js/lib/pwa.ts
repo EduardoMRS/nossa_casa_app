@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { computed, ref } from 'vue';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -13,6 +13,12 @@ const notificationPermission = ref<NotificationPermission>(
     typeof Notification === 'undefined' ? 'default' : Notification.permission,
 );
 const pwaChurchStorageKey = 'ncapp.pwa_church_id';
+const pwaChurchExpiresAtKey = 'ncapp.pwa_church_expires_at';
+const pwaChurchDefaultDays = 15;
+
+export const isStandalonePwa = (): boolean =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 export const isPortalOrigin = (): boolean => {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -26,20 +32,56 @@ export const isPortalOrigin = (): boolean => {
     return !portalHost || window.location.hostname === portalHost;
 };
 
-const isStandalonePwa = (): boolean =>
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+export const currentPwaChurchId = (): string | null => {
+    const churchId = window.localStorage.getItem(pwaChurchStorageKey);
+    const expiresAt = Number(
+        window.localStorage.getItem(pwaChurchExpiresAtKey),
+    );
 
-const currentPwaChurchId = (): string | null =>
-    window.localStorage.getItem(pwaChurchStorageKey);
+    if (!churchId) {
+        return null;
+    }
 
-const persistPwaChurchId = (churchId: string): void => {
-    window.localStorage.setItem(pwaChurchStorageKey, churchId);
-    document.cookie = `ncapp_pwa_church_id=${encodeURIComponent(churchId)}; Path=/; SameSite=Lax; Max-Age=31536000`;
+    if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+        clearPwaChurchId();
+
+        return null;
+    }
+
+    if (!Number.isFinite(expiresAt)) {
+        persistPwaChurchId(churchId);
+    }
+
+    return churchId;
 };
 
-const clearPwaChurchId = (): void => {
+export const pwaChurchDaysRemaining = (): number | null => {
+    currentPwaChurchId();
+    const expiresAt = Number(
+        window.localStorage.getItem(pwaChurchExpiresAtKey),
+    );
+
+    return Number.isFinite(expiresAt)
+        ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000))
+        : null;
+};
+
+export const persistPwaChurchId = (
+    churchId: string,
+    days = pwaChurchDefaultDays,
+): void => {
+    const maxAge = Math.max(1, days) * 86400;
+    window.localStorage.setItem(pwaChurchStorageKey, churchId);
+    window.localStorage.setItem(
+        pwaChurchExpiresAtKey,
+        String(Date.now() + maxAge * 1000),
+    );
+    document.cookie = `ncapp_pwa_church_id=${encodeURIComponent(churchId)}; Path=/; SameSite=Lax; Max-Age=${maxAge}`;
+};
+
+export const clearPwaChurchId = (): void => {
     window.localStorage.removeItem(pwaChurchStorageKey);
+    window.localStorage.removeItem(pwaChurchExpiresAtKey);
     document.cookie = 'ncapp_pwa_church_id=; Path=/; SameSite=Lax; Max-Age=0';
 };
 
@@ -68,7 +110,8 @@ export const navigatePwaChurchUrl = (value: string, churchId: string): void => {
     const portalUrl = new URL(window.location.href);
     const locale = portalUrl.pathname.split('/').filter(Boolean)[0];
 
-    portalUrl.pathname = target.pathname === '/' ? `/${locale || ''}` : target.pathname;
+    portalUrl.pathname =
+        target.pathname === '/' ? `/${locale || ''}` : target.pathname;
     portalUrl.search = target.search;
     portalUrl.searchParams.set('church_id', churchId);
     portalUrl.searchParams.set('pwa', '1');
@@ -97,7 +140,11 @@ const handleStandaloneExternalNavigation = (event: MouseEvent): void => {
 
     const anchor = target.closest<HTMLAnchorElement>('a[href]');
 
-    if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) {
+    if (
+        !anchor ||
+        anchor.target === '_blank' ||
+        anchor.hasAttribute('download')
+    ) {
         return;
     }
 
@@ -123,17 +170,13 @@ const handleStandaloneExternalNavigation = (event: MouseEvent): void => {
     }
 };
 
-export const initializePwa = (churchId?: string | null): void => {
+export const initializePwa = (): void => {
     if (typeof window === 'undefined') {
         return;
     }
 
     if (!isPortalOrigin()) {
         return;
-    }
-
-    if (isStandalonePwa() && churchId) {
-        persistPwaChurchId(churchId);
     }
 
     window.addEventListener('beforeinstallprompt', (event) => {
@@ -194,12 +237,16 @@ export const initializePwa = (churchId?: string | null): void => {
             window.location.href,
         );
 
-        if (!isStandalonePwa() || requestUrl.origin !== window.location.origin) {
+        if (
+            !isStandalonePwa() ||
+            requestUrl.origin !== window.location.origin
+        ) {
             return originalFetch(input, init);
         }
 
         const headers = new Headers(
-            init.headers ?? (input instanceof Request ? input.headers : undefined),
+            init.headers ??
+                (input instanceof Request ? input.headers : undefined),
         );
         const churchId = currentPwaChurchId();
 

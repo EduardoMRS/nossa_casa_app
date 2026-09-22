@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -26,6 +27,7 @@ class FortifyServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(LoginResponse::class, ChurchAwareLoginResponse::class);
+        $this->app->singleton(RegisterResponse::class, ChurchAwareLoginResponse::class);
         $this->app->singleton(TwoFactorLoginResponse::class, ChurchAwareLoginResponse::class);
     }
 
@@ -84,9 +86,18 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/Register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
+        Fortify::registerView(function (Request $request) {
+            $redirect = $request->string('redirect')->toString();
+
+            if ($redirect !== '') {
+                $request->session()->put('auth.login_redirect', $redirect);
+            }
+
+            return Inertia::render('auth/Register', [
+                'passwordRules' => Password::defaults()->toPasswordRulesString(),
+                'redirect' => $redirect ?: null,
+            ]);
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/TwoFactorChallenge'));
 

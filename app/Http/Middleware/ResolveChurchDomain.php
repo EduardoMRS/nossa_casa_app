@@ -34,7 +34,7 @@ class ResolveChurchDomain
         if ($this->context->isMainDomain()
             && $church
             && ($request->boolean('pwa') || $request->header('X-PWA-APP') === '1')) {
-            cookie()->queue(cookie('ncapp_pwa_church_id', $church->id, 60 * 24 * 365));
+            cookie()->queue(cookie('ncapp_pwa_church_id', $church->id, 60 * 24 * 15));
         }
 
         $church

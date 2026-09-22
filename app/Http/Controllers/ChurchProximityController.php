@@ -65,6 +65,28 @@ final class ChurchProximityController extends Controller
             $source = 'community';
         }
 
+        if ($alternatives === []) {
+            $alternatives = $this->nearbyChurches(
+                $church,
+                $relatedIds,
+                (float) $validated['latitude'],
+                (float) $validated['longitude'],
+                withinThreshold: false,
+            );
+            $source = 'network';
+
+            if ($alternatives === []) {
+                $alternatives = $this->nearbyChurches(
+                    $church,
+                    null,
+                    (float) $validated['latitude'],
+                    (float) $validated['longitude'],
+                    withinThreshold: false,
+                );
+                $source = 'community';
+            }
+        }
+
         return response()->json([
             'should_prompt' => true,
             'distance_km' => $ownDistance,
@@ -87,6 +109,7 @@ final class ChurchProximityController extends Controller
         ?array $churchIds,
         float $latitude,
         float $longitude,
+        bool $withinThreshold = true,
     ): array {
         if (is_array($churchIds) && $churchIds === []) {
             return [];
@@ -98,10 +121,10 @@ final class ChurchProximityController extends Controller
             ->when(is_array($churchIds), fn ($query) => $query->whereKey($churchIds))
             ->with(['address', 'settings'])
             ->get(['id', 'name', 'domain', 'community_id'])
-            ->map(function (Church $candidate) use ($latitude, $longitude): ?array {
+            ->map(function (Church $candidate) use ($latitude, $longitude, $withinThreshold): ?array {
                 $distance = $this->distanceFrom($candidate, $latitude, $longitude);
 
-                if ($distance === null || $distance > self::DISTANCE_THRESHOLD_KM) {
+                if ($distance === null || ($withinThreshold && $distance > self::DISTANCE_THRESHOLD_KM)) {
                     return null;
                 }
 

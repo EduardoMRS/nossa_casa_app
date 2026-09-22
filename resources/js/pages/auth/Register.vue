@@ -13,8 +13,9 @@ import { useI18n } from '@/lib/i18n';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
-defineProps<{
+const props = defineProps<{
     passwordRules: string;
+    redirect?: string | null;
 }>();
 
 defineOptions({
@@ -47,6 +48,12 @@ onMounted(() => {
         v-slot="{ errors, processing }"
         class="flex flex-col gap-6"
     >
+        <input
+            v-if="props.redirect"
+            type="hidden"
+            name="redirect"
+            :value="props.redirect"
+        />
         <input type="hidden" name="location_lang" :value="browserLocale" />
 
         <div class="grid gap-6">
@@ -128,8 +135,12 @@ onMounted(() => {
                     autocomplete="sex"
                     class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
-                    <option value="">{{ t('auth.common.not_informed') }}</option>
-                    <option value="female">{{ t('auth.common.female') }}</option>
+                    <option value="">
+                        {{ t('auth.common.not_informed') }}
+                    </option>
+                    <option value="female">
+                        {{ t('auth.common.female') }}
+                    </option>
                     <option value="male">{{ t('auth.common.male') }}</option>
                     <option value="other">{{ t('auth.common.other') }}</option>
                 </select>

@@ -5,6 +5,7 @@ import { createApp, Fragment, h } from 'vue';
 import ChurchDistancePrompt from '@/components/ChurchDistancePrompt.vue';
 import ConfirmDialogHost from '@/components/ConfirmDialogHost.vue';
 import PwaBottomNavigation from '@/components/PwaBottomNavigation.vue';
+import PwaChurchPrompt from '@/components/PwaChurchPrompt.vue';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -13,8 +14,8 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { installI18n, supportedLocales } from '@/lib/i18n';
-import { setUrlDefaults } from '@/wayfinder';
 import { initializePwa } from '@/lib/pwa';
+import { setUrlDefaults } from '@/wayfinder';
 
 const browserLocation =
     typeof window !== 'undefined' ? window.location : undefined;
@@ -52,7 +53,9 @@ const appName =
         : import.meta.env.VITE_APP_NAME || 'Laravel';
 
 setUrlDefaults(() => {
-    const firstSegment = browserLocation?.pathname.split('/').filter(Boolean)[0];
+    const firstSegment = browserLocation?.pathname
+        .split('/')
+        .filter(Boolean)[0];
     const candidates = [
         firstSegment,
         typeof document !== 'undefined' ? document.documentElement.lang : null,
@@ -63,7 +66,9 @@ setUrlDefaults(() => {
     const locale = candidates
         .map((candidate) => candidate?.toLowerCase().split(/[-_]/)[0])
         .find((candidate): candidate is (typeof supportedLocales)[number] =>
-            supportedLocales.includes(candidate as (typeof supportedLocales)[number]),
+            supportedLocales.includes(
+                candidate as (typeof supportedLocales)[number],
+            ),
         );
 
     return { locale: locale ?? 'en' };
@@ -117,6 +122,7 @@ createInertiaApp({
                 h(Fragment, [
                     h(App, props),
                     h(PwaBottomNavigation),
+                    h(PwaChurchPrompt),
                     h(ChurchDistancePrompt),
                     h(ConfirmDialogHost),
                 ]),
@@ -125,11 +131,7 @@ createInertiaApp({
         app.use(plugin);
         installI18n(app, props.initialPage.props.locale);
         applyBranding(props.initialPage.props.branding);
-        initializePwa(
-            (props.initialPage.props.churchContext as
-                | { church?: { id?: string } | null }
-                | undefined)?.church?.id,
-        );
+        initializePwa();
         app.mount(el as HTMLElement);
     },
 });

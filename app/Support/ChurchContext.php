@@ -29,8 +29,25 @@ class ChurchContext
         $this->resolved = true;
         $this->source = 'domain';
 
+        $isPwaRequest = $request->boolean('pwa') || $request->header('X-PWA-APP') === '1';
+
+        if (! $this->mainDomain && $isPwaRequest) {
+            $requestedChurchId = $request->header('X-Church-ID')
+                ?? $request->query('church_id')
+                ?? $request->cookie('ncapp_pwa_church_id');
+
+            if (is_string($requestedChurchId) && Str::isUlid($requestedChurchId)) {
+                $this->church = $this->activeChurchQuery()->find($requestedChurchId);
+                $this->source = $request->header('X-Church-ID') ? 'header' : 'pwa';
+
+                if ($this->church) {
+                    return;
+                }
+            }
+        }
+
         if ($this->mainDomain) {
-            $isPwaRequest = $request->boolean('pwa') || $request->header('X-PWA-APP') === '1';
+
             $isGlobalAdministrator = $request->user() instanceof User
                 && in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
             $requestedChurchId = $request->header('X-Church-ID')

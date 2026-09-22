@@ -154,6 +154,25 @@
         "copied": "Link copied to clipboard.",
         "unavailable": "Sharing is not available in this browser."
     },
+    "pwa_church": {
+        "initial": {
+            "title": "Open this church every time?",
+            "description": "You are viewing {church}. Set it as the starting church for this PWA for 15 days?"
+        },
+        "switch": {
+            "title": "Change your starting church?",
+            "description": "You are viewing {church}. Set it as the new starting church for 15 days?"
+        },
+        "membership": {
+            "title": "Become a member of this church?",
+            "description": "Your starting church expires in up to 3 days. Join {church}, or keep it as your starting church for 30 more days?",
+            "login": "Log in to join",
+            "register": "Register to join",
+            "join": "Become a member",
+            "continue": "Keep for 30 days"
+        },
+        "keep": "Use as starting church"
+    },
     "dialogs": {
         "confirm": {
             "title": "Confirm action",

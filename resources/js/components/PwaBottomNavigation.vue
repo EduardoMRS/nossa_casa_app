@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import {
     BookOpen,
     CalendarDays,
+    House,
     Image,
     LayoutDashboard,
     LibraryBig,
@@ -13,7 +14,7 @@ import {
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from '@/lib/i18n';
-import { login } from '@/routes';
+import { home, login } from '@/routes';
 import { index as adminEventsIndex } from '@/routes/admin/events';
 import { index as adminGalleryIndex } from '@/routes/admin/galleryModeration';
 import { index as adminLibraryIndex } from '@/routes/admin/libraryVerse';
@@ -63,6 +64,9 @@ const { t } = useI18n();
 const standalone = ref(false);
 const mediaQueries: MediaQueryList[] = [];
 
+const isMainDomain = computed(
+    () => page.props.churchContext?.isMainDomain === true,
+);
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
 
 const hasChurchContext = computed(() =>
@@ -268,10 +272,23 @@ const managerItems = computed(() => {
     ];
 });
 
+const guestItems = computed(() => [
+    {
+        key: 'portal' as const,
+        label: t('nav.home'),
+        href: home(),
+        icon: House,
+        disabled: false,
+    },
+    ...memberItems.value,
+]);
+
 const items = computed(() =>
     isAuthenticated.value && isContentManager.value
         ? managerItems.value
-        : memberItems.value,
+        : !isAuthenticated.value && isMainDomain.value
+          ? guestItems.value
+          : memberItems.value,
 );
 
 const updateStandalone = (): void => {

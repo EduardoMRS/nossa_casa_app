@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Symfony\Component\HttpFoundation\Response;
 
-class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
+class ChurchAwareLoginResponse implements LoginResponse, RegisterResponse, TwoFactorLoginResponse
 {
     public function __construct(private readonly ChurchDomainContext $context) {}
 
@@ -27,6 +28,17 @@ class ChurchAwareLoginResponse implements LoginResponse, TwoFactorLoginResponse
         $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
 
         if ($request->header('X-PWA-APP') === '1') {
+            $redirect = $this->safeRedirectPath($request);
+            $redirectQuery = [];
+
+            if (is_string($redirect)) {
+                parse_str((string) parse_url($redirect, PHP_URL_QUERY), $redirectQuery);
+            }
+
+            if (($redirectQuery['pwa_membership'] ?? null) === '1' && $redirect !== null) {
+                return $this->response($request, $redirect);
+            }
+
             $query = array_filter([
                 'pwa' => '1',
                 'church_id' => $userChurch?->id,
