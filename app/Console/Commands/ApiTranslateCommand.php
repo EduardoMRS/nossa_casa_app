@@ -19,7 +19,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-#[Signature('lang:translate {--dynamic-only : Translate database content without rewriting locale files}')]
+#[Signature('lang:translate {--dynamic-only : Translate database content without rewriting locale files} {--static-only : Translate locale files without rewriting database content}')]
 #[Description('Translate static locale files and dynamic application content')]
 class ApiTranslateCommand extends Command
 {
@@ -75,7 +75,9 @@ class ApiTranslateCommand extends Command
             $this->translateFrontendJson($staticLocales);
         }
 
-        $this->translateDynamicContent($locales);
+        if (! $this->option('static-only')) {
+            $this->translateDynamicContent($locales);
+        }
 
         $this->info('Translation command completed successfully.');
 
