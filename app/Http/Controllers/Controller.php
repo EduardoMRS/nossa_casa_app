@@ -12,7 +12,7 @@ abstract class Controller
     {
         $role = $request->user()->role;
 
-        if ($role === UserRole::SYSTEM) {
+        if (in_array($role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return;
         }
 

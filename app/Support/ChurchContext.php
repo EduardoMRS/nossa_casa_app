@@ -31,14 +31,36 @@ class ChurchContext
 
         if ($this->mainDomain) {
             $isPwaRequest = $request->boolean('pwa') || $request->header('X-PWA-APP') === '1';
+            $isGlobalAdministrator = $request->user() instanceof User
+                && in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
             $requestedChurchId = $request->header('X-Church-ID')
-                ?? ($isPwaRequest
-                    ? $request->query('church_id') ?? $request->cookie('ncapp_pwa_church_id')
+                ?? (($isPwaRequest || $isGlobalAdministrator)
+                    ? $request->query('church_id')
+                        ?? ($isGlobalAdministrator ? $request->session()->get('admin_church_id') : null)
+                        ?? $request->cookie('ncapp_pwa_church_id')
                     : null);
+
+            if ($isGlobalAdministrator && blank($requestedChurchId) && $request->is('dashboard', 'dashboard/*')) {
+                $requestedChurchId = $this->activeChurchQuery()->value('id');
+                $this->source = 'dashboard-default';
+            }
+
+            if (blank($requestedChurchId)
+                && $request->is('dashboard', 'dashboard/*')
+                && $request->user() instanceof User
+                && blank($request->user()->church?->domain)) {
+                $requestedChurchId = $request->user()->church?->id;
+                $this->source = 'membership';
+            }
 
             if (is_string($requestedChurchId) && Str::isUlid($requestedChurchId)) {
                 $this->church = $this->activeChurchQuery()->find($requestedChurchId);
-                $this->source = $request->header('X-Church-ID') ? 'header' : 'pwa';
+                $this->source = $request->header('X-Church-ID')
+                    ? 'header'
+                    : ($isGlobalAdministrator ? 'query' : 'pwa');
+                if ($isGlobalAdministrator && $this->source === 'query' && $request->query('church_id')) {
+                    $request->session()->put('admin_church_id', $requestedChurchId);
+                }
             } elseif ($isPwaRequest && $request->user() instanceof User) {
                 $this->church = $request->user()->church?->loadMissing(
                     'community:id,owner_id,name,slug,bible_versions,default_bible_version',

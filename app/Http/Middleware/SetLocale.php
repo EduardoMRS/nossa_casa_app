@@ -18,10 +18,9 @@ class SetLocale
             ->unique()
             ->values();
 
-        $churchDefaultLocale = app(ChurchDomainContext::class)
-            ->church()
-            ?->community
-            ?->default_locale;
+        $church = app(ChurchDomainContext::class)->church();
+        $churchDefaultLocale = data_get($church?->settings?->options, 'default_locale')
+            ?: $church?->community?->default_locale;
         $requestedLocale = $request->route('locale')
             ?? $request->header('X-Locale')
             ?? $request->cookie('ncapp_locale')

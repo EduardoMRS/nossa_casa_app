@@ -28,7 +28,7 @@ final class PublicLibraryController extends Controller
 
         return Inertia::render(
             'Library/Bible',
-            $this->library->bible($church)->toArray(),
+            $this->library->bible($church, app()->getLocale())->toArray(),
         );
     }
 }

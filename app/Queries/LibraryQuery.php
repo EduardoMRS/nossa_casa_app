@@ -44,12 +44,12 @@ final readonly class LibraryQuery
         ]);
     }
 
-    public function bible(?Church $church): CanonicalData
+    public function bible(?Church $church, ?string $locale = null): CanonicalData
     {
         $access = $church ? $this->access->forChurch($church) : null;
 
         try {
-            $versions = collect($this->bible->versions())
+            $versions = collect($this->bible->versions($locale))
                 ->when($access, fn ($versions) => $versions->whereIn('id', $access['versions']))
                 ->map(fn (array $version): array => [
                     ...$version,

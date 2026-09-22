@@ -16,9 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BrandingController extends Controller
 {
@@ -83,6 +83,9 @@ class BrandingController extends Controller
             'currency' => is_string($setting?->options['currency'] ?? null)
                 ? $setting->options['currency']
                 : 'BRL',
+            'defaultLocale' => (string) ($setting?->options['default_locale']
+                ?? $church->community?->default_locale
+                ?? config('app.locale')),
             'mainDomain' => $this->domainContext->mainHost(),
             'networkSettings' => $this->networkSettings->forChurch($church),
             'mailSettings' => [
@@ -146,6 +149,7 @@ class BrandingController extends Controller
         $templates = Arr::pull($validated, 'templates', []);
         $terminology = Arr::pull($validated, 'terminology', []);
         $currency = Arr::pull($validated, 'currency');
+        $defaultLocale = Arr::pull($validated, 'default_locale');
         $mail = Arr::pull($validated, 'mail');
         $address = Arr::pull($validated, 'address', []);
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
@@ -188,6 +192,7 @@ class BrandingController extends Controller
         $options['templates'] = array_merge($this->defaultTemplates(), $templates);
         $options['terminology'] = $this->terminology->selections($terminology);
         $options['currency'] = $currency ?? $options['currency'] ?? 'BRL';
+        $options['default_locale'] = $defaultLocale;
 
         $addressData = array_merge(
             $this->defaultAddress(),

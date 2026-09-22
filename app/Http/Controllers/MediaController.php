@@ -50,7 +50,7 @@ class MediaController extends Controller
     {
         $validated = $request->validated();
 
-        $church = $request->user()->church;
+        $church = app(ChurchDomainContext::class)->church() ?? $request->user()->church;
         abort_unless($church && $church->exists(), 422, __('church.membership_upload_media_required'));
 
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
@@ -132,7 +132,7 @@ class MediaController extends Controller
 
     public function pending(Request $request)
     {
-        $churchId = $request->user()->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()->church?->id;
 
         abort_unless($churchId, 422, __('church.membership_media_moderate_required'));
 

@@ -130,6 +130,7 @@ const props = defineProps<{
     terminology: TerminologySelections;
     terminologyOptions: TerminologyOptions;
     currency: string;
+    defaultLocale: 'pt' | 'en';
     mainDomain: string;
     mailSettings: MailSettings;
     networkSettings: ChurchNetworkSettingsData;
@@ -317,6 +318,22 @@ const resolvedDomain = computed(() =>
                         />
                         <InputError :message="errors.tagline" />
                     </div>
+                </div>
+
+                <div class="grid gap-2 md:max-w-md">
+                    <Label for="default_locale">{{
+                        t('admin.branding.default_language')
+                    }}</Label>
+                    <select
+                        id="default_locale"
+                        name="default_locale"
+                        :value="props.defaultLocale"
+                        class="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                        <option value="pt">{{ t('portal.fields.language_pt') }}</option>
+                        <option value="en">{{ t('portal.fields.language_en') }}</option>
+                    </select>
+                    <InputError :message="errors.default_locale" />
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">

@@ -53,6 +53,9 @@ class SearchIndexController extends Controller
         $urls = collect($this->locales())->flatMap(fn (string $locale): array => [
             ['location' => $portalUrl.$this->localizedPath('home', $locale), 'last_modified' => null],
             ['location' => $portalUrl.$this->localizedPath('legal.privacy', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('login', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('register', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('password.request', $locale), 'last_modified' => null],
         ]);
 
         Community::query()
@@ -99,6 +102,9 @@ class SearchIndexController extends Controller
                 ['name' => 'library.bible', 'parameters' => [], 'last_modified' => null],
                 ['name' => 'gallery.index', 'parameters' => [], 'last_modified' => null],
                 ['name' => 'legal.privacy', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'login', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'register', 'parameters' => [], 'last_modified' => null],
+                ['name' => 'password.request', 'parameters' => [], 'last_modified' => null],
             ])->map(fn (array $url): array => [
                 'location' => $this->localizedPath($url['name'], $locale, $url['parameters']),
                 'last_modified' => $url['last_modified'],

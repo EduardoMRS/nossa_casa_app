@@ -52,6 +52,7 @@ class UpdateChurchSettingsRequest extends FormRequest
             'contact_phone' => ['nullable', 'string', 'max:60'],
             'contact_whatsapp' => ['nullable', 'string', 'max:60'],
             'currency' => ['sometimes', Rule::in(['BRL', 'USD', 'EUR', 'GBP', 'ARS', 'PYG', 'BOB', 'CLP', 'COP', 'MXN'])],
+            'default_locale' => ['required', Rule::in((array) config('app.locales', ['en', 'pt']))],
             'mail' => ['sometimes', 'array:enabled,allow_branches,host,port,scheme,username,password,from_address,from_name'],
             'mail.enabled' => ['sometimes', 'boolean'],
             'mail.allow_branches' => ['sometimes', 'boolean'],

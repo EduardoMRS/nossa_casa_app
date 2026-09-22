@@ -505,6 +505,7 @@
             "accent_color": "Cor de destaque",
             "surface_color": "Cor de fundo",
             "currency": "Moeda",
+            "default_language": "Idioma padrão",
             "groups": {
                 "identity": "Identidade",
                 "domain": "Domínio",

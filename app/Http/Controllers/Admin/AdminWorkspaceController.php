@@ -40,11 +40,14 @@ class AdminWorkspaceController extends Controller
 {
     use ManagesChurchCategories;
 
-    public function __construct(private ChurchTerminology $terminology) {}
+    public function __construct(
+        private ChurchTerminology $terminology,
+        private ChurchDomainContext $domainContext,
+    ) {}
 
     public function highlights(): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
         $highlights = Highlight::query()
             ->where('church_id', $churchId)
             ->with('highlightable')
@@ -70,7 +73,7 @@ class AdminWorkspaceController extends Controller
 
     public function events(Request $request): Response
     {
-        $churchId = $request->user()?->profile?->church_id;
+        $churchId = $this->currentChurchId();
         $events = Event::query()
             ->where('church_id', $churchId)
             ->withCount(['registrations as users_count', 'forms'])
@@ -86,7 +89,7 @@ class AdminWorkspaceController extends Controller
 
     public function galleryModeration(): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
 
         $media = Media::query()
             ->where('church_id', $churchId)
@@ -131,7 +134,7 @@ class AdminWorkspaceController extends Controller
 
     public function categories(): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
 
         return Inertia::render('Admin/Categories', [
             'title' => __('admin.categories.title'),
@@ -157,7 +160,7 @@ class AdminWorkspaceController extends Controller
 
     public function wallModeration(): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
         $comments = Comment::query()
             ->whereHasMorph('commentable', [Post::class, Event::class, Media::class], fn ($query) => $query->where('church_id', $churchId))
             ->with(['user:id,first_name,last_name', 'commentable'])
@@ -209,7 +212,7 @@ class AdminWorkspaceController extends Controller
 
     public function forms(): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
         $forms = Form::query()
             ->where('church_id', $churchId)
             ->with(['categories:id,name', 'events:id,title', 'posts:id,title'])
@@ -233,7 +236,7 @@ class AdminWorkspaceController extends Controller
 
     public function formCreate(Request $request): Response
     {
-        $churchId = $request->user()?->church?->id;
+        $churchId = $this->currentChurchId();
 
         return Inertia::render('Admin/Form', $this->formEditorProps($churchId));
     }
@@ -298,7 +301,7 @@ class AdminWorkspaceController extends Controller
     {
         $hasPrayerTable = Schema::hasTable('prayer_requests');
         $role = $request->user()->role?->value ?? (string) $request->user()->role;
-        $churchId = $request->user()->church?->id;
+        $churchId = $this->currentChurchId();
         $canSeeAnonymous = in_array($role, ['church_leader', 'superadmin', 'system'], true);
         $myRequests = $hasPrayerTable
             ? PrayerRequest::query()
@@ -337,7 +340,7 @@ class AdminWorkspaceController extends Controller
     {
         $actor = request()->user();
         $role = $actor?->role?->value ?? (string) $actor?->role;
-        $churchId = $actor?->church?->id;
+        $churchId = $this->currentChurchId();
         $users = User::query()
             ->when($role === 'church_leader', fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->where('church_id', $churchId)))
             ->with(['profile', 'church' => fn ($query) => $query->select(['churches.id', 'churches.name'])])
@@ -448,7 +451,7 @@ class AdminWorkspaceController extends Controller
 
     private function classroomWorkspace(bool $kidsOnly): Response
     {
-        $churchId = request()->user()?->church?->id;
+        $churchId = $this->currentChurchId();
         $classrooms = Classroom::query()
             ->where('church_id', $churchId)
             ->when($kidsOnly, fn ($query) => $query->where('is_kids', true))
@@ -492,7 +495,7 @@ class AdminWorkspaceController extends Controller
     public function updateClassroomSettings(Request $request): RedirectResponse
     {
         $validated = $request->validate(['separate_kids_ministry' => ['required', 'boolean']]);
-        $churchId = $request->user()?->church?->id;
+        $churchId = $this->currentChurchId();
         abort_unless($churchId, 422);
         $setting = Setting::query()->firstOrNew(['church_id' => $churchId]);
         $options = $setting->options ?? [];
@@ -517,6 +520,11 @@ class AdminWorkspaceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __($status)]);
 
         return back();
+    }
+
+    private function currentChurchId(): ?string
+    {
+        return $this->domainContext->churchId() ?? request()->user()?->church?->id;
     }
 
     public function logsMetrics(SystemMetricsSnapshot $snapshot): Response

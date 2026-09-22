@@ -505,6 +505,7 @@
             "accent_color": "Accent color",
             "surface_color": "Surface color",
             "currency": "Currency",
+            "default_language": "Default language",
             "groups": {
                 "identity": "Identity",
                 "domain": "Domain",

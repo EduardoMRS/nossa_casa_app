@@ -14,7 +14,7 @@ use Throwable;
 class BibleApiClient
 {
     /** @return list<array{id: string, name: string, abbreviation: string, language: string, language_code: string, scope: string, copyright: string, offline_available: bool}> */
-    public function versions($language = null): array
+    public function versions(?string $language = null): array
     {
         try {
             $remoteVersions = Cache::remember('bible-api.versions.v2', $this->cacheTtl(), function (): array {
@@ -44,12 +44,15 @@ class BibleApiClient
             $remoteVersions = [];
         }
 
-        // Extrai e normaliza os idiomas da requisição para minúsculo
-        $requestLanguages = array_values(array_unique(array_map(function($l) {
-            return strtolower(explode('-', (explode('_', $l)[0]))[0]);
-        }, (request()?->getLanguages() ?: []))));
+        $requestLanguages = array_values(array_unique(array_map(
+            fn (string $locale): string => strtolower(explode('-', str_replace('_', '-', trim($locale)))[0]),
+            array_filter(array_merge(
+                $language !== null ? [$language] : [],
+                request()?->getLanguages() ?: [],
+            )),
+        )));
 
-        $data =  collect($remoteVersions)
+        $data = collect($remoteVersions)
             ->keyBy('id')
             ->merge(collect($this->onlineVersions())->mapWithKeys(
                 fn (array $version, string $id): array => [$id => $this->configuredVersionMetadata($id, $version, false)],
@@ -62,28 +65,31 @@ class BibleApiClient
                 [function ($item) use ($requestLanguages) {
                     $langCode = strtolower($item['language_code'] ?? '');
                     $langName = strtolower($item['language'] ?? '');
-                    
-                    // Busca correpondencia atraves do idioma do usuário
+
                     foreach ($requestLanguages as $index => $reqLang) {
-                        if (class_exists('Locale') && ($langName !== '' || $langCode !== '')) {
-                            $originLanguage = strtolower(\Locale::getDisplayLanguage($reqLang, 'en'));
-                            if ($originLanguage === $langName || substr($originLanguage, 0) === $langName) {
-                                return $index;
-                            }
+                        $languageMatches = match ($reqLang) {
+                            'pt' => in_array($langCode, ['por', 'pt'], true) || str_contains($langName, 'portugu'),
+                            'en' => in_array($langCode, ['eng', 'en'], true) || str_contains($langName, 'english'),
+                            default => $langCode === $reqLang || str_starts_with($langCode, $reqLang),
+                        };
+
+                        if ($languageMatches) {
+                            return $index;
                         }
                     }
-                    
+
                     return 9999;
                 }, 'asc'],
-                
+
                 // 2º Critério: Ordem alfabética pelo idioma principal
                 ['language', 'asc'],
-                
+
                 // 3º Critério: Ordem alfabética pelo nome da versão
                 ['name', 'asc'],
-        ])
+            ])
             ->values()
             ->all();
+
         // $laguagesAvailable = $data->pluck('language')->unique()->values();
         return $data;
     }

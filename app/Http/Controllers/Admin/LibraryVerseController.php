@@ -35,7 +35,7 @@ class LibraryVerseController extends Controller
         $access = $this->bibleAccess->forChurch($church);
 
         try {
-            $versions = $this->bible->versions();
+            $versions = $this->bible->versions($this->churchLocale($church));
             $bibleAvailable = true;
         } catch (Throwable $exception) {
             report($exception);
@@ -146,7 +146,7 @@ class LibraryVerseController extends Controller
 
         if ($validated['scope'] === 'community') {
             abort_unless($church->community !== null && $this->bibleAccess->canManageCommunity($request->user(), $church), 403);
-            
+
             abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
 
             $church->community->update([
@@ -158,7 +158,7 @@ class LibraryVerseController extends Controller
         }
 
         $communityVersions = $this->bibleAccess->forChurch($church)['community_versions'];
-        
+
         $versions = array_values(array_intersect($versions, $communityVersions));
 
         abort_unless(in_array($validated['default_version'], $versions, true), 422, __('bible.default_version_invalid'));
@@ -252,6 +252,13 @@ class LibraryVerseController extends Controller
         abort_unless($church instanceof Church, 422, __('church.membership_library_manage_required'));
 
         return $church;
+    }
+
+    private function churchLocale(Church $church): string
+    {
+        return (string) (data_get($church->settings?->options, 'default_locale')
+            ?: $church->community?->default_locale
+            ?: config('app.locale'));
     }
 
     /** @return array<string, mixed> */

@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\Category;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -24,7 +25,7 @@ trait ManagesChurchCategories
 
     protected function syncChurchCategories(Request $request, string $type, ?string $churchId = null): array
     {
-        $churchId ??= $request->user()?->church?->id;
+        $churchId ??= app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
         $categoryIds = collect($request->input('category_ids', []))
             ->filter()
             ->map(fn ($categoryId) => (string) $categoryId)

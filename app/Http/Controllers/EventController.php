@@ -11,6 +11,7 @@ use App\Models\Event;
 use App\Models\Form;
 use App\Models\User;
 use App\Services\UniqueSlugger;
+use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class EventController extends Controller
         $responsibleIds = Arr::pull($data, 'responsible_ids', []);
         $address = Arr::pull($data, 'address', []);
 
-        $data['church_id'] = $user->church->id ?? null;
+        $data['church_id'] = app(ChurchDomainContext::class)->churchId() ?? $user->church?->id;
         $data['author_id'] = $user->id;
         abort_unless($data['church_id'], 422, __('church.membership_event_create_required'));
         $data['slug'] = $this->slugs->make($data['title'], 'events');
