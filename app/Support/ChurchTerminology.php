@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Church;
+use App\Models\Network;
+
 final class ChurchTerminology
 {
     /**
@@ -121,5 +124,27 @@ final class ChurchTerminology
                 ];
             })
             ->all();
+    }
+
+    /** Resolve terminology through the church network before application defaults. */
+    public function resolvedForChurch(Church $church): array
+    {
+        $current = $church;
+        $visited = [];
+
+        while ($current instanceof Church && ! isset($visited[$current->id])) {
+            $visited[$current->id] = true;
+            $options = $current->settings?->options ?? [];
+            $saved = is_array($options['terminology'] ?? null) ? $options['terminology'] : [];
+            $source = $options['terminology_source'] ?? null;
+
+            if ($saved !== [] && $source !== 'inherited') {
+                return $this->resolved($saved);
+            }
+
+            $current = Network::query()->where('child_church_id', $current->id)->with('parentChurch.settings')->first()?->parentChurch;
+        }
+
+        return $this->resolved();
     }
 }

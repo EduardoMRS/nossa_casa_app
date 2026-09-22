@@ -352,7 +352,8 @@ class AdminWorkspaceController extends Controller
         $savedTerminology = is_array($setting?->options['terminology'] ?? null)
             ? $setting->options['terminology']
             : [];
-        $resolvedTerminology = $this->terminology->resolved($savedTerminology);
+        $terminologyChurch = $churchId ? Church::query()->find($churchId) : null;
+        $resolvedTerminology = $terminologyChurch ? $this->terminology->resolvedForChurch($terminologyChurch) : $this->terminology->resolved();
 
         return Inertia::render('Admin/UserManagement', [
             'users' => $users,

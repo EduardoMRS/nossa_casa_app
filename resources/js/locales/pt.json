@@ -149,6 +149,11 @@
         "accept": "Aceitar",
         "reject": "Recusar"
     },
+    "share": {
+        "button": "Compartilhar",
+        "copied": "Link copiado para a área de transferência.",
+        "unavailable": "O compartilhamento não está disponível neste navegador."
+    },
     "dialogs": {
         "confirm": {
             "title": "Confirmar ação",
@@ -886,10 +891,7 @@
             "anonymous": "Pedido anônimo",
             "mine": "Meu pedido",
             "send_anonymously": "Enviar anonimamente",
-            "stats": [
-                "Pedidos enviados",
-                "Pedidos da igreja"
-            ]
+            "stats": ["Pedidos enviados", "Pedidos da igreja"]
         },
         "wall": {
             "title": "Moderar parede",
@@ -939,11 +941,7 @@
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
-            "stats": [
-                "Igrejas",
-                "Comunidades",
-                "Vínculos de sede/filial"
-            ],
+            "stats": ["Igrejas", "Comunidades", "Vínculos de sede/filial"],
             "status": {
                 "active": "Ativo",
                 "inactive": "Inativo",
@@ -965,11 +963,7 @@
             "reset_password": "Enviar redefinição de senha",
             "protected": "Conta protegida",
             "delete_confirm": "Excluir usuário \"{name}\"?",
-            "stats": [
-                "Total de usuários",
-                "Administradores",
-                "Membros"
-            ]
+            "stats": ["Total de usuários", "Administradores", "Membros"]
         },
         "media": {
             "title": "Moderar galeria",
@@ -998,16 +992,8 @@
             "approve": "Aprovar",
             "reject": "Rejeitar",
             "empty": "Nenhuma mídia registrada ainda.",
-            "actions": [
-                "Abrir galeria pública",
-                "Ir para o painel"
-            ],
-            "stats": [
-                "Mídia submetida",
-                "Pendente",
-                "Aprovado",
-                "Rejeitado"
-            ],
+            "actions": ["Abrir galeria pública", "Ir para o painel"],
+            "stats": ["Mídia submetida", "Pendente", "Aprovado", "Rejeitado"],
             "status": {
                 "pending": "Pendente",
                 "approved": "Aprovado",
@@ -1148,10 +1134,7 @@
                     "Versículos registrados",
                     "Categorias de conteúdo"
                 ],
-                "actions": [
-                    "Abrir página pública",
-                    "Revisar destaques"
-                ]
+                "actions": ["Abrir página pública", "Revisar destaques"]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercessão",
@@ -1162,10 +1145,7 @@
                     "Solicitações anônimas",
                     "Solicitações identificadas"
                 ],
-                "actions": [
-                    "Abrir minhas orações",
-                    "Ir para o painel"
-                ]
+                "actions": ["Abrir minhas orações", "Ir para o painel"]
             }
         },
         "church_network": {
@@ -1255,7 +1235,7 @@
         "login_to_comment": "Faça login para comentar"
     },
     "home": {
-        "meta_title": "Casa",
+        "meta_title": "Inicio",
         "daily_verse": {
             "kicker": "Versículo do dia"
         },

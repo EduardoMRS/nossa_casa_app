@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Edit, Share2 } from '@lucide-vue';
 import { computed } from 'vue';
+import { toast } from 'vue-sonner';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
+    edit as editEvent,
     index as eventsIndex,
     privateArea as eventPrivateArea,
     register as registerEvent,
@@ -15,6 +18,7 @@ type EventDetail = {
     id: string;
     title: string;
     slug: string;
+    canEdit: boolean;
     description: string | null;
     description_html: string;
     start_time: string;
@@ -44,6 +48,7 @@ const props = defineProps<{
 }>();
 
 const { locale, t } = useI18n();
+const page = usePage();
 const publicTemplate = usePublicTemplate('events_show');
 
 const formatter = computed(
@@ -93,10 +98,60 @@ const coverStyle = computed(() => {
 
     return 'background-image: linear-gradient(140deg, #0b3d44 0%, #0f5f68 45%, #0f7a69 100%);';
 });
+const shareEvent = async (): Promise<void> => {
+    const shareData = {
+        title: props.event.title,
+        text: props.event.description ?? props.event.title,
+        url: window.location.href,
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else if (navigator.clipboard) {
+            await navigator.clipboard.writeText(shareData.url);
+            toast.success(t('share.copied'));
+        } else {
+            toast.error(t('share.unavailable'));
+        }
+    } catch (error) {
+        if ((error as DOMException).name !== 'AbortError') {
+            toast.error(t('share.unavailable'));
+        }
+    }
+};
 </script>
 
 <template>
-    <Head :title="event.title" />
+    <Head :title="event.title">
+        <meta
+            head-key="description"
+            name="description"
+            :content="event.description ?? event.title"
+        />
+        <meta head-key="og:title" property="og:title" :content="event.title" />
+        <meta
+            head-key="og:description"
+            property="og:description"
+            :content="event.description ?? event.title"
+        />
+        <meta
+            v-if="event.cover_path"
+            head-key="og:image"
+            property="og:image"
+            :content="event.cover_path"
+        />
+        <meta
+            head-key="twitter:title"
+            name="twitter:title"
+            :content="event.title"
+        />
+        <meta
+            head-key="twitter:description"
+            name="twitter:description"
+            :content="event.description ?? event.title"
+        />
+    </Head>
 
     <div
         class="public-template-page flex min-h-screen flex-col bg-[#f8fafc] text-slate-950"
@@ -150,6 +205,32 @@ const coverStyle = computed(() => {
                     >
                         {{ t('events.show.registrations_unavailable') }}
                     </span>
+                    <button
+                        type="button"
+                        class="flex size-10 items-center justify-center rounded-full bg-white text-[#0b3d44]"
+                        :title="t('share.button')"
+                        :aria-label="t('share.button')"
+                        @click="shareEvent"
+                    >
+                        <Share2 class="size-4" /><span class="sr-only">{{
+                            t('share.button')
+                        }}</span>
+                    </button>
+                    <Link
+                        v-if="event.canEdit"
+                        :href="
+                            editEvent(event.id, {
+                                query: { return_to: page.url },
+                            })
+                        "
+                        class="flex size-10 items-center justify-center rounded-full bg-white text-[#0b3d44]"
+                        :title="t('actions.edit')"
+                        :aria-label="t('actions.edit')"
+                    >
+                        <Edit class="size-4" /><span class="sr-only">{{
+                            t('actions.edit')
+                        }}</span>
+                    </Link>
                     <Link
                         :href="eventsIndex()"
                         class="rounded-full border border-white/35 px-5 py-2.5 text-sm font-semibold text-white"

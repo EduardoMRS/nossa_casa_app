@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Save } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { store, update } from '@/actions/App/Http/Controllers/PostController';
 import CategorySelector from '@/components/CategorySelector.vue';
 import MarkdownWysiwyg from '@/components/MarkdownWysiwyg.vue';
@@ -68,6 +68,19 @@ const slugify = (value: string): string => {
         .replace(/-+/g, '-');
 };
 
+watch(
+    () => form.title,
+    (value) => {
+        if (!isEditing.value) {
+            form.slug = slugify(value);
+        }
+    },
+);
+
+const navigateBack = (): void => {
+    router.visit(props.returnUrl ?? index());
+};
+
 const submit = () => {
     if (!form.slug && form.title) {
         form.slug = slugify(form.title);
@@ -77,9 +90,15 @@ const submit = () => {
         const baseUrl = `/dashboard/events/${props.privateEvent.id}/content/posts`;
 
         if (isEditing.value && props.post?.id) {
-            form.put(`${baseUrl}/${props.post.id}`, { preserveScroll: true });
+            form.put(`${baseUrl}/${props.post.id}`, {
+                preserveScroll: true,
+                onSuccess: navigateBack,
+            });
         } else {
-            form.post(baseUrl, { preserveScroll: true });
+            form.post(baseUrl, {
+                preserveScroll: true,
+                onSuccess: navigateBack,
+            });
         }
 
         return;
@@ -88,14 +107,13 @@ const submit = () => {
     if (isEditing.value && props.post?.id) {
         form.put(update.url({ post: props.post.id }), {
             preserveScroll: true,
+            onSuccess: navigateBack,
         });
 
         return;
     }
 
-    form.post(store.url(), {
-        preserveScroll: true,
-    });
+    form.post(store.url(), { preserveScroll: true, onSuccess: navigateBack });
 };
 </script>
 
@@ -169,7 +187,8 @@ const submit = () => {
                         <input
                             v-model="form.slug"
                             type="text"
-                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
+                            readonly
+                            class="w-full rounded-lg border border-input bg-muted px-3 py-2.5 text-sm text-foreground"
                         />
                         <p v-if="form.errors.slug" class="text-xs text-red-600">
                             {{ form.errors.slug }}
@@ -197,12 +216,24 @@ const submit = () => {
                 />
 
                 <div class="grid gap-3 sm:grid-cols-2">
-                    <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
-                        <input v-model="form.comments_enabled" type="checkbox" class="rounded border-input" />
+                    <label
+                        class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold"
+                    >
+                        <input
+                            v-model="form.comments_enabled"
+                            type="checkbox"
+                            class="rounded border-input"
+                        />
                         {{ t('posts.form.allow_comments') }}
                     </label>
-                    <label class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold">
-                        <input v-model="form.reactions_enabled" type="checkbox" class="rounded border-input" />
+                    <label
+                        class="flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-sm font-bold"
+                    >
+                        <input
+                            v-model="form.reactions_enabled"
+                            type="checkbox"
+                            class="rounded border-input"
+                        />
                         {{ t('posts.form.allow_reactions') }}
                     </label>
                 </div>

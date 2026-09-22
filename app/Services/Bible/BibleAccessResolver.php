@@ -4,6 +4,7 @@ namespace App\Services\Bible;
 
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Models\Network;
 use App\Models\User;
 
 class BibleAccessResolver
@@ -19,7 +20,7 @@ class BibleAccessResolver
         $communityDefault = in_array($church->community?->default_bible_version, $communityVersions, true)
             ? $church->community->default_bible_version
             : ($communityVersions[0] ?? null);
-        $churchVersions = $this->normalizeVersions(data_get($church->settings?->options, 'bible.versions', []));
+        $churchVersions = $this->inheritedChurchVersions($church);
         $allowedChurchVersions = array_values(array_intersect($churchVersions, $communityVersions));
         $versions = $allowedChurchVersions !== [] ? $allowedChurchVersions : $communityVersions;
         $configuredDefault = data_get($church->settings?->options, 'bible.default_version');
@@ -52,5 +53,28 @@ class BibleAccessResolver
             $versions,
             fn (mixed $version): bool => is_string($version) && $version !== '',
         )));
+    }
+
+    /** @return list<string> */
+    private function inheritedChurchVersions(Church $church): array
+    {
+        $current = $church;
+        $visited = [];
+
+        while ($current instanceof Church && ! isset($visited[$current->id])) {
+            $visited[$current->id] = true;
+            $versions = $this->normalizeVersions(data_get($current->settings?->options, 'bible.versions', []));
+
+            if ($versions !== []) {
+                return $versions;
+            }
+
+            $current = Network::query()
+                ->where('child_church_id', $current->id)
+                ->with('parentChurch.settings')
+                ->first()?->parentChurch;
+        }
+
+        return [];
     }
 }

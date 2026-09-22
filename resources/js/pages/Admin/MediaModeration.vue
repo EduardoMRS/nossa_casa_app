@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { Check, Image, Pencil, Plus, Tags, Trash2, Upload } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import {
+    ArrowLeft,
+    Check,
+    Image,
+    Pencil,
+    Plus,
+    Tags,
+    Trash2,
+    Upload,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
@@ -35,6 +44,11 @@ defineProps<{
     categories: ManagedCategory[];
 }>();
 const { t } = useI18n();
+const returnUrl = computed(
+    () =>
+        new URLSearchParams(window.location.search).get('return_to') ||
+        '/dashboard',
+);
 const { confirm } = useConfirmDialog();
 const editorOpen = ref(false);
 const categoriesOpen = ref(false);
@@ -143,6 +157,7 @@ const save = (): void => {
         },
         onSuccess: () => {
             editorOpen.value = false;
+            router.visit(returnUrl.value);
         },
         onFinish: () => {
             processing.value = false;
@@ -183,6 +198,11 @@ onBeforeUnmount(revokePreview);
                 class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"
             >
                 <div>
+                    <Link
+                        :href="returnUrl"
+                        class="mb-3 inline-flex items-center gap-2 text-xs font-bold text-white/80"
+                        ><ArrowLeft class="size-4" />{{ t('nav.back') }}</Link
+                    >
                     <p
                         class="font-mono text-[10px] font-bold tracking-widest text-cyan-200 uppercase"
                     >

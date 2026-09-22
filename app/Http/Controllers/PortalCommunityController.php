@@ -121,7 +121,7 @@ final class PortalCommunityController extends Controller
         $savedTerminology = is_array($church->settings?->options['terminology'] ?? null)
             ? $church->settings->options['terminology']
             : [];
-        $resolvedTerminology = $this->terminology->resolved($savedTerminology);
+        $resolvedTerminology = $this->terminology->resolvedForChurch($church);
         $churchLatitude = $address?->latitude ?? data_get($branding, 'latitude');
         $churchLongitude = $address?->longitude ?? data_get($branding, 'longitude');
         $distance = $latitude !== null && $longitude !== null && is_numeric($churchLatitude) && is_numeric($churchLongitude)

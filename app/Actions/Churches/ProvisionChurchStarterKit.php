@@ -56,6 +56,7 @@ final class ProvisionChurchStarterKit
             'contact_email' => 'contact@'.Str::slug($church->name).'.test',
         ], $savedBranding);
         $options['terminology'] = $this->terminology->selections($savedTerminology);
+        $options['terminology_source'] = 'inherited';
 
         $setting->options = $options;
         $setting->save();

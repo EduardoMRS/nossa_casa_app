@@ -10,6 +10,7 @@ use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
 use App\Services\UniqueSlugger;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -20,7 +21,7 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $churchId = $request->user()?->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
 
         $categories = Category::query()
             ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
@@ -39,7 +40,7 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $churchId = $request->user()?->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
         abort_unless($churchId !== null, 422, __('church.membership_category_manage_required'));
 
         $validated = $request->validate([

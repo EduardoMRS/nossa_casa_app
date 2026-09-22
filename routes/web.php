@@ -61,7 +61,7 @@ Route::get('/.well-known/nossa-casa.json', DiscoveryController::class)
 if (! function_exists('categoriesForChurchAndType')) {
     function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
     {
-        $churchId = $request->user()?->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
 
         if (! $churchId) {
             return collect();
@@ -83,6 +83,17 @@ if (! function_exists('preferredAppLocale')) {
     function preferredAppLocale(Request $request): string
     {
         return mb_strtolower(explode('-', str_replace('_', '-', $request->getPreferredLanguage(config('app.locales', ['en'])) ?: config('app.locale')))[0]);
+    }
+}
+
+if (! function_exists('safeReturnUrl')) {
+    function safeReturnUrl(Request $request, string $fallback): string
+    {
+        $returnUrl = $request->query('return_to');
+
+        return is_string($returnUrl) && str_starts_with($returnUrl, '/') && ! str_starts_with($returnUrl, '//')
+            ? $returnUrl
+            : $fallback;
     }
 }
 
@@ -120,6 +131,27 @@ Route::get('/auth/handoff', [ChurchOnboardingController::class, 'handoff'])->nam
 URL::defaults([
     'locale' => mb_strtolower(explode('-', str_replace('_', '-', (string) config('app.locale', 'en')))[0]),
 ]);
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/classrooms', [ClassroomPortalController::class, 'index']);
+    Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show']);
+    Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store']);
+    Route::get('/classrooms/{classroom:slug}/materials/{material}', ClassroomMaterialDownloadController::class);
+    Route::post('/classrooms/{classroom:slug}/discussions', [ClassroomDiscussionController::class, 'store']);
+    Route::post('/classrooms/{classroom:slug}/discussions/{discussion}/replies', [ClassroomDiscussionController::class, 'reply']);
+
+    Route::get('/dashboard/classrooms/{classroom}/content', [ClassroomContentController::class, 'index']);
+    Route::put('/dashboard/classrooms/{classroom}/content/settings', [ClassroomContentController::class, 'updateSettings']);
+    Route::post('/dashboard/classrooms/{classroom}/content/posts', [ClassroomContentController::class, 'storePost']);
+    Route::put('/dashboard/classrooms/{classroom}/content/posts/{post}', [ClassroomContentController::class, 'updatePost']);
+    Route::delete('/dashboard/classrooms/{classroom}/content/posts/{post}', [ClassroomContentController::class, 'destroyPost']);
+    Route::post('/dashboard/classrooms/{classroom}/content/activities', [ClassroomContentController::class, 'storeActivity']);
+    Route::delete('/dashboard/classrooms/{classroom}/content/activities/{activity}', [ClassroomContentController::class, 'destroyActivity']);
+    Route::post('/dashboard/classrooms/{classroom}/content/materials', [ClassroomContentController::class, 'storeMaterial']);
+    Route::delete('/dashboard/classrooms/{classroom}/content/materials/{material}', [ClassroomContentController::class, 'destroyMaterial']);
+    Route::put('/dashboard/classrooms/{classroom}/content/discussions/{discussion}', [ClassroomContentController::class, 'moderateDiscussion']);
+    Route::delete('/dashboard/classrooms/{classroom}/content/discussions/{discussion}', [ClassroomContentController::class, 'destroyDiscussion']);
+});
 
 Route::group([
     'middleware' => 'ensure.locale',
@@ -484,23 +516,23 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     // Route::get('/churches/{id}/edit', function ($id) { return Inertia::render('Churches/Edit', ['id' => $id]); })->name('churches.edit');
 
     Route::get('/dashboard/events/create', function () {
-        $churchId = request()->user()?->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id;
 
         return Inertia::render('Events/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::EVENT->value),
-            'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
+            'forms' => Form::query()->where('church_id', app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
             'responsibleOptions' => User::query()
                 ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
                 ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER])
                 ->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
             'currency' => Setting::query()->where('church_id', $churchId)->first()?->options['currency'] ?? 'BRL',
-            'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
+            'returnUrl' => safeReturnUrl(request(), request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index')),
         ]);
     })->middleware('role:leader|church_leader|superadmin|system')->name('events.create');
 
     Route::get('/dashboard/events/{event}/edit', function (string $event) {
         $resource = Event::query()->findOrFail($event);
-        abort_unless($resource->church_id === request()->user()?->profile?->church_id, 403);
+        abort_unless($resource->church_id === (app(ChurchDomainContext::class)->churchId() ?? request()->user()?->profile?->church_id), 403);
 
         return Inertia::render('Events/Form', [
             'event' => [
@@ -524,12 +556,12 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
                 ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER])
                 ->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
             'currency' => Setting::query()->where('church_id', $resource->church_id)->first()?->options['currency'] ?? 'BRL',
-            'returnUrl' => request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index'),
+            'returnUrl' => safeReturnUrl(request(), request()->user()?->role?->value === 'leader' ? route('events.index') : route('admin.events.index')),
         ]);
     })->middleware('role:leader|church_leader|superadmin|system')->name('events.edit');
 
     Route::get('/dashboard/posts', function () {
-        $churchId = request()->user()?->church?->id;
+        $churchId = app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id;
         $posts = Post::query()
             ->where('church_id', $churchId)
             ->where('visibility', 'public')
@@ -568,15 +600,17 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     Route::get('/dashboard/posts/create', function () {
         return Inertia::render('Posts/Form', [
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
-            'forms' => Form::query()->where('church_id', request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
+            'returnUrl' => safeReturnUrl(request(), route('posts.index')),
+            'forms' => Form::query()->where('church_id', app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id)->orderBy('title')->get(['id', 'title', 'description']),
         ]);
     })->name('posts.create');
     Route::get('/dashboard/posts/{post}/edit', function ($post) {
         $post = Post::query()->where('visibility', 'public')->with(['church', 'medias'])->findOrFail(request()->route('post'));
-        abort_unless($post->church_id === request()->user()?->church?->id, 403);
+        abort_unless($post->church_id === (app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id), 403);
         $church = $post->church;
         $props = [
             'available_categories' => $church->categories()->get(['id', 'name'])->each->makeHidden('translations'),
+            'returnUrl' => safeReturnUrl(request(), route('posts.index')),
             'categories' => categoriesForChurchAndType(request(), CategoryType::POST->value),
             'forms' => Form::query()->where('church_id', $post->church_id)->orderBy('title')->get(['id', 'title', 'description']),
             'post' => [
@@ -597,7 +631,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     })->name('posts.edit');
     Route::get('/dashboard/posts/{post}', function () {
         $post = Post::query()->where('visibility', 'public')->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
-        abort_unless($post->church_id === request()->user()?->church?->id, 403);
+        abort_unless($post->church_id === (app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id), 403);
         $post->localize(relations: ['church', 'categories']);
         $props = [
             'can' => [

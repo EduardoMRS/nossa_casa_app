@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, CalendarClock, Save } from '@lucide/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { store, update } from '@/actions/App/Http/Controllers/EventController';
@@ -120,7 +120,7 @@ const slugify = (value: string): string => {
 watch(
     () => form.title,
     (value) => {
-        if (!isEditing.value && !form.slug) {
+        if (!isEditing.value) {
             form.slug = slugify(value);
         }
     },
@@ -176,7 +176,7 @@ const submit = () => {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
-            form.clearErrors();
+            router.visit(props.returnUrl);
         },
     };
 
@@ -189,9 +189,7 @@ const submit = () => {
     form.post(store.url(), {
         ...options,
         onSuccess: () => {
-            form.reset();
-            coverPreview.value = '';
-            revokeCoverPreview();
+            router.visit(props.returnUrl);
         },
     });
 };
@@ -271,7 +269,8 @@ onBeforeUnmount(() => {
                         <input
                             v-model="form.slug"
                             type="text"
-                            class="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground"
+                            readonly
+                            class="w-full rounded-lg border border-input bg-muted px-3 py-2.5 text-sm text-foreground"
                         />
                         <p v-if="form.errors.slug" class="text-xs text-red-600">
                             {{ form.errors.slug }}

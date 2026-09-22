@@ -191,8 +191,11 @@ class BrandingController extends Controller
         $options['branding'] = array_merge($currentBranding, $validated);
         $options['templates'] = array_merge($this->defaultTemplates(), $templates);
         $options['terminology'] = $this->terminology->selections($terminology);
+        $options['terminology_source'] = 'church';
         $options['currency'] = $currency ?? $options['currency'] ?? 'BRL';
-        $options['default_locale'] = $defaultLocale;
+        if (is_string($defaultLocale) && $defaultLocale !== '') {
+            $options['default_locale'] = $defaultLocale;
+        }
 
         $addressData = array_merge(
             $this->defaultAddress(),

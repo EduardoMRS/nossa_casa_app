@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
-import { BookOpen, Download, ExternalLink } from '@lucide/vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Download, Edit, ExternalLink, Share2 } from '@lucide/vue';
+import { computed } from 'vue';
+import { toast } from 'vue-sonner';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
+import { index as adminLibraryIndex } from '@/routes/admin/libraryVerse';
 type Item = {
     id: string;
     kind: 'resource';
@@ -27,7 +30,33 @@ defineProps<{
     } | null;
 }>();
 const { t } = useI18n();
+const page = usePage<{ permissions?: { manageLibrary?: boolean } }>();
+const canManageLibrary = computed(
+    () => page.props.permissions?.manageLibrary === true,
+);
 const publicTemplate = usePublicTemplate('library');
+const shareLibraryItem = async (
+    title: string,
+    text: string,
+    url: string,
+): Promise<void> => {
+    const shareData = { title, text, url };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else if (navigator.clipboard) {
+            await navigator.clipboard.writeText(shareData.url);
+            toast.success(t('share.copied'));
+        } else {
+            toast.error(t('share.unavailable'));
+        }
+    } catch (error) {
+        if ((error as DOMException).name !== 'AbortError') {
+            toast.error(t('share.unavailable'));
+        }
+    }
+};
 </script>
 <template>
     <div
@@ -43,7 +72,7 @@ const publicTemplate = usePublicTemplate('library');
         <main
             class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-6 sm:space-y-7 sm:px-6 sm:py-8 lg:px-8"
         >
-            <header class="text-center">
+            <header class="flex flex-col items-center gap-3 text-center">
                 <p
                     class="font-mono text-[10px] font-bold tracking-[0.2em] text-indigo-500 uppercase"
                 >
@@ -57,6 +86,19 @@ const publicTemplate = usePublicTemplate('library');
                 >
                     {{ t('library.description') }}
                 </p>
+                <Link
+                    v-if="canManageLibrary"
+                    :href="
+                        adminLibraryIndex({ query: { return_to: page.url } })
+                    "
+                    class="inline-flex size-10 items-center justify-center rounded-lg bg-indigo-700 text-white"
+                    :title="t('admin.library.title')"
+                    :aria-label="t('admin.library.title')"
+                >
+                    <Edit class="size-4" /><span class="sr-only">{{
+                        t('admin.library.title')
+                    }}</span>
+                </Link>
             </header>
             <section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <article
@@ -92,6 +134,23 @@ const publicTemplate = usePublicTemplate('library');
                     >
                         <BookOpen class="size-4" />{{ t('library.bible.read') }}
                     </Link>
+                    <button
+                        type="button"
+                        class="mt-3 inline-flex size-10 items-center justify-center self-end rounded-lg border border-white/40 text-white"
+                        :title="t('share.button')"
+                        :aria-label="t('share.button')"
+                        @click="
+                            shareLibraryItem(
+                                bible.title,
+                                bible.description,
+                                bible.href,
+                            )
+                        "
+                    >
+                        <Share2 class="size-4" /><span class="sr-only">{{
+                            t('share.button')
+                        }}</span>
+                    </button>
                 </article>
                 <article
                     v-for="item in items.data"
@@ -125,6 +184,23 @@ const publicTemplate = usePublicTemplate('library');
                             t('library.open')
                         }}</a
                     >
+                    <button
+                        type="button"
+                        class="mt-3 inline-flex size-10 items-center justify-center self-end rounded-lg border border-indigo-200 text-indigo-700"
+                        :title="t('share.button')"
+                        :aria-label="t('share.button')"
+                        @click="
+                            shareLibraryItem(
+                                item.title,
+                                item.description ?? item.title,
+                                item.file_url ?? window.location.href,
+                            )
+                        "
+                    >
+                        <Share2 class="size-4" /><span class="sr-only">{{
+                            t('share.button')
+                        }}</span>
+                    </button>
                 </article>
             </section>
             <p

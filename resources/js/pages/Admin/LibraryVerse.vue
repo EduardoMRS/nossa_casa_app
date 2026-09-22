@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
+    ArrowLeft,
     BookOpen,
     FileText,
     Pencil,
@@ -61,6 +62,11 @@ const props = defineProps<{
     bible: BibleSettings;
 }>();
 const { t } = useI18n();
+const returnUrl = computed(
+    () =>
+        new URLSearchParams(window.location.search).get('return_to') ||
+        '/dashboard',
+);
 const { confirm } = useConfirmDialog();
 const verseOpen = ref(false);
 const libraryOpen = ref(false);
@@ -286,6 +292,7 @@ const saveLibrary = (): void => {
         },
         onSuccess: () => {
             libraryOpen.value = false;
+            router.visit(returnUrl.value);
         },
         onFinish: () => {
             processing.value = false;
@@ -349,6 +356,12 @@ onBeforeUnmount(revokePreview);
             class="flex flex-col justify-between gap-4 rounded-2xl bg-gradient-to-br from-indigo-950 to-indigo-800 p-7 text-white md:flex-row md:items-end"
         >
             <div>
+                <Link
+                    :href="returnUrl"
+                    class="mb-3 inline-flex items-center gap-2 text-xs font-bold text-white/80"
+                >
+                    <ArrowLeft class="size-4" />{{ t('nav.back') }}
+                </Link>
                 <p
                     class="font-mono text-[10px] font-bold tracking-widest text-amber-300 uppercase"
                 >

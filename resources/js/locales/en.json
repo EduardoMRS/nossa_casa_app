@@ -149,6 +149,11 @@
         "accept": "Accept",
         "reject": "Reject"
     },
+    "share": {
+        "button": "Share",
+        "copied": "Link copied to clipboard.",
+        "unavailable": "Sharing is not available in this browser."
+    },
     "dialogs": {
         "confirm": {
             "title": "Confirm action",
@@ -808,14 +813,7 @@
                 "processing": "Maintenance mode active...",
                 "error": "The backup operation could not be completed."
             },
-            "stats": [
-                "Users",
-                "Events",
-                "Posts",
-                "Comments",
-                "Media",
-                "Forms"
-            ]
+            "stats": ["Users", "Events", "Posts", "Comments", "Media", "Forms"]
         },
         "live_streams": {
             "title": "Live stream control",
@@ -886,10 +884,7 @@
             "anonymous": "Anonymous request",
             "mine": "My request",
             "send_anonymously": "Send anonymously",
-            "stats": [
-                "Requests sent",
-                "Church requests"
-            ]
+            "stats": ["Requests sent", "Church requests"]
         },
         "wall": {
             "title": "Moderate wall",
@@ -939,11 +934,7 @@
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
-            "stats": [
-                "Churches",
-                "Communities",
-                "Headquarters/branch links"
-            ],
+            "stats": ["Churches", "Communities", "Headquarters/branch links"],
             "status": {
                 "active": "Active",
                 "inactive": "Inactive",
@@ -965,11 +956,7 @@
             "reset_password": "Send password reset",
             "protected": "Protected account",
             "delete_confirm": "Delete user \"{name}\"?",
-            "stats": [
-                "Total users",
-                "Administrators",
-                "Members"
-            ]
+            "stats": ["Total users", "Administrators", "Members"]
         },
         "media": {
             "title": "Moderate gallery",
@@ -998,16 +985,8 @@
             "approve": "Approve",
             "reject": "Reject",
             "empty": "No media registered yet.",
-            "actions": [
-                "Open public gallery",
-                "Go to dashboard"
-            ],
-            "stats": [
-                "Media submitted",
-                "Pending",
-                "Approved",
-                "Rejected"
-            ],
+            "actions": ["Open public gallery", "Go to dashboard"],
+            "stats": ["Media submitted", "Pending", "Approved", "Rejected"],
             "status": {
                 "pending": "Pending",
                 "approved": "Approved",
@@ -1133,11 +1112,7 @@
                     "Published posts",
                     "Published events"
                 ],
-                "actions": [
-                    "Manage posts",
-                    "Open events",
-                    "Church settings"
-                ]
+                "actions": ["Manage posts", "Open events", "Church settings"]
             },
             "library": {
                 "title": "Library and verse",
@@ -1148,10 +1123,7 @@
                     "Registered verses",
                     "Content categories"
                 ],
-                "actions": [
-                    "Open public home",
-                    "Review highlights"
-                ]
+                "actions": ["Open public home", "Review highlights"]
             },
             "prayer_requests": {
                 "title": "Intercession requests",
@@ -1162,10 +1134,7 @@
                     "Anonymous requests",
                     "Identified requests"
                 ],
-                "actions": [
-                    "Open my prayers",
-                    "Go to dashboard"
-                ]
+                "actions": ["Open my prayers", "Go to dashboard"]
             }
         },
         "church_network": {

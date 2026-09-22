@@ -1,11 +1,25 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, CalendarDays, Newspaper, UserRound } from '@lucide/vue';
+import {
+    BookOpen,
+    CalendarDays,
+    Image,
+    LayoutDashboard,
+    LibraryBig,
+    Newspaper,
+    Radio,
+    School,
+    UserRound,
+} from '@lucide/vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from '@/lib/i18n';
 import { login } from '@/routes';
+import { index as adminEventsIndex } from '@/routes/admin/events';
+import { index as adminGalleryIndex } from '@/routes/admin/galleryModeration';
+import { index as adminLibraryIndex } from '@/routes/admin/libraryVerse';
 import { index as eventsIndex } from '@/routes/events';
 import { bible as bibleRoute } from '@/routes/library';
+import { index as adminPostsIndex } from '@/routes/posts';
 import { index as publicPostsIndex } from '@/routes/posts/public';
 import { edit as profileEdit } from '@/routes/profile';
 
@@ -13,7 +27,16 @@ type StandaloneNavigator = Navigator & {
     standalone?: boolean;
 };
 
-type BottomNavigationKey = 'bible' | 'news' | 'events' | 'profile';
+type BottomNavigationKey =
+    | 'bible'
+    | 'news'
+    | 'events'
+    | 'profile'
+    | 'dashboard'
+    | 'media'
+    | 'classrooms'
+    | 'library'
+    | 'live-streams';
 
 const publicShellComponents = new Set([
     'Home',
@@ -41,25 +64,30 @@ const standalone = ref(false);
 const mediaQueries: MediaQueryList[] = [];
 
 const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
-const hasUserChurch = computed(() =>
-    Boolean(
-        (
-            page.props.churchContext as
-                | { userChurch?: { id?: string } | null }
-                | undefined
-        )?.userChurch,
-    ),
-);
 
-const hasChurchContext = computed( () => 
+const hasChurchContext = computed(() =>
     Boolean(
         (
             page.props.churchContext as
-                | { church?: { id?: string } | null }
-                | undefined
+                { church?: { id?: string } | null } | undefined
         )?.church,
     ),
 );
+const role = computed(() => {
+    const rawRole = page.props.auth?.user?.role;
+
+    return typeof rawRole === 'string'
+        ? rawRole
+        : rawRole && typeof rawRole === 'object'
+          ? (rawRole.value ?? '')
+          : '';
+});
+const isContentManager = computed(() =>
+    ['leader', 'media', 'church_leader', 'superadmin', 'system'].includes(
+        role.value,
+    ),
+);
+const permissions = computed(() => page.props.permissions ?? {});
 const currentPath = computed(() => page.url.split(/[?#]/, 1)[0]);
 const isPublicShell = computed(() => publicShellComponents.has(page.component));
 const shouldShow = computed(
@@ -67,7 +95,6 @@ const shouldShow = computed(
         standalone.value &&
         page.component !== 'Library/Bible' &&
         !page.component.startsWith('auth/') &&
-        !currentPath.value.startsWith('/dashboard') &&
         !currentPath.value.startsWith('/classrooms'),
 );
 
@@ -91,6 +118,10 @@ const activeKey = computed<BottomNavigationKey | null>(() => {
         return 'profile';
     }
 
+    if (currentPath.value.startsWith('/dashboard')) {
+        return 'dashboard';
+    }
+
     return null;
 });
 
@@ -100,7 +131,7 @@ const profileHref = computed(() =>
         : login({ query: { redirect: page.url } }),
 );
 
-const items = computed(() => [
+const memberItems = computed(() => [
     {
         key: 'bible' as const,
         label: t('nav.bible'),
@@ -125,11 +156,123 @@ const items = computed(() => [
     {
         key: 'profile' as const,
         label: t('nav.profile'),
-        href: isAuthenticated.value ? profileHref.value : login({ query: { redirect: page.url } }),
+        href: profileHref.value,
         icon: UserRound,
         disabled: false,
     },
 ]);
+
+const managerItems = computed(() => {
+    if (role.value === 'media') {
+        return [
+            {
+                key: 'news' as const,
+                label: t('nav.news'),
+                href: adminPostsIndex(),
+                icon: Newspaper,
+                disabled: !permissions.value.managePosts,
+            },
+            {
+                key: 'media' as const,
+                label: t('nav.gallery'),
+                href: role.value === 'media' ? '/gallery' : adminGalleryIndex(),
+                icon: Image,
+                disabled: false,
+            },
+            {
+                key: 'live-streams' as const,
+                label: t('dashboard.module.live_streams.title'),
+                href: '/dashboard/live-streams',
+                icon: Radio,
+                disabled: !permissions.value.manageLiveStreams,
+            },
+            {
+                key: 'profile' as const,
+                label: t('nav.profile'),
+                href: profileHref.value,
+                icon: UserRound,
+                disabled: false,
+            },
+        ];
+    }
+
+    if (role.value === 'leader') {
+        return [
+            {
+                key: 'news' as const,
+                label: t('nav.news'),
+                href: adminPostsIndex(),
+                icon: Newspaper,
+                disabled: !permissions.value.managePosts,
+            },
+            {
+                key: 'events' as const,
+                label: t('nav.events'),
+                href: adminEventsIndex(),
+                icon: CalendarDays,
+                disabled: !permissions.value.manageEvents,
+            },
+            {
+                key: 'classrooms' as const,
+                label: t('admin.classrooms.title'),
+                href: '/dashboard/classrooms',
+                icon: School,
+                disabled: !permissions.value.manageClassrooms,
+            },
+            {
+                key: 'profile' as const,
+                label: t('nav.profile'),
+                href: profileHref.value,
+                icon: UserRound,
+                disabled: false,
+            },
+        ];
+    }
+
+    return [
+        {
+            key: 'dashboard' as const,
+            label: t('nav.dashboard'),
+            href: '/dashboard',
+            icon: LayoutDashboard,
+            disabled: false,
+        },
+        {
+            key: 'news' as const,
+            label: t('nav.news'),
+            href: adminPostsIndex(),
+            icon: Newspaper,
+            disabled: !permissions.value.managePosts,
+        },
+        {
+            key: 'events' as const,
+            label: t('nav.events'),
+            href: adminEventsIndex(),
+            icon: CalendarDays,
+            disabled: !permissions.value.manageEvents,
+        },
+        {
+            key: 'media' as const,
+            label: t('nav.gallery'),
+            href: adminGalleryIndex(),
+            icon: Image,
+            disabled: !permissions.value.manageMedia,
+        },
+        {
+            key: 'library' as const,
+            label: t('admin.library.title'),
+            href: adminLibraryIndex(),
+            icon: LibraryBig,
+            disabled: !permissions.value.manageLibrary,
+        },
+    ];
+});
+
+const items = computed(() =>
+    isAuthenticated.value && isContentManager.value
+        ? managerItems.value
+        : memberItems.value,
+);
 
 const updateStandalone = (): void => {
     standalone.value =
@@ -202,7 +345,12 @@ onBeforeUnmount(() => {
         :aria-label="t('nav.pwa_navigation')"
         :style="{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }"
     >
-        <div class="mx-auto grid h-16 max-w-md grid-cols-4 px-2">
+        <div
+            :class="[
+                'mx-auto grid h-16 max-w-md px-2',
+                items.length === 5 ? 'grid-cols-5' : 'grid-cols-4',
+            ]"
+        >
             <component
                 :is="item.disabled ? 'span' : Link"
                 v-for="item in items"

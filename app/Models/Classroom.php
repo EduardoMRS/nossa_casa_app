@@ -132,7 +132,7 @@ class Classroom extends Model
 
     public function canBeManagedBy(User $user): bool
     {
-        if ($user->role === UserRole::SYSTEM) {
+        if (in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
             return true;
         }
 

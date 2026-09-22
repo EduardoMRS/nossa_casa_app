@@ -9,21 +9,24 @@ use App\Models\ClassroomDiscussion;
 use App\Models\ClassroomMaterial;
 use App\Models\Form;
 use App\Models\Post;
+use App\Services\UniqueSlugger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ClassroomContentController extends Controller
 {
+    public function __construct(private readonly UniqueSlugger $slugs) {}
+
     public function index(Request $request, Classroom $classroom): Response
     {
         $this->ensureManage($request, $classroom);
         $classroom->load(['posts' => fn ($query) => $query->where('visibility', 'classroom_private')->latest(), 'activities.form', 'materials', 'discussions.author']);
+
         return Inertia::render('Admin/ClassroomContent', [
             'classroom' => $classroom,
             'forms' => Form::query()->where('church_id', $classroom->church_id)->orderBy('title')->get(['id', 'title', 'description']),
@@ -44,7 +47,9 @@ class ClassroomContentController extends Controller
         ]);
         $coverPath = $classroom->cover_path;
         if ($request->hasFile('cover')) {
-            if ($coverPath) Storage::disk((string) config('media.disk'))->delete($coverPath);
+            if ($coverPath) {
+                Storage::disk((string) config('media.disk'))->delete($coverPath);
+            }
             $coverPath = $request->file('cover')->store("church/{$classroom->church_id}/classrooms/{$classroom->id}", (string) config('media.disk'));
         }
         $classroom->update([
@@ -52,6 +57,7 @@ class ClassroomContentController extends Controller
             'cover_path' => $coverPath,
             'portal_settings' => [...($classroom->portal_settings ?? []), 'forum_enabled' => $validated['forum_enabled']],
         ]);
+
         return back()->with('success', __('classroom.notifications.portal_updated'));
     }
 
@@ -67,13 +73,14 @@ class ClassroomContentController extends Controller
         ]);
         $post = Post::query()->create([
             ...$validated,
-            'slug' => Str::slug($validated['title']).'-'.Str::lower((string) Str::ulid()),
+            'slug' => $this->slugs->make($validated['title'], 'posts', scope: ['church_id' => $classroom->church_id]),
             'author_id' => $request->user()->id,
             'church_id' => $classroom->church_id,
             'published_at' => $validated['published_at'] ?? now(),
             'visibility' => 'classroom_private',
         ]);
         $classroom->posts()->attach($post);
+
         return back()->with('success', __('classroom.notifications.post_published'));
     }
 
@@ -88,6 +95,7 @@ class ClassroomContentController extends Controller
             'comments_enabled' => ['required', 'boolean'],
             'reactions_enabled' => ['required', 'boolean'],
         ]));
+
         return back()->with('success', __('classroom.notifications.post_updated'));
     }
 
@@ -96,6 +104,7 @@ class ClassroomContentController extends Controller
         $this->ensureManage($request, $classroom);
         abort_unless($classroom->posts()->whereKey($post->id)->exists(), 404);
         $post->delete();
+
         return back();
     }
 
@@ -112,6 +121,7 @@ class ClassroomContentController extends Controller
             'is_published' => ['required', 'boolean'],
         ]);
         $classroom->activities()->create([...$validated, 'created_by_id' => $request->user()->id]);
+
         return back()->with('success', __('classroom.notifications.activity_created'));
     }
 
@@ -120,6 +130,7 @@ class ClassroomContentController extends Controller
         $this->ensureManage($request, $classroom);
         abort_unless($activity->classroom_id === $classroom->id, 404);
         $activity->delete();
+
         return back();
     }
 
@@ -143,6 +154,7 @@ class ClassroomContentController extends Controller
             'mimetype' => $file?->getMimeType(),
             'size' => $file?->getSize(),
         ]);
+
         return back()->with('success', __('classroom.notifications.material_added'));
     }
 
@@ -150,8 +162,11 @@ class ClassroomContentController extends Controller
     {
         $this->ensureManage($request, $classroom);
         abort_unless($material->classroom_id === $classroom->id, 404);
-        if ($material->file_path) Storage::disk($material->disk ?: (string) config('media.disk'))->delete($material->file_path);
+        if ($material->file_path) {
+            Storage::disk($material->disk ?: (string) config('media.disk'))->delete($material->file_path);
+        }
         $material->delete();
+
         return back();
     }
 
@@ -161,6 +176,7 @@ class ClassroomContentController extends Controller
         abort_unless($discussion->classroom_id === $classroom->id, 404);
         $validated = $request->validate(['is_pinned' => ['required', 'boolean'], 'is_locked' => ['required', 'boolean']]);
         $discussion->update([...$validated, 'pinned_by_id' => $validated['is_pinned'] ? $request->user()->id : null]);
+
         return response()->json($discussion);
     }
 
@@ -169,12 +185,13 @@ class ClassroomContentController extends Controller
         $this->ensureManage($request, $classroom);
         abort_unless($discussion->classroom_id === $classroom->id, 404);
         $discussion->delete();
+
         return back();
     }
 
     private function ensureManage(Request $request, Classroom $classroom): void
     {
-        $this->ensurePublicChurchResource($classroom->church_id);
+        $this->ensureChurchAccess($request, $classroom->church_id);
         abort_unless($request->user()->can('manage', $classroom), 403);
     }
 }

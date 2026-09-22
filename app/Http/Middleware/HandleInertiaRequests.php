@@ -200,6 +200,18 @@ class HandleInertiaRequests extends Middleware
                 'manageBranding' => ($currentChurch !== null || $isUnassignedChurchDashboard)
                     && ($isGlobalAdministrator || $isOwnChurch)
                     && in_array($role, ['church_leader', 'superadmin', 'system'], true),
+                'managePosts' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true),
+                'manageEvents' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true),
+                'manageMedia' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['media', 'church_leader', 'superadmin', 'system'], true),
+                'manageLibrary' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['church_leader', 'superadmin', 'system'], true),
+                'manageClassrooms' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true),
+                'manageLiveStreams' => ($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['media', 'church_leader', 'superadmin', 'system'], true),
             ],
             'classrooms' => [
                 'hasAccess' => $hasAccessibleClassrooms,

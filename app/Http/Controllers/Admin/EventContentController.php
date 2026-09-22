@@ -11,19 +11,21 @@ use App\Models\EventMaterial;
 use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
+use App\Services\UniqueSlugger;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class EventContentController extends Controller
 {
+    public function __construct(private readonly UniqueSlugger $slugs) {}
+
     use ManagesChurchCategories;
 
     public function index(Request $request, Event $event): Response
@@ -82,7 +84,6 @@ class EventContentController extends Controller
         $this->ensureCanManage($request, $event);
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:posts,slug'],
             'content' => ['required', 'string'],
             'published_at' => ['nullable', 'date'],
             'expires_at' => ['nullable', 'date', 'after:published_at'],
@@ -92,7 +93,7 @@ class EventContentController extends Controller
         ]);
         $post = Post::query()->create([
             ...collect($validated)->except('form_id')->all(),
-            'slug' => $validated['slug'] ?: Str::slug($validated['title']).'-'.Str::lower((string) Str::ulid()),
+            'slug' => $this->slugs->make($validated['title'], 'posts', scope: ['church_id' => $event->church_id]),
             'author_id' => $request->user()->id,
             'church_id' => $event->church_id,
             'published_at' => $validated['published_at'] ?? now(),

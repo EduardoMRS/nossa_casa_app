@@ -36,7 +36,7 @@ class ChurchContext
             $requestedChurchId = $request->header('X-Church-ID')
                 ?? (($isPwaRequest || $isGlobalAdministrator)
                     ? $request->query('church_id')
-                        ?? ($isGlobalAdministrator ? $request->session()->get('admin_church_id') : null)
+                        ?? ($isGlobalAdministrator ? $request->hasSession() ? $request->session()->get('admin_church_id') : null : null)
                         ?? $request->cookie('ncapp_pwa_church_id')
                     : null);
 
@@ -58,7 +58,9 @@ class ChurchContext
                 $this->source = $request->header('X-Church-ID')
                     ? 'header'
                     : ($isGlobalAdministrator ? 'query' : 'pwa');
-                if ($isGlobalAdministrator && $this->source === 'query' && $request->query('church_id')) {
+                if ($isGlobalAdministrator
+                    && in_array($this->source, ['query', 'dashboard-default'], true)
+                    && $requestedChurchId) {
                     $request->session()->put('admin_church_id', $requestedChurchId);
                 }
             } elseif ($isPwaRequest && $request->user() instanceof User) {
@@ -81,6 +83,14 @@ class ChurchContext
         $this->resolved = true;
         $this->mainDomain = self::normalizeDomain($request->getHost()) === $this->mainHost();
         $requestedChurchId = $request->header('X-Church-ID');
+        $isGlobalAdministrator = $request->user() instanceof User
+            && in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+
+        if (blank($requestedChurchId) && $this->mainDomain && $isGlobalAdministrator) {
+            $requestedChurchId = $request->query('church_id')
+                ?? ($request->hasSession() ? $request->session()->get('admin_church_id') : null)
+                ?? $this->activeChurchQuery()->value('id');
+        }
 
         if (is_string($requestedChurchId) && $requestedChurchId !== '') {
             if (! Str::isUlid($requestedChurchId)) {
@@ -188,6 +198,12 @@ class ChurchContext
 
         if ($memberships->count() === 1) {
             return $memberships->first()?->loadMissing('community:id,owner_id,name,slug,bible_versions,default_bible_version');
+        }
+
+        $profileChurch = $user->church;
+
+        if ($profileChurch?->status === ChurchStatus::ACTIVE) {
+            return $profileChurch->loadMissing('community:id,owner_id,name,slug,bible_versions,default_bible_version');
         }
 
         return null;

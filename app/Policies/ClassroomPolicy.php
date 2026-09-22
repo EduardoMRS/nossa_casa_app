@@ -14,8 +14,8 @@ class ClassroomPolicy
 
     public function view(User $user, Classroom $classroom): bool
     {
-        return $classroom->portal_enabled
-            && ($classroom->hasMember($user) || $classroom->canBeManagedBy($user));
+        return $classroom->canBeManagedBy($user)
+            || ($classroom->portal_enabled && $classroom->hasMember($user));
     }
 
     public function manage(User $user, Classroom $classroom): bool
@@ -25,12 +25,13 @@ class ClassroomPolicy
 
     public function submitActivity(User $user, Classroom $classroom): bool
     {
-        return $this->view($user, $classroom);
+        return $classroom->portal_enabled && $classroom->hasMember($user);
     }
 
     public function participateInForum(User $user, Classroom $classroom): bool
     {
-        return $this->view($user, $classroom)
+        return $classroom->portal_enabled
+            && $classroom->hasMember($user)
             && ($classroom->portal_settings['forum_enabled'] ?? true);
     }
 }

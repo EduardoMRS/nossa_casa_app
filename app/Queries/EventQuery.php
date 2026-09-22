@@ -3,6 +3,7 @@
 namespace App\Queries;
 
 use App\Data\CanonicalData;
+use App\Enums\UserRole;
 use App\Models\Event;
 use App\Models\User;
 use App\Support\ContentEmbedRenderer;
@@ -41,10 +42,16 @@ final class EventQuery
         $registrationRecord = $user
             ? $event->registrations()->where('user_id', $user->id)->first()
             : null;
+        $role = $user?->role?->value ?? (string) $user?->role;
+        $canEdit = $user !== null
+            && (in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
+                || ($user->church?->id === $event->church_id
+                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true)));
 
         return new CanonicalData([
             'event' => [
                 ...$this->item($event),
+                'canEdit' => $canEdit,
                 'description_html' => $this->embedRenderer->render($event->description ?? '', $event->church_id),
                 'categories' => $event->categories->pluck('name')->values()->all(),
                 'address' => $event->address,

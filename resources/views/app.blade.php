@@ -39,15 +39,36 @@
     $canonicalUrl = url()->current();
     $churchName = data_get($page, 'props.churchContext.church.name');
     $communityName = data_get($page, 'props.community.name');
-    $seoName = $communityName ?: ($churchName ?: (data_get($branding, 'brand_name') ?: config('app.name')));
-    $seoDescription = data_get($page, 'props.community.description')
+    $contentTitle = data_get($page, 'props.post.title') ?: data_get($page, 'props.event.title');
+    $sectionTitle = match ($component) {
+        'Events/Index' => __('events.index.meta_title'),
+        'Posts/PublicIndex' => __('posts.public.meta_title'),
+        'Gallery/Index' => __('gallery.meta_title'),
+        'Library/Index', 'Library/Bible' => __('library.title'),
+        default => null,
+    };
+    $seoName = $contentTitle ?: ($communityName ?: ($sectionTitle ? ($churchName ? $sectionTitle.' - '.$churchName : $sectionTitle) : ($churchName ?: (data_get($branding, 'brand_name') ?: config('app.name')))));
+    $contentDescription = data_get($page, 'props.post.contentHtml')
+        ?: data_get($page, 'props.event.description')
+        ?: data_get($page, 'props.event.description_html')
+        ?: data_get($page, 'props.community.description');
+    $contentDescription = is_string($contentDescription)
+        ? trim(preg_replace('/\s+/', ' ', strip_tags($contentDescription)))
+        : null;
+    $seoDescription = $contentDescription
         ?: (data_get($branding, 'tagline') ?: data_get($branding, 'banner_subtitle'));
     $seoDescription = is_string($seoDescription) && $seoDescription !== ''
-        ? $seoDescription
+        ? \Illuminate\Support\Str::limit($seoDescription, 160)
         : __('pwa.description', ['name' => $seoName]);
-    $absoluteLogoUrl = str_starts_with((string) $logoUrl, 'http')
-        ? $logoUrl
-        : request()->getSchemeAndHttpHost().'/'.ltrim((string) $logoUrl, '/');
+    $contentImageUrl = data_get($page, 'props.post.cover_url')
+        ?: data_get($page, 'props.event.cover_path')
+        ?: data_get($page, 'props.community.logo_url')
+        ?: data_get($page, 'props.media.data.0.url');
+    $toAbsoluteUrl = static fn (mixed $value): string => str_starts_with((string) $value, 'http')
+        ? (string) $value
+        : request()->getSchemeAndHttpHost().'/'.ltrim((string) $value, '/');
+    $absoluteLogoUrl = $toAbsoluteUrl($logoUrl);
+    $absoluteImageUrl = $contentImageUrl ? $toAbsoluteUrl($contentImageUrl) : $absoluteLogoUrl;
     $organizationSchema = in_array($component, ['Home', 'Portal/Index', 'Portal/CommunityShow'], true)
         ? array_filter([
             '@context' => 'https://schema.org',
@@ -133,11 +154,16 @@
         <meta name="theme-color" content="{{ $validColor(data_get($branding, 'primary_color'), '#342f87') }}">
         <meta name="description" content="{{ $seoDescription }}">
         <meta name="robots" content="{{ $isIndexable ? 'index, follow' : 'noindex, nofollow' }}">
-        <meta property="og:type" content="website">
+        <meta property="og:type" content="{{ $contentTitle ? 'article' : 'website' }}">
         <meta property="og:title" content="{{ $seoName }}">
         <meta property="og:description" content="{{ $seoDescription }}">
         <meta property="og:url" content="{{ $canonicalUrl }}">
-        <meta property="og:image" content="{{ $absoluteLogoUrl }}">
+        <meta property="og:image" content="{{ $absoluteImageUrl }}">
+        <meta property="og:image:alt" content="{{ $seoName }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $seoName }}">
+        <meta name="twitter:description" content="{{ $seoDescription }}">
+        <meta name="twitter:image" content="{{ $absoluteImageUrl }}">
         @if ($organizationSchema)
             <script type="application/ld+json">{!! json_encode($organizationSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
         @endif
@@ -148,7 +174,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $seoName }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

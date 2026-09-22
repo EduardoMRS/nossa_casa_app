@@ -8,9 +8,12 @@ import {
     Send,
     Upload,
     Download,
+    Edit,
+    Share2,
     X,
 } from '@lucide/vue';
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 import AppModal from '@/components/AppModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
@@ -18,6 +21,7 @@ import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
+import { index as adminGalleryIndex } from '@/routes/admin/galleryModeration';
 import { index as galleryIndex } from '@/routes/gallery';
 import { replaceWebQuery } from '@/shared/platform/web';
 import { queryFromPaginationLink } from '@/shared/repositories/content/types';
@@ -81,6 +85,9 @@ const { locale, t } = useI18n();
 const { gallery: galleryRepository, interactions } = useRepositories();
 const publicTemplate = usePublicTemplate('gallery');
 const page = usePage();
+const canManageGallery = computed(
+    () => page.props.permissions?.manageMedia === true,
+);
 const mediaItems = ref<MediaItem[]>(
     props.media.data.map((item) => ({ ...item })),
 );
@@ -210,6 +217,33 @@ const closeMedia = (): void => {
     selectedMedia.value = null;
     galleryComment.value = '';
     interactionError.value = '';
+};
+
+const shareMedia = async (): Promise<void> => {
+    if (!selectedMedia.value) {
+        return;
+    }
+
+    const shareData = {
+        title: selectedMedia.value.title,
+        text: selectedMedia.value.description ?? selectedMedia.value.title,
+        url: selectedMedia.value.url,
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else if (navigator.clipboard) {
+            await navigator.clipboard.writeText(shareData.url);
+            toast.success(t('share.copied'));
+        } else {
+            toast.error(t('share.unavailable'));
+        }
+    } catch (error) {
+        if ((error as DOMException).name !== 'AbortError') {
+            toast.error(t('share.unavailable'));
+        }
+    }
 };
 
 const reactToMedia = async (content: string): Promise<void> => {
@@ -456,6 +490,19 @@ onBeforeUnmount(() => {
                         }}
                     </p>
                 </div>
+                <Link
+                    v-if="canManageGallery"
+                    :href="
+                        adminGalleryIndex({ query: { return_to: page.url } })
+                    "
+                    class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm sm:self-center"
+                    :title="t('admin.media.title')"
+                    :aria-label="t('admin.media.title')"
+                >
+                    <Edit class="size-4" /><span class="sr-only">{{
+                        t('admin.media.title')
+                    }}</span>
+                </Link>
                 <button
                     v-if="canUploadMedia && props.view === 'gallery'"
                     class="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-lg px-4 py-2.5 text-xs font-bold text-white shadow-sm sm:self-center"
@@ -717,8 +764,19 @@ onBeforeUnmount(() => {
                                 <Download class="size-4" />
                                 {{ t('gallery.download') }}
                             </a>
+                            <button
+                                type="button"
+                                class="mt-3 inline-flex size-10 items-center justify-center rounded-lg border border-slate-300 text-slate-700"
+                                :title="t('share.button')"
+                                :aria-label="t('share.button')"
+                                @click="shareMedia"
+                            >
+                                <Share2 class="size-4" /><span
+                                    class="sr-only"
+                                    >{{ t('share.button') }}</span
+                                >
+                            </button>
                         </header>
-
                         <div
                             class="min-h-48 flex-1 space-y-4 overflow-y-auto p-5 lg:min-h-0"
                         >
@@ -904,28 +962,28 @@ onBeforeUnmount(() => {
                     <select
                         :value="uploadType"
                         class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
-                            @change="handleUploadTypeChange"
-                        >
-                            <option value="url">
-                                {{ t('admin.common.url') }}
-                            </option>
-                            <option value="file">
-                                {{ t('gallery.file') }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div
-                        class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_240px] md:items-start"
+                        @change="handleUploadTypeChange"
                     >
-                        <div class="space-y-3">
-                            <input
-                                v-model="uploadTitle"
-                                type="text"
-                                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                                :placeholder="t('gallery.title_placeholder')"
-                            />
-                            <textarea
+                        <option value="url">
+                            {{ t('admin.common.url') }}
+                        </option>
+                        <option value="file">
+                            {{ t('gallery.file') }}
+                        </option>
+                    </select>
+                </div>
+
+                <div
+                    class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_240px] md:items-start"
+                >
+                    <div class="space-y-3">
+                        <input
+                            v-model="uploadTitle"
+                            type="text"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                            :placeholder="t('gallery.title_placeholder')"
+                        />
+                        <textarea
                             v-model="uploadDescription"
                             rows="3"
                             class="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
@@ -933,74 +991,74 @@ onBeforeUnmount(() => {
                         />
                         <input
                             v-if="uploadType === 'file'"
-                                type="file"
-                                accept="image/*,video/*,application/pdf"
-                                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                                @change="handleUploadFileChange"
-                            />
-                            <input
-                                v-else
-                                v-model="uploadUrl"
-                                type="text"
-                                :placeholder="t('gallery.file_placeholder')"
-                                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-                            />
-                            <p class="text-xs text-slate-500">
-                                {{ t('gallery.upload_hint') }}
-                            </p>
-                            <p
-                                v-if="uploadError"
-                                class="text-xs font-semibold text-red-600"
-                            >
-                                {{ uploadError }}
-                            </p>
-                            <CategorySelector
-                                v-model="selectedCategoryIds"
-                                :categories="categories"
-                                :label="t('gallery.categories')"
-                                :hint="t('gallery.categories_hint')"
-                            />
-                        </div>
-
-                        <div
-                            class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3"
+                            type="file"
+                            accept="image/*,video/*,application/pdf"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                            @change="handleUploadFileChange"
+                        />
+                        <input
+                            v-else
+                            v-model="uploadUrl"
+                            type="text"
+                            :placeholder="t('gallery.file_placeholder')"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+                        />
+                        <p class="text-xs text-slate-500">
+                            {{ t('gallery.upload_hint') }}
+                        </p>
+                        <p
+                            v-if="uploadError"
+                            class="text-xs font-semibold text-red-600"
                         >
-                            <p
-                                class="mb-2 text-xs font-bold tracking-[0.16em] uppercase"
-                                :style="{ color: 'var(--church-primary)' }"
-                            >
-                                {{ t('gallery.preview') }}
-                            </p>
-                            <img
-                                v-if="uploadPreview"
-                                :src="uploadPreview"
-                                :alt="t('gallery.preview_alt')"
-                                class="h-44 w-full rounded-xl object-cover"
-                            />
-                            <div
-                                v-else
-                                class="flex h-44 items-center justify-center rounded-xl bg-white text-sm text-slate-500"
-                            >
-                                {{ t('gallery.no_selection') }}
-                            </div>
-                        </div>
+                            {{ uploadError }}
+                        </p>
+                        <CategorySelector
+                            v-model="selectedCategoryIds"
+                            :categories="categories"
+                            :label="t('gallery.categories')"
+                            :hint="t('gallery.categories_hint')"
+                        />
                     </div>
 
-                    <div class="mt-4 flex justify-end">
-                        <button
-                            type="button"
-                            :disabled="uploadProcessing"
-                            class="rounded-lg px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
-                            :style="{
-                                backgroundColor: 'var(--church-primary)',
-                            }"
-                            @click="submitUpload"
+                    <div
+                        class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3"
+                    >
+                        <p
+                            class="mb-2 text-xs font-bold tracking-[0.16em] uppercase"
+                            :style="{ color: 'var(--church-primary)' }"
                         >
-                            {{
-                                uploadProcessing
-                                    ? t('gallery.uploading')
-                                    : t('gallery.upload')
-                            }}
+                            {{ t('gallery.preview') }}
+                        </p>
+                        <img
+                            v-if="uploadPreview"
+                            :src="uploadPreview"
+                            :alt="t('gallery.preview_alt')"
+                            class="h-44 w-full rounded-xl object-cover"
+                        />
+                        <div
+                            v-else
+                            class="flex h-44 items-center justify-center rounded-xl bg-white text-sm text-slate-500"
+                        >
+                            {{ t('gallery.no_selection') }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex justify-end">
+                    <button
+                        type="button"
+                        :disabled="uploadProcessing"
+                        class="rounded-lg px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+                        :style="{
+                            backgroundColor: 'var(--church-primary)',
+                        }"
+                        @click="submitUpload"
+                    >
+                        {{
+                            uploadProcessing
+                                ? t('gallery.uploading')
+                                : t('gallery.upload')
+                        }}
                     </button>
                 </div>
             </section>

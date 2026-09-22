@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\Post;
 use App\Support\ContentEmbedRenderer;
@@ -16,16 +17,23 @@ class ClassroomPortalController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $isGlobalAdministrator = in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
         $classrooms = Classroom::query()
             ->with(['church:id,name,slug', 'teacher:id,first_name,last_name'])
-            ->where('portal_enabled', true)
-            ->where(function ($query) use ($user): void {
-                $query->where('teacher_id', $user->id)
-                    ->orWhereHas('members', fn ($members) => $members->whereKey($user->id));
+            ->where(function ($query) use ($user, $isGlobalAdministrator): void {
+                if ($isGlobalAdministrator) {
+                    return;
+                }
 
-                if ($user->role->value === 'system') {
-                    $query->orWhereNotNull('id');
-                } elseif (in_array($user->role->value, ['leader', 'church_leader', 'superadmin'], true)) {
+                $query->where(function ($visible) use ($user): void {
+                    $visible->where('portal_enabled', true)
+                        ->where(function ($participants) use ($user): void {
+                            $participants->where('teacher_id', $user->id)
+                                ->orWhereHas('members', fn ($members) => $members->whereKey($user->id));
+                        });
+                });
+
+                if (in_array($user->role->value, ['leader', 'church_leader', 'superadmin'], true)) {
                     $query->orWhere('church_id', $user->church?->id);
                 }
             })
@@ -37,7 +45,7 @@ class ClassroomPortalController extends Controller
 
     public function show(Request $request, Classroom $classroom): Response
     {
-        $this->ensurePublicChurchResource($classroom->church_id);
+        $this->ensureChurchAccess($request, $classroom->church_id);
         abort_unless($request->user()->can('view', $classroom), 403);
 
         $classroom->load(['church:id,name,slug', 'teacher:id,first_name,last_name']);
@@ -74,6 +82,7 @@ class ClassroomPortalController extends Controller
             ->get()
             ->map(function ($activity) use ($request): array {
                 $attempts = $activity->submissions()->where('user_id', $request->user()->id)->count();
+
                 return [
                     ...$activity->only(['id', 'title', 'instructions', 'available_until', 'max_attempts']),
                     'form' => $activity->form,
