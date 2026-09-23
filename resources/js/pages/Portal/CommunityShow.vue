@@ -313,7 +313,8 @@ onMounted(() => {
                                 v-if="church.distance_km != null"
                                 class="rounded-full bg-sky-50 px-2 py-1 text-sky-700"
                             >
-                                {{ church.distance_km }} {{ t('units.kilometers_short') }}
+                                {{ church.distance_km }}
+                                {{ t('units.kilometers_short') }}
                             </span>
                         </div>
                         <a

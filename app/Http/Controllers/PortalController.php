@@ -86,6 +86,9 @@ class PortalController extends Controller
                         'url' => $church->domain ? $this->context->churchUrl($church) : null,
                         'is_live' => (bool) $church->is_live,
                         'distance_km' => $distance,
+                        'address' => $address?->to_string,
+                        'latitude' => is_numeric($churchLatitude) ? (float) $churchLatitude : null,
+                        'longitude' => is_numeric($churchLongitude) ? (float) $churchLongitude : null,
                     ];
                 })->sortBy(fn (array $church): float => $church['distance_km'] ?? INF)->values();
 

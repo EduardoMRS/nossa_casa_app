@@ -142,13 +142,7 @@ final class PortalCommunityController extends Controller
             'distance_km' => $distance,
             'city' => $address?->city,
             'state' => $address?->state,
-            'address' => collect([
-                $address?->street,
-                $address?->number,
-                $address?->neighborhood,
-                $address?->city,
-                $address?->state,
-            ])->filter()->join(', '),
+            'address' => $address?->to_string,
         ];
     }
 

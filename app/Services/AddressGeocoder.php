@@ -23,7 +23,6 @@ class AddressGeocoder
             $response = Http::withHeaders([
                 'User-Agent' => (string) config('services.geocoding.user_agent'),
             ])
-                ->retry([100, 500], throw: false)
                 ->timeout(5)
                 ->connectTimeout(3)
                 ->get((string) config('services.geocoding.url'), [

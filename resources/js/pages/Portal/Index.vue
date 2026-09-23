@@ -34,6 +34,7 @@ type Church = {
     url: string | null;
     is_live: boolean;
     distance_km?: number | null;
+    address?: string | null;
 };
 
 type ParentChurch = {
@@ -151,7 +152,17 @@ const generatedChurchSlug = computed(() =>
         .replace(/^-|-$/g, ''),
 );
 const generatedChurchDomain = computed(() => {
-    const ignored = new Set(['A', 'AS', 'DA', 'DAS', 'DE', 'DO', 'DOS', 'E', 'EM']);
+    const ignored = new Set([
+        'A',
+        'AS',
+        'DA',
+        'DAS',
+        'DE',
+        'DO',
+        'DOS',
+        'E',
+        'EM',
+    ]);
     const nameWords = normalizeIdentity(churchForm.value.name)
         .split(/\s+/)
         .filter((word) => word && !ignored.has(word));
@@ -159,9 +170,10 @@ const generatedChurchDomain = computed(() => {
         .split(/\s+/)
         .filter((word) => word && !ignored.has(word));
     const acronym = nameWords.map((word) => word[0]).join('') || 'CH';
-    const cityCode = cityWords.length === 1
-        ? cityWords[0].slice(0, 3)
-        : cityWords.map((word) => word[0]).join('');
+    const cityCode =
+        cityWords.length === 1
+            ? cityWords[0].slice(0, 3)
+            : cityWords.map((word) => word[0]).join('');
 
     return `${acronym}${cityCode || 'BR'}`.toLowerCase();
 });
@@ -209,7 +221,6 @@ const handleDomainInput = (): void => {
     }
 };
 
-
 const normalizedDomainInput = computed(() =>
     domainInput.value
         .trim()
@@ -248,10 +259,10 @@ const domainError = computed(() => {
 });
 
 const availableCommunities = computed(() => props.communities);
-const notEmptyCommunities = computed(() => 
+const notEmptyCommunities = computed(() =>
     props.communities.filter(
-        (community) => (community.churches_count || 0) >= 1
-    )
+        (community) => (community.churches_count || 0) >= 1,
+    ),
 );
 const selectedCommunity = computed(() =>
     props.communities.find(
@@ -275,17 +286,16 @@ watch(
     { immediate: true },
 );
 
-const openOnboarding = (
-    mode: 'new_community' | 'existing_community',
-): void => {
+const openOnboarding = (mode: 'new_community' | 'existing_community'): void => {
     onboardingMode.value = mode;
     errorMessage.value = '';
     communityModalOpen.value = true;
 };
 
-const useCurrentLocation = (
-    form: { latitude: string; longitude: string },
-): void => {
+const useCurrentLocation = (form: {
+    latitude: string;
+    longitude: string;
+}): void => {
     if (!('geolocation' in navigator)) {
         return;
     }
@@ -471,7 +481,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
 <template>
     <Head :title="t('portal.meta_title')" />
-    <div class="min-h-screen min-w-0 overflow-x-clip bg-[#f7f8fc] text-slate-950">
+    <div
+        class="min-h-screen min-w-0 overflow-x-clip bg-[#f7f8fc] text-slate-950"
+    >
         <PortalHeader
             :user-church-url="userChurchUrl"
             :user-church-id="userChurchId"
@@ -555,7 +567,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             >
                 <div
                     data-test="nearby-communities-container"
-                    class="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-8"
+                    class="mx-auto max-w-6xl min-w-0 px-4 py-8 sm:px-5 sm:py-10 lg:px-8"
                 >
                     <div class="flex min-w-0 items-center gap-3">
                         <span
@@ -594,16 +606,17 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             >
                                 <Link
                                     :href="community.url"
-                                    class="min-w-0 flex-1 break-words font-black text-indigo-950 hover:text-indigo-700"
+                                    class="min-w-0 flex-1 font-black break-words text-indigo-950 hover:text-indigo-700"
                                 >
                                     {{ community.name }}
                                 </Link>
                                 <span
                                     v-if="community.distance_km != null"
-                                    class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black text-sky-700"
+                                    class="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-50 px-2 py-1 text-[10px] font-black whitespace-nowrap text-sky-700"
                                 >
                                     <MapPin class="size-3" />
-                                    {{ community.distance_km }} {{ t('units.kilometers_short') }}
+                                    {{ community.distance_km }}
+                                    {{ t('units.kilometers_short') }}
                                 </span>
                             </div>
                             <div class="mt-4 space-y-2">
@@ -628,7 +641,8 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         v-if="church.distance_km != null"
                                         class="ml-2 shrink-0 whitespace-nowrap text-slate-400"
                                     >
-                                        {{ church.distance_km }} {{ t('units.kilometers_short') }}
+                                        {{ church.distance_km }}
+                                        {{ t('units.kilometers_short') }}
                                     </span>
                                 </a>
                             </div>
@@ -736,6 +750,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                                         )
                                                     }}</span
                                                 ></span
+                                            ><small
+                                                v-if="church.address"
+                                                class="mt-1 flex items-start gap-1 text-slate-400"
+                                            >
+                                                <MapPin
+                                                    class="mt-0.5 size-3 shrink-0"
+                                                />
+                                                {{ church.address }} </small
                                             ><small class="text-slate-400">{{
                                                 church.domain
                                             }}</small></span
@@ -754,6 +776,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                             ><strong class="block text-sm">{{
                                                 church.name
                                             }}</strong
+                                            ><small
+                                                v-if="church.address"
+                                                class="mt-1 flex items-start gap-1 text-slate-400"
+                                            >
+                                                <MapPin
+                                                    class="mt-0.5 size-3 shrink-0"
+                                                />
+                                                {{ church.address }} </small
                                             ><small class="text-slate-400">{{
                                                 t(
                                                     'portal.communities.domain_pending',
@@ -816,9 +846,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         class="mt-1 text-xs font-bold text-indigo-700"
                                     >
                                         {{
-                                            t('portal.review.requested_parent', {
-                                                name: item.requested_parent_church.name,
-                                            })
+                                            t(
+                                                'portal.review.requested_parent',
+                                                {
+                                                    name: item
+                                                        .requested_parent_church
+                                                        .name,
+                                                },
+                                            )
                                         }}
                                     </p>
                                 </div>
@@ -875,9 +910,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         class="mt-2 text-xs font-bold text-indigo-700"
                                     >
                                         {{
-                                            t('portal.review.requested_parent', {
-                                                name: item.requested_parent_church.name,
-                                            })
+                                            t(
+                                                'portal.review.requested_parent',
+                                                {
+                                                    name: item
+                                                        .requested_parent_church
+                                                        .name,
+                                                },
+                                            )
                                         }}
                                     </p>
                                     <p
@@ -908,8 +948,14 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                         v-if="item.locale"
                                         class="mt-1 text-xs font-bold text-slate-500"
                                     >
-                                        {{ t('portal.fields.default_language') }}:
-                                        {{ t(`portal.fields.language_${item.locale}`) }}
+                                        {{
+                                            t('portal.fields.default_language')
+                                        }}:
+                                        {{
+                                            t(
+                                                `portal.fields.language_${item.locale}`,
+                                            )
+                                        }}
                                     </p>
                                     <a
                                         v-if="item.document_url"
@@ -991,7 +1037,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 
             <form
                 v-if="onboardingMode === 'new_community'"
-                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-2 [scrollbar-gutter:stable]"
+                class="min-h-0 [scrollbar-gutter:stable] space-y-5 overflow-y-auto overscroll-contain p-2"
                 @submit.prevent="saveCommunity"
             >
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -1011,7 +1057,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.description') }}
                         <textarea
                             v-model="communityForm.description"
@@ -1025,7 +1073,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         <input
                             v-model="communityForm.found_date"
                             type="date"
-                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none [color-scheme:light] focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 [color-scheme:light] shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
@@ -1035,11 +1083,17 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             required
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         >
-                            <option value="pt">{{ t('portal.fields.language_pt') }}</option>
-                            <option value="en">{{ t('portal.fields.language_en') }}</option>
+                            <option value="pt">
+                                {{ t('portal.fields.language_pt') }}
+                            </option>
+                            <option value="en">
+                                {{ t('portal.fields.language_en') }}
+                            </option>
                         </select>
                     </label>
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.address') }}
                         <textarea
                             v-model="communityForm.address"
@@ -1091,10 +1145,12 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
             </form>
             <form
                 v-else
-                class="min-h-0 space-y-5 overflow-y-auto overscroll-contain p-1 [scrollbar-gutter:stable]"
+                class="min-h-0 [scrollbar-gutter:stable] space-y-5 overflow-y-auto overscroll-contain p-1"
                 @submit.prevent="requestChurch"
             >
-                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
+                <label
+                    class="block space-y-1.5 text-sm font-bold text-slate-700"
+                >
                     {{ t('portal.fields.community') }}
                     <select
                         v-model="churchForm.community_id"
@@ -1124,7 +1180,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         id="registration-parent-church"
                         v-model="churchForm.parent_church_id"
                         :disabled="!churchForm.community_id"
-                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     >
                         <option value="">
                             {{ t('portal.onboarding.community_approval') }}
@@ -1142,7 +1198,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     </p>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.name') }}
                         <input
                             v-model="churchForm.name"
@@ -1150,13 +1208,18 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.slug') }}
                         <input
                             v-model="churchForm.slug"
                             required
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 font-mono text-sm text-slate-900 shadow-sm outline-none placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                            :placeholder="generatedChurchSlug || t('portal.identity.preview_empty')"
+                            :placeholder="
+                                generatedChurchSlug ||
+                                t('portal.identity.preview_empty')
+                            "
                             @input="handleChurchSlugInput"
                         />
                     </label>
@@ -1198,7 +1261,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                                 class="min-w-0 flex-1 border-0 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:ring-0"
                                 :placeholder="
                                     domainMode === 'subdomain'
-                                        ? t('portal.domain.subdomain_placeholder')
+                                        ? t(
+                                              'portal.domain.subdomain_placeholder',
+                                          )
                                         : t('portal.fields.domain')
                                 "
                             />
@@ -1229,7 +1294,7 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         <input
                             v-model="churchForm.found_date"
                             type="date"
-                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none [color-scheme:light] focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 [color-scheme:light] shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
@@ -1239,8 +1304,12 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             required
                             class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         >
-                            <option value="pt">{{ t('portal.fields.language_pt') }}</option>
-                            <option value="en">{{ t('portal.fields.language_en') }}</option>
+                            <option value="pt">
+                                {{ t('portal.fields.language_pt') }}
+                            </option>
+                            <option value="en">
+                                {{ t('portal.fields.language_en') }}
+                            </option>
                         </select>
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
@@ -1259,7 +1328,9 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                         />
                     </label>
                 </div>
-                <label class="block space-y-1.5 text-sm font-bold text-slate-700">
+                <label
+                    class="block space-y-1.5 text-sm font-bold text-slate-700"
+                >
                     {{ t('portal.fields.description') }}
                     <textarea
                         v-model="churchForm.description"
@@ -1268,37 +1339,72 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                     />
                 </label>
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.street') }}
-                        <input v-model="churchForm.street" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.street"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.number') }}
-                        <input v-model="churchForm.number" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.number"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.neighborhood') }}
-                        <input v-model="churchForm.neighborhood" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.neighborhood"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.city') }}
-                        <input v-model="churchForm.city" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.city"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.state') }}
-                        <input v-model="churchForm.state" required maxlength="2" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 uppercase shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.state"
+                            required
+                            maxlength="2"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 uppercase shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.zipcode') }}
-                        <input v-model="churchForm.zipcode" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.zipcode"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                     <label class="space-y-1.5 text-sm font-bold text-slate-700">
                         {{ t('portal.fields.country') }}
-                        <input v-model="churchForm.country" required class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.country"
+                            required
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
-                    <label class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2">
+                    <label
+                        class="space-y-1.5 text-sm font-bold text-slate-700 sm:col-span-2"
+                    >
                         {{ t('portal.fields.complement') }}
-                        <input v-model="churchForm.complement" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100" />
+                        <input
+                            v-model="churchForm.complement"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        />
                     </label>
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">

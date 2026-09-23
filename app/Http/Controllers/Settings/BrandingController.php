@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
 use App\Models\Church;
 use App\Models\Setting;
+use App\Services\AddressGeocoder;
 use App\Services\ChurchNetworkSettingsData;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
@@ -27,6 +28,7 @@ class BrandingController extends Controller
         private ChurchBrandingResolver $brandingResolver,
         private ChurchDomainContext $domainContext,
         private ChurchNetworkSettingsData $networkSettings,
+        private AddressGeocoder $addressGeocoder,
     ) {}
 
     public function edit(Request $request): Response
@@ -203,6 +205,10 @@ class BrandingController extends Controller
         );
 
         if (collect($addressData)->contains(fn (mixed $value): bool => filled($value))) {
+            if (blank($addressData['latitude'] ?? null) || blank($addressData['longitude'] ?? null)) {
+                $addressData = array_merge($addressData, $this->addressGeocoder->coordinates($addressData) ?? []);
+            }
+
             $addressModel = $church->address()->first() ?? $church->address()->make();
             $addressModel->fill($addressData);
             $addressModel->save();

@@ -39,7 +39,7 @@ class Address extends Model
         return $this->morphTo();
     }
 
-    public function getToStringAttribute()
+    public function getToStringAttribute(): string
     {
         $street = collect([
             $this->street,
@@ -52,7 +52,7 @@ class Address extends Model
             $this->neighborhood,
             $this->city,
             $this->state,
-            $this->zip_code,
+            $this->zipcode,
             $this->country,
         ])->filter(fn ($value) => filled($value))->implode(', ');
     }

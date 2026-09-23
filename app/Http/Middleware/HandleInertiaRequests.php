@@ -116,13 +116,25 @@ class HandleInertiaRequests extends Middleware
         $brandingChurch = $currentChurch ?? ($domainContext->isMainDomain() ? null : $user?->church);
 
         if ($brandingChurch) {
+            $addressModel = $brandingChurch->address?->first();
             $setting = Setting::query()->where('church_id', $brandingChurch->id)->first();
             $savedBranding = $setting?->options['branding'] ?? [];
 
             if (is_array($savedBranding)) {
                 $branding = array_merge($branding, $savedBranding);
             }
-            $branding['address'] = $brandingChurch?->address?->first()?->to_string ?? $branding['address'];
+            $branding['address'] = $addressModel?->to_string ?? $branding['address'];
+            $branding['latitude'] = $addressModel?->latitude ?? $branding['latitude'];
+            $branding['longitude'] = $addressModel?->longitude ?? $branding['longitude'];
+
+            if (blank($branding['map_embed']) && is_numeric($branding['latitude']) && is_numeric($branding['longitude'])) {
+                $delta = 0.01;
+                $branding['map_embed'] = 'https://www.openstreetmap.org/export/embed.html?'.http_build_query([
+                    'bbox' => implode(',', [(float) $branding['longitude'] - $delta, (float) $branding['latitude'] - $delta, (float) $branding['longitude'] + $delta, (float) $branding['latitude'] + $delta]),
+                    'layer' => 'mapnik',
+                    'marker' => $branding['latitude'].','.$branding['longitude'],
+                ]);
+            }
         }
 
         $branding = array_merge($branding, $this->brandingResolver->sharedLogo($brandingChurch));
