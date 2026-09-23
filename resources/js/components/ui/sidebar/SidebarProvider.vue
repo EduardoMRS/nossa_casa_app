@@ -3,6 +3,7 @@ import type { HTMLAttributes, Ref } from "vue"
 import { defaultDocument, useEventListener, useMediaQuery, useVModel } from "@vueuse/core"
 import { TooltipProvider } from "reka-ui"
 import { computed, ref } from "vue"
+import { isStandalonePwa } from "@/lib/pwa"
 import { cn } from "@/lib/utils"
 import { provideSidebarContext, SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME, SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from "./utils"
 
@@ -21,6 +22,8 @@ const emits = defineEmits<{
 
 const isMobile = useMediaQuery("(max-width: 768px)")
 const openMobile = ref(false)
+const touchStartX = ref<number | null>(null)
+const touchStartY = ref<number | null>(null)
 
 const open = useVModel(props, "open", emits, {
   defaultValue: props.defaultOpen ?? false,
@@ -42,6 +45,60 @@ function setOpenMobile(value: boolean) {
 function toggleSidebar() {
   return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
 }
+
+function handlePwaTouchStart(event: TouchEvent): void {
+  if (!isStandalonePwa() || !isMobile.value) {
+    return
+  }
+
+  const touch = event.touches[0]
+
+  if (!touch || touch.clientX <= 24 || touch.clientX >= 80) {
+    touchStartX.value = null
+    touchStartY.value = null
+
+    return
+  }
+
+  touchStartX.value = touch.clientX
+  touchStartY.value = touch.clientY
+}
+
+function handlePwaTouchEnd(event: TouchEvent): void {
+  if (touchStartX.value === null || touchStartY.value === null) {
+    return
+  }
+
+  const touch = event.changedTouches[0]
+  const horizontalDistance = touch ? touch.clientX - touchStartX.value : 0
+  const verticalDistance = touch
+    ? Math.abs(touch.clientY - touchStartY.value)
+    : Number.POSITIVE_INFINITY
+
+  touchStartX.value = null
+  touchStartY.value = null
+
+  if (Math.abs(horizontalDistance) < 50 || verticalDistance >= 40) {
+    return
+  }
+
+  if (openMobile.value) {
+    if (horizontalDistance < -50) {
+      setOpenMobile(false)
+    }
+
+    return
+  }
+
+  setOpenMobile(true)
+}
+
+useEventListener(defaultDocument, "touchstart", handlePwaTouchStart, {
+  passive: true,
+})
+useEventListener(defaultDocument, "touchend", handlePwaTouchEnd, {
+  passive: true,
+})
 
 useEventListener("keydown", (event: KeyboardEvent) => {
   if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
