@@ -41,6 +41,7 @@ use App\Models\Post;
 use App\Models\Setting;
 use App\Models\User;
 use App\Queries\EventQuery;
+use App\Queries\PostQuery;
 use App\Support\ChurchDomainContext;
 use App\Support\ContentEmbedRenderer;
 use App\Support\S3TemporaryUrlGenerator;
@@ -629,35 +630,8 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
 
         return Inertia::render('Posts/Form', $props);
     })->name('posts.edit');
-    Route::get('/dashboard/posts/{post}', function () {
-        $post = Post::query()->where('visibility', 'public')->with(['church', 'medias', 'categories'])->findOrFail(request()->route('post'));
-        abort_unless($post->church_id === (app(ChurchDomainContext::class)->churchId() ?? request()->user()?->church?->id), 403);
-        $post->localize(relations: ['church', 'categories']);
-        $props = [
-            'can' => [
-                'edit' => auth()->user()->can('update', $post),
-                'delete' => auth()->user()->can('delete', $post),
-                'comment' => auth()->user()->can('comment', $post),
-                'react' => auth()->user()->can('react', $post),
-            ],
-            'post' => $post,
-            'contentHtml' => app(ContentEmbedRenderer::class)->render((string) $post->content, $post->church_id),
-            'author' => $post->author_details,
-            'metrics' => $post->metrics,
-            'translations' => $post->translations,
-            'media' => $post->medias()->get()->map(function ($media) {
-                return [
-                    'id' => $media->id,
-                    'name' => $media->name,
-                    'url' => $media->url,
-                    'type' => $media->type,
-                ];
-            }),
-            'comments' => $post->comments()->with(['user:id,first_name,last_name', 'replies.user:id,first_name,last_name'])->orderBy('created_at', 'desc')->get(),
-            'reactions' => $post->reactions()->with('user:id,first_name,last_name')->get(),
-        ];
-
-        return Inertia::render('Posts/Show', $props);
+    Route::get('/dashboard/posts/{post}', function (Post $post, Request $request, PostQuery $posts) {
+        return Inertia::render('Posts/PublicShow', $posts->show($post->slug, app(ChurchDomainContext::class)->churchId(), $request->user())->toArray());
     })->name('posts.show');
 
     // Legacy Portuguese URLs remain available for existing bookmarks and integrations.

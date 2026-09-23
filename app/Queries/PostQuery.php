@@ -125,6 +125,12 @@ final class PostQuery
             'comments' => $comments->map(fn (Comment $comment): array => $this->comment($comment))->all(),
             'reactions' => $reactions->map(fn (Reaction $reaction): array => $this->reaction($reaction))->all(),
             'canInteract' => $user !== null && $post->church_id !== null,
+            'can' => [
+                'edit' => $user?->can('update', $post) ?? false,
+                'delete' => $user?->can('delete', $post) ?? false,
+                'comment' => $user?->can('comment', $post) ?? false,
+                'react' => $user?->can('react', $post) ?? false,
+            ],
             'relatedPosts' => $relatedPosts,
             'latestPosts' => $latestPosts,
         ]);

@@ -3,8 +3,10 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Edit, Share2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';
+import { destroy as destroyEvent } from '@/actions/App/Http/Controllers/EventController';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -19,6 +21,7 @@ type EventDetail = {
     title: string;
     slug: string;
     canEdit: boolean;
+    canDelete: boolean;
     description: string | null;
     description_html: string;
     start_time: string;
@@ -49,6 +52,20 @@ const props = defineProps<{
 
 const { locale, t } = useI18n();
 const page = usePage();
+const { confirm } = useConfirmDialog();
+
+const deleteEvent = async (): Promise<void> => {
+    if (
+        await confirm({
+            message: t('events.delete_confirm', { title: props.event.title }),
+            confirmLabel: t('actions.delete'),
+            intent: 'danger',
+        })
+    ) {
+        router.delete(destroyEvent.url({ event: props.event.id }));
+    }
+};
+
 const publicTemplate = usePublicTemplate('events_show');
 
 const formatter = computed(
@@ -231,6 +248,18 @@ const shareEvent = async (): Promise<void> => {
                             t('actions.edit')
                         }}</span>
                     </Link>
+                    <button
+                        v-if="event.canDelete"
+                        type="button"
+                        class="flex size-10 items-center justify-center rounded-full bg-rose-600 text-white"
+                        :title="t('actions.delete')"
+                        :aria-label="t('actions.delete')"
+                        @click="deleteEvent"
+                    >
+                        <Trash class="size-4" /><span class="sr-only">{{
+                            t('actions.delete')
+                        }}</span>
+                    </button>
                     <Link
                         :href="eventsIndex()"
                         class="rounded-full border border-white/35 px-5 py-2.5 text-sm font-semibold text-white"

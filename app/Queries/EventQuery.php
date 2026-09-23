@@ -52,6 +52,7 @@ final class EventQuery
             'event' => [
                 ...$this->item($event),
                 'canEdit' => $canEdit,
+                'canDelete' => $canEdit,
                 'description_html' => $this->embedRenderer->render($event->description ?? '', $event->church_id),
                 'categories' => $event->categories->pluck('name')->values()->all(),
                 'address' => $event->address,
