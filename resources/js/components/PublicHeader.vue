@@ -68,12 +68,11 @@ const activeLiveStream = computed(
             started_at: string | null;
         } | null,
 );
-const hasChurchContext = computed( () => 
+const hasChurchContext = computed(() =>
     Boolean(
         (
             page.props.churchContext as
-                | { church?: { id?: string } | null }
-                | undefined
+                { church?: { id?: string } | null } | undefined
         )?.church,
     ),
 );
@@ -155,11 +154,11 @@ const navClass = (key: PublicNavKey): string =>
 <template>
     <header
         data-test="public-top-navigation"
-        class="public-top-navigation sticky top-0 z-40 border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
+        class="public-top-navigation sticky top-0 z-[80] border-b border-indigo-950 bg-[#342f87] text-white shadow-sm"
         :style="{ backgroundColor: 'var(--church-primary, #342f87)' }"
     >
         <div
-            class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6 lg:px-8"
+            class="mx-auto flex h-12 max-w-6xl items-center justify-between gap-1.5 px-2 sm:h-16 sm:gap-4 sm:px-6 lg:px-8"
         >
             <Link
                 :href="home()"
@@ -167,7 +166,7 @@ const navClass = (key: PublicNavKey): string =>
                 class="group flex shrink-0 items-center gap-3"
             >
                 <span
-                    class="grid size-9 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black transition group-hover:scale-105 sm:size-10 sm:text-lg"
+                    class="grid size-8 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black transition group-hover:scale-105 sm:size-10 sm:text-lg"
                 >
                     <img
                         v-if="branding.logo_url"
@@ -190,7 +189,10 @@ const navClass = (key: PublicNavKey): string =>
                 </span>
             </Link>
 
-            <nav v-if="hasChurchContext" class="hidden items-center gap-1 md:flex">
+            <nav
+                v-if="hasChurchContext"
+                class="hidden items-center gap-1 md:flex"
+            >
                 <Link
                     v-for="item in desktopNavItems"
                     :key="item.key"
@@ -238,7 +240,8 @@ const navClass = (key: PublicNavKey): string =>
                     class="hidden rounded-lg bg-white px-3 py-2 text-xs font-bold text-indigo-950 shadow-sm sm:px-4 md:inline-flex"
                     >{{ t('nav.login') }}</Link
                 >
-                <button v-if="hasChurchContext"
+                <button
+                    v-if="hasChurchContext"
                     class="rounded-lg p-2 text-indigo-100 hover:bg-indigo-800 md:hidden"
                     :aria-label="t('nav.menu')"
                     @click="mobileOpen = !mobileOpen"
@@ -276,7 +279,7 @@ const navClass = (key: PublicNavKey): string =>
         <template v-if="hasChurchContext">
             <nav
                 v-if="mobileOpen"
-                class="border-t border-indigo-800 bg-indigo-950 p-3 md:hidden"
+                class="max-h-[calc(100dvh-7rem)] overflow-y-auto overscroll-contain border-t border-indigo-800 bg-indigo-950 p-2.5 md:hidden"
             >
                 <div class="grid grid-cols-2 gap-2">
                     <Link
@@ -291,7 +294,7 @@ const navClass = (key: PublicNavKey): string =>
                         {{ item.label }}
                     </Link>
                 </div>
-    
+
                 <div
                     class="mt-3 border-t border-white/15 pt-3"
                     data-test="mobile-account-section"
@@ -313,7 +316,9 @@ const navClass = (key: PublicNavKey): string =>
                                             v-if="isForeignChurch"
                                             class="size-4 shrink-0 text-sky-300"
                                             :aria-label="
-                                                t('membership.foreign_indicator')
+                                                t(
+                                                    'membership.foreign_indicator',
+                                                )
                                             "
                                         />
                                     </template>

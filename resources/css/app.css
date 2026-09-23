@@ -689,6 +689,26 @@
     }
 }
 
+@media (max-width: 767px) {
+    .dashboard-theme .overflow-x-auto {
+        max-width: 100%;
+        overscroll-behavior-inline: contain;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dashboard-theme table {
+        min-width: 34rem;
+        font-size: 0.75rem;
+    }
+
+    .dashboard-theme th,
+    .dashboard-theme td {
+        padding: 0.625rem 0.75rem;
+        white-space: nowrap;
+    }
+}
+
 button,
 a,
 select,
