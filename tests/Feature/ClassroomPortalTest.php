@@ -40,6 +40,21 @@ test('only classroom participants can open its private portal', function () {
         ->assertForbidden();
 });
 
+test('classroom portal route stays separate from the classroom API route', function () {
+    $portalUrl = route('portal.classrooms.show', ['classroom' => $this->classroom->slug]);
+
+    expect($portalUrl)->toEndWith('/classrooms/'.$this->classroom->slug);
+    expect($portalUrl)->not->toContain('/api/');
+
+    $this->actingAs($this->member)
+        ->get('/classrooms')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Classrooms/Index')
+            ->has('classrooms', 1)
+            ->where('classrooms.hasAccess', true));
+});
+
 test('classroom posts stay private and honor interaction switches', function () {
     $post = Post::query()->create([
         'church_id' => $this->church->id,

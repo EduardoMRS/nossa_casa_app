@@ -168,8 +168,8 @@ Route::group([
     Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
     Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
     Route::middleware('auth')->group(function () {
-        Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('classrooms.index');
-        Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('classrooms.show');
+        Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('portal.classrooms.index');
+        Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('portal.classrooms.show');
         Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store'])->name('classrooms.activities.submit');
         Route::get('/classrooms/{classroom:slug}/materials/{material}', ClassroomMaterialDownloadController::class)->name('classrooms.materials.download');
         Route::post('/classrooms/{classroom:slug}/discussions', [ClassroomDiscussionController::class, 'store'])->name('classrooms.discussions.store');

@@ -12,7 +12,6 @@ import {
     Undo2,
 } from '@lucide/vue';
 import { computed } from 'vue';
-import ClassroomPortalController from '@/actions/App/Http/Controllers/ClassroomPortalController';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -55,9 +54,10 @@ const churchContext = computed(
     () =>
         page.props.churchContext as
             | {
+                  id?: string;
                   isForeignChurch?: boolean;
                   church?: { name: string } | null;
-                  userChurch?: { name: string; url: string } | null;
+                  userChurch?: { name: string; url: string; id: string; } | null;
               }
             | undefined,
 );
@@ -189,7 +189,7 @@ const transferMembership = async (): Promise<void> => {
         <DropdownMenuItem v-if="hasClassroomAccess" :as-child="true">
             <Link
                 class="block w-full cursor-pointer"
-                :href="ClassroomPortalController.index.url()"
+                href="/classrooms"
                 prefetch
             >
                 <BookOpen class="mr-2 size-4" />

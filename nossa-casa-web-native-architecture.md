@@ -1377,3 +1377,5 @@ O MVP web/native estará pronto quando:
 - [Firebase Pricing — Cloud Messaging sem custo](https://firebase.google.com/pricing)
 - [Android — Background Execution Limits](https://developer.android.com/about/versions/oreo/background)
 - [Apple — Envio direto ao APNs](https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns)
+
+atualmente ao acessar as configurações do usuário caso não esteja dentro de uma church e mostrado um menu superior como se estivesse e ao clicar nos botões das postagens por exemplo o usuário entra na tela e não mostra nada até porque não tem nada, talvez sejá a hora de criar um layout limpo onde no menu superior tem apenas o dropdow do usuario e botão de inicio com a logo da church ou portal inicialmente será usado apenas pelo o perfil do usuário, na aba de relacionamento permita informar o email do familiar que será cadastrado caso não tenha cadastro ainda, se inforamdo envie um email para confirmação e criação de senha

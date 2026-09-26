@@ -30,7 +30,7 @@ class ClassroomContentController extends Controller
         return Inertia::render('Admin/ClassroomContent', [
             'classroom' => $classroom,
             'forms' => Form::query()->where('church_id', $classroom->church_id)->orderBy('title')->get(['id', 'title', 'description']),
-            'portalUrl' => route('classrooms.show', ['classroom' => $classroom->slug]),
+            'portalUrl' => route('portal.classrooms.show', ['classroom' => $classroom->slug]),
         ]);
     }
 
