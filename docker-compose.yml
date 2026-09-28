@@ -294,7 +294,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest-dev
     command: server /data --console-address ":9001"
     expose:
       - "9000"
@@ -309,14 +309,15 @@ services:
       - laravel_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      # O busybox do -dev sempre tem wget, então usamos ele no lugar do curl por garantia
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:9000/minio/health/live"]
       interval: 3s
       timeout: 2s
       retries: 30
       start_period: 5s
 
   minio-init:
-    image: minio/mc
+    image: cgr.dev/chainguard/minio-client:latest-dev
     entrypoint: >-
       /bin/sh -c "until mc alias set local http://minio:9000
       \"$${MINIO_ROOT_USER}\" \"$${MINIO_ROOT_PASSWORD}\"; do sleep 1; done;
