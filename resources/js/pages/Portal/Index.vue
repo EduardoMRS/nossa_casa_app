@@ -19,7 +19,9 @@ import {
     Calendar,
     Users,
     Image,
-    FileText
+    FileText,
+    ChevronLeft,
+    ChevronRight
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -328,6 +330,23 @@ const requestNearbyCommunities = (
     );
 };
 
+const featuresScrollRef = ref<HTMLElement | null>(null);
+
+const featuresList = [
+    { key: 'kids', icon: Users },
+    { key: 'library', icon: BookOpen },
+    { key: 'events', icon: Calendar },
+    { key: 'live', icon: Radio },
+    { key: 'gallery', icon: Image },
+    { key: 'posts', icon: FileText },
+];
+
+const scrollFeatures = (direction: 'left' | 'right') => {
+    if (!featuresScrollRef.value) return;
+    const scrollAmount = direction === 'left' ? -350 : 350;
+    featuresScrollRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+};
+
 onMounted(() => {
     if (props.locationApplied || !('geolocation' in navigator)) {
         return;
@@ -580,97 +599,64 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                 </div>
             </section>
 
-            <section class="mx-auto max-w-6xl px-4 py-12 sm:px-5 sm:py-16 lg:px-8">
-                <div class="text-center max-w-3xl mx-auto">
-                    <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 uppercase tracking-wider">
-                        <ShieldCheck class="size-4 text-emerald-600" />
-                        {{ t('portal.features.free_badge') }}
-                    </span>
-                    <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                        {{ t('portal.features.title') }}
-                    </h2>
-                    <p class="mt-3 text-base text-slate-600 leading-relaxed">
-                        {{ t('portal.features.description') }}
-                    </p>
+            <section class="mx-auto max-w-6xl px-4 py-12 sm:px-5 sm:py-16 lg:px-8 overflow-hidden">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                    <div class="max-w-3xl">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 uppercase tracking-wider">
+                            <ShieldCheck class="size-4 text-emerald-600" />
+                            {{ t('portal.features.free_badge') }}
+                        </span>
+                        <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                            {{ t('portal.features.title') }}
+                        </h2>
+                        <p class="mt-3 text-base text-slate-600 leading-relaxed">
+                            {{ t('portal.features.description') }}
+                        </p>
+                    </div>
+
+                    <!-- Botões de Controle do Carrossel -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button 
+                            type="button"
+                            @click="scrollFeatures('left')"
+                            class="size-11 rounded-2xl border border-slate-200 bg-white grid place-items-center text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm active:scale-95"
+                            aria-label="Anterior"
+                        >
+                            <ChevronLeft class="size-5" />
+                        </button>
+                        <button 
+                            type="button"
+                            @click="scrollFeatures('right')"
+                            class="size-11 rounded-2xl border border-slate-200 bg-white grid place-items-center text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm active:scale-95"
+                            aria-label="Próximo"
+                        >
+                            <ChevronRight class="size-5" />
+                        </button>
+                    </div>
                 </div>
 
-                <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <!-- Salas e Check-in Kids -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <Users class="size-6" />
+                <!-- Trilho do Carrossel com Scroll Snap -->
+                <div 
+                    ref="featuresScrollRef"
+                    class="flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus:outline-none"
+                    tabindex="0"
+                >
+                    <article 
+                        v-for="feature in featuresList" 
+                        :key="feature.key"
+                        class="w-[300px] sm:w-[350px] shrink-0 snap-start rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md flex flex-col justify-between"
+                    >
+                        <div>
+                            <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                                <component :is="feature.icon" class="size-6" />
+                            </div>
+                            <h3 class="mt-5 text-lg font-black text-slate-950">
+                                {{ t(`portal.features.items.${feature.key}.title`) }}
+                            </h3>
+                            <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                                {{ t(`portal.features.items.${feature.key}.description`) }}
+                            </p>
                         </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.kids.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.kids.description') }}
-                        </p>
-                    </article>
-
-                    <!-- Biblioteca e Bíblias Offline -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <BookOpen class="size-6" />
-                        </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.library.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.library.description') }}
-                        </p>
-                    </article>
-
-                    <!-- Eventos e Formulários Dinâmicos -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <Calendar class="size-6" />
-                        </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.events.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.events.description') }}
-                        </p>
-                    </article>
-
-                    <!-- Transmissões ao Vivo -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <Radio class="size-6" />
-                        </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.live.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.live.description') }}
-                        </p>
-                    </article>
-
-                    <!-- Galeria de Fotos e Vídeos -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <Image class="size-6" />
-                        </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.gallery.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.gallery.description') }}
-                        </p>
-                    </article>
-
-                    <!-- Notícias e Publicações -->
-                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
-                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
-                            <FileText class="size-6" />
-                        </div>
-                        <h3 class="mt-5 text-lg font-black text-slate-950">
-                            {{ t('portal.features.items.posts.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
-                            {{ t('portal.features.items.posts.description') }}
-                        </p>
                     </article>
                 </div>
             </section>

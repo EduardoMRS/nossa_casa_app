@@ -1271,37 +1271,11 @@
             "gallery": "Mídia da galeria",
             "posts": "Posts e atualizações"
         },
-        "features": {
-            "kicker": "100% gratuito e aberto",
-            "title": "Recursos completos sem custos adicionais",
-            "description": "Toda a tecnologia da Nossa Casa é gratuita para comunidades e igrejas, sem taxas de licenciamento ou cobranças ocultas.",
-            "free_badge": "Gratuito para todos",
-            "items": {
-                "kids": {
-                    "title": "Salas e check-in kids",
-                    "description": "Organize turmas infantis com controle de idade e sistema seguro de check-in com PIN para retirada dos pais."
-                },
-                "library": {
-                    "title": "Biblioteca e Bíblias offline",
-                    "description": "Estudos, devocionais e Bíblias disponíveis para leitura e consulta mesmo sem conexão com a internet."
-                },
-                "events": {
-                    "title": "Eventos e formulários dinâmicos",
-                    "description": "Calendário integrado com formulários de inscrição personalizados e gestão segura de participantes."
-                },
-                "live": {
-                    "title": "Transmissões ao vivo",
-                    "description": "Transmita cultos via RTMP com comentários em tempo real e gravação automática para a comunidade."
-                },
-                "gallery": {
-                    "title": "Galeria de fotos e vídeos",
-                    "description": "Compartilhe memórias visuais da comunidade com suporte a moderação e arquivos seguros."
-                },
-                "posts": {
-                    "title": "Notícias e publicações",
-                    "description": "Divulgue avisos, devocionais e histórias com reações e comentários em tempo real."
-                }
-            }
+        "featured": {
+            "kicker": "Destaques",
+            "title": "Eventos futuros",
+            "view_all": "Ver tudo",
+            "view_detail": "Ver detalhes"
         },
         "latest_posts": {
             "kicker": "Comunicação",
@@ -1674,6 +1648,38 @@
             "domains_description": "Cada igreja pode usar seu próprio domínio e fornecer conteúdo relevante aos seus membros.",
             "governance_title": "Relações protegidas",
             "governance_description": "Novas congregações são revisadas pelos líderes da comunidade antes da ativação."
+        },
+        "features": {
+            "kicker": "100% gratuito e aberto",
+            "title": "Recursos completos sem custos adicionais",
+            "description": "Toda a tecnologia da Nossa Casa é gratuita para comunidades e igrejas, sem taxas de licenciamento ou cobranças ocultas.",
+            "free_badge": "Gratuito para todos",
+            "items": {
+                "kids": {
+                    "title": "Salas e check-in kids",
+                    "description": "Organize turmas infantis com controle de idade e sistema seguro de check-in com PIN para retirada dos pais."
+                },
+                "library": {
+                    "title": "Biblioteca e Bíblias offline",
+                    "description": "Estudos, devocionais e Bíblias disponíveis para leitura e consulta mesmo sem conexão com a internet."
+                },
+                "events": {
+                    "title": "Eventos e formulários dinâmicos",
+                    "description": "Calendário integrado com formulários de inscrição personalizados e gestão segura de participantes."
+                },
+                "live": {
+                    "title": "Transmissões ao vivo",
+                    "description": "Transmita cultos via RTMP com comentários em tempo real e gravação automática para a comunidade."
+                },
+                "gallery": {
+                    "title": "Galeria de fotos e vídeos",
+                    "description": "Compartilhe memórias visuais da comunidade com suporte a moderação e arquivos seguros."
+                },
+                "posts": {
+                    "title": "Notícias e publicações",
+                    "description": "Divulgue avisos, devocionais e histórias com reações e comentários em tempo real."
+                }
+            }
         },
         "communities": {
             "kicker": "Comunidades participantes",

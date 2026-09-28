@@ -1260,37 +1260,11 @@
             "gallery": "Gallery media",
             "posts": "Posts and updates"
         },
-        "features": {
-            "kicker": "100% free and open source",
-            "title": "Complete features with zero extra charges",
-            "description": "All Nossa Casa technology is free for communities and churches, with no licensing fees or hidden charges.",
-            "free_badge": "Free for everyone",
-            "items": {
-                "kids": {
-                    "title": "Kids classrooms and check-in",
-                    "description": "Organize children's classes with age filtering and a secure PIN check-in system for parent pickup."
-                },
-                "library": {
-                    "title": "Library and offline Bibles",
-                    "description": "Studies, devotionals, and Bibles available for reading and study even without an internet connection."
-                },
-                "events": {
-                    "title": "Events and dynamic forms",
-                    "description": "Integrated calendar with custom registration forms and secure participant management."
-                },
-                "live": {
-                    "title": "Live streams",
-                    "description": "Stream services via RTMP with real-time comments and automatic community recordings."
-                },
-                "gallery": {
-                    "title": "Photo and video gallery",
-                    "description": "Share visual memories of the community with moderation support and secure files."
-                },
-                "posts": {
-                    "title": "News and posts",
-                    "description": "Publish announcements, devotionals, and stories with real-time reactions and comments."
-                }
-            }
+        "featured": {
+            "kicker": "Highlights",
+            "title": "Upcoming events",
+            "view_all": "View all",
+            "view_detail": "View details"
         },
         "latest_posts": {
             "kicker": "Communication",
@@ -1663,6 +1637,38 @@
             "domains_description": "Each church can use its own domain and provide relevant content to its members.",
             "governance_title": "Protected relationships",
             "governance_description": "New congregations are reviewed by community leaders before activation."
+        },
+        "features": {
+            "kicker": "100% free and open source",
+            "title": "Complete features with zero extra charges",
+            "description": "All Nossa Casa technology is free for communities and churches, with no licensing fees or hidden charges.",
+            "free_badge": "Free for everyone",
+            "items": {
+                "kids": {
+                    "title": "Kids classrooms and check-in",
+                    "description": "Organize children's classes with age filtering and a secure PIN check-in system for parent pickup."
+                },
+                "library": {
+                    "title": "Library and offline Bibles",
+                    "description": "Studies, devotionals, and Bibles available for reading and study even without an internet connection."
+                },
+                "events": {
+                    "title": "Events and dynamic forms",
+                    "description": "Integrated calendar with custom registration forms and secure participant management."
+                },
+                "live": {
+                    "title": "Live streams",
+                    "description": "Stream services via RTMP with real-time comments and automatic community recordings."
+                },
+                "gallery": {
+                    "title": "Photo and video gallery",
+                    "description": "Share visual memories of the community with moderation support and secure files."
+                },
+                "posts": {
+                    "title": "News and posts",
+                    "description": "Publish announcements, devotionals, and stories with real-time reactions and comments."
+                }
+            }
         },
         "communities": {
             "kicker": "Participating communities",
