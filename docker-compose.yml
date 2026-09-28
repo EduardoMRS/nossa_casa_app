@@ -298,8 +298,7 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    image: bitnami/minio:latest
     expose:
       - "9000"
     ports:
@@ -320,11 +319,14 @@ services:
       start_period: 5s
 
   minio-init:
-    image: minio/mc:latest
+    image: alpine:latest
     entrypoint: >-
-      /bin/sh -c "until mc alias set local http://minio:9000
-      \"$${MINIO_ROOT_USER}\" \"$${MINIO_ROOT_PASSWORD}\"; do sleep 1; done;
-      mc mb --ignore-existing \"local/$${MINIO_BUCKET}\""
+      /bin/sh -c "
+      wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /bin/mc &&
+      chmod +x /bin/mc &&
+      until mc alias set local http://minio:9000 \"$${MINIO_ROOT_USER}\" \"$${MINIO_ROOT_PASSWORD}\"; do sleep 1; done;
+      mc mb --ignore-existing \"local/$${MINIO_BUCKET}\"
+      "
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
