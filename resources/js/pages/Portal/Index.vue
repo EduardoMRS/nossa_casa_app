@@ -15,6 +15,11 @@ import {
     X,
     FileCheck2,
     Paperclip,
+    BookOpen,
+    Calendar,
+    Users,
+    Image,
+    FileText
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -480,7 +485,21 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
 </script>
 
 <template>
-    <Head :title="t('portal.meta_title')" />
+    <Head>
+        <title>{{ t('portal.meta_title') }}</title>
+        <meta name="description" :content="t('portal.hero.description')" />
+        
+        <!-- Open Graph / Redes Sociais (WhatsApp, Facebook, LinkedIn) -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" :content="t('portal.meta_title')" />
+        <meta property="og:description" :content="t('portal.hero.description')" />
+        <meta property="og:locale" :content="locale === 'pt' ? 'pt_BR' : 'en_US'" />
+        
+        <!-- Twitter Cards -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" :content="t('portal.meta_title')" />
+        <meta name="twitter:description" :content="t('portal.hero.description')" />
+    </Head>
     <div
         class="min-h-screen min-w-0 overflow-x-clip bg-[#f7f8fc] text-slate-950"
     >
@@ -558,6 +577,101 @@ const rejectRequest = async (request: RegistrationRequest): Promise<void> => {
                             </p>
                         </article>
                     </div>
+                </div>
+            </section>
+
+            <section class="mx-auto max-w-6xl px-4 py-12 sm:px-5 sm:py-16 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 uppercase tracking-wider">
+                        <ShieldCheck class="size-4 text-emerald-600" />
+                        {{ t('portal.features.free_badge') }}
+                    </span>
+                    <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                        {{ t('portal.features.title') }}
+                    </h2>
+                    <p class="mt-3 text-base text-slate-600 leading-relaxed">
+                        {{ t('portal.features.description') }}
+                    </p>
+                </div>
+
+                <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Salas e Check-in Kids -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <Users class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.kids.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.kids.description') }}
+                        </p>
+                    </article>
+
+                    <!-- Biblioteca e Bíblias Offline -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <BookOpen class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.library.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.library.description') }}
+                        </p>
+                    </article>
+
+                    <!-- Eventos e Formulários Dinâmicos -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <Calendar class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.events.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.events.description') }}
+                        </p>
+                    </article>
+
+                    <!-- Transmissões ao Vivo -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <Radio class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.live.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.live.description') }}
+                        </p>
+                    </article>
+
+                    <!-- Galeria de Fotos e Vídeos -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <Image class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.gallery.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.gallery.description') }}
+                        </p>
+                    </article>
+
+                    <!-- Notícias e Publicações -->
+                    <article class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md">
+                        <div class="size-12 rounded-2xl bg-indigo-50 grid place-items-center text-indigo-700 font-black">
+                            <FileText class="size-6" />
+                        </div>
+                        <h3 class="mt-5 text-lg font-black text-slate-950">
+                            {{ t('portal.features.items.posts.title') }}
+                        </h3>
+                        <p class="mt-2 text-sm text-slate-500 leading-relaxed">
+                            {{ t('portal.features.items.posts.description') }}
+                        </p>
+                    </article>
                 </div>
             </section>
 
