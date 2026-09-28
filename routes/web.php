@@ -58,6 +58,8 @@ $isWayfinderGeneration = in_array('wayfinder:generate', $_SERVER['argv'] ?? [], 
 Route::get('/.well-known/nossa-casa.json', DiscoveryController::class)
     ->middleware('throttle:discovery')
     ->name('discovery');
+Route::get('/.well-known/ai-catalog.json', fn() => response()->json([], 404));
+Route::get('/llms.txt', fn() => response('', 404));
 
 if (! function_exists('categoriesForChurchAndType')) {
     function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
