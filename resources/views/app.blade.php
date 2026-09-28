@@ -86,8 +86,9 @@
     $currentRoute = request()->route()?->getName();
     $routeParameters = request()->route()?->parameters() ?? [];
     unset($routeParameters['locale']);
-    $hasLocalizedRoute = $currentRoute !== null && request()->route()?->uri() !== null
-        && str_starts_with(request()->route()->uri(), '{locale}');
+    
+    $hasLocalizedRoute = $currentRoute !== null 
+        && in_array('locale', request()->route()?->parameterNames() ?? []);
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="{{ $brandingStyle }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
