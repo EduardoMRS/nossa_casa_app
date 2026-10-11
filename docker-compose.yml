@@ -47,14 +47,6 @@ services:
       MINIO_ENDPOINT: http://minio:9000
     networks:
       - laravel_network
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - "php -r '$$socket = @fsockopen(\"127.0.0.1\", 9000); exit(is_resource($$socket) ? 0 : 1);'"
-      interval: 3s
-      timeout: 2s
-      retries: 60
-      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
