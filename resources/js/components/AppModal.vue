@@ -42,7 +42,7 @@ const contentClasses = computed(() =>
 </script>
 
 <template>
-    <Dialog v-model:open="open">
+    <Dialog v-model:open="open" class="z-1000">
         <DialogScrollContent
             v-if="scrollable"
             :class="contentClasses"
