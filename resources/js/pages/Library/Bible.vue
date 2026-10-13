@@ -1190,7 +1190,7 @@ onBeforeUnmount(() => {
 
             <aside
                 v-if="pendingHighlight"
-                class="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 mx-auto max-w-2xl rounded-2xl border border-[var(--reader-border)] bg-[var(--reader-surface)] p-3 shadow-2xl shadow-black/20 sm:bottom-4 sm:p-4"
+                class="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-80 mx-auto max-w-2xl rounded-2xl border border-[var(--reader-border)] bg-[var(--reader-surface)] p-3 shadow-2xl shadow-black/20 sm:bottom-4 sm:p-4"
                 data-test="bible-highlight-toolbar"
             >
                 <div class="flex items-start justify-between gap-3">

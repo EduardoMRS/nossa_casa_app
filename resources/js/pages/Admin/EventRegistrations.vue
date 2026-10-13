@@ -231,7 +231,7 @@ const exportUrl = (format: 'pdf' | 'xlsx'): string => {
                         {{ t('admin.event_registrations.columns') }}
                     </summary>
                     <div
-                        class="absolute left-0 z-50 mt-2 max-h-80 w-[min(18rem,calc(100vw-3rem))] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-xl"
+                        class="absolute left-0 z-80 mt-2 max-h-80 w-[min(18rem,calc(100vw-3rem))] space-y-2 overflow-y-auto rounded-xl border border-border bg-popover p-4 text-popover-foreground shadow-xl"
                     >
                         <label
                             v-for="column in columns"

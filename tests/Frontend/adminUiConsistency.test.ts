@@ -11,7 +11,7 @@ test('event registration column picker is not clipped by its table card', () => 
     );
 
     assert.match(source, /class="relative z-30"/);
-    assert.match(source, /absolute left-0 z-50/);
+    assert.match(source, /absolute left-0 z-80/);
     assert.match(source, /bg-popover/);
     assert.doesNotMatch(
         source,
