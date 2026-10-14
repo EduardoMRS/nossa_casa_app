@@ -101,6 +101,20 @@ test('leader can upload media from a stored file path string', function () {
     }
 });
 
+test('leader upload uses the original filename as title when title is missing', function () {
+    $leader = User::factory()->create(['role' => UserRole::LEADER]);
+    $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
+    $church->assignMember($leader);
+
+    $response = $this->actingAs($leader)->postJson('/api/media', [
+        'file' => UploadedFile::fake()->create('Sunday service.mp4', 10, 'video/mp4'),
+    ]);
+
+    $response->assertCreated();
+
+    expect(Media::query()->latest()->firstOrFail()->title)->toBe('Sunday service');
+});
+
 test('member cannot upload media', function () {
     $member = User::factory()->create(['role' => UserRole::MEMBER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);

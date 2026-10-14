@@ -64,9 +64,15 @@ final class MediaQuery
         $media->localize(relations: ['categories']);
         $path = parse_url($media->file_path, PHP_URL_PATH) ?: $media->file_path;
 
+        // Retorna a URL otimizada de preview caso disponível, com fallback para o original
+        $previewUrl = $media->optimized_path
+            ? Storage::disk((string) config('media.disk'))->url($media->optimized_path)
+            : $media->url;
+
         return [
             'id' => $media->id,
-            'url' => $media->url,
+            'url' => $previewUrl,
+            'original_url' => $media->url,
             'download_url' => route('gallery.download', $media),
             'title' => $media->title ?: (string) Str::of(pathinfo($path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->headline(),
             'description' => $media->description,

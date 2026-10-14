@@ -25,6 +25,7 @@ class Media extends Model
         'gallery',
         'status',
         'disk',
+        'optimized_path',
     ];
 
     protected $casts = [

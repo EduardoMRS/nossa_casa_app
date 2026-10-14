@@ -12,6 +12,7 @@ use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -61,9 +62,12 @@ class MediaController extends Controller
 
         $fileData = getFileMetadata($fileInput);
         $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
+        $fileName = $fileInput instanceof UploadedFile ? $fileInput->getClientOriginalName() : $fileData['name'];
 
         $media = Media::create([
-            'title' => $validated['title'] ?? null,
+            'title' => filled($validated['title'] ?? null)
+                ? $validated['title']
+                : pathinfo(basename($fileName), PATHINFO_FILENAME),
             'description' => $validated['description'] ?? null,
             'file_path' => $mediaPath,
             'mimetype' => $validated['mimetype'] ?? ($fileData['mime_type'] ?? null),
