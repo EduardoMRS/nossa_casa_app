@@ -36,7 +36,7 @@ const { t } = useI18n()
       <DialogContent
         :class="
           cn(
-            'relative z-80 my-8 grid w-full min-w-0 max-w-[calc(100%-2rem)] w-98 md:w-full h-98 md:w-full gap-4 border border-border bo bg-background p-6 shadow-lg duration-200 sm:rounded-lg',
+            'relative z-80 my-8 grid min-w-0 max-w-[calc(100%-2rem)] w-98 md:w-80 h-78 md:w-78 gap-4 border border-border bo bg-background p-6 shadow-lg duration-200 sm:rounded-lg',
             props.class,
           )
         "
