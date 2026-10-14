@@ -711,7 +711,7 @@ onBeforeUnmount(() => {
                                 :src="selectedMedia.url"
                                 controls
                                 autoplay
-                                class="max-h-[86vh] h-full w-full"
+                                class="max-h-[86vh] h-full w-full object-contain"
                             />
                             <iframe
                                 v-else-if="isPdf(selectedMedia)"
@@ -723,7 +723,7 @@ onBeforeUnmount(() => {
                                 v-else
                                 :src="selectedMedia.url"
                                 :alt="selectedMedia.title"
-                                class="max-h-[86vh] h-full w-full"
+                                class="max-h-[86vh] h-full w-full object-contain"
                             />
                         </div>
     
