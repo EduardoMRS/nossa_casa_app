@@ -6,14 +6,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('media', function (Blueprint $table) {
+        Schema::table('medias', function (Blueprint $table) {
             $table->string('optimized_path')->nullable()->after('file_path');
         });
     }
 
     public function down(): void
     {
-        Schema::table('media', function (Blueprint $table) {
+        Schema::table('medias', function (Blueprint $table) {
             $table->dropColumn('optimized_path');
         });
     }
