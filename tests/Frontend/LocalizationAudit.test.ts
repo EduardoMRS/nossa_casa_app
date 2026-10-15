@@ -3,7 +3,9 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
-type Catalog = Record<string, string | Catalog>;
+interface Catalog {
+    [key: string]: string | Catalog;
+}
 
 const projectRoot = process.cwd();
 

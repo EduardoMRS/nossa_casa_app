@@ -84,7 +84,16 @@ const props = defineProps<{
 const { locale, t } = useI18n();
 const { gallery: galleryRepository, interactions } = useRepositories();
 const publicTemplate = usePublicTemplate('gallery');
-const page = usePage();
+const page = usePage<{
+    auth?: {
+        user?: {
+            id: string | number;
+            name: string;
+            role?: string | { value?: string };
+        } | null;
+    };
+    permissions?: { manageMedia?: boolean };
+}>();
 const canManageGallery = computed(
     () => page.props.permissions?.manageMedia === true,
 );
@@ -225,8 +234,11 @@ const shareMedia = async (): Promise<void> => {
     }
 
     const shareData = {
-        title: selectedMedia.value.title,
-        text: selectedMedia.value.description ?? selectedMedia.value.title,
+        title: selectedMedia.value.title ?? undefined,
+        text:
+            selectedMedia.value.description ??
+            selectedMedia.value.title ??
+            undefined,
         url: selectedMedia.value.url,
     };
 

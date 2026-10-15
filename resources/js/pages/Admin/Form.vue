@@ -546,12 +546,17 @@ async function save(): Promise<void> {
                             </label>
                             <textarea
                                 v-if="field.type === 'textarea'"
-                                v-model="previewValues[field.id]"
+                                :value="String(previewValues[field.id] ?? '')"
                                 :rows="
                                     field.size === 'fixed' ? field.height : 3
                                 "
                                 :placeholder="field.placeholder"
                                 class="mt-1 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-foreground"
+                                @input="
+                                    previewValues[field.id] = (
+                                        $event.target as HTMLTextAreaElement
+                                    ).value
+                                "
                             />
                             <select
                                 v-else-if="field.type === 'select'"

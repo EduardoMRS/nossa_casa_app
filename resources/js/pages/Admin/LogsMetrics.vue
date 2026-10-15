@@ -108,7 +108,6 @@ onMounted(() => {
     refreshTimer = window.setInterval(() => {
         router.reload({
             only: ['stats', 'queue', 'logs', 'liveStreams'],
-            preserveScroll: true,
         });
     }, 30_000);
 });

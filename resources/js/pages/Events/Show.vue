@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { Edit, Share2 } from '@lucide/vue';
 import { computed } from 'vue';
 import { toast } from 'vue-sonner';

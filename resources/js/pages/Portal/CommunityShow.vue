@@ -72,7 +72,7 @@ const formattedFoundDate = computed(() =>
 
 const requestLocalPriority = (latitude: number, longitude: number): void => {
     router.get(
-        communityShow(props.community).url,
+        communityShow({ community: props.community.slug }).url,
         { latitude, longitude },
         {
             only: ['churches', 'tree', 'locationApplied'],

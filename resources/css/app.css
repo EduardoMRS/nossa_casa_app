@@ -824,7 +824,8 @@ label {
     }
 }
 
-/* 
-Custom style to scroll the page to the top when a new page is loaded in the public shell.
- */
+
+body:has(div[role="dialog"][data-state="open"]) {
+    overflow: hidden;
+}
  

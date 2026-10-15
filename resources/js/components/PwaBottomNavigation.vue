@@ -27,6 +27,18 @@ import { edit as profileEdit } from '@/routes/profile';
 type StandaloneNavigator = Navigator & {
     standalone?: boolean;
 };
+type NavigationPageProps = {
+    auth?: {
+        user?: {
+            role?: string | { value?: string };
+        } | null;
+    };
+    churchContext?: {
+        isMainDomain?: boolean;
+        church?: { id?: string } | null;
+    };
+    permissions?: Record<string, boolean>;
+};
 
 type BottomNavigationKey =
     | 'bible'
@@ -59,7 +71,7 @@ const publicShellComponents = new Set([
     'LiveStreams/Show',
 ]);
 
-const page = usePage();
+const page = usePage<NavigationPageProps>();
 const { t } = useI18n();
 const standalone = ref(false);
 const mediaQueries: MediaQueryList[] = [];
@@ -298,23 +310,11 @@ const updateStandalone = (): void => {
 };
 
 const addMediaListener = (query: MediaQueryList): void => {
-    if ('addEventListener' in query) {
-        query.addEventListener('change', updateStandalone);
-
-        return;
-    }
-
-    query.addListener(updateStandalone);
+    query.addEventListener('change', updateStandalone);
 };
 
 const removeMediaListener = (query: MediaQueryList): void => {
-    if ('removeEventListener' in query) {
-        query.removeEventListener('change', updateStandalone);
-
-        return;
-    }
-
-    query.removeListener(updateStandalone);
+    query.removeEventListener('change', updateStandalone);
 };
 
 const syncDocumentClasses = (): void => {

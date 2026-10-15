@@ -57,6 +57,8 @@ const shareLibraryItem = async (
         }
     }
 };
+const currentPageUrl = (): string =>
+    typeof window === 'undefined' ? '' : window.location.href;
 </script>
 <template>
     <div
@@ -193,7 +195,7 @@ const shareLibraryItem = async (
                             shareLibraryItem(
                                 item.title,
                                 item.description ?? item.title,
-                                item.file_url ?? window.location.href,
+                                item.file_url ?? currentPageUrl(),
                             )
                         "
                     >
