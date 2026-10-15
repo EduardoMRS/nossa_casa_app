@@ -23,7 +23,22 @@ class S3TemporaryUrlGenerator
             throw new InvalidArgumentException(__('media.temporary_url_not_s3', ['disk' => $diskName]));
         }
 
-        $endpoint = $config['temporary_url'] ?? $config['endpoint'] ?? null;
+        $temporaryUrl = $config['temporary_url'] ?? null;
+        $endpoint = $temporaryUrl ?? $config['endpoint'] ?? null;
+        $applicationHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+        $temporaryUrlHost = is_string($temporaryUrl)
+            ? parse_url($temporaryUrl, PHP_URL_HOST)
+            : null;
+
+        if (
+            is_string($applicationHost)
+            && is_string($temporaryUrlHost)
+            && strcasecmp($applicationHost, $temporaryUrlHost) === 0
+            && is_string($config['endpoint'] ?? null)
+            && $config['endpoint'] !== ''
+        ) {
+            $endpoint = $config['endpoint'];
+        }
 
         if (! is_string($endpoint) || $endpoint === '') {
             throw new InvalidArgumentException(__('media.temporary_url_endpoint_missing', ['disk' => $diskName]));
