@@ -10,6 +10,7 @@ import {
     Trash2,
     Upload,
 } from '@lucide/vue';
+import axios from 'axios';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import AppModal from '@/components/AppModal.vue';
 import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
@@ -56,6 +57,8 @@ const selected = ref<MediaItem | null>(null);
 const sourceType = ref<'url' | 'file'>('file');
 const fileUrl = ref('');
 const selectedFile = ref<File | null>(null);
+const selectedFiles = ref<File[]>([]);
+const uploadedFileIndexes = ref<number[]>([]);
 const localPreview = ref('');
 const mediaTitle = ref('');
 const mediaDescription = ref('');
@@ -64,6 +67,12 @@ const status = ref('pending');
 const categoryIds = ref<string[]>([]);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
+const isBulkUpload = computed(
+    () =>
+        !selected.value &&
+        sourceType.value === 'file' &&
+        selectedFiles.value.length > 1,
+);
 const preview = computed(
     () =>
         localPreview.value ||
@@ -97,6 +106,8 @@ const openUpload = (): void => {
     sourceType.value = 'file';
     fileUrl.value = '';
     selectedFile.value = null;
+    selectedFiles.value = [];
+    uploadedFileIndexes.value = [];
     mediaTitle.value = '';
     mediaDescription.value = '';
     gallery.value = true;
@@ -111,6 +122,8 @@ const openEditor = (item: MediaItem): void => {
     sourceType.value = item.file_path?.startsWith('http') ? 'url' : 'file';
     fileUrl.value = item.file_path?.startsWith('http') ? item.file_path : '';
     selectedFile.value = null;
+    selectedFiles.value = [];
+    uploadedFileIndexes.value = [];
     mediaTitle.value = item.title ?? '';
     mediaDescription.value = item.description ?? '';
     gallery.value = item.gallery;
@@ -121,7 +134,10 @@ const openEditor = (item: MediaItem): void => {
     editorOpen.value = true;
 };
 const chooseFile = (event: Event): void => {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    const file = files[0] ?? null;
+    selectedFiles.value = files;
+    uploadedFileIndexes.value = [];
     selectedFile.value = file;
     revokePreview();
 
@@ -129,8 +145,64 @@ const chooseFile = (event: Event): void => {
         localPreview.value = URL.createObjectURL(file);
     }
 };
-const save = (): void => {
+const changeSource = (): void => {
+    selectedFile.value = null;
+    selectedFiles.value = [];
+    uploadedFileIndexes.value = [];
+    revokePreview();
+};
+const uploadMultiple = async (): Promise<void> => {
+    const failedIndexes: number[] = [];
+
+    for (const [index, file] of selectedFiles.value.entries()) {
+        if (uploadedFileIndexes.value.includes(index)) {
+            continue;
+        }
+
+        const payload = new FormData();
+        payload.append('file', file);
+        payload.append('gallery', gallery.value ? '1' : '0');
+        categoryIds.value.forEach((categoryId) =>
+            payload.append('category_ids[]', categoryId),
+        );
+
+        try {
+            await axios.post('/api/media', payload);
+            uploadedFileIndexes.value = [...uploadedFileIndexes.value, index];
+        } catch {
+            failedIndexes.push(index);
+        }
+    }
+
+    if (failedIndexes.length > 0) {
+        errors.value = {
+            bulk: t('admin.media.bulk_error', {
+                uploaded: uploadedFileIndexes.value.length,
+                total: selectedFiles.value.length,
+            }),
+        };
+
+        return;
+    }
+
+    editorOpen.value = false;
+    router.visit(returnUrl.value);
+};
+const save = async (): Promise<void> => {
     processing.value = true;
+
+    if (isBulkUpload.value) {
+        errors.value = {};
+
+        try {
+            await uploadMultiple();
+        } finally {
+            processing.value = false;
+        }
+
+        return;
+    }
+
     const payload: Record<string, any> = {
         title: mediaTitle.value || null,
         description: mediaDescription.value || null,
@@ -389,6 +461,7 @@ onBeforeUnmount(revokePreview);
                                 }}<select
                                     v-model="sourceType"
                                     class="mt-1 w-full rounded-lg border-slate-300 text-sm"
+                                    @change="changeSource"
                                 >
                                     <option value="file">
                                         {{ t('gallery.file') }}
@@ -403,6 +476,7 @@ onBeforeUnmount(revokePreview);
                                     v-if="sourceType === 'file'"
                                     type="file"
                                     accept="image/*,video/*,application/pdf"
+                                    multiple
                                     class="mt-1 w-full rounded-lg border p-2 text-sm"
                                     @change="chooseFile" /><input
                                     v-else
@@ -410,6 +484,13 @@ onBeforeUnmount(revokePreview);
                                     class="mt-1 w-full rounded-lg border-slate-300 text-sm"
                             /></label>
                         </template>
+                        <p v-if="isBulkUpload" class="text-xs text-slate-500">
+                            {{
+                                t('admin.media.files_selected', {
+                                    count: selectedFiles.length,
+                                })
+                            }}
+                        </p>
                         <p
                             v-for="message in errors"
                             :key="message"
@@ -417,14 +498,18 @@ onBeforeUnmount(revokePreview);
                         >
                             {{ message }}
                         </p>
-                        <label class="block text-xs font-bold"
+                        <label
+                            v-if="!isBulkUpload"
+                            class="block text-xs font-bold"
                             >{{ t('admin.media.record_title')
                             }}<input
                                 v-model="mediaTitle"
                                 maxlength="255"
                                 class="mt-1 w-full rounded-lg border-slate-300 text-sm"
                         /></label>
-                        <label class="block text-xs font-bold"
+                        <label
+                            v-if="!isBulkUpload"
+                            class="block text-xs font-bold"
                             >{{ t('admin.media.record_description')
                             }}<textarea
                                 v-model="mediaDescription"
@@ -434,7 +519,9 @@ onBeforeUnmount(revokePreview);
                             />
                         </label>
                         <div class="grid grid-cols-2 gap-3">
-                            <label class="block text-xs font-bold"
+                            <label
+                                v-if="!isBulkUpload"
+                                class="block text-xs font-bold"
                                 >{{ t('admin.common.status')
                                 }}<select
                                     v-model="status"
@@ -449,8 +536,9 @@ onBeforeUnmount(revokePreview);
                                     <option value="rejected">
                                         {{ t('admin.media.status.rejected') }}
                                     </option>
-                                </select></label
-                            ><label
+                                </select>
+                            </label>
+                            <label
                                 class="flex items-center gap-2 self-end rounded-lg border p-2.5 text-xs font-bold"
                                 ><input v-model="gallery" type="checkbox" />{{
                                     t('admin.media.public_gallery')
@@ -467,9 +555,14 @@ onBeforeUnmount(revokePreview);
                             class="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
                         >
                             {{
-                                processing
-                                    ? t('admin.common.saving')
-                                    : t('admin.common.save')
+                                processing && isBulkUpload
+                                    ? t('admin.media.bulk_progress', {
+                                          uploaded: uploadedFileIndexes.length,
+                                          total: selectedFiles.length,
+                                      })
+                                    : processing
+                                      ? t('admin.common.saving')
+                                      : t('admin.common.save')
                             }}
                         </button>
                     </div>

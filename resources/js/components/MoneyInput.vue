@@ -112,7 +112,7 @@ watch(selectedCode, (value) => {
             :required="required"
             :disabled="disabled"
             :placeholder="t('money.placeholder')"
-            class="money-input__value h-full w-0 min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-3 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
+            class="money-input__value h-full w-0 min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-3 py-1 text-sm text-slate-600 outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
             @input="update"
             @blur="format"
         />
