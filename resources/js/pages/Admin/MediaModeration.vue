@@ -282,7 +282,7 @@ onBeforeUnmount(revokePreview);
                     </button>
                     <div class="p-4">
                         <p class="truncate text-sm font-black">
-                            {{ item.file_path }}
+                            {{ item.title ?? item.file_path }}
                         </p>
                         <p class="mt-1 text-xs text-slate-400">
                             {{ item.uploader?.first_name }}
@@ -323,7 +323,7 @@ onBeforeUnmount(revokePreview);
 
         <AppModal
             v-model:open="editorOpen"
-            :title="selected?.file_path ?? t('admin.media.crud')"
+            :title="mediaTitle ?? selected?.file_path ?? t('admin.media.crud')"
             :description="
                 selected ? t('admin.media.edit') : t('admin.media.new')
             "

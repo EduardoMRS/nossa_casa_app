@@ -66,7 +66,7 @@ class AdminWorkspaceController extends Controller
             'candidates' => [
                 'post' => Post::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
                 'event' => Event::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
-                'media' => Media::query()->where('church_id', $churchId)->latest()->get(['id', 'file_path']),
+                'media' => Media::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
             ],
         ]);
     }
