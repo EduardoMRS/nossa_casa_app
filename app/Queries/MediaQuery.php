@@ -10,6 +10,7 @@ use App\Models\Media;
 use App\Models\Reaction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 final class MediaQuery
 {
