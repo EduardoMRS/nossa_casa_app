@@ -19,7 +19,7 @@ class SearchIndexController extends Controller
         if (!$context->church()) {
             return response()
                 ->view('sitemap', [
-                    'central' => true,
+                    'portal' => true,
                     'sitemaps' => $this->portalUrls($context)
                 ])
                 ->header('Content-Type', 'application/xml; charset=UTF-8')
@@ -29,7 +29,7 @@ class SearchIndexController extends Controller
         // Se for o subdomínio de uma igreja específica
         return response()
             ->view('sitemap', [
-                'central' => false,
+                'portal' => false,
                 'urls' => $this->churchUrls($request, $context->church())
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8')
@@ -44,7 +44,7 @@ class SearchIndexController extends Controller
     {
         return response()
             ->view('sitemap', [
-                'central' => false,
+                'portal' => true,
                 'urls' => $this->portalMainUrls($context)
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
@@ -79,7 +79,7 @@ class SearchIndexController extends Controller
     {
         $portalUrl = rtrim((string) config('app.url'), '/');
 
-        // 1. Injeta o sub-sitemap que contém apenas as páginas institucionais do central
+        // 1. Injeta o sub-sitemap que contém apenas as páginas institucionais do portal
         $sitemaps = collect([
             [
                 'location' => $portalUrl . '/sitemap-main.xml',
@@ -107,7 +107,7 @@ class SearchIndexController extends Controller
     }
 
     /** 
-     * Retorna apenas as URLs internas e estáticas pertencentes ao portal central
+     * Retorna apenas as URLs internas e estáticas pertencentes ao portal
      * @return array<int, array{location: string, last_modified: string|null}> 
      */
     private function portalMainUrls(ChurchDomainContext $context): array
