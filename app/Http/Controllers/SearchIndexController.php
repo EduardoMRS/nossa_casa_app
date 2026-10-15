@@ -95,12 +95,10 @@ class SearchIndexController extends Controller
             ->oldest('created_at')
             ->get(['domain', 'updated_at'])
             ->each(function (Church $church) use (&$sitemaps, $context): void {
-                foreach ($this->locales() as $locale) {
-                    $sitemaps->push([
-                        'location' => rtrim($context->churchUrl($church, $locale), '/') . '/sitemap.xml',
-                        'last_modified' => $church->updated_at?->toAtomString(),
-                    ]);
-                }
+                $sitemaps->push([
+                    'location' => rtrim($context->churchUrl($church, '/sitemap.xml'), '/'),
+                    'last_modified' => $church->updated_at?->toAtomString(),
+                ]);
             });
 
         return $sitemaps->all();
