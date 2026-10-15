@@ -10,7 +10,6 @@ use App\Models\Media;
 use App\Models\Reaction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 final class MediaQuery
 {
@@ -67,7 +66,7 @@ final class MediaQuery
 
         // Retorna a URL otimizada de preview caso disponível, com fallback para o original
         $previewUrl = $media->optimized_path
-            ? Storage::disk((string) config('media.disk'))->url($media->optimized_path)
+            ? genUrl($media->optimized_path, $media->disk)
             : $media->url;
 
         return [

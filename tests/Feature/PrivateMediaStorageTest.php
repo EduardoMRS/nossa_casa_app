@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Media;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -17,6 +19,47 @@ test('legacy public uploads can be moved to private storage', function () {
 
     Storage::disk('public')->assertMissing('church/example/logo.png');
     Storage::disk('media')->assertExists('church/example/logo.png');
+});
+
+test('media optimize can force a specific already optimized media', function () {
+    $uploader = User::factory()->create();
+    $media = Media::query()->create([
+        'uploader_id' => $uploader->id,
+        'file_path' => 'church/example/document.pdf',
+        'optimized_path' => 'previews/existing.webp',
+        'mimetype' => 'application/pdf',
+        'size' => 100,
+    ]);
+
+    $this->artisan('media:optimize', ['--force' => $media->id])
+        ->expectsOutput('Mídias selecionadas para otimização: 1.')
+        ->assertSuccessful();
+
+    expect($media->refresh()->optimized_path)->toBe('previews/existing.webp');
+});
+
+test('media optimize requires an id when force is used', function () {
+    $this->artisan('media:optimize', ['--force' => true])
+        ->expectsOutput('Informe o ID da mídia com --force=ID.')
+        ->assertFailed();
+});
+
+test('media optimize force all ignores the batch limit', function () {
+    $uploader = User::factory()->create();
+
+    foreach (['first', 'second'] as $name) {
+        Media::query()->create([
+            'uploader_id' => $uploader->id,
+            'file_path' => "church/example/{$name}.pdf",
+            'optimized_path' => "previews/{$name}.webp",
+            'mimetype' => 'application/pdf',
+            'size' => 100,
+        ]);
+    }
+
+    $this->artisan('media:optimize', ['--force-all' => true, '--limit' => 1])
+        ->expectsOutput('Mídias selecionadas para otimização: 2.')
+        ->assertSuccessful();
 });
 
 test('private files are only served by encrypted temporary signed urls', function () {

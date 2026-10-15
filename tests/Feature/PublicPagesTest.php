@@ -12,6 +12,7 @@ use App\Models\Media;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('guests can visit public home page', function () {
@@ -49,6 +50,37 @@ test('guests can visit public gallery page', function () {
     $response = $this->get(route('gallery.index'));
 
     $response->assertOk();
+});
+
+test('public gallery preview urls use the church domain and signed storage route', function () {
+    $this->withoutVite();
+    $church = Church::query()->create([
+        'name' => 'Preview church',
+        'slug' => 'preview-church',
+        'domain' => 'preview.test',
+    ]);
+    $uploader = User::factory()->create(['role' => UserRole::MEDIA]);
+    $church->assignMember($uploader);
+    $optimizedPath = 'previews/preview.webp';
+    Storage::fake((string) config('media.disk'));
+    Storage::disk((string) config('media.disk'))->put($optimizedPath, 'optimized preview');
+    Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $uploader->id,
+        'title' => 'Preview image',
+        'file_path' => 'church/'.$church->id.'/media/original.jpg',
+        'optimized_path' => $optimizedPath,
+        'mimetype' => 'image/jpeg',
+        'size' => 1024,
+        'gallery' => true,
+        'status' => MediaStatus::APPROVED,
+    ]);
+
+    $this->get('http://preview.test/en/gallery')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Gallery/Index')
+            ->where('media.data.0.url', fn (string $url): bool => str_starts_with($url, 'http://preview.test/d/')));
 });
 
 test('home links to a public post page with rendered markdown', function () {
