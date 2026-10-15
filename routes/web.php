@@ -121,6 +121,7 @@ Route::get('/communities/{community:slug}', function (Request $request, Communit
 })->name('legacy.communities.show');
 
 Route::get('/sitemap.xml', [SearchIndexController::class, 'sitemap'])->name('sitemap');
+Route::get('/sitemap-main.xml', [SearchIndexController::class, 'sitemapMain'])->name('sitemap.main');
 Route::get('/robots.txt', [SearchIndexController::class, 'robots'])->name('robots');
 Route::get('/manifest.webmanifest', [PwaController::class, 'manifest'])->name('pwa.manifest');
 Route::get('/sw.js', [PwaController::class, 'serviceWorker'])->name('pwa.service-worker');
