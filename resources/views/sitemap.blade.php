@@ -1,5 +1,5 @@
 <?php echo '<?xml version="1.0" encoding="UTF-8"?>'; ?>
-@if ($portal && $sitemaps)
+@if ((isset($portal) && $portal) && (isset($sitemaps) && $sitemaps))
     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     @foreach ($sitemaps as $sitemap)
         <sitemap>
