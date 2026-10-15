@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, Plus, Save, Trash2 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
+import { updateChurchHighlights } from '@/actions/App/Http/Controllers/HighlightController';
 import { useI18n } from '@/lib/i18n';
 
 type HighlightItem = {
@@ -68,7 +69,7 @@ async function save(): Promise<void> {
     saving.value = true;
 
     try {
-        await axios.put(`/api/churches/${props.churchId}/highlights`, {
+        await axios.put(updateChurchHighlights.url(props.churchId), {
             highlights: items.value.map((item, order) => ({
                 id: item.id,
                 type: item.type,

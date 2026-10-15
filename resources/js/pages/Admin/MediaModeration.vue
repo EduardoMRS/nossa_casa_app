@@ -333,7 +333,7 @@ onBeforeUnmount(revokePreview);
             <form class="space-y-5 contents" @submit.prevent="save">
                 <div class="flex flex-col md:flex-row overflow-auto gap-2">
                     <div
-                        class="grid min-h-72 place-items-center overflow-hidden rounded-xl border bg-slate-100"
+                        class="grid min-h-72 min-w-[50%] place-items-center overflow-hidden rounded-xl border bg-slate-100"
                     >
                         <video
                             v-if="preview && previewKind === 'video'"
@@ -352,7 +352,7 @@ onBeforeUnmount(revokePreview);
                             class="max-h-[28rem] w-full object-contain"
                         /><Image v-else class="size-16 text-slate-300" />
                     </div>
-                    <div class="space-y-4">
+                    <div class="space-y-4 overflow-auto">
                         <div
                             v-if="selected"
                             class="rounded-xl border border-amber-200 bg-amber-50 p-3"

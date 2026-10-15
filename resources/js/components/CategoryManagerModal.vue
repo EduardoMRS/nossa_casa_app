@@ -176,7 +176,7 @@ const remove = async (category: ManagedCategory): Promise<void> => {
                     </p>
                 </div>
                 <form
-                    class="mt-2 md:mt-auto h-fit space-y-4 rounded-xl border border-border bg-muted/50 p-4 text-foreground"
+                    class="mt-2 md:mt-0 h-fit space-y-4 rounded-xl border border-border bg-muted/50 p-4 text-foreground"
                     @submit.prevent="save"
                 >
                     <div class="flex items-center justify-between">
