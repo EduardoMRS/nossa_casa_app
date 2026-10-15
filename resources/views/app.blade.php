@@ -24,6 +24,8 @@
         ->values();
     $indexableComponents = [
         'Home',
+        'auth/Login',
+        'auth/Register',
         'Portal/Index',
         'Portal/CommunityShow',
         'Events/Index',
@@ -86,7 +88,7 @@
     $currentRoute = request()->route()?->getName();
     $routeParameters = request()->route()?->parameters() ?? [];
     unset($routeParameters['locale']);
-    
+
     $hasLocalizedRoute = $currentRoute !== null 
         && in_array('locale', request()->route()?->parameterNames() ?? []);
 @endphp
