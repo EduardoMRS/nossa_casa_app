@@ -118,7 +118,7 @@ const remove = async (category: ManagedCategory): Promise<void> => {
         scrollable
         @update:open="(value) => !value && emit('close')"
     >
-        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
+        <div class="block overflow-auto md:grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.72fr)]">
             <div class="overflow-hidden rounded-xl border border-border bg-card">
                 <table class="w-full text-left text-sm">
                     <thead
@@ -176,7 +176,7 @@ const remove = async (category: ManagedCategory): Promise<void> => {
                     </p>
                 </div>
                 <form
-                    class="h-fit space-y-4 rounded-xl border border-border bg-muted/50 p-4 text-foreground"
+                    class="mt-2 md:mt-auto h-fit space-y-4 rounded-xl border border-border bg-muted/50 p-4 text-foreground"
                     @submit.prevent="save"
                 >
                     <div class="flex items-center justify-between">
