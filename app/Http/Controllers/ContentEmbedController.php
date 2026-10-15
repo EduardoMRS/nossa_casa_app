@@ -22,7 +22,7 @@ class ContentEmbedController extends Controller
         return response()->json([
             'forms' => Form::query()->where('church_id', $churchId)->orderBy('title')->get(['id', 'title', 'description']),
             'media' => Media::query()->with('categories:id,name')->where('church_id', $churchId)->where('status', MediaStatus::APPROVED)->latest()->get()->map(fn (Media $media): array => [
-                'id' => $media->id, 'title' => $media->title ?: basename($media->file_path),
+                'id' => $media->id, 'title' => $media->title ?: $media->original_filename ?: basename($media->file_path),
                 'description' => $media->description, 'url' => $media->url, 'mimetype' => $media->mimetype,
                 'categories' => $media->categories->map->only(['id', 'name'])->values(),
             ]),

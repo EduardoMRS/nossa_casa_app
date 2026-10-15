@@ -9,7 +9,6 @@ use App\Models\Comment;
 use App\Models\Media;
 use App\Models\Reaction;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
 final class MediaQuery
 {
@@ -62,8 +61,6 @@ final class MediaQuery
     private function item(Media $media): array
     {
         $media->localize(relations: ['categories']);
-        $path = parse_url($media->file_path, PHP_URL_PATH) ?: $media->file_path;
-
         // Retorna a URL otimizada de preview caso disponível, com fallback para o original
         $previewUrl = $media->optimized_path
             ? genUrl($media->optimized_path, $media->disk)
@@ -74,7 +71,7 @@ final class MediaQuery
             'url' => $previewUrl,
             'original_url' => $media->url,
             'download_url' => route('gallery.download', $media),
-            'title' => $media->title ?: (string) Str::of(pathinfo($path, PATHINFO_FILENAME))->replace(['-', '_'], ' ')->headline(),
+            'title' => filled($media->title) ? $media->title : null,
             'description' => $media->description,
             'mimetype' => $media->mimetype,
             'size' => $media->size,

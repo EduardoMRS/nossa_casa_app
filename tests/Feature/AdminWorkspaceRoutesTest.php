@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Classroom;
 use App\Models\Community;
+use App\Models\Media;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserProfile;
@@ -100,6 +101,28 @@ it('blocks members from admin workspace routes', function () {
             ->get(route($routeName))
             ->assertForbidden();
     }
+});
+
+it('shows the original filename in media moderation when no title is set', function () {
+    $admin = createAdminUserWithChurch();
+    $church = Church::query()->findOrFail($admin->profile->church_id);
+    $media = Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $admin->id,
+        'title' => null,
+        'original_filename' => 'service-photo.jpg',
+        'file_path' => 'church/'.$church->id.'/media/stored-object.jpg',
+        'mimetype' => 'image/jpeg',
+        'size' => 100,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.galleryModeration.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/MediaModeration')
+            ->where('media.0.id', $media->id)
+            ->where('media.0.title', null)
+            ->where('media.0.original_filename', 'service-photo.jpg'));
 });
 
 it('shares the kids ministry settings from the authenticated church', function () {

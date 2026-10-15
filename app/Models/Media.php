@@ -18,6 +18,7 @@ class Media extends Model
         'uploader_id',
         'church_id',
         'title',
+        'original_filename',
         'description',
         'file_path',
         'mimetype',
@@ -31,6 +32,10 @@ class Media extends Model
     protected $casts = [
         'gallery' => 'boolean',
         'status' => MediaStatus::class,
+    ];
+
+    protected $hidden = [
+        'original_filename',
     ];
 
     protected $appends = [

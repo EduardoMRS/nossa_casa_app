@@ -67,7 +67,7 @@ test('public gallery preview urls use the church domain and signed storage route
     Media::query()->create([
         'church_id' => $church->id,
         'uploader_id' => $uploader->id,
-        'title' => 'Preview image',
+        'original_filename' => 'original.jpg',
         'file_path' => 'church/'.$church->id.'/media/original.jpg',
         'optimized_path' => $optimizedPath,
         'mimetype' => 'image/jpeg',
@@ -80,6 +80,8 @@ test('public gallery preview urls use the church domain and signed storage route
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Gallery/Index')
+            ->where('media.data.0.title', null)
+            ->missing('media.data.0.original_filename')
             ->where('media.data.0.url', fn (string $url): bool => str_starts_with($url, 'http://preview.test/d/')));
 });
 

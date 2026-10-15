@@ -63,11 +63,11 @@ class MediaController extends Controller
         $fileData = getFileMetadata($fileInput);
         $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
         $fileName = $fileInput instanceof UploadedFile ? $fileInput->getClientOriginalName() : $fileData['name'];
+        $title = filled($validated['title'] ?? null) ? $validated['title'] : null;
 
         $media = Media::create([
-            'title' => filled($validated['title'] ?? null)
-                ? $validated['title']
-                : pathinfo(basename($fileName), PATHINFO_FILENAME),
+            'title' => $title,
+            'original_filename' => $fileName,
             'description' => $validated['description'] ?? null,
             'file_path' => $mediaPath,
             'mimetype' => $validated['mimetype'] ?? ($fileData['mime_type'] ?? null),

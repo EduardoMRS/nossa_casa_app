@@ -56,7 +56,7 @@ class EventContentController extends Controller
                 ->get()
                 ->map(fn (Media $media): array => [
                     'id' => $media->id,
-                    'title' => $media->title ?: basename($media->file_path),
+                    'title' => $media->title ?: $media->original_filename ?: basename($media->file_path),
                     'url' => $media->url,
                     'mimetype' => $media->mimetype,
                     'gallery' => $media->gallery,

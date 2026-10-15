@@ -789,3 +789,8 @@ label {
         @apply rounded-md border border-slate-300 bg-white px-2 py-1 text-sm placeholder:text-slate-400 focus:ring-1 focus:ring-slate-400 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
     }
 }
+
+/* 
+Custom style to scroll the page to the top when a new page is loaded in the public shell.
+ */
+:

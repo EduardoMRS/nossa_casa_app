@@ -22,6 +22,7 @@ import { useI18n } from '@/lib/i18n';
 type MediaItem = {
     id: string;
     title: string | null;
+    original_filename: string | null;
     description: string | null;
     file_path: string | null;
     preview_url: string | null;
@@ -354,7 +355,7 @@ onBeforeUnmount(revokePreview);
                     </button>
                     <div class="p-4">
                         <p class="truncate text-sm font-black">
-                            {{ item.title ?? item.file_path }}
+                            {{ item.title ?? item.original_filename ?? item.file_path }}
                         </p>
                         <p class="mt-1 text-xs text-slate-400">
                             {{ item.uploader?.first_name }}

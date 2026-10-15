@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Church;
+use App\Models\Media;
 use App\Models\Post;
 use App\Models\User;
 use App\Support\ContentEmbedRenderer;
@@ -25,4 +26,25 @@ test('content shortcode renders a safe preview for church content', function () 
     $html = app(ContentEmbedRenderer::class)->render("Before\n\n[[post:{$post->id}]]\n\nAfter", $church->id);
 
     expect($html)->toContain('content-embed-card')->toContain('Linked post')->toContain('/posts/'.$post->slug);
+});
+
+test('public media embeds omit the original filename when the title is empty', function () {
+    $church = Church::factory()->create();
+    $uploader = User::factory()->create();
+    $media = Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $uploader->id,
+        'title' => null,
+        'original_filename' => 'private-filename.jpg',
+        'file_path' => 'church/'.$church->id.'/media/private-filename.jpg',
+        'mimetype' => 'image/jpeg',
+        'size' => 100,
+    ]);
+
+    $html = app(ContentEmbedRenderer::class)->render("[[media:{$media->id}]]", $church->id);
+
+    expect($html)
+        ->toContain('alt=""')
+        ->not->toContain('private-filename.jpg')
+        ->not->toContain('<figcaption>');
 });

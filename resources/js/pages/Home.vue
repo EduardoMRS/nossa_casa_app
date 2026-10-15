@@ -53,7 +53,7 @@ type PostCard = {
 
 type RecordingCard = {
     id: string;
-    title: string;
+    title: string | null;
     url: string;
     mimetype: string;
     created_at: string;
@@ -675,7 +675,7 @@ const submitPrayer = async (): Promise<void> => {
                             </span>
                         </span>
                         <span class="block p-4">
-                            <strong class="block truncate text-sm">{{
+                            <strong v-if="recording.title" class="block truncate text-sm">{{
                                 recording.title
                             }}</strong>
                             <small class="mt-1 block text-slate-500">{{
@@ -1085,7 +1085,7 @@ const submitPrayer = async (): Promise<void> => {
         <template v-if="selectedRecording">
             <AppModal
                 :open="Boolean(selectedRecording)"
-                :title="selectedRecording.title"
+                :title="selectedRecording.title ?? ''"
                 size="full"
                 scrollable
                 :show-close-button="false"
@@ -1101,7 +1101,7 @@ const submitPrayer = async (): Promise<void> => {
                             class="flex items-center justify-between gap-4 p-4 text-white"
                         >
                             <div class="min-w-0">
-                                <p class="truncate font-bold">
+                                <p v-if="selectedRecording.title" class="truncate font-bold">
                                     {{ selectedRecording.title }}
                                 </p>
                                 <p class="mt-0.5 text-xs text-slate-400">
@@ -1165,6 +1165,7 @@ const submitPrayer = async (): Promise<void> => {
                                 </span>
                                 <span class="min-w-0 self-center">
                                     <strong
+                                        v-if="recording.title"
                                         class="line-clamp-2 text-sm leading-tight"
                                     >
                                         {{ recording.title }}

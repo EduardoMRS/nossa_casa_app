@@ -101,7 +101,7 @@ test('leader can upload media from a stored file path string', function () {
     }
 });
 
-test('leader upload uses the original filename as title when title is missing', function () {
+test('leader upload keeps the original filename without assigning an automatic title', function () {
     $leader = User::factory()->create(['role' => UserRole::LEADER]);
     $church = Church::create(['name' => 'Nossa Casa', 'slug' => 'nossa-casa', 'status' => 'active']);
     $church->assignMember($leader);
@@ -112,7 +112,10 @@ test('leader upload uses the original filename as title when title is missing', 
 
     $response->assertCreated();
 
-    expect(Media::query()->latest()->firstOrFail()->title)->toBe('Sunday service');
+    $media = Media::query()->latest()->firstOrFail();
+
+    expect($media->title)->toBeNull()
+        ->and($media->original_filename)->toBe('Sunday service.mp4');
 });
 
 test('member cannot upload media', function () {

@@ -57,7 +57,7 @@ interface MediaItem {
     id: string;
     url: string;
     download_url: string;
-    title: string;
+    title: string | null;
     description: string | null;
     mimetype: string;
     size: number;
@@ -574,7 +574,7 @@ onBeforeUnmount(() => {
                         <img
                             v-else
                             :src="item.url"
-                            :alt="item.title"
+                            :alt="item.title ?? ''"
                             class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                             loading="lazy"
                         />
@@ -604,9 +604,11 @@ onBeforeUnmount(() => {
                         </span>
                     </span>
                     <span class="block space-y-1 p-3">
-                        <strong class="block truncate text-sm text-slate-900">{{
-                            item.title
-                        }}</strong>
+                        <strong
+                            v-if="item.title"
+                            class="block truncate text-sm text-slate-900"
+                            >{{ item.title }}</strong
+                        >
                         <span class="block truncate text-xs text-slate-500">
                             {{
                                 item.uploader
@@ -682,7 +684,7 @@ onBeforeUnmount(() => {
         <template v-if="selectedMedia">
             <AppModal
                 :open="Boolean(selectedMedia)"
-                :title="selectedMedia.title"
+                :title="selectedMedia.title ?? ''"
                 size="full"
                 scrollable
                 :show-close-button="false"
@@ -716,20 +718,23 @@ onBeforeUnmount(() => {
                             <iframe
                                 v-else-if="isPdf(selectedMedia)"
                                 :src="selectedMedia.url"
-                                :title="selectedMedia.title"
+                                :title="selectedMedia.title ?? ''"
                                 class="h-full w-full bg-white"
                             />
                             <img
                                 v-else
                                 :src="selectedMedia.url"
-                                :alt="selectedMedia.title"
+                                :alt="selectedMedia.title ?? ''"
                                 class="h-full w-full object-contain"
                             />
                         </div>
     
                         <div class="flex flex-1 min-w-[40%] flex-col bg-white">
                             <header class="border-b border-slate-200 p-5 pr-14">
-                                <h2 class="text-lg font-black text-slate-950">
+                                <h2
+                                    v-if="selectedMedia.title"
+                                    class="text-lg font-black text-slate-950"
+                                >
                                     {{ selectedMedia.title }}
                                 </h2>
                                 <p class="mt-1 text-xs text-slate-500">

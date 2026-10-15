@@ -40,11 +40,12 @@ class ContentEmbedRenderer
 
         if ($model instanceof Media) {
             $url = $this->escape($model->url);
-            $title = $this->escape($model->title ?: basename($model->file_path));
+            $title = filled($model->title) ? $this->escape($model->title) : null;
+            $caption = $title !== null ? "<figcaption>{$title}</figcaption>" : '';
 
             return str_starts_with((string) $model->mimetype, 'video/')
-                ? "<figure class=\"content-embed content-embed-media\"><video controls preload=\"metadata\" src=\"{$url}\"></video><figcaption>{$title}</figcaption></figure>"
-                : "<figure class=\"content-embed content-embed-media\"><img loading=\"lazy\" src=\"{$url}\" alt=\"{$title}\"><figcaption>{$title}</figcaption></figure>";
+                ? "<figure class=\"content-embed content-embed-media\"><video controls preload=\"metadata\" src=\"{$url}\"></video>{$caption}</figure>"
+                : "<figure class=\"content-embed content-embed-media\"><img loading=\"lazy\" src=\"{$url}\" alt=\"{$title}\">{$caption}</figure>";
         }
 
         $title = $this->escape((string) $model->getAttribute('title'));

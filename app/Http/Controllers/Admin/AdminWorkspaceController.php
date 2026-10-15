@@ -57,7 +57,7 @@ class AdminWorkspaceController extends Controller
                 'id' => $highlight->highlightable_id,
                 'type' => Str::lower(class_basename($highlight->highlightable_type)),
                 'order' => $highlight->order,
-                'title' => $highlight->highlightable?->title ?? $highlight->highlightable?->name ?? $highlight->highlightable?->file_path,
+                'title' => $highlight->highlightable?->title ?? $highlight->highlightable?->name ?? $highlight->highlightable?->original_filename ?? $highlight->highlightable?->file_path,
             ]);
 
         return Inertia::render('Admin/Highlights', [
@@ -66,7 +66,11 @@ class AdminWorkspaceController extends Controller
             'candidates' => [
                 'post' => Post::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
                 'event' => Event::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
-                'media' => Media::query()->where('church_id', $churchId)->latest()->get(['id', 'title']),
+                'media' => Media::query()->where('church_id', $churchId)->latest()->get(['id', 'title', 'original_filename'])
+                    ->map(fn (Media $media): array => [
+                        'id' => $media->id,
+                        'title' => $media->title ?: $media->original_filename,
+                    ]),
             ],
         ]);
     }
@@ -100,6 +104,7 @@ class AdminWorkspaceController extends Controller
             ->map(fn (Media $item) => [
                 'id' => $item->id,
                 'title' => $item->title,
+                'original_filename' => $item->original_filename,
                 'description' => $item->description,
                 'file_path' => $item->file_path,
                 'preview_url' => $item->url,
@@ -170,7 +175,7 @@ class AdminWorkspaceController extends Controller
                 'id' => $comment->id,
                 'content' => $comment->content,
                 'commentable_type' => Str::lower(class_basename($comment->commentable_type)),
-                'commentable_title' => $comment->commentable?->title ?? $comment->commentable?->file_path ?? __('common.media'),
+                'commentable_title' => $comment->commentable?->title ?? $comment->commentable?->original_filename ?? $comment->commentable?->file_path ?? __('common.media'),
                 'created_at' => $comment->created_at,
                 'user' => $comment->user,
             ]);
