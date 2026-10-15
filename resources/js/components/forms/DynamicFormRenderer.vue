@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import DocumentInput from '@/components/DocumentInput.vue';
 import MoneyInput from '@/components/MoneyInput.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import { useI18n } from '@/lib/i18n';
@@ -41,11 +42,13 @@ const fields = computed<Field[]>(() => {
         : Array.isArray(record?.fields)
           ? record.fields
           : [];
+
     return raw.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object')).map((item, index) => {
         const name = String(item.name ?? item.key ?? item.id ?? '');
         const options = Array.isArray(item.options) ? item.options.map((option) => typeof option === 'string'
             ? { label: option, value: option }
             : { label: String(option.label ?? option.name ?? option.value ?? ''), value: String(option.value ?? option.id ?? option.label ?? '') }) : [];
+
         return {
             key: name || `element-${index}`, name, label: String(item.label ?? name),
             type: String(item.type ?? 'text').toLowerCase(), required: Boolean(item.required),
@@ -76,6 +79,7 @@ const update = (field: Field, next: unknown): void => emit('update:modelValue', 
                 </div>
                 <label v-else-if="field.type === 'checkbox'" class="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" :checked="Boolean(value(field))" :disabled="disabled" @change="update(field, ($event.target as HTMLInputElement).checked)" />{{ field.placeholder || field.label }}</label>
                 <PhoneInput v-else-if="field.type === 'phone'" :model-value="String(value(field))" :name="field.name" :required="field.required" :disabled="disabled" @update:model-value="update(field, $event)" />
+                <DocumentInput v-else-if="field.type === 'document'" :model-value="value(field)" :required="field.required" :disabled="disabled" :placeholder="field.placeholder" @update:model-value="update(field, $event)" />
                 <MoneyInput v-else-if="field.type === 'money'" :model-value="String(value(field))" :currency="currency" lock-currency :name="field.name" :required="field.required" :disabled="disabled" @update:model-value="update(field, $event)" />
                 <input v-else :value="String(value(field))" :type="field.type" :disabled="disabled" class="w-full rounded-xl border-slate-300 text-sm" :placeholder="field.placeholder" @input="update(field, ($event.target as HTMLInputElement).value)" />
                 <p v-if="field.helpText" class="text-xs text-slate-500">{{ field.helpText }}</p>

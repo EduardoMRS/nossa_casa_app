@@ -16,6 +16,7 @@ import {
 } from '@lucide/vue';
 import axios from 'axios';
 import { computed, reactive, ref } from 'vue';
+import DocumentInput from '@/components/DocumentInput.vue';
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
@@ -24,6 +25,12 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
+import { update as updateProfile } from '@/routes/profile';
+
+type DocumentValue = {
+    type: 'cpf' | 'ssn' | 'nif' | 'nino' | 'cuit' | 'dni' | 'passport';
+    number: string;
+};
 
 type Person = {
     id: string;
@@ -82,6 +89,7 @@ type PendingCheckout = {
 };
 const props = defineProps<{
     workspaceUser: WorkspaceUser;
+    document: DocumentValue | null;
     prayerRequests: Array<{ id: string; content: string; created_at: string }>;
     mustVerifyEmail: boolean;
     status?: string;
@@ -106,6 +114,7 @@ const profile = reactive({
     email: props.workspaceUser.email,
     birth_date: dateInputValue(props.workspaceUser.birth_date),
     phone: props.workspaceUser.profile?.phone ?? '',
+    document: props.document ?? { type: 'cpf', number: '' },
     gender: props.workspaceUser.profile?.gender ?? '',
     avatar: null as File | null,
     community_id: props.workspaceUser.profile?.community_id ?? '',
@@ -150,7 +159,7 @@ const availableChurches = computed(
 const saveProfile = (): void => {
     saving.value = true;
     router.post(
-        '/settings/profile',
+        updateProfile.url(),
         { ...profile, _method: 'patch' },
         {
             forceFormData: true,
@@ -331,6 +340,11 @@ const personFor = (item: Relationship): Person | undefined =>
                         >{{ t('settings.profile.phone')
                         }}<PhoneInput
                             v-model="profile.phone"
+                            class="mt-1" /></label
+                    ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
+                        >{{ t('settings.profile.document')
+                        }}<DocumentInput
+                            v-model="profile.document"
                             class="mt-1" /></label
                     ><label class="min-w-0 max-w-full text-xs font-bold text-slate-600"
                         >{{ t('settings.profile.gender')

@@ -37,6 +37,7 @@ class ProfileController extends Controller
             'relationships.relatedUser.profile',
             'relatedRelationships.user.profile',
         ]);
+        $documentNumber = $user->profile?->document_number;
         $churchId = $user->profile?->church_id;
         $childIds = $user->relationships()
             ->where('relationship_type', UserRelationships::PARENT->value)
@@ -46,6 +47,10 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'workspaceUser' => $user,
+            'document' => filled($documentNumber) ? [
+                'type' => $user->profile?->document_type,
+                'number' => $documentNumber,
+            ] : null,
             'prayerRequests' => PrayerRequest::query()->where('user_id', $user->id)->latest()->get(),
             'communities' => Community::query()
                 ->with(['churches' => fn ($query) => $query->orderBy('name')->select(['id', 'community_id', 'name', 'slug'])])
@@ -93,6 +98,13 @@ class ProfileController extends Controller
 
         $request->user()->save();
         $profileUpdates = array_intersect_key($validated, array_flip(['phone', 'gender']));
+
+        if (array_key_exists('document', $validated)) {
+            $document = $validated['document'] ?? [];
+            $documentNumber = trim((string) ($document['number'] ?? ''));
+            $profileUpdates['document_type'] = filled($documentNumber) ? ($document['type'] ?? null) : null;
+            $profileUpdates['document_number'] = filled($documentNumber) ? $documentNumber : null;
+        }
 
         if ($selectedChurch !== null && $request->user()->profile?->church_id !== $selectedChurch->id) {
             $this->transferChurchMembership->handle($request->user(), $selectedChurch);

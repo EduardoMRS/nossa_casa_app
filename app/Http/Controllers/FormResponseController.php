@@ -41,8 +41,13 @@ class FormResponseController extends Controller
             }
 
             $value = $answers[$key] ?? null;
+            $missing = ($field['type'] ?? null) === 'document'
+                ? ! is_array($value)
+                    || blank($value['number'] ?? null)
+                    || ! in_array($value['type'] ?? null, ['cpf', 'ssn', 'nif', 'nino', 'cuit', 'dni', 'passport'], true)
+                : $value === null || $value === '' || (is_array($value) && count($value) === 0);
 
-            if ($value === null || $value === '' || (is_array($value) && count($value) === 0)) {
+            if ($missing) {
                 $errors["answers.{$key}"] = __('form.field_required', ['field' => $key]);
             }
         });

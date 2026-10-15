@@ -92,6 +92,7 @@ test('members submit dynamic activities within the configured attempt limit', fu
         'title' => 'Revisão',
         'schema' => ['fields' => [
             ['name' => 'resposta', 'label' => 'Resposta', 'type' => 'textarea', 'required' => true],
+            ['name' => 'documento', 'label' => 'Documento', 'type' => 'document', 'required' => true],
         ]],
     ]);
     $activity = $this->classroom->activities()->create([
@@ -108,7 +109,17 @@ test('members submit dynamic activities within the configured attempt limit', fu
         ->assertUnprocessable();
 
     $this->postJson("/classrooms/{$this->classroom->slug}/activities/{$activity->id}/submissions", [
-        'answers' => ['resposta' => 'Minha resposta'],
+        'answers' => [
+            'resposta' => 'Minha resposta',
+            'documento' => ['type' => 'cpf', 'number' => ''],
+        ],
+    ])->assertUnprocessable();
+
+    $this->postJson("/classrooms/{$this->classroom->slug}/activities/{$activity->id}/submissions", [
+        'answers' => [
+            'resposta' => 'Minha resposta',
+            'documento' => ['type' => 'cpf', 'number' => '123.456.789-09'],
+        ],
     ])->assertCreated();
 
     $this->postJson("/classrooms/{$this->classroom->slug}/activities/{$activity->id}/submissions", [

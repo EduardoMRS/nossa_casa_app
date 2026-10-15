@@ -12,6 +12,8 @@ class UserProfile extends Model
     protected $fillable = [
         'user_id',
         'phone',
+        'document_type',
+        'document_number',
         'location_lang',
         'church_id',
         'community_id',
@@ -22,9 +24,21 @@ class UserProfile extends Model
 
     protected $table = 'user_profiles';
 
+    protected $hidden = [
+        'document_type',
+        'document_number',
+    ];
+
     protected $appends = [
         'avatar_url',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'document_number' => 'encrypted',
+        ];
+    }
 
     protected static function booted(): void
     {

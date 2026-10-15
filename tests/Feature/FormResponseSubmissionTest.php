@@ -51,6 +51,12 @@ test('authenticated user can submit event registration form response', function 
                 'type' => 'text',
                 'required' => true,
             ],
+            [
+                'name' => 'document',
+                'label' => 'Documento',
+                'type' => 'document',
+                'required' => false,
+            ],
         ],
     ]);
 
@@ -59,12 +65,14 @@ test('authenticated user can submit event registration form response', function 
     $response = $this->actingAs($attendee)->postJson("/api/forms/{$form->id}/responses", [
         'answers' => [
             'full_name' => 'Membro Teste',
+            'document' => ['type' => 'cpf', 'number' => '123.456.789-09'],
         ],
     ]);
 
     $response->assertCreated();
 
-    expect(FormResponse::query()->where('form_id', $form->id)->where('user_id', $attendee->id)->exists())->toBeTrue();
+    expect(FormResponse::query()->where('form_id', $form->id)->where('user_id', $attendee->id)->exists())->toBeTrue()
+        ->and(FormResponse::query()->where('form_id', $form->id)->where('user_id', $attendee->id)->firstOrFail()->answers['document'])->toBe(['type' => 'cpf', 'number' => '123.456.789-09']);
     expect(EventUser::query()->where('event_id', $event->id)->where('user_id', $attendee->id)->exists())->toBeTrue();
 });
 
@@ -111,6 +119,12 @@ test('required schema fields are validated on form response submission', functio
                 'type' => 'text',
                 'required' => true,
             ],
+            [
+                'name' => 'document',
+                'label' => 'Documento',
+                'type' => 'document',
+                'required' => true,
+            ],
         ],
     ]);
 
@@ -119,8 +133,9 @@ test('required schema fields are validated on form response submission', functio
     $response = $this->actingAs($attendee)->postJson("/api/forms/{$form->id}/responses", [
         'answers' => [
             'full_name' => '',
+            'document' => ['type' => 'cpf', 'number' => ''],
         ],
     ]);
 
-    $response->assertStatus(422)->assertJsonValidationErrors(['answers.full_name']);
+    $response->assertStatus(422)->assertJsonValidationErrors(['answers.full_name', 'answers.document']);
 });

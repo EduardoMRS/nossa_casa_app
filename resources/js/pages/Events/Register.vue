@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import DocumentInput from '@/components/DocumentInput.vue';
 import MoneyInput from '@/components/MoneyInput.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
@@ -479,6 +480,16 @@ const formatDate = (value: string): string => {
                                     v-else-if="field.type === 'phone'"
                                     :model-value="String(getFieldValue(field))"
                                     :name="field.name"
+                                    :required="field.required"
+                                    :placeholder="field.placeholder"
+                                    @update:model-value="
+                                        updateFieldValue(field, $event)
+                                    "
+                                />
+
+                                <DocumentInput
+                                    v-else-if="field.type === 'document'"
+                                    :model-value="getFieldValue(field)"
                                     :required="field.required"
                                     :placeholder="field.placeholder"
                                     @update:model-value="

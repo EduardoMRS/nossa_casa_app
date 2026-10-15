@@ -2,6 +2,7 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import CategorySelector from '@/components/CategorySelector.vue';
+import DocumentInput from '@/components/DocumentInput.vue';
 import MoneyInput from '@/components/MoneyInput.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import { useI18n } from '@/lib/i18n';
@@ -47,6 +48,7 @@ const { forms } = useRepositories();
 const saving = ref(false);
 const error = ref('');
 const previewValues = ref<Record<string, string | boolean>>({});
+const documentPreviewValues = ref<Record<string, unknown>>({});
 const fields = ref<FormElement[]>([]);
 const formState = ref({
     title: props.form?.title ?? '',
@@ -62,6 +64,7 @@ const fieldTypes = computed(
             ['text', t('admin.forms.types.text')],
             ['email', t('admin.forms.types.email')],
             ['phone', t('admin.forms.types.phone')],
+            ['document', t('admin.forms.types.document')],
             ['money', t('admin.forms.types.money')],
             ['number', t('admin.forms.types.number')],
             ['date', t('admin.forms.types.date')],
@@ -78,6 +81,7 @@ const inputTypes = new Set([
     'text',
     'email',
     'phone',
+    'document',
     'money',
     'number',
     'date',
@@ -599,6 +603,15 @@ async function save(): Promise<void> {
                                 class="mt-1"
                                 @update:model-value="
                                     previewValues[field.id] = $event
+                                "
+                            />
+                            <DocumentInput
+                                v-else-if="field.type === 'document'"
+                                :model-value="documentPreviewValues[field.id]"
+                                :required="Boolean(field.required)"
+                                class="mt-1"
+                                @update:model-value="
+                                    documentPreviewValues[field.id] = $event
                                 "
                             />
                             <MoneyInput

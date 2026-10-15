@@ -15,6 +15,19 @@
         "country": "Country calling code",
         "placeholder": "Phone number"
     },
+    "document_input": {
+        "type": "Document type",
+        "placeholder": "Document number",
+        "types": {
+            "cpf": "CPF",
+            "ssn": "SSN",
+            "nif": "NIF",
+            "nino": "NINO",
+            "cuit": "CUIT",
+            "dni": "DNI",
+            "passport": "Passport"
+        }
+    },
     "money": {
         "currency": "Currency",
         "placeholder": "0.00"
@@ -308,6 +321,7 @@
             "name": "Full name",
             "birth_date": "Birth date",
             "phone": "Phone / WhatsApp",
+            "document": "Identification document",
             "gender": "Gender",
             "avatar": "Profile photo",
             "other": "Other",
@@ -787,6 +801,7 @@
                 "text": "Short text",
                 "email": "Email",
                 "phone": "Phone",
+                "document": "Document",
                 "money": "Currency amount",
                 "number": "Number",
                 "date": "Date",

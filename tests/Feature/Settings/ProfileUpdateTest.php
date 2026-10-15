@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->withoutVite();
@@ -35,6 +36,53 @@ test('profile information can be updated', function () {
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
     expect($user->email_verified_at)->toBeNull();
+});
+
+test('user document is encrypted and returned only to the owner profile page', function () {
+    $user = User::factory()->create();
+    $documentNumber = '123.456.789-09';
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'document' => [
+                'type' => 'cpf',
+                'number' => $documentNumber,
+            ],
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $user->refresh()->load('profile');
+
+    expect($user->profile?->document_type)->toBe('cpf')
+        ->and($user->profile?->document_number)->toBe($documentNumber)
+        ->and($user->profile?->getRawOriginal('document_number'))->not->toBe($documentNumber);
+
+    $this->actingAs($user)
+        ->get(route('profile.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/Workspace')
+            ->where('document.type', 'cpf')
+            ->where('document.number', $documentNumber)
+            ->missing('workspaceUser.profile.document_type')
+            ->missing('workspaceUser.profile.document_number'));
+});
+
+test('profile document type must be supported', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'document' => [
+                'type' => 'unknown',
+                'number' => '12345',
+            ],
+        ])
+        ->assertSessionHasErrors('document.type');
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

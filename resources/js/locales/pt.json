@@ -15,6 +15,19 @@
         "country": "Código de discagem do país",
         "placeholder": "Número de telefone"
     },
+    "document_input": {
+        "type": "Tipo de documento",
+        "placeholder": "Número do documento",
+        "types": {
+            "cpf": "CPF",
+            "ssn": "SSN",
+            "nif": "NIF",
+            "nino": "NINO",
+            "cuit": "CUIT",
+            "dni": "DNI",
+            "passport": "Passaporte"
+        }
+    },
     "money": {
         "currency": "Moeda",
         "placeholder": "0.00"
@@ -308,6 +321,7 @@
             "name": "Nome completo",
             "birth_date": "Data de nascimento",
             "phone": "Telefone / WhatsApp",
+            "document": "Documento de identificação",
             "gender": "Gênero",
             "avatar": "Foto de perfil",
             "other": "Outros",
@@ -787,6 +801,7 @@
                 "text": "Texto curto",
                 "email": "E-mail",
                 "phone": "Telefone",
+                "document": "Documento",
                 "money": "Valor monetário",
                 "number": "Número",
                 "date": "Data",

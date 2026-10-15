@@ -30,7 +30,13 @@ class ClassroomActivitySubmissionController extends Controller
             $type = strtolower((string) ($field['type'] ?? 'text'));
             if (in_array($type, ['heading', 'divider', 'line_break'], true)) continue;
             $key = (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? '');
-            if ($key !== '' && blank($answers[$key] ?? null)) {
+            $value = $answers[$key] ?? null;
+            $missing = $type === 'document'
+                ? ! is_array($value)
+                    || blank($value['number'] ?? null)
+                    || ! in_array($value['type'] ?? null, ['cpf', 'ssn', 'nif', 'nino', 'cuit', 'dni', 'passport'], true)
+                : blank($value);
+            if ($key !== '' && $missing) {
                 $errors["answers.$key"] = __('classroom.validation.required', ['attribute' => $field['label'] ?? $key]);
             }
         }

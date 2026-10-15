@@ -2,18 +2,18 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from '@/lib/i18n';
 
-type Currency = { code: string; locale: string; symbol: string };
+type Currency = { code: string; locale: string; symbol: string; flag: string };
 const currencies: Currency[] = [
-    { code: 'BRL', locale: 'pt-BR', symbol: 'R$' },
-    { code: 'USD', locale: 'en-US', symbol: '$' },
-    { code: 'EUR', locale: 'de-DE', symbol: '€' },
-    { code: 'GBP', locale: 'en-GB', symbol: '£' },
-    { code: 'ARS', locale: 'es-AR', symbol: '$' },
-    { code: 'PYG', locale: 'es-PY', symbol: '₲' },
-    { code: 'BOB', locale: 'es-BO', symbol: 'Bs' },
-    { code: 'CLP', locale: 'es-CL', symbol: '$' },
-    { code: 'COP', locale: 'es-CO', symbol: '$' },
-    { code: 'MXN', locale: 'es-MX', symbol: '$' },
+    { code: 'BRL', locale: 'pt-BR', symbol: 'R$', flag: '🇧🇷' },
+    { code: 'USD', locale: 'en-US', symbol: '$', flag: '🇺🇸' },
+    { code: 'EUR', locale: 'de-DE', symbol: '€', flag: '🇪🇺' },
+    { code: 'GBP', locale: 'en-GB', symbol: '£', flag: '🇬🇧' },
+    { code: 'ARS', locale: 'es-AR', symbol: '$', flag: '🇦🇷' },
+    { code: 'PYG', locale: 'es-PY', symbol: '₲', flag: '🇵🇾' },
+    { code: 'BOB', locale: 'es-BO', symbol: 'Bs', flag: '🇧🇴' },
+    { code: 'CLP', locale: 'es-CL', symbol: '$', flag: '🇨🇱' },
+    { code: 'COP', locale: 'es-CO', symbol: '$', flag: '🇨🇴' },
+    { code: 'MXN', locale: 'es-MX', symbol: '$', flag: '🇲🇽' },
 ];
 const props = withDefaults(
     defineProps<{
@@ -102,7 +102,7 @@ watch(selectedCode, (value) => {
                 :key="item.code"
                 :value="item.code"
             >
-                {{ item.symbol }} {{ item.code }}
+                {{ item.flag }} {{ item.symbol }}
             </option>
         </select>
         <input
