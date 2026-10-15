@@ -691,7 +691,7 @@ onBeforeUnmount(() => {
                 @update:open="(value) => !value && closeMedia()"
             >
                 <section
-                    class="relative flex w-full bg-white lg:max-h-[86vh] max-h-[98dvh]"
+                    class="relative flex h-full w-full bg-white"
                 >
                     <button
                         type="button"
