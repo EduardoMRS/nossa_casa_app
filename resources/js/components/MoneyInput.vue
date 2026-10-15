@@ -88,14 +88,14 @@ watch(selectedCode, (value) => {
 
 <template>
     <div
-        class="flex w-full min-w-0 max-w-full rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-ring/40"
+        class="money-input flex h-9 w-full min-w-0 max-w-full overflow-hidden rounded-md border border-input bg-background shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
     >
         <select
             v-model="selectedCode"
             :name="currencyName"
             :disabled="disabled || lockCurrency"
             :aria-label="t('money.currency')"
-            class="w-28 shrink-0 rounded-l-lg border-0 border-r border-input bg-muted px-2 py-2.5 text-sm focus:ring-0 disabled:opacity-70"
+            class="money-input__currency h-full w-32 shrink-0 rounded-l-md border-0 bg-transparent px-2 py-1 text-sm text-foreground outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 sm:w-36"
         >
             <option
                 v-for="item in currencies"
@@ -112,7 +112,7 @@ watch(selectedCode, (value) => {
             :required="required"
             :disabled="disabled"
             :placeholder="t('money.placeholder')"
-            class="min-w-0 flex-1 rounded-r-lg border-0 bg-transparent px-3 py-2.5 text-sm focus:ring-0"
+            class="money-input__value h-full w-0 min-w-0 flex-1 rounded-r-md border-0 bg-transparent px-3 py-1 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
             @input="update"
             @blur="format"
         />
@@ -124,3 +124,18 @@ watch(selectedCode, (value) => {
         />
     </div>
 </template>
+
+<style scoped>
+.money-input__currency option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+}
+
+.money-input__value:-webkit-autofill,
+.money-input__value:-webkit-autofill:hover,
+.money-input__value:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    box-shadow: 0 0 0 1000px transparent inset;
+    transition: background-color 9999s ease-out;
+}
+</style>
