@@ -6,19 +6,13 @@ const highlights = readFileSync(
     new URL('../../resources/js/pages/Admin/Highlights.vue', import.meta.url),
     'utf8',
 );
-const highlightRoute = readFileSync(
-    new URL(
-        '../../resources/js/actions/App/Http/Controllers/HighlightController.ts',
-        import.meta.url,
-    ),
+const apiRoutes = readFileSync(
+    new URL('../../routes/api.php', import.meta.url),
     'utf8',
 );
 
-test('saving highlights uses the generated Laravel route', () => {
-    assert.equal(
-        highlightRoute.includes("url: '/api/church/{church}/highlights'"),
-        true,
-    );
+test('saving highlights uses the registered Laravel route', () => {
+    assert.match(apiRoutes, /Route::put\('church\/\{church\}\/highlights'/);
     assert.match(
         highlights,
         /import \{ updateChurchHighlights \} from '@\/actions\/App\/Http\/Controllers\/HighlightController';/,
