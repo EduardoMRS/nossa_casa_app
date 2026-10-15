@@ -14,7 +14,6 @@ import {
 import { computed, onBeforeUnmount, ref } from 'vue';
 import BrandingController from '@/actions/App/Http/Controllers/Settings/BrandingController';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
-import ChurchNetworkSettings from '@/components/ChurchNetworkSettings.vue';
 import InputError from '@/components/InputError.vue';
 import PhoneInput from '@/components/PhoneInput.vue';
 import TemplateVariantPreview from '@/components/TemplateVariantPreview.vue';
@@ -79,6 +78,19 @@ type WeeklySchedule = {
     day_of_week: number;
     start_time: string;
     end_time: string;
+    frequency?: 'weekly' | 'monthly' | 'yearly';
+    monthly_rule?:
+        | 'weekday_occurrence'
+        | 'day_of_month'
+        | 'business_day'
+        | 'business_day_after';
+    monthly_ordinal?: 'first' | 'second' | 'third' | 'fourth' | 'last';
+    monthly_day?: number;
+    monthly_business_position?: 'first' | 'last';
+    monthly_after_day?: number;
+    monthly_after_position?: 'first' | 'last';
+    yearly_month?: number;
+    yearly_day?: number;
 };
 
 type TemplateSection =
@@ -144,7 +156,18 @@ const colors = ref({
     surface_color: props.branding.surface_color,
 });
 const weeklySchedule = ref<WeeklySchedule[]>(
-    props.branding.weekly_schedule.map((item) => ({ ...item })),
+    props.branding.weekly_schedule.map((item) => ({
+        ...item,
+        frequency: item.frequency ?? 'weekly',
+        monthly_rule: item.monthly_rule ?? 'weekday_occurrence',
+        monthly_ordinal: item.monthly_ordinal ?? 'first',
+        monthly_day: item.monthly_day ?? 1,
+        monthly_business_position: item.monthly_business_position ?? 'first',
+        monthly_after_day: item.monthly_after_day ?? 1,
+        monthly_after_position: item.monthly_after_position ?? 'first',
+        yearly_month: item.yearly_month ?? 1,
+        yearly_day: item.yearly_day ?? 1,
+    })),
 );
 const templateSelections = ref<Record<TemplateSection, TemplateVariant>>({
     ...props.templates,
@@ -180,6 +203,15 @@ const addSchedule = (): void => {
         day_of_week: 0,
         start_time: '09:00',
         end_time: '10:00',
+        frequency: 'weekly',
+        monthly_rule: 'weekday_occurrence',
+        monthly_ordinal: 'first',
+        monthly_day: 1,
+        monthly_business_position: 'first',
+        monthly_after_day: 1,
+        monthly_after_position: 'first',
+        yearly_month: 1,
+        yearly_day: 1,
     });
 };
 
@@ -197,7 +229,7 @@ defineOptions({
         ],
     },
 });
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const weekdays = [
     'sunday',
     'monday',
@@ -207,6 +239,15 @@ const weekdays = [
     'friday',
     'saturday',
 ];
+const scheduleFrequencies = ['weekly', 'monthly', 'yearly'] as const;
+const scheduleMonthlyRules = [
+    'weekday_occurrence',
+    'day_of_month',
+    'business_day',
+    'business_day_after',
+] as const;
+const scheduleOrdinals = ['first', 'second', 'third', 'fourth', 'last'] as const;
+const scheduleMonths = Array.from({ length: 12 }, (_, index) => index + 1);
 const templateSections: TemplateSection[] = [
     'home',
     'posts_index',
@@ -1291,7 +1332,7 @@ const resolvedDomain = computed(() =>
                         <article
                             v-for="(schedule, index) in weeklySchedule"
                             :key="index"
-                            class="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_8rem_8rem_auto] md:items-end"
+                            class="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 md:grid-cols-2 xl:grid-cols-4 md:items-end"
                         >
                             <div class="grid gap-2">
                                 <Label :for="`schedule_title_${index}`">{{
@@ -1310,6 +1351,37 @@ const resolvedDomain = computed(() =>
                                 />
                             </div>
                             <div class="grid gap-2">
+                                <Label :for="`schedule_frequency_${index}`">{{
+                                    t('admin.branding.schedule_frequency')
+                                }}</Label>
+                                <select
+                                    :id="`schedule_frequency_${index}`"
+                                    v-model="schedule.frequency"
+                                    :name="`weekly_schedule[${index}][frequency]`"
+                                    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                >
+                                    <option
+                                        v-for="frequency in scheduleFrequencies"
+                                        :key="frequency"
+                                        :value="frequency"
+                                    >
+                                        {{
+                                            t(
+                                                `admin.branding.schedule_frequencies.${frequency}`,
+                                            )
+                                        }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div
+                                v-if="
+                                    schedule.frequency === 'weekly' ||
+                                    (schedule.frequency === 'monthly' &&
+                                        schedule.monthly_rule ===
+                                            'weekday_occurrence')
+                                "
+                                class="grid gap-2"
+                            >
                                 <Label :for="`schedule_day_${index}`">{{
                                     t('admin.branding.schedule_day')
                                 }}</Label>
@@ -1327,6 +1399,162 @@ const resolvedDomain = computed(() =>
                                         {{ t(`weekdays.${weekday}`) }}
                                     </option>
                                 </select>
+                            </div>
+                            <input
+                                v-else
+                                type="hidden"
+                                :name="`weekly_schedule[${index}][day_of_week]`"
+                                :value="schedule.day_of_week"
+                            />
+                            <div
+                                v-if="schedule.frequency === 'monthly'"
+                                class="grid gap-3 rounded-lg border border-border bg-background/70 p-3 sm:grid-cols-2 xl:col-span-4"
+                            >
+                                <label class="grid gap-2 text-sm font-bold">
+                                    {{ t('admin.branding.schedule_monthly_rule') }}
+                                    <select
+                                        v-model="schedule.monthly_rule"
+                                        :name="`weekly_schedule[${index}][monthly_rule]`"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                    >
+                                        <option
+                                            v-for="rule in scheduleMonthlyRules"
+                                            :key="rule"
+                                            :value="rule"
+                                        >
+                                            {{
+                                                t(
+                                                    `admin.branding.schedule_monthly_rules.${rule}`,
+                                                )
+                                            }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    v-if="
+                                        schedule.monthly_rule ===
+                                        'weekday_occurrence'
+                                    "
+                                    class="grid gap-2 text-sm font-bold"
+                                >
+                                    {{ t('admin.branding.schedule_ordinal') }}
+                                    <select
+                                        v-model="schedule.monthly_ordinal"
+                                        :name="`weekly_schedule[${index}][monthly_ordinal]`"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                    >
+                                        <option
+                                            v-for="ordinal in scheduleOrdinals"
+                                            :key="ordinal"
+                                            :value="ordinal"
+                                        >
+                                            {{
+                                                t(
+                                                    `admin.branding.schedule_ordinals.${ordinal}`,
+                                                )
+                                            }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    v-if="schedule.monthly_rule === 'day_of_month'"
+                                    class="grid gap-2 text-sm font-bold"
+                                >
+                                    {{ t('admin.branding.schedule_month_day') }}
+                                    <Input
+                                        v-model.number="schedule.monthly_day"
+                                        :name="`weekly_schedule[${index}][monthly_day]`"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                    />
+                                </label>
+                                <label
+                                    v-if="schedule.monthly_rule === 'business_day'"
+                                    class="grid gap-2 text-sm font-bold"
+                                >
+                                    {{ t('admin.branding.schedule_business_position') }}
+                                    <select
+                                        v-model="schedule.monthly_business_position"
+                                        :name="`weekly_schedule[${index}][monthly_business_position]`"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                    >
+                                        <option value="first">
+                                            {{ t('admin.branding.schedule_ordinals.first') }}
+                                        </option>
+                                        <option value="last">
+                                            {{ t('admin.branding.schedule_ordinals.last') }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <template
+                                    v-if="schedule.monthly_rule === 'business_day_after'"
+                                >
+                                    <label class="grid gap-2 text-sm font-bold">
+                                        {{ t('admin.branding.schedule_after_day') }}
+                                        <Input
+                                            v-model.number="schedule.monthly_after_day"
+                                            :name="`weekly_schedule[${index}][monthly_after_day]`"
+                                            type="number"
+                                            min="1"
+                                            max="31"
+                                        />
+                                    </label>
+                                    <label class="grid gap-2 text-sm font-bold">
+                                        {{ t('admin.branding.schedule_business_position') }}
+                                        <select
+                                            v-model="schedule.monthly_after_position"
+                                            :name="`weekly_schedule[${index}][monthly_after_position]`"
+                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                        >
+                                            <option value="first">
+                                                {{ t('admin.branding.schedule_ordinals.first') }}
+                                            </option>
+                                            <option value="last">
+                                                {{ t('admin.branding.schedule_ordinals.last') }}
+                                            </option>
+                                        </select>
+                                    </label>
+                                    <p class="text-xs text-muted-foreground sm:col-span-2">
+                                        {{ t('admin.branding.schedule_business_day_hint') }}
+                                    </p>
+                                </template>
+                            </div>
+                            <div
+                                v-if="schedule.frequency === 'yearly'"
+                                class="grid gap-3 rounded-lg border border-border bg-background/70 p-3 sm:grid-cols-2 xl:col-span-4"
+                            >
+                                <label class="grid gap-2 text-sm font-bold">
+                                    {{ t('admin.branding.schedule_year_month') }}
+                                    <select
+                                        v-model.number="schedule.yearly_month"
+                                        :name="`weekly_schedule[${index}][yearly_month]`"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                    >
+                                        <option
+                                            v-for="month in scheduleMonths"
+                                            :key="month"
+                                            :value="month"
+                                        >
+                                            {{
+                                                new Intl.DateTimeFormat(
+                                                    locale === 'pt' ? 'pt-BR' : 'en-US',
+                                                    { month: 'long' },
+                                                ).format(new Date(2024, month - 1, 1))
+                                            }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label class="grid gap-2 text-sm font-bold">
+                                    {{ t('admin.branding.schedule_month_day') }}
+                                    <Input
+                                        v-model.number="schedule.yearly_day"
+                                        :name="`weekly_schedule[${index}][yearly_day]`"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                    />
+                                </label>
                             </div>
                             <div class="grid gap-2">
                                 <Label :for="`schedule_start_${index}`">{{

@@ -68,6 +68,25 @@ test('church branding stores location embed and grouped weekly schedules for the
                     'start_time' => '18:00',
                     'end_time' => '19:30',
                 ],
+                [
+                    'title' => 'Leadership meeting',
+                    'frequency' => 'monthly',
+                    'monthly_rule' => 'business_day_after',
+                    'monthly_after_day' => 15,
+                    'monthly_after_position' => 'last',
+                    'day_of_week' => 0,
+                    'start_time' => '19:00',
+                    'end_time' => '20:00',
+                ],
+                [
+                    'title' => 'Annual celebration',
+                    'frequency' => 'yearly',
+                    'yearly_month' => 12,
+                    'yearly_day' => 25,
+                    'day_of_week' => 0,
+                    'start_time' => '10:00',
+                    'end_time' => '11:00',
+                ],
             ],
         ])
         ->assertRedirect();
@@ -79,8 +98,10 @@ test('church branding stores location embed and grouped weekly schedules for the
         ->and($branding['logo_path'])->toStartWith('church/'.$church->id.'/branding/')
         ->and($branding['map_embed'])->toBe('https://www.google.com/maps/embed?pb=church')
         ->and($branding['social_links']['instagram'])->toBe('https://instagram.com/weeklychurch')
-        ->and($branding['weekly_schedule'])->toHaveCount(2)
-        ->and($branding['weekly_schedule'][0]['title'])->toBe('Worship service');
+        ->and($branding['weekly_schedule'])->toHaveCount(4)
+        ->and($branding['weekly_schedule'][0]['title'])->toBe('Worship service')
+        ->and($branding['weekly_schedule'][2]['monthly_rule'])->toBe('business_day_after')
+        ->and($branding['weekly_schedule'][3]['yearly_month'])->toBe(12);
     expect(Storage::disk((string) config('media.disk'))->exists($branding['logo_path']))->toBeTrue();
 
     $this->get('http://weekly-new.test/')
@@ -95,7 +116,7 @@ test('church branding stores location embed and grouped weekly schedules for the
             ->where('branding.address', '100 Main Street, Manaus')
             ->where('branding.map_embed', 'https://www.google.com/maps/embed?pb=church')
             ->where('branding.social_links.instagram', 'https://instagram.com/weeklychurch')
-            ->has('branding.weekly_schedule', 2)
+            ->has('branding.weekly_schedule', 4)
             ->where('calendarEvents.0.id', $event->id));
 });
 

@@ -526,7 +526,7 @@ onBeforeUnmount(() => {
                     {{ t('gallery.gallery_view') }}
                 </Link>
                 <Link
-                    :href="`${galleryIndex()}?view=transmissions`"
+                    :href="galleryIndex(undefined, { query: { view: 'transmissions' } })"
                     class="rounded-lg px-4 py-2 text-sm font-bold transition"
                     :class="
                         props.view === 'transmissions'

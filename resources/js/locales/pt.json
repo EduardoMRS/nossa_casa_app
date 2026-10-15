@@ -609,15 +609,42 @@
             "map_embed": "Mapa incorporado",
             "map_embed_placeholder": "Cole um URL ou iframe do Google Maps/OpenStreetMap",
             "map_embed_hint": "HTTPS embeds do Google Maps e OpenStreetMap são aceitos.",
-            "schedule_title": "Horário semanal",
-            "schedule_description": "Inscreva-se em serviços e atividades recorrentes; entradas com o mesmo título são agrupadas na página inicial.",
+            "schedule_title": "Horários recorrentes",
+            "schedule_description": "Cadastre serviços e atividades semanais, mensais ou anuais; entradas com o mesmo título são agrupadas na página inicial.",
             "schedule_add": "Adicionar horário",
             "schedule_name": "Título",
+            "schedule_frequency": "Repetição",
+            "schedule_frequencies": {
+                "weekly": "Semanal",
+                "monthly": "Mensal",
+                "yearly": "Anual"
+            },
             "schedule_day": "Dia da semana",
+            "schedule_monthly_rule": "Padrão mensal",
+            "schedule_monthly_rules": {
+                "weekday_occurrence": "Ocorrência do dia da semana",
+                "day_of_month": "Dia específico do mês",
+                "business_day": "Primeiro ou último dia útil",
+                "business_day_after": "Dia útil após uma data"
+            },
+            "schedule_ordinal": "Ocorrência",
+            "schedule_ordinals": {
+                "first": "Primeiro",
+                "second": "Segundo",
+                "third": "Terceiro",
+                "fourth": "Quarto",
+                "last": "Último"
+            },
+            "schedule_month_day": "Dia do mês",
+            "schedule_business_position": "Dia útil",
+            "schedule_after_day": "Após o dia do mês",
+            "schedule_business_day_hint": "Dias úteis são de segunda a sexta; feriados não são considerados.",
+            "schedule_year_month": "Mês",
+            "schedule_year_day": "Dia do mês",
             "schedule_start": "Início",
             "schedule_end": "Fim",
             "schedule_remove": "Remover horário",
-            "schedule_empty": "Nenhum horário semanal foi registrado.",
+            "schedule_empty": "Nenhum horário recorrente foi registrado.",
             "save": "Salvar configurações da igreja",
             "template_variant_descriptions": {
                 "classic": "Cards em camadas, profundidade suave e cores da marca em destaque.",
@@ -1334,7 +1361,12 @@
             "map_title": "Mapa de localização da igreja"
         },
         "schedule": {
-            "title": "Calendário semanal"
+            "title": "Agenda",
+            "monthly_weekday": "{weekday} {ordinal} do mês",
+            "monthly_day": "Dia {day} de cada mês",
+            "monthly_business_day": "{position} dia útil do mês",
+            "monthly_business_after": "{position} dia útil após o dia {day}",
+            "yearly": "{day} de {month}"
         }
     },
     "weekdays": {

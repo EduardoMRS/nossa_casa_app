@@ -24,6 +24,7 @@ import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { useRepositories } from '@/lib/repositories';
+import { scheduleOccursOn } from '@/lib/scheduleRecurrence';
 import { index as eventsIndex, show as eventsShow } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
 import { show as publicPostShow } from '@/routes/posts/public';
@@ -72,6 +73,19 @@ type WeeklySchedule = {
     day_of_week: number;
     start_time: string;
     end_time: string;
+    frequency?: 'weekly' | 'monthly' | 'yearly';
+    monthly_rule?:
+        | 'weekday_occurrence'
+        | 'day_of_month'
+        | 'business_day'
+        | 'business_day_after';
+    monthly_ordinal?: 'first' | 'second' | 'third' | 'fourth' | 'last';
+    monthly_day?: number;
+    monthly_business_position?: 'first' | 'last';
+    monthly_after_day?: number;
+    monthly_after_position?: 'first' | 'last';
+    yearly_month?: number;
+    yearly_day?: number;
 };
 
 type BrandingData = {
@@ -152,7 +166,11 @@ const scheduleGroups = computed(() => {
         title,
         schedules: schedules.sort(
             (first, second) =>
-                first.day_of_week - second.day_of_week ||
+                (first.frequency ?? 'weekly').localeCompare(
+                    second.frequency ?? 'weekly',
+                ) ||
+                Number(first.day_of_week ?? 0) -
+                    Number(second.day_of_week ?? 0) ||
                 first.start_time.localeCompare(second.start_time),
         ),
     }));
@@ -249,6 +267,52 @@ const weekdayLabel = (day: number, format: 'long' | 'short' = 'long') =>
         weekday: format,
     }).format(new Date(2024, 0, 7 + day));
 
+const scheduleRepeatLabel = (schedule: WeeklySchedule): string => {
+    const frequency = schedule.frequency ?? 'weekly';
+
+    if (frequency === 'weekly') {
+        return weekdayLabel(Number(schedule.day_of_week ?? 0));
+    }
+
+    if (frequency === 'yearly') {
+        const month = new Intl.DateTimeFormat(
+            locale.value === 'pt' ? 'pt-BR' : 'en-US',
+            { month: 'long' },
+        ).format(new Date(2024, Number(schedule.yearly_month ?? 1) - 1, 1));
+
+        return t('home.schedule.yearly', {
+            month,
+            day: Number(schedule.yearly_day ?? 1),
+        });
+    }
+
+    const monthlyRule = schedule.monthly_rule ?? 'weekday_occurrence';
+
+    if (monthlyRule === 'weekday_occurrence') {
+        return t('home.schedule.monthly_weekday', {
+            ordinal: t(`admin.branding.schedule_ordinals.${schedule.monthly_ordinal ?? 'first'}`).toLowerCase(),
+            weekday: weekdayLabel(Number(schedule.day_of_week ?? 0)),
+        });
+    }
+
+    if (monthlyRule === 'day_of_month') {
+        return t('home.schedule.monthly_day', {
+            day: Number(schedule.monthly_day ?? 1),
+        });
+    }
+
+    const position = t(
+        `admin.branding.schedule_ordinals.${monthlyRule === 'business_day' ? schedule.monthly_business_position ?? 'first' : schedule.monthly_after_position ?? 'first'}`,
+    ).toLowerCase();
+
+    return monthlyRule === 'business_day'
+        ? t('home.schedule.monthly_business_day', { position })
+        : t('home.schedule.monthly_business_after', {
+              position,
+              day: Number(schedule.monthly_after_day ?? 1),
+          });
+};
+
 const monthLabel = computed(() =>
     new Intl.DateTimeFormat(locale.value === 'pt' ? 'pt-BR' : 'en-US', {
         month: 'long',
@@ -262,7 +326,7 @@ const calendarItemsForDate = (date: Date): CalendarItem[] => {
         .filter((event) => dateKey(new Date(event.start_time)) === key)
         .map((event) => ({ ...event, recurring: false }));
     const recurringItems = weeklySchedule.value
-        .filter((schedule) => schedule.day_of_week === date.getDay())
+        .filter((schedule) => scheduleOccursOn(schedule, date))
         .map((schedule, index) => ({
             id: `schedule-${schedule.title}-${schedule.day_of_week}-${index}`,
             title: schedule.title,
@@ -641,7 +705,9 @@ const submitPrayer = async (): Promise<void> => {
                     </div>
                     <Link
                         :href="
-                            galleryIndex({ query: { view: 'transmissions' } })
+                                galleryIndex(undefined, {
+                                    query: { view: 'transmissions' },
+                                })
                         "
                         class="text-xs font-bold text-indigo-600"
                     >
@@ -1053,10 +1119,10 @@ const submitPrayer = async (): Promise<void> => {
                                 }}</strong>
                                 <p
                                     v-for="schedule in group.schedules"
-                                    :key="`${schedule.day_of_week}-${schedule.start_time}`"
+                                    :key="`${schedule.frequency ?? 'weekly'}-${schedule.monthly_rule ?? ''}-${schedule.monthly_day ?? ''}-${schedule.yearly_month ?? ''}-${schedule.yearly_day ?? ''}-${schedule.start_time}`"
                                     class="mt-1 text-xs text-slate-500"
                                 >
-                                    {{ weekdayLabel(schedule.day_of_week) }} ·
+                                    {{ scheduleRepeatLabel(schedule) }} ·
                                     {{ schedule.start_time }}–{{
                                         schedule.end_time
                                     }}

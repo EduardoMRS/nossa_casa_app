@@ -609,15 +609,42 @@
             "map_embed": "Embedded map",
             "map_embed_placeholder": "Paste a Google Maps/OpenStreetMap URL or iframe",
             "map_embed_hint": "HTTPS embeds from Google Maps and OpenStreetMap are accepted.",
-            "schedule_title": "Weekly schedule",
-            "schedule_description": "Register recurring services and activities; entries with the same title are grouped on the home page.",
+            "schedule_title": "Recurring schedule",
+            "schedule_description": "Register weekly, monthly, or yearly services and activities; entries with the same title are grouped on the home page.",
             "schedule_add": "Add time",
             "schedule_name": "Title",
+            "schedule_frequency": "Repeats",
+            "schedule_frequencies": {
+                "weekly": "Weekly",
+                "monthly": "Monthly",
+                "yearly": "Yearly"
+            },
             "schedule_day": "Weekday",
+            "schedule_monthly_rule": "Monthly pattern",
+            "schedule_monthly_rules": {
+                "weekday_occurrence": "Weekday occurrence",
+                "day_of_month": "Specific day of month",
+                "business_day": "First or last business day",
+                "business_day_after": "Business day after a date"
+            },
+            "schedule_ordinal": "Occurrence",
+            "schedule_ordinals": {
+                "first": "First",
+                "second": "Second",
+                "third": "Third",
+                "fourth": "Fourth",
+                "last": "Last"
+            },
+            "schedule_month_day": "Day of month",
+            "schedule_business_position": "Business day",
+            "schedule_after_day": "After day of month",
+            "schedule_business_day_hint": "Business days are Monday through Friday; holidays are not excluded.",
+            "schedule_year_month": "Month",
+            "schedule_year_day": "Day of month",
             "schedule_start": "Starts",
             "schedule_end": "Ends",
             "schedule_remove": "Remove time",
-            "schedule_empty": "No weekly schedule has been registered.",
+            "schedule_empty": "No recurring schedule has been registered.",
             "save": "Save church settings",
             "template_variant_descriptions": {
                 "classic": "Layered cards, soft depth and stronger brand colors.",
@@ -1323,7 +1350,12 @@
             "map_title": "Church location map"
         },
         "schedule": {
-            "title": "Weekly schedule"
+            "title": "Schedule",
+            "monthly_weekday": "{ordinal} {weekday} of each month",
+            "monthly_day": "Day {day} of each month",
+            "monthly_business_day": "{position} business day of the month",
+            "monthly_business_after": "{position} business day after day {day}",
+            "yearly": "{month} {day}"
         }
     },
     "weekdays": {

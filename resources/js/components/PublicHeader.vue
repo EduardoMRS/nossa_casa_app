@@ -163,7 +163,7 @@ const navClass = (key: PublicNavKey): string =>
             <Link
                 :href="home()"
                 data-pwa-clear-church
-                class="group flex shrink-0 items-center gap-3"
+                class="group flex min-w-0 max-w-[min(42vw,18rem)] shrink items-center gap-3"
             >
                 <span
                     class="grid size-8 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black transition group-hover:scale-105 sm:size-10 sm:text-lg"
@@ -176,15 +176,12 @@ const navClass = (key: PublicNavKey): string =>
                     />
                     <template v-else>{{ brandInitials }}</template>
                 </span>
-                <span class="hidden sm:block">
-                    <strong class="block text-base leading-tight">{{
-                        branding.brand_name || t('portal.brand_name')
-                    }}</strong>
+                <span class="hidden min-w-0 flex-1 sm:block">
+                    <strong class="block truncate text-base leading-tight">
+                        {{ branding.brand_name || t('portal.brand_name') }}</strong>
                     <small
-                        class="block font-mono text-[9px] font-bold tracking-[0.2em] text-indigo-200 uppercase"
-                        >{{
-                            branding.tagline || t('nav.faith_community')
-                        }}</small
+                        class="block truncate font-mono text-[9px] font-bold tracking-[0.2em] text-indigo-200 uppercase"
+                        >{{ branding.tagline || t('nav.faith_community') }}</small
                     >
                 </span>
             </Link>
