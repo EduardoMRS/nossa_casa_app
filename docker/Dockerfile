@@ -8,6 +8,7 @@ RUN apk add --no-cache \
     curl \
     libpng-dev \
     libjpeg-turbo-dev \
+    libwebp-dev \
     freetype-dev \
     libzip-dev \
     libxml2-dev \
@@ -19,7 +20,7 @@ RUN apk add --no-cache \
     nodejs=~22 \
     npm
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg && \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
     docker-php-ext-install pdo_mysql pdo_sqlite bcmath gd pcntl zip intl   
 
 # Run PHP-FPM with the project user so bind-mounted files remain editable on
