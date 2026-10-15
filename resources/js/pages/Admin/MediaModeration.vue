@@ -331,7 +331,7 @@ onBeforeUnmount(revokePreview);
             scrollable
         >
             <form class="space-y-5" @submit.prevent="save">
-                <div class="grid gap-6 lg:grid-cols-2">
+                <div class="flex flex-col md:flex-row overflow-auto gap-2">
                     <div
                         class="grid min-h-72 place-items-center overflow-hidden rounded-xl border bg-slate-100"
                     >

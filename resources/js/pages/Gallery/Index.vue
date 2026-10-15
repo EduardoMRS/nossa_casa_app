@@ -702,7 +702,7 @@ onBeforeUnmount(() => {
                         <X class="size-5" />
                     </button>
 
-                    <div class="flex flex-col md:flex-row w-full overflow-y-auto md:overflow-hidden">
+                    <div class="flex flex-col md:flex-row gap-2 w-full overflow-y-auto md:overflow-hidden">
                         <div
                             class="flex place-items-center bg-slate-950"
                         >
@@ -727,7 +727,7 @@ onBeforeUnmount(() => {
                             />
                         </div>
     
-                        <div class="flex flex-1 min-h-0 flex-col bg-white">
+                        <div class="flex flex-1 min-w-[40%] flex-col bg-white">
                             <header class="border-b border-slate-200 p-5 pr-14">
                                 <h2 class="text-lg font-black text-slate-950">
                                     {{ selectedMedia.title }}

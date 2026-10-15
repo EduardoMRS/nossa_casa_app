@@ -118,7 +118,7 @@ const saveMedia = async () => {
                 >
             </div>
         </header>
-        <section class="grid gap-6 lg:grid-cols-2">
+        <section class="flex flex-col md:flex-row overflow-auto gap-2">
             <div class="rounded-2xl border bg-white p-5 lg:col-span-2">
                 <h2 class="text-xl font-black">
                     {{ t('admin.event_content.posts') }}

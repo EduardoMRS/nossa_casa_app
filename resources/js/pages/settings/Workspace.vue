@@ -559,7 +559,7 @@ const personFor = (item: Relationship): Person | undefined =>
                     </p>
                 </header>
 
-                <div class="mt-5 grid gap-6 lg:grid-cols-2">
+                <div class="mt-5 flex flex-col md:flex-row overflow-auto gap-2">
                     <div class="space-y-4">
                         <div
                             class="flex items-center gap-2 border-b pb-3 text-sm font-black"
