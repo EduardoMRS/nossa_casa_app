@@ -704,30 +704,30 @@ onBeforeUnmount(() => {
 
                     <div class="flex flex-col md:flex-row w-full overflow-y-auto md:overflow-hidden">
                         <div
-                            class="grid min-h-72 place-items-center bg-slate-950 lg:min-h-[38rem]"
+                            class="flex place-items-center bg-slate-950"
                         >
                             <video
                                 v-if="isVideo(selectedMedia)"
                                 :src="selectedMedia.url"
                                 controls
                                 autoplay
-                                class="max-h-[86vh] h-full w-full object-contain"
+                                class="h-full w-full object-contain"
                             />
                             <iframe
                                 v-else-if="isPdf(selectedMedia)"
                                 :src="selectedMedia.url"
                                 :title="selectedMedia.title"
-                                class="h-[70vh] w-full bg-white"
+                                class="h-full w-full bg-white"
                             />
                             <img
                                 v-else
                                 :src="selectedMedia.url"
                                 :alt="selectedMedia.title"
-                                class="max-h-[86vh] h-full w-full object-contain"
+                                class="h-full w-full object-contain"
                             />
                         </div>
     
-                        <div class="flex min-h-0 w-full flex-col bg-white">
+                        <div class="flex flex-1 min-h-0 flex-col bg-white">
                             <header class="border-b border-slate-200 p-5 pr-14">
                                 <h2 class="text-lg font-black text-slate-950">
                                     {{ selectedMedia.title }}
