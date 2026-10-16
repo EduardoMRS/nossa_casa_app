@@ -1,7 +1,7 @@
 <?php
+
 namespace App\Services;
 
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -11,18 +11,18 @@ class MediaOptimizer
     {
         $disk = Storage::disk($diskName);
 
-        if (!$disk->exists($originalPath)) {
+        if (! $disk->exists($originalPath)) {
             return null;
         }
 
         $extension = strtolower(pathinfo($originalPath, PATHINFO_EXTENSION));
 
-        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+        if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
             return null;
         }
 
         $stream = $disk->readStream($originalPath);
-        if (!$stream) {
+        if (! $stream) {
             return null;
         }
 
@@ -30,7 +30,7 @@ class MediaOptimizer
         fclose($stream);
 
         $image = @imagecreatefromstring($binaryData);
-        if (!$image) {
+        if (! $image) {
             return null;
         }
 
@@ -55,11 +55,11 @@ class MediaOptimizer
         $compressedData = ob_get_clean();
         imagedestroy($image);
 
-        if (!$compressedData) {
+        if (! $compressedData) {
             return null;
         }
 
-        $filename = 'previews/' . Str::uuid() . '.webp';
+        $filename = 'previews/'.Str::uuid().'.webp';
 
         return $disk->put($filename, $compressedData) ? $filename : null;
     }

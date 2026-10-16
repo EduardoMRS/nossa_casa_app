@@ -1,11 +1,11 @@
 <?php
 
 use App\Console\Commands\BroadcastSystemMetrics;
+use App\Console\Commands\OptimizeMediaFiles;
 use App\Console\Commands\ReconcileMediaMtxPaths;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Console\Commands\OptimizeMediaFiles;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

@@ -23,7 +23,7 @@ class Reaction extends Model
         'reactionable_type',
         'reactionable_id',
         'updated_at',
-        'user'
+        'user',
     ];
 
     protected $appends = [
@@ -34,7 +34,7 @@ class Reaction extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     public function getUserDetailsAttribute()
     {
         return $this->user?->details ?? null;

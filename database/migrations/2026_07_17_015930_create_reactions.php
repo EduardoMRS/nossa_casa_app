@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-         Schema::create('reactions', function (Blueprint $table) {
+        Schema::create('reactions', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->foreignUlid('user_id')->constrained('users')->cascadeOnDelete();
             $table->ulidMorphs('reactionable'); // Relaciona com posts, medias, events, etc.

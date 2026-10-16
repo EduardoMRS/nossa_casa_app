@@ -75,7 +75,7 @@ class AppServiceProvider extends ServiceProvider
             if (! $domainContext->isResolved()) {
                 $domainContext->resolve($response->request, failWhenUnknown: false);
             }
-            Log::error('Show ErrorPage, erro: '. $response->exception->getMessage(), ['exception' => $response->exception]);
+            Log::error('Show ErrorPage, erro: '.$response->exception->getMessage(), ['exception' => $response->exception]);
 
             return $response
                 ->render('ErrorPage', ['status' => $status])

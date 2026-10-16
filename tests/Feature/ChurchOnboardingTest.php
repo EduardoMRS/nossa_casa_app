@@ -246,7 +246,6 @@ test('unrelated user cannot approve a church request', function () {
         ->assertForbidden();
 });
 
-
 test('selected parent church exclusively reviews and receives the approved church as a branch', function () {
     $communityOwner = User::factory()->create();
     $requester = User::factory()->create();

@@ -2,24 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class AiModel extends Model
 {
     protected $table = 'ai_models';
 
     protected $fillable = [
-        'provider', 
-        'model_id', 
-        'name', 
+        'provider',
+        'model_id',
+        'name',
         'status', // 'active', 'inactive', 'removed'
         'position',
         'context_length',
         'input_modalities',
         'output_modalities',
         'price_prompt',
-        'price_completion'
+        'price_completion',
     ];
 
     protected $casts = [
@@ -40,8 +40,8 @@ class AiModel extends Model
 
         static::addGlobalScope('order_provider_position', function (Builder $builder) {
             $builder->orderBy('provider', 'asc')
-                    ->orderBy('position', 'asc')
-                    ->orderBy('id', 'asc');
+                ->orderBy('position', 'asc')
+                ->orderBy('id', 'asc');
         });
     }
 
@@ -60,7 +60,7 @@ class AiModel extends Model
 
     public function getIsFreeAttribute(): bool
     {
-        return ($this->price_prompt == 0 && $this->price_completion == 0);
+        return $this->price_prompt == 0 && $this->price_completion == 0;
     }
 
     public function getInputModalitiesArrayAttribute(): array

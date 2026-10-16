@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Church;
 use App\Models\Media;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -67,13 +68,68 @@ test('private files are only served by encrypted temporary signed urls', functio
 
     $url = genUrl('church/example/private.txt');
 
-    expect($url)->toContain('signature=')->toContain('expires=');
+    expect($url)->toContain('/d/')
+        ->and(strlen($url))->toBeLessThan(200);
 
     $response = $this->get($url)->assertSuccessful();
 
     expect($response->baseResponse->getFile()->getContent())->toBe('private-content');
 
-    $this->get($url.'&tampered=1')->assertForbidden();
+    $this->get($url.'tampered')->assertForbidden();
+});
+
+test('genUrl uses the church domain when available and falls back to portal url', function () {
+    $church = Church::factory()->create([
+        'domain' => 'ieadmdo-na.nossacasaapp.org',
+    ]);
+
+    $churchUrl = genUrl('previews/sample.webp', 'media', $church);
+    expect($churchUrl)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/');
+
+    $churchIdUrl = genUrl('previews/sample.webp', 'media', $church->id);
+    expect($churchIdUrl)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/');
+
+    $churchWithoutDomain = Church::factory()->create([
+        'domain' => null,
+    ]);
+
+    $portalUrl = genUrl('previews/sample.webp', 'media', $churchWithoutDomain);
+    expect($portalUrl)->toStartWith(rtrim((string) config('app.url'), '/').'/d/');
+
+    $noChurchUrl = genUrl('previews/sample.webp', 'media');
+    expect($noChurchUrl)->toStartWith(rtrim((string) config('app.url'), '/').'/d/');
+});
+
+test('media model url and preview_url use church domain when church is loaded or present', function () {
+    $uploader = User::factory()->create();
+    $church = Church::factory()->create([
+        'domain' => 'ieadmdo-na.nossacasaapp.org',
+    ]);
+
+    $media = Media::query()->create([
+        'church_id' => $church->id,
+        'uploader_id' => $uploader->id,
+        'file_path' => 'gallery/photo.jpg',
+        'optimized_path' => 'previews/photo.webp',
+        'mimetype' => 'image/jpeg',
+        'size' => 120,
+    ]);
+
+    expect($media->url)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/')
+        ->and($media->preview_url)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/');
+
+    $loaded = Media::query()->with('church:id,domain')->find($media->id);
+    expect($loaded->url)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/')
+        ->and($loaded->preview_url)->toStartWith('https://ieadmdo-na.nossacasaapp.org/d/');
+});
+
+test('expired secure file tokens are rejected with 403', function () {
+    Storage::disk('media')->put('church/example/expired.txt', 'expired-content');
+
+    $token = encodeSecureFileToken('media', 'church/example/expired.txt', now()->subMinute());
+    $url = route('secure-file', ['encryptedFile' => $token]);
+
+    $this->get($url)->assertForbidden();
 });
 
 test('internal S3 container endpoints stream files directly rather than redirecting to unreachable hosts', function () {

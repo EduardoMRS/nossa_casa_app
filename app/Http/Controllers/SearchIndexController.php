@@ -16,11 +16,11 @@ class SearchIndexController extends Controller
     public function sitemap(Request $request, ChurchDomainContext $context): Response
     {
         // Se for o portal central
-        if (!$context->church()) {
+        if (! $context->church()) {
             return response()
                 ->view('sitemap', [
                     'portal' => true,
-                    'sitemaps' => $this->portalUrls($context)
+                    'sitemaps' => $this->portalUrls($context),
                 ])
                 ->header('Content-Type', 'application/xml; charset=UTF-8')
                 ->header('Cache-Control', 'public, max-age=900');
@@ -30,7 +30,7 @@ class SearchIndexController extends Controller
         return response()
             ->view('sitemap', [
                 'portal' => false,
-                'urls' => $this->churchUrls($request, $context->church())
+                'urls' => $this->churchUrls($request, $context->church()),
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8')
             ->header('Cache-Control', 'public, max-age=900');
@@ -45,14 +45,14 @@ class SearchIndexController extends Controller
         return response()
             ->view('sitemap', [
                 'portal' => true,
-                'urls' => $this->portalMainUrls($context)
+                'urls' => $this->portalMainUrls($context),
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 
     public function robots(Request $request): Response
     {
-        $sitemapUrl = $request->getSchemeAndHttpHost() . '/sitemap.xml';
+        $sitemapUrl = $request->getSchemeAndHttpHost().'/sitemap.xml';
         $content = implode("\n", [
             'User-agent: *',
             'Allow: /',
@@ -61,7 +61,7 @@ class SearchIndexController extends Controller
             'Disallow: /settings',
             'Disallow: /auth/',
             '',
-            'Sitemap: ' . $sitemapUrl,
+            'Sitemap: '.$sitemapUrl,
             '',
         ]);
 
@@ -71,9 +71,10 @@ class SearchIndexController extends Controller
         ]);
     }
 
-    /** 
+    /**
      * Retorna a estrutura do Sitemap Index (Apenas apontamentos de arquivos)
-     * @return array<int, array{location: string, last_modified: string|null}> 
+     *
+     * @return array<int, array{location: string, last_modified: string|null}>
      */
     private function portalUrls(ChurchDomainContext $context): array
     {
@@ -82,9 +83,9 @@ class SearchIndexController extends Controller
         // 1. Injeta o sub-sitemap que contém apenas as páginas institucionais do portal
         $sitemaps = collect([
             [
-                'location' => $portalUrl . '/sitemap-main.xml',
-                'last_modified' => now()->toAtomString()
-            ]
+                'location' => $portalUrl.'/sitemap-main.xml',
+                'last_modified' => now()->toAtomString(),
+            ],
         ]);
 
         // 2. Coleta dinamicamente os sitemaps de cada subdomínio de igreja ativa
@@ -104,28 +105,29 @@ class SearchIndexController extends Controller
         return $sitemaps->all();
     }
 
-    /** 
+    /**
      * Retorna apenas as URLs internas e estáticas pertencentes ao portal
-     * @return array<int, array{location: string, last_modified: string|null}> 
+     *
+     * @return array<int, array{location: string, last_modified: string|null}>
      */
     private function portalMainUrls(ChurchDomainContext $context): array
     {
         $portalUrl = rtrim((string) config('app.url'), '/');
-        $urls = collect($this->locales())->flatMap(fn(string $locale): array => [
-            ['location' => $portalUrl . $this->localizedPath('home', $locale), 'last_modified' => null],
-            ['location' => $portalUrl . $this->localizedPath('legal.privacy', $locale), 'last_modified' => null],
-            ['location' => $portalUrl . $this->localizedPath('login', $locale), 'last_modified' => null],
-            ['location' => $portalUrl . $this->localizedPath('register', $locale), 'last_modified' => null],
+        $urls = collect($this->locales())->flatMap(fn (string $locale): array => [
+            ['location' => $portalUrl.$this->localizedPath('home', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('legal.privacy', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('login', $locale), 'last_modified' => null],
+            ['location' => $portalUrl.$this->localizedPath('register', $locale), 'last_modified' => null],
         ]);
 
         Community::query()
-            ->whereHas('churches', fn($query) => $query->where('status', ChurchStatus::ACTIVE))
+            ->whereHas('churches', fn ($query) => $query->where('status', ChurchStatus::ACTIVE))
             ->oldest('created_at')
             ->get(['slug', 'updated_at'])
             ->each(function (Community $community) use (&$urls, $portalUrl): void {
                 foreach ($this->locales() as $locale) {
                     $urls->push([
-                        'location' => $portalUrl . $this->localizedPath('communities.show', $locale, ['community' => $community->slug]),
+                        'location' => $portalUrl.$this->localizedPath('communities.show', $locale, ['community' => $community->slug]),
                         'last_modified' => $community->updated_at?->toAtomString(),
                     ]);
                 }
@@ -149,10 +151,10 @@ class SearchIndexController extends Controller
                 ['name' => 'legal.privacy', 'parameters' => [], 'last_modified' => null],
                 ['name' => 'login', 'parameters' => [], 'last_modified' => null],
                 ['name' => 'register', 'parameters' => [], 'last_modified' => null],
-            ])->map(fn(array $url): array => [
-                    'location' => $this->localizedPath($url['name'], $locale, $url['parameters']),
-                    'last_modified' => $url['last_modified'],
-                ])->all();
+            ])->map(fn (array $url): array => [
+                'location' => $this->localizedPath($url['name'], $locale, $url['parameters']),
+                'last_modified' => $url['last_modified'],
+            ])->all();
         });
 
         Event::query()
@@ -182,8 +184,8 @@ class SearchIndexController extends Controller
                 }
             });
 
-        return $urls->map(fn(array $url): array => [
-            'location' => $baseUrl . $url['location'],
+        return $urls->map(fn (array $url): array => [
+            'location' => $baseUrl.$url['location'],
             'last_modified' => $url['last_modified'],
         ])->all();
     }
@@ -192,7 +194,7 @@ class SearchIndexController extends Controller
     private function locales(): array
     {
         return collect(config('app.locales', ['en']))
-            ->map(fn(string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
+            ->map(fn (string $locale): string => mb_strtolower(explode('-', str_replace('_', '-', $locale))[0]))
             ->unique()
             ->values()
             ->all();
@@ -201,6 +203,6 @@ class SearchIndexController extends Controller
     /** @param array<string, mixed> $parameters */
     private function localizedPath(string $name, string $locale, array $parameters = []): string
     {
-        return '/' . ltrim(route($name, [...$parameters, 'locale' => $locale], absolute: false), '/');
+        return '/'.ltrim(route($name, [...$parameters, 'locale' => $locale], absolute: false), '/');
     }
 }

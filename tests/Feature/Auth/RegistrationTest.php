@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\WelcomeMail;
+use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
 
@@ -32,7 +33,7 @@ test('new users can register with optional profile details and a simple eight ch
     $this->assertAuthenticated();
     $response->assertRedirect(route('home', absolute: false));
 
-    $user = \App\Models\User::query()
+    $user = User::query()
         ->where('email', 'test@example.com')
         ->with('profile')
         ->firstOrFail();

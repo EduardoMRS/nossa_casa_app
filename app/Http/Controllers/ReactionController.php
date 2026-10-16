@@ -31,12 +31,15 @@ class ReactionController extends Controller
         $churchId = $reactionable instanceof Comment ? $this->commentChurchId($reactionable) : $reactionable->church_id;
         $this->ensurePublicChurchResource($churchId);
 
-        if ($post = $this->rootPost($reactionable)) Gate::authorize('react', $post);
+        if ($post = $this->rootPost($reactionable)) {
+            Gate::authorize('react', $post);
+        }
 
         $reaction = Reaction::query()->updateOrCreate(
             ['user_id' => $request->user()->id, 'reactionable_type' => $reactionableClass, 'reactionable_id' => $reactionable->id],
             ['content' => $validated['content'], 'type' => $validated['type'] ?? 'emoji'],
         );
+
         return response()->json($reaction->load('user'), 201);
     }
 
@@ -44,24 +47,32 @@ class ReactionController extends Controller
     {
         abort_unless($reaction->user_id === $request->user()->id, 403);
         $reaction->delete();
+
         return response()->json(null, 204);
     }
 
     private function rootPost(Post|Event|Media|Comment $target): ?Post
     {
-        if ($target instanceof Post) return $target;
+        if ($target instanceof Post) {
+            return $target;
+        }
         if ($target instanceof Comment) {
             $parent = $target->commentable;
+
             return $parent instanceof Post || $parent instanceof Comment ? $this->rootPost($parent) : null;
         }
+
         return null;
     }
 
     private function commentChurchId(Comment $comment): string
     {
         $commentable = $comment->commentable;
-        if ($commentable instanceof Comment) return $this->commentChurchId($commentable);
+        if ($commentable instanceof Comment) {
+            return $this->commentChurchId($commentable);
+        }
         abort_unless($commentable instanceof Post || $commentable instanceof Event || $commentable instanceof Media, 422);
+
         return $commentable->church_id;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\AiModel;
 use Illuminate\Database\Seeder;
 
 class InitialAiModelSeeder extends Seeder
@@ -35,14 +35,14 @@ class InitialAiModelSeeder extends Seeder
                     'status' => 'active',
                 ],
                 [
-                    'model_id'=> 'openai/gpt-oss-20b:free',
+                    'model_id' => 'openai/gpt-oss-20b:free',
                     'status' => 'active',
-                ]
-            ]
+                ],
+            ],
         ];
         foreach ($providers as $provider => $models) {
             foreach ($models as $index => $modelData) {
-                \App\Models\AiModel::updateOrCreate(
+                AiModel::updateOrCreate(
                     [
                         'provider' => $provider,
                         'model_id' => $modelData['model_id'],

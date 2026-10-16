@@ -97,7 +97,7 @@ class AdminWorkspaceController extends Controller
 
         $media = Media::query()
             ->where('church_id', $churchId)
-            ->with('uploader:id,first_name,last_name')
+            ->with(['church:id,domain', 'uploader:id,first_name,last_name'])
             ->latest()
             ->limit(24)
             ->get()
@@ -107,9 +107,7 @@ class AdminWorkspaceController extends Controller
                 'original_filename' => $item->original_filename,
                 'description' => $item->description,
                 'file_path' => $item->file_path,
-                'preview_url' => $item->optimized_path
-                    ? genUrl($item->optimized_path, $item->disk)
-                    : $item->url,
+                'preview_url' => $item->preview_url,
                 'mimetype' => $item->mimetype,
                 'size' => $item->size,
                 'gallery' => $item->gallery,

@@ -22,6 +22,7 @@ class ClassroomDiscussionController extends Controller
             'author_id' => $request->user()->id,
             'last_activity_at' => now(),
         ]);
+
         return response()->json($discussion->load('author:id,first_name,last_name'), 201);
     }
 
@@ -43,6 +44,7 @@ class ClassroomDiscussionController extends Controller
             'author_id' => $request->user()->id,
         ]);
         $discussion->update(['last_activity_at' => now()]);
+
         return response()->json($reply->load('author:id,first_name,last_name'), 201);
     }
 }

@@ -9,8 +9,7 @@ final class GeoDistance
         float $fromLongitude,
         float $toLatitude,
         float $toLongitude,
-    ): float
-    {
+    ): float {
         $earthRadius = 6371;
         $latitudeDelta = deg2rad($toLatitude - $fromLatitude);
         $longitudeDelta = deg2rad($toLongitude - $fromLongitude);

@@ -26,9 +26,13 @@ class ClassroomActivitySubmissionController extends Controller
         $errors = [];
 
         foreach ($fields as $field) {
-            if (! is_array($field) || empty($field['required'])) continue;
+            if (! is_array($field) || empty($field['required'])) {
+                continue;
+            }
             $type = strtolower((string) ($field['type'] ?? 'text'));
-            if (in_array($type, ['heading', 'divider', 'line_break'], true)) continue;
+            if (in_array($type, ['heading', 'divider', 'line_break'], true)) {
+                continue;
+            }
             $key = (string) ($field['name'] ?? $field['key'] ?? $field['id'] ?? '');
             $value = $answers[$key] ?? null;
             $missing = $type === 'document'
@@ -41,7 +45,9 @@ class ClassroomActivitySubmissionController extends Controller
             }
         }
 
-        if ($errors) throw ValidationException::withMessages($errors);
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
 
         $attempt = $activity->submissions()->where('user_id', $request->user()->id)->count() + 1;
         if ($attempt > $activity->max_attempts) {

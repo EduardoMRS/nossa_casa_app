@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Console\Commands;
 
 use App\Models\Media;
@@ -8,6 +9,7 @@ use Illuminate\Console\Command;
 class OptimizeMediaFiles extends Command
 {
     protected $signature = 'media:optimize {--limit=50 : Quantidade máxima de arquivos por execução} {--force= : ID de uma mídia específica para reotimizar} {--force-all : Reotimiza todas as mídias ignorando o limite}';
+
     protected $description = 'Gera versões otimizadas de mídia para preview rápido na galeria e modal';
 
     public function handle(): int
@@ -50,6 +52,7 @@ class OptimizeMediaFiles extends Command
 
         if ($items->isEmpty()) {
             $this->info('Nenhuma mídia pendente de otimização.');
+
             return self::SUCCESS;
         }
 

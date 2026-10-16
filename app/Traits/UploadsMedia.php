@@ -12,9 +12,9 @@ trait UploadsMedia
     /**
      * Lida com o upload de um arquivo, salvando via Storage e gerando o path.
      *
-     * @param UploadedFile|string|null $file Arquivo ou caminho do arquivo a ser enviado
-     * @param string $directory Diretório base no Storage (ex: 'events/covers')
-     * @param string|null $oldPath Caminho do arquivo antigo para ser substituído (opcional)
+     * @param  UploadedFile|string|null  $file  Arquivo ou caminho do arquivo a ser enviado
+     * @param  string  $directory  Diretório base no Storage (ex: 'events/covers')
+     * @param  string|null  $oldPath  Caminho do arquivo antigo para ser substituído (opcional)
      * @return array{path: string|null, optimized_path: string|null}|string|null
      */
     protected function handleMediaUpload(UploadedFile|string|null $file, string $directory, ?string $oldPath = null): ?string
@@ -57,13 +57,13 @@ trait UploadsMedia
                 $filename = Str::uuid()->toString();
 
                 if ($extension !== '') {
-                    $filename .= '.' . $extension;
+                    $filename .= '.'.$extension;
                 }
 
-                $path = $directory . '/' . $filename;
+                $path = $directory.'/'.$filename;
                 $stored = $disk->put($path, $resource);
 
-                if (!$stored) {
+                if (! $stored) {
                     $path = null;
                 }
 
@@ -81,7 +81,7 @@ trait UploadsMedia
      */
     protected function generateMediaPreview(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 

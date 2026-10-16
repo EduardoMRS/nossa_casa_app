@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\Network;
 use App\Models\User;
 use App\Services\ChurchNetworkService;
+use App\Services\ChurchNetworkSettingsData;
 use Illuminate\Validation\ValidationException;
 
 test('a church network link requires approval from the other church', function () {
@@ -73,7 +74,6 @@ test('church hierarchy rejects cycles and cross community links', function () {
         ->toThrow(ValidationException::class);
 });
 
-
 test('church network overview exposes ancestors and the descendant tree', function () {
     $community = Community::factory()->create();
     $headquarters = Church::factory()->for($community)->create();
@@ -90,7 +90,7 @@ test('church network overview exposes ancestors and the descendant tree', functi
         'community_id' => $community->id,
     ]);
 
-    $overview = app(\App\Services\ChurchNetworkSettingsData::class)->forChurch($regional);
+    $overview = app(ChurchNetworkSettingsData::class)->forChurch($regional);
 
     expect($overview['ancestors'])->toHaveCount(1)
         ->and($overview['ancestors'][0]['id'])->toBe($headquarters->id)

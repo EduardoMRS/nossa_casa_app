@@ -60,14 +60,14 @@ test('stored files are served only through encrypted temporary signed urls', fun
 
     $url = genUrl('gallery/private.txt', 'media');
 
-    expect($url)->toContain('signature=')
-        ->and($url)->toContain('expires=');
+    expect($url)->toContain('/d/')
+        ->and(strlen($url))->toBeLessThan(200);
 
     $this->get($url)
         ->assertOk()
         ->assertHeader('Content-Disposition', 'inline; filename="private.txt"');
 
-    $this->get($url.'&tampered=1')->assertForbidden();
+    $this->get($url.'tampered')->assertForbidden();
 });
 
 test('leader can upload media from a stored file path string', function () {

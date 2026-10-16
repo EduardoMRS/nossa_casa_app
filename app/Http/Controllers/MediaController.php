@@ -12,8 +12,8 @@ use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -31,7 +31,7 @@ class MediaController extends Controller
             ->visible()
             ->where('gallery', true)
             ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
-            ->with('uploader:id,first_name,last_name')
+            ->with(['church:id,domain', 'uploader:id,first_name,last_name'])
             ->paginate(15));
     }
 
@@ -142,7 +142,7 @@ class MediaController extends Controller
 
         return response()->json(Media::pending()
             ->where('church_id', $churchId)
-            ->with('uploader:id,first_name,last_name')
+            ->with(['church:id,domain', 'uploader:id,first_name,last_name'])
             ->paginate(15));
     }
 

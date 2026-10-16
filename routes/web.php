@@ -44,10 +44,8 @@ use App\Queries\EventQuery;
 use App\Queries\PostQuery;
 use App\Support\ChurchDomainContext;
 use App\Support\ContentEmbedRenderer;
-use App\Support\S3TemporaryUrlGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -297,14 +295,19 @@ Route::group([
     }
 });
 
-Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrlGenerator $temporaryUrlGenerator) {
-    try {
-        $payload = json_decode(Crypt::decryptString($encryptedFile), true, flags: JSON_THROW_ON_ERROR);
-        $filePath = $payload['path'] ?? null;
-        $diskName = $payload['disk'] ?? null;
-    } catch (Throwable) {
+Route::get('/d/{encryptedFile}', function (string $encryptedFile, Request $request) {
+    if ($request->has('signature') && ! $request->hasValidSignature()) {
         abort(403, __('common.errors.invalid_file_link'));
     }
+
+    $payload = decodeSecureFileToken($encryptedFile);
+
+    if (! $payload) {
+        abort(403, __('common.errors.invalid_file_link'));
+    }
+
+    $filePath = $payload['path'];
+    $diskName = $payload['disk'];
 
     abort_if(
         ! is_string($filePath)
@@ -327,23 +330,6 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrl
         'Cache-Control' => 'private, max-age=3600',
     ];
 
-    if (config("filesystems.disks.{$diskName}.driver") === 's3') {
-        $diskConfig = config("filesystems.disks.{$diskName}", []);
-        $endpoint = $diskConfig['temporary_url'] ?? $diskConfig['endpoint'] ?? null;
-        $endpointHost = is_string($endpoint) ? parse_url($endpoint, PHP_URL_HOST) : null;
-
-        $isInternalContainerHost = is_string($endpointHost) && (
-            $endpointHost === 'minio'
-            || (! str_contains($endpointHost, '.') && ! in_array($endpointHost, ['localhost', '127.0.0.1'], true))
-        );
-
-        if (! $isInternalContainerHost && is_string($endpoint) && $endpoint !== '') {
-            return redirect()->away($temporaryUrlGenerator->generate($diskName, $filePath, now()->addMinutes(5), [
-                'ResponseContentDisposition' => $headers['Content-Disposition'],
-            ]));
-        }
-    }
-
     if (config("filesystems.disks.{$diskName}.driver") === 'local') {
         return response()->file($disk->path($filePath), $headers);
     }
@@ -356,7 +342,7 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrl
             fclose($stream);
         }
     }, 200, $headers);
-})->middleware('signed')->name('secure-file');
+})->name('secure-file');
 
 Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGeneration) {
     Route::get('/dashboard', function (Request $request) {

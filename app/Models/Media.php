@@ -40,6 +40,7 @@ class Media extends Model
 
     protected $appends = [
         'url',
+        'preview_url',
         'uploader_details',
         'translations',
     ];
@@ -113,6 +114,17 @@ class Media extends Model
 
     public function getUrlAttribute()
     {
-        return genUrl($this->file_path, $this->disk);
+        $church = $this->relationLoaded('church') ? $this->church : $this->church_id;
+
+        return genUrl($this->file_path, $this->disk, $church);
+    }
+
+    public function getPreviewUrlAttribute(): ?string
+    {
+        $church = $this->relationLoaded('church') ? $this->church : $this->church_id;
+
+        return $this->optimized_path
+            ? genUrl($this->optimized_path, $this->disk, $church)
+            : $this->url;
     }
 }

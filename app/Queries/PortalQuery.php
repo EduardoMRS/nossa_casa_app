@@ -106,6 +106,7 @@ final readonly class PortalQuery
             ->visible()
             ->where('gallery', true)
             ->whereHas('recording')
+            ->with('church:id,domain')
             ->latest()
             ->limit(8)
             ->get()

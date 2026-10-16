@@ -35,8 +35,8 @@ test('metrics snapshot combines configured and daily log files chronologically',
     expect($olderLog)->toBeString()
         ->and($dailyLog)->toBeString();
 
-    file_put_contents($olderLog, "older entry");
-    file_put_contents($dailyLog, "daily entry");
+    file_put_contents($olderLog, 'older entry');
+    file_put_contents($dailyLog, 'daily entry');
     touch($olderLog, now()->subMinute()->timestamp);
     touch($dailyLog, now()->timestamp);
 

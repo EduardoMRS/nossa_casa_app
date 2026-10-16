@@ -10,9 +10,9 @@ class UserRelationship extends Model
     protected $fillable = [
         'user_id',
         'related_user_id',
-        'relationship_type'
+        'relationship_type',
     ];
-    
+
     public const FAMILY = [
         UserRelationships::SPOUSE,
         UserRelationships::PARENT,
@@ -33,6 +33,4 @@ class UserRelationship extends Model
     {
         return UserRelationships::from($this->attributes['relationship_type']) ?? null;
     }
-
-    
 }

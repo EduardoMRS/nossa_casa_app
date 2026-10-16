@@ -89,7 +89,6 @@ class BibleController extends Controller
         abort_unless(collect($this->bible->books($version))->contains('slug', $book), 404);
     }
 
-
     /** @param callable(): array<string, mixed> $callback */
     private function respond(callable $callback): JsonResponse
     {

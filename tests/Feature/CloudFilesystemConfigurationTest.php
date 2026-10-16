@@ -136,4 +136,3 @@ test('S3 URLs are signed directly for the browser endpoint', function (): void {
         ->toStartWith('https://nossa.test/test-bucket/recordings/service.mp4?')
         ->toContain('X-Amz-Signature=');
 });
-

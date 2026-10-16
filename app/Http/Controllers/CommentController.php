@@ -19,7 +19,9 @@ class CommentController extends Controller
     {
         if ($request->commentable_type && $request->commentable_id) {
             $target = $this->findCommentable($request->commentable_type, $request->commentable_id);
-            if ($post = $this->rootPost($target)) Gate::authorize('view', $post);
+            if ($post = $this->rootPost($target)) {
+                Gate::authorize('view', $post);
+            }
             $this->ensurePublicChurchResource($this->commentableChurchId($target));
         }
 
@@ -39,7 +41,9 @@ class CommentController extends Controller
 
         $commentable = $this->findCommentable($validated['commentable_type'], $validated['commentable_id']);
         $this->ensurePublicChurchResource($this->commentableChurchId($commentable));
-        if ($post = $this->rootPost($commentable)) Gate::authorize('comment', $post);
+        if ($post = $this->rootPost($commentable)) {
+            Gate::authorize('comment', $post);
+        }
 
         $comment = Comment::create([
             ...$validated,
@@ -54,9 +58,12 @@ class CommentController extends Controller
     {
         $churchId = $this->commentableChurchId($comment);
         $this->ensurePublicChurchResource($churchId);
-        if ($post = $this->rootPost($comment)) Gate::authorize('comment', $post);
+        if ($post = $this->rootPost($comment)) {
+            Gate::authorize('comment', $post);
+        }
         $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->update($request->validate(['content' => ['required', 'string', 'max:5000']]));
+
         return response()->json($comment);
     }
 
@@ -66,6 +73,7 @@ class CommentController extends Controller
         $this->ensurePublicChurchResource($churchId);
         $this->ensureOwnerOrChurchModerator($request, $comment->user_id, $churchId);
         $comment->delete();
+
         return response()->noContent();
     }
 
@@ -79,6 +87,7 @@ class CommentController extends Controller
             'pinned_by_id' => $validated['is_pinned'] ? $request->user()->id : null,
             'pinned_at' => $validated['is_pinned'] ? now() : null,
         ]);
+
         return response()->json($comment->fresh('user:id,first_name,last_name'));
     }
 
@@ -97,11 +106,15 @@ class CommentController extends Controller
 
     private function rootPost(Post|Event|Media|LiveStream|Comment $target): ?Post
     {
-        if ($target instanceof Post) return $target;
+        if ($target instanceof Post) {
+            return $target;
+        }
         if ($target instanceof Comment) {
             $parent = $target->commentable;
+
             return $parent instanceof Post || $parent instanceof Comment ? $this->rootPost($parent) : null;
         }
+
         return null;
     }
 
@@ -110,9 +123,11 @@ class CommentController extends Controller
         if ($commentable instanceof Comment) {
             $parent = $commentable->commentable;
             abort_unless($parent instanceof Post || $parent instanceof Event || $parent instanceof Media || $parent instanceof LiveStream || $parent instanceof Comment, 422);
+
             return $this->commentableChurchId($parent);
         }
         abort_unless($commentable->church_id, 422);
+
         return $commentable->church_id;
     }
 }

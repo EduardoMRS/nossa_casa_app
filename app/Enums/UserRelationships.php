@@ -9,5 +9,5 @@ enum UserRelationships: string
     case BLOCKED = 'blocked';
     case SPOUSE = 'spouse';
     case PARENT = 'parent';
-    case CHILD = 'child';    
+    case CHILD = 'child';
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MediaStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -19,7 +20,7 @@ return new class extends Migration
             $table->string('mimetype');
             $table->unsignedBigInteger('size'); // Tamanho do arquivo em bytes
             $table->boolean('gallery')->default(true); // Se aparece na Galeria
-            $table->string('status')->default(\App\Enums\MediaStatus::PENDING->value);
+            $table->string('status')->default(MediaStatus::PENDING->value);
             $table->timestamps();
         });
 
@@ -27,7 +28,7 @@ return new class extends Migration
         Schema::create('mediables', function (Blueprint $table) {
             $table->foreignUlid('media_id')->constrained('medias')->cascadeOnDelete();
             $table->ulidMorphs('mediable'); // Cria mediable_type e mediable_id (ULID)
-            
+
             $table->primary(['media_id', 'mediable_id', 'mediable_type'], 'mediables_primary');
         });
     }

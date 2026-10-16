@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUlid('child_church_id')->constrained('churches')->cascadeOnDelete();
             $table->foreignUlid('community_id')->nullable()->constrained('communities')->nullOnDelete();
             $table->timestamps();
-            
+
             $table->unique(['parent_church_id', 'child_church_id']); // Evita duplicidade de vínculo
         });
     }

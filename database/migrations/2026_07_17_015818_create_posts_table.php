@@ -25,7 +25,7 @@ return new class extends Migration
 
         Schema::create('postables', function (Blueprint $table) {
             $table->foreignUlid('post_id')->constrained('posts')->cascadeOnDelete();
-            $table->ulidMorphs('postable'); // Cria postable_type e postable_id (ULID)            
+            $table->ulidMorphs('postable'); // Cria postable_type e postable_id (ULID)
             $table->primary(['post_id', 'postable_id', 'postable_type'], 'postables_primary');
         });
     }

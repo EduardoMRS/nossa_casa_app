@@ -25,6 +25,7 @@ final class MediaQuery
                 fn (Builder $query): Builder => $query->whereDoesntHave('recording'),
             )
             ->with([
+                'church:id,domain',
                 'uploader:id,first_name,last_name',
                 'categories:id,name,slug',
                 'comments' => fn ($query) => $query
@@ -62,9 +63,7 @@ final class MediaQuery
     {
         $media->localize(relations: ['categories']);
         // Retorna a URL otimizada de preview caso disponível, com fallback para o original
-        $previewUrl = $media->optimized_path
-            ? genUrl($media->optimized_path, $media->disk)
-            : $media->url;
+        $previewUrl = $media->preview_url;
 
         return [
             'id' => $media->id,
