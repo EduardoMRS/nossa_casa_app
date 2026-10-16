@@ -21,14 +21,23 @@ const CORE_ASSETS = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches
-            .open(STATIC_CACHE)
-            .then((cache) =>
-                Promise.allSettled(
-                    CORE_ASSETS.map((asset) => cache.add(asset)),
+        Promise.all([
+            caches
+                .open(STATIC_CACHE)
+                .then((cache) =>
+                    Promise.allSettled(
+                        CORE_ASSETS.map((asset) => cache.add(asset)),
+                    ),
                 ),
-            )
-            .then(() => self.skipWaiting()),
+            caches
+                .open(PAGE_CACHE)
+                .then((cache) =>
+                    Promise.allSettled([
+                        cache.add('/'),
+                        cache.add('/?pwa=1'),
+                    ]),
+                ),
+        ]).then(() => self.skipWaiting()),
     );
 });
 
@@ -370,7 +379,11 @@ async function cacheReaderPage(readerUrl) {
     if (isHtmlPageResponse(response)) {
         const cache = await caches.open(PAGE_CACHE);
 
-        await cache.put(request, response);
+        await cache.put(request, response.clone());
+
+        if (response.url && response.url !== request.url) {
+            await cache.put(response.url, response);
+        }
     }
 }
 
@@ -385,7 +398,11 @@ function isHtmlPageResponse(response) {
 }
 
 async function cachedHtmlPage(cache, request) {
-    const cached = await cache.match(request);
+    let cached = await cache.match(request);
+
+    if (!cached) {
+        cached = await cache.match(request, { ignoreSearch: true });
+    }
 
     if (!cached) {
         return null;
@@ -408,19 +425,37 @@ async function networkFirstPage(request) {
             const cache = await caches.open(PAGE_CACHE);
 
             await cache.put(request, response.clone());
+
+            if (response.url && response.url !== request.url) {
+                await cache.put(response.url, response.clone());
+            }
         }
 
         return response;
     } catch {
-        const cache = await caches.open(PAGE_CACHE);
-        const cached = await cachedHtmlPage(cache, request);
+        const pageCache = await caches.open(PAGE_CACHE);
+        let cached = await cachedHtmlPage(pageCache, request);
+
+        if (!cached) {
+            const staticCache = await caches.open(STATIC_CACHE);
+            cached = await cachedHtmlPage(staticCache, request);
+        }
 
         if (cached) {
             return cached;
         }
 
         if (request.mode === 'navigate') {
-            const cachedHome = await cachedHtmlPage(cache, '/');
+            let cachedHome = await cachedHtmlPage(pageCache, '/');
+
+            if (!cachedHome) {
+                cachedHome = await cachedHtmlPage(pageCache, '/?pwa=1');
+            }
+
+            if (!cachedHome) {
+                const staticCache = await caches.open(STATIC_CACHE);
+                cachedHome = await cachedHtmlPage(staticCache, '/');
+            }
 
             if (cachedHome) {
                 return cachedHome;
@@ -438,6 +473,10 @@ async function networkFirstPage(request) {
 }
 
 function withPwaHeaders(request) {
+    if (request.mode === 'navigate') {
+        return request;
+    }
+
     const headers = new Headers(request.headers);
     headers.set('X-PWA-APP', '1');
 
