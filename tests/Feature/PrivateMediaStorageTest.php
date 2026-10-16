@@ -75,3 +75,21 @@ test('private files are only served by encrypted temporary signed urls', functio
 
     $this->get($url.'&tampered=1')->assertForbidden();
 });
+
+test('internal S3 container endpoints stream files directly rather than redirecting to unreachable hosts', function () {
+    config()->set('filesystems.disks.minio.driver', 's3');
+    config()->set('filesystems.disks.minio.key', 'test-key');
+    config()->set('filesystems.disks.minio.secret', 'test-secret');
+    config()->set('filesystems.disks.minio.bucket', 'test-bucket');
+    config()->set('filesystems.disks.minio.endpoint', 'http://minio:9000');
+    config()->set('filesystems.disks.minio.temporary_url', null);
+
+    Storage::fake('minio');
+    Storage::disk('minio')->put('previews/sample.webp', 'image-binary-data');
+
+    $url = genUrl('previews/sample.webp', 'minio');
+
+    $response = $this->get($url);
+
+    $response->assertOk();
+});

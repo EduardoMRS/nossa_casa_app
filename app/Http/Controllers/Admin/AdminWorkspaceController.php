@@ -107,7 +107,9 @@ class AdminWorkspaceController extends Controller
                 'original_filename' => $item->original_filename,
                 'description' => $item->description,
                 'file_path' => $item->file_path,
-                'preview_url' => $item->url,
+                'preview_url' => $item->optimized_path
+                    ? genUrl($item->optimized_path, $item->disk)
+                    : $item->url,
                 'mimetype' => $item->mimetype,
                 'size' => $item->size,
                 'gallery' => $item->gallery,

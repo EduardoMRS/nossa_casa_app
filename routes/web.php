@@ -58,8 +58,8 @@ $isWayfinderGeneration = in_array('wayfinder:generate', $_SERVER['argv'] ?? [], 
 Route::get('/.well-known/nossa-casa.json', DiscoveryController::class)
     ->middleware('throttle:discovery')
     ->name('discovery');
-Route::get('/.well-known/ai-catalog.json', fn() => response()->json([], 404));
-Route::get('/llms.txt', fn() => response('', 404));
+Route::get('/.well-known/ai-catalog.json', fn () => response()->json([], 404));
+Route::get('/llms.txt', fn () => response('', 404));
 
 if (! function_exists('categoriesForChurchAndType')) {
     function categoriesForChurchAndType(Request $request, string $type, bool $localized = false): Collection
@@ -328,9 +328,20 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, S3TemporaryUrl
     ];
 
     if (config("filesystems.disks.{$diskName}.driver") === 's3') {
-        return redirect()->away($temporaryUrlGenerator->generate($diskName, $filePath, now()->addMinutes(5), [
-            'ResponseContentDisposition' => $headers['Content-Disposition'],
-        ]));
+        $diskConfig = config("filesystems.disks.{$diskName}", []);
+        $endpoint = $diskConfig['temporary_url'] ?? $diskConfig['endpoint'] ?? null;
+        $endpointHost = is_string($endpoint) ? parse_url($endpoint, PHP_URL_HOST) : null;
+
+        $isInternalContainerHost = is_string($endpointHost) && (
+            $endpointHost === 'minio'
+            || (! str_contains($endpointHost, '.') && ! in_array($endpointHost, ['localhost', '127.0.0.1'], true))
+        );
+
+        if (! $isInternalContainerHost && is_string($endpoint) && $endpoint !== '') {
+            return redirect()->away($temporaryUrlGenerator->generate($diskName, $filePath, now()->addMinutes(5), [
+                'ResponseContentDisposition' => $headers['Content-Disposition'],
+            ]));
+        }
     }
 
     if (config("filesystems.disks.{$diskName}.driver") === 'local') {
