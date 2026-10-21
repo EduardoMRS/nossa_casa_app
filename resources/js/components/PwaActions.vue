@@ -33,7 +33,7 @@ const isIos = computed(() => {
 
     return iosDevice && !standalone;
 });
-const canUsePortalPwa = computed(() => isPortalOrigin());
+const canUsePortalPwa = computed(() => true);
 
 const installApp = async (): Promise<void> => {
     if (isIos.value && !canInstall.value) {

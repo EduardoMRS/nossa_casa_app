@@ -11,26 +11,76 @@ const CACHE_PREFIX = `${CACHE_ROOT}-v${CACHE_SCHEMA_VERSION}-${CACHE_SCOPE}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const BIBLE_CACHE = `${CACHE_PREFIX}-bible-${CACHE_VERSION}`;
 const PAGE_CACHE = `${CACHE_PREFIX}-pages-${CACHE_VERSION}`;
-const ACTIVE_CACHES = [STATIC_CACHE, BIBLE_CACHE, PAGE_CACHE];
+const INERTIA_CACHE = `${CACHE_PREFIX}-inertia-${CACHE_VERSION}`;
+const ACTIVE_CACHES = [STATIC_CACHE, BIBLE_CACHE, PAGE_CACHE, INERTIA_CACHE];
 const CORE_ASSETS = [
     '/manifest.webmanifest',
     '/branding/icon.svg',
     '/branding/logo',
+    '/favicon.ico',
+    '/favicon.svg',
     '/',
 ];
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches
-            .open(STATIC_CACHE)
-            .then((cache) =>
-                Promise.allSettled(
-                    CORE_ASSETS.map((asset) => cache.add(asset)),
-                ),
-            )
-            .then(() => self.skipWaiting()),
-    );
+    event.waitUntil(precacheCoreAssets().then(() => self.skipWaiting()));
 });
+
+async function precacheCoreAssets() {
+    const staticCache = await caches.open(STATIC_CACHE);
+    const pageCache = await caches.open(PAGE_CACHE);
+    const inertiaCache = await caches.open(INERTIA_CACHE);
+
+    await Promise.allSettled(
+        CORE_ASSETS.map((asset) => staticCache.add(asset)),
+    );
+
+    const initialPages = [
+        '/?pwa=1',
+        '/',
+        '/pt?pwa=1',
+        '/pt',
+        '/en?pwa=1',
+        '/en',
+        '/library/bible',
+        '/biblioteca/biblia',
+    ];
+    await Promise.allSettled(
+        initialPages.map(async (url) => {
+            try {
+                const response = await fetch(url, {
+                    credentials: 'same-origin',
+                });
+                if (response.ok && isHtmlPageResponse(response)) {
+                    await pageCache.put(url, response.clone());
+                    if (response.url && response.url !== url) {
+                        await pageCache.put(response.url, response.clone());
+                    }
+                }
+
+                const inertiaResponse = await fetch(url, {
+                    headers: {
+                        'X-Inertia': 'true',
+                        'X-PWA-APP': '1',
+                        Accept: 'text/html, application/xhtml+xml',
+                    },
+                    credentials: 'same-origin',
+                });
+                if (isInertiaResponse(inertiaResponse)) {
+                    await inertiaCache.put(url, inertiaResponse.clone());
+                    if (inertiaResponse.url && inertiaResponse.url !== url) {
+                        await inertiaCache.put(
+                            inertiaResponse.url,
+                            inertiaResponse.clone(),
+                        );
+                    }
+                }
+            } catch {
+                // Ignore if network is unavailable during install
+            }
+        }),
+    );
+}
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
@@ -105,7 +155,8 @@ self.addEventListener('notificationclick', (event) => {
         self.clients
             .matchAll({ type: 'window', includeUncontrolled: true })
             .then((clients) => {
-                const sameOriginTarget = new URL(targetUrl).origin === self.location.origin;
+                const sameOriginTarget =
+                    new URL(targetUrl).origin === self.location.origin;
                 const matchingClient = sameOriginTarget
                     ? clients.find((client) =>
                           client.url.startsWith(self.location.origin),
@@ -142,10 +193,19 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (request.headers.get('X-Inertia') === 'true') {
+        event.respondWith(networkFirstInertia(request));
+
         return;
     }
 
-    if (url.pathname.startsWith('/build/')) {
+    if (
+        url.pathname.startsWith('/build/') ||
+        url.pathname.startsWith('/branding/') ||
+        url.pathname === '/manifest.webmanifest' ||
+        url.pathname === '/favicon.ico' ||
+        url.pathname === '/favicon.svg' ||
+        url.pathname === '/apple-touch-icon.png'
+    ) {
         event.respondWith(cacheFirst(request));
 
         return;
@@ -176,15 +236,19 @@ async function cacheFirst(request) {
         return cached;
     }
 
-    const response = await fetch(request);
+    try {
+        const response = await fetch(request);
 
-    if (response.ok) {
-        const cache = await caches.open(STATIC_CACHE);
+        if (response.ok) {
+            const cache = await caches.open(STATIC_CACHE);
 
-        await cache.put(request, response.clone());
+            await cache.put(request, response.clone());
+        }
+
+        return response;
+    } catch {
+        return new Response('', { status: 408, statusText: 'Request Timeout' });
     }
-
-    return response;
 }
 
 async function cacheFirstBible(request) {
@@ -361,21 +425,41 @@ async function cacheReaderPage(readerUrl) {
         return;
     }
 
-    const request = new Request(readerUrl, {
-        headers: { Accept: 'text/html' },
-        credentials: 'same-origin',
-    });
-    const response = await fetch(request);
+    try {
+        const pageCache = await caches.open(PAGE_CACHE);
+        const inertiaCache = await caches.open(INERTIA_CACHE);
 
-    if (isHtmlPageResponse(response)) {
-        const cache = await caches.open(PAGE_CACHE);
+        const htmlRequest = new Request(readerUrl, {
+            headers: { Accept: 'text/html' },
+            credentials: 'same-origin',
+        });
+        const htmlResponse = await fetch(htmlRequest);
 
-        await cache.put(request, response);
+        if (isHtmlPageResponse(htmlResponse)) {
+            await pageCache.put(htmlRequest, htmlResponse);
+        }
+
+        const inertiaRequest = new Request(readerUrl, {
+            headers: {
+                'X-Inertia': 'true',
+                'X-PWA-APP': '1',
+                Accept: 'text/html, application/xhtml+xml',
+            },
+            credentials: 'same-origin',
+        });
+        const inertiaResponse = await fetch(inertiaRequest);
+
+        if (isInertiaResponse(inertiaResponse)) {
+            await inertiaCache.put(inertiaRequest, inertiaResponse);
+        }
+    } catch {
+        // Silently continue if offline
     }
 }
 
 function isHtmlPageResponse(response) {
-    const contentType = response?.headers.get('Content-Type')?.toLowerCase() ?? '';
+    const contentType =
+        response?.headers.get('Content-Type')?.toLowerCase() ?? '';
 
     return (
         response?.ok &&
@@ -384,8 +468,12 @@ function isHtmlPageResponse(response) {
     );
 }
 
-async function cachedHtmlPage(cache, request) {
-    const cached = await cache.match(request);
+function isInertiaResponse(response) {
+    return response?.ok && response.headers.get('X-Inertia') === 'true';
+}
+
+async function cachedHtmlPage(cache, request, options = undefined) {
+    const cached = await cache.match(request, options);
 
     if (!cached) {
         return null;
@@ -400,6 +488,33 @@ async function cachedHtmlPage(cache, request) {
     return null;
 }
 
+async function networkFirstInertia(request) {
+    try {
+        const response = await fetch(withPwaHeaders(request));
+
+        if (isInertiaResponse(response)) {
+            const cache = await caches.open(INERTIA_CACHE);
+
+            await cache.put(request, response.clone());
+        }
+
+        return response;
+    } catch {
+        const cache = await caches.open(INERTIA_CACHE);
+        let cached = await cache.match(request);
+
+        if (!cached) {
+            cached = await cache.match(request, { ignoreSearch: true });
+        }
+
+        if (cached) {
+            return cached;
+        }
+
+        return offlineFallbackResponse();
+    }
+}
+
 async function networkFirstPage(request) {
     try {
         const response = await fetch(withPwaHeaders(request));
@@ -408,40 +523,83 @@ async function networkFirstPage(request) {
             const cache = await caches.open(PAGE_CACHE);
 
             await cache.put(request, response.clone());
+
+            if (response.url && response.url !== request.url) {
+                await cache.put(response.url, response.clone());
+            }
         }
 
         return response;
     } catch {
-        const cache = await caches.open(PAGE_CACHE);
-        const cached = await cachedHtmlPage(cache, request);
+        const pageCache = await caches.open(PAGE_CACHE);
+        let cached = await cachedHtmlPage(pageCache, request);
+
+        if (!cached) {
+            cached = await cachedHtmlPage(pageCache, request, {
+                ignoreSearch: true,
+            });
+        }
 
         if (cached) {
             return cached;
         }
 
-        if (request.mode === 'navigate') {
-            const cachedHome = await cachedHtmlPage(cache, '/');
-
-            if (cachedHome) {
-                return cachedHome;
+        const fallbackUrls = [
+            '/?pwa=1',
+            '/',
+            '/pt?pwa=1',
+            '/pt',
+            '/en?pwa=1',
+            '/en',
+        ];
+        for (const fallbackUrl of fallbackUrls) {
+            cached = await cachedHtmlPage(pageCache, fallbackUrl);
+            if (cached) {
+                return cached;
             }
         }
 
-        return new Response(
-            `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(OFFLINE_TITLE)}</title><style>body{font-family:system-ui,sans-serif;display:grid;min-height:100vh;place-items:center;margin:0;background:#f8fafc;color:#172554}main{max-width:32rem;padding:2rem;text-align:center}h1{font-size:1.5rem}p{line-height:1.7;color:#475569}</style><main><h1>${escapeHtml(OFFLINE_TITLE)}</h1><p>${escapeHtml(OFFLINE_MESSAGE)}</p></main>`,
-            {
-                status: 503,
-                headers: { 'Content-Type': 'text/html; charset=UTF-8' },
-            },
-        );
+        const keys = await pageCache.keys();
+        for (const key of keys) {
+            cached = await cachedHtmlPage(pageCache, key);
+            if (cached) {
+                return cached;
+            }
+        }
+
+        const staticCache = await caches.open(STATIC_CACHE);
+        cached = await cachedHtmlPage(staticCache, '/');
+        if (cached) {
+            return cached;
+        }
+
+        return offlineFallbackResponse();
     }
 }
 
-function withPwaHeaders(request) {
-    const headers = new Headers(request.headers);
-    headers.set('X-PWA-APP', '1');
+function offlineFallbackResponse() {
+    return new Response(
+        `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(OFFLINE_TITLE)}</title><style>body{font-family:system-ui,sans-serif;display:grid;min-height:100vh;place-items:center;margin:0;background:#f8fafc;color:#172554}main{max-width:32rem;padding:2rem;text-align:center}h1{font-size:1.5rem}p{line-height:1.7;color:#475569}</style><main><h1>${escapeHtml(OFFLINE_TITLE)}</h1><p>${escapeHtml(OFFLINE_MESSAGE)}</p></main>`,
+        {
+            status: 503,
+            headers: { 'Content-Type': 'text/html; charset=UTF-8' },
+        },
+    );
+}
 
-    return new Request(request, { headers });
+function withPwaHeaders(request) {
+    if (request.mode === 'navigate') {
+        return request;
+    }
+
+    try {
+        const headers = new Headers(request.headers);
+        headers.set('X-PWA-APP', '1');
+
+        return new Request(request, { headers });
+    } catch {
+        return request;
+    }
 }
 
 function escapeHtml(value) {

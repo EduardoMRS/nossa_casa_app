@@ -175,10 +175,6 @@ export const initializePwa = (): void => {
         return;
     }
 
-    if (!isPortalOrigin()) {
-        return;
-    }
-
     window.addEventListener('beforeinstallprompt', (event) => {
         installPrompt.value = event as BeforeInstallPromptEvent;
     });
@@ -189,7 +185,9 @@ export const initializePwa = (): void => {
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(() => preloadPwaEssentials())
+                .catch(() => {});
         });
     }
 
@@ -202,17 +200,13 @@ export const initializePwa = (): void => {
 
         const churchId = currentPwaChurchId();
 
-        if (!churchId) {
-            return;
-        }
-
         const visit = event.detail.visit as typeof event.detail.visit & {
             headers?: Record<string, string>;
         };
         visit.headers = {
             ...visit.headers,
-            'X-Church-ID': churchId,
             'X-PWA-APP': '1',
+            ...(churchId ? { 'X-Church-ID': churchId } : {}),
         };
     });
 
@@ -327,4 +321,98 @@ const urlBase64ToArrayBuffer = (value: string): ArrayBuffer => {
 
     return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)))
         .buffer;
+};
+
+export const preloadPwaEssentials = (): void => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return;
+    }
+
+    const schedulePreload = (fn: () => void) => {
+        if ('requestIdleCallback' in window) {
+            (
+                window as Window & {
+                    requestIdleCallback: (
+                        cb: () => void,
+                        opts?: { timeout: number },
+                    ) => void;
+                }
+            ).requestIdleCallback(fn, { timeout: 4000 });
+        } else {
+            window.setTimeout(fn, 1500);
+        }
+    };
+
+    schedulePreload(async () => {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const activeWorker = registration.active;
+
+            if (!activeWorker) {
+                return;
+            }
+
+            // 1. Preload Bible page and its offline bundle
+            const bibleUrl = '/library/bible';
+            const response = await fetch(bibleUrl, {
+                headers: {
+                    'X-Inertia': 'true',
+                    'X-PWA-APP': '1',
+                    Accept: 'text/html, application/xhtml+xml',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const versions: Array<{
+                    id: string;
+                    offline_available?: boolean;
+                    offline_url?: string;
+                }> = data?.props?.versions ?? [];
+                const defaultVersionId = data?.props?.defaultVersion;
+
+                const downloadableVersions = versions.filter(
+                    (v) => v.offline_available && v.offline_url,
+                );
+
+                if (downloadableVersions.length) {
+                    const primaryVersion =
+                        downloadableVersions.find(
+                            (v) => v.id === defaultVersionId,
+                        ) ?? downloadableVersions[0];
+
+                    activeWorker.postMessage({
+                        type: 'CACHE_BIBLES',
+                        readerUrl: bibleUrl,
+                        versions: [
+                            {
+                                id: primaryVersion.id,
+                                url: primaryVersion.offline_url,
+                            },
+                        ],
+                    });
+                }
+            }
+
+            // 2. Preload navigation tabs for instant fluid navigation
+            const navUrls = ['/', '/posts', '/events'];
+            for (const url of navUrls) {
+                try {
+                    await fetch(url, {
+                        headers: {
+                            'X-Inertia': 'true',
+                            'X-PWA-APP': '1',
+                            Accept: 'text/html, application/xhtml+xml',
+                        },
+                        credentials: 'same-origin',
+                    });
+                } catch {
+                    // Ignore non-fatal preload errors
+                }
+            }
+        } catch {
+            // Ignore non-fatal background preload errors
+        }
+    });
 };
