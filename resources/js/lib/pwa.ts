@@ -184,11 +184,18 @@ export const initializePwa = (): void => {
     });
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        const registerWorker = () => {
+            navigator.serviceWorker
+                .register('/sw.js', { scope: '/' })
                 .then(() => preloadPwaEssentials())
                 .catch(() => {});
-        });
+        };
+
+        if (document.readyState === 'complete') {
+            registerWorker();
+        } else {
+            window.addEventListener('load', registerWorker);
+        }
     }
 
     window.addEventListener('click', handleStandaloneExternalNavigation, true);
@@ -329,17 +336,17 @@ export const preloadPwaEssentials = (): void => {
     }
 
     const schedulePreload = (fn: () => void) => {
-        if ('requestIdleCallback' in window) {
-            (
-                window as Window & {
-                    requestIdleCallback: (
-                        cb: () => void,
-                        opts?: { timeout: number },
-                    ) => void;
-                }
-            ).requestIdleCallback(fn, { timeout: 4000 });
+        const win = window as unknown as {
+            requestIdleCallback?: (
+                cb: () => void,
+                opts?: { timeout: number },
+            ) => void;
+        };
+
+        if (typeof win.requestIdleCallback === 'function') {
+            win.requestIdleCallback(fn, { timeout: 4000 });
         } else {
-            window.setTimeout(fn, 1500);
+            setTimeout(fn, 1500);
         }
     };
 
@@ -353,46 +360,66 @@ export const preloadPwaEssentials = (): void => {
             }
 
             // 1. Preload Bible page and its offline bundle
-            const bibleUrl = '/library/bible';
-            const response = await fetch(bibleUrl, {
-                headers: {
-                    'X-Inertia': 'true',
-                    'X-PWA-APP': '1',
-                    Accept: 'text/html, application/xhtml+xml',
-                },
-                credentials: 'same-origin',
-            });
+            const currentPath = window.location.pathname;
+            const currentLocale = currentPath.split('/')[1] || 'pt';
+            const bibleUrls = [
+                `/${currentLocale}/library/bible`,
+                '/library/bible',
+                `/${currentLocale}/biblioteca/biblia`,
+                '/biblioteca/biblia',
+            ];
 
-            if (response.ok) {
-                const data = await response.json();
-                const versions: Array<{
-                    id: string;
-                    offline_available?: boolean;
-                    offline_url?: string;
-                }> = data?.props?.versions ?? [];
-                const defaultVersionId = data?.props?.defaultVersion;
+            let versions: Array<{
+                id: string;
+                offline_available?: boolean;
+                offline_url?: string;
+            }> = [];
+            let defaultVersionId: string | undefined;
 
-                const downloadableVersions = versions.filter(
-                    (v) => v.offline_available && v.offline_url,
-                );
-
-                if (downloadableVersions.length) {
-                    const primaryVersion =
-                        downloadableVersions.find(
-                            (v) => v.id === defaultVersionId,
-                        ) ?? downloadableVersions[0];
-
-                    activeWorker.postMessage({
-                        type: 'CACHE_BIBLES',
-                        readerUrl: bibleUrl,
-                        versions: [
-                            {
-                                id: primaryVersion.id,
-                                url: primaryVersion.offline_url,
-                            },
-                        ],
+            for (const bibleUrl of bibleUrls) {
+                try {
+                    const response = await fetch(bibleUrl, {
+                        headers: {
+                            'X-Inertia': 'true',
+                            'X-PWA-APP': '1',
+                            Accept: 'text/html, application/xhtml+xml',
+                        },
+                        credentials: 'same-origin',
                     });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        versions = data?.props?.versions ?? [];
+                        defaultVersionId = data?.props?.defaultVersion;
+                        if (versions.length) {
+                            break;
+                        }
+                    }
+                } catch {
+                    // Try next candidate URL
                 }
+            }
+
+            const downloadableVersions = versions.filter(
+                (v) => v.offline_available && v.offline_url,
+            );
+
+            if (downloadableVersions.length) {
+                const primaryVersion =
+                    downloadableVersions.find(
+                        (v) => v.id === defaultVersionId,
+                    ) ?? downloadableVersions[0];
+
+                activeWorker.postMessage({
+                    type: 'CACHE_BIBLES',
+                    readerUrl: window.location.pathname,
+                    versions: [
+                        {
+                            id: primaryVersion.id,
+                            url: primaryVersion.offline_url,
+                        },
+                    ],
+                });
             }
 
             // 2. Preload navigation tabs for instant fluid navigation

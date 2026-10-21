@@ -65,12 +65,17 @@ test('PWA church context stays on the portal origin and is sent with requests', 
 test('PWA caches and handles Inertia requests offline', () => {
     const serviceWorker = readSource('resources/pwa/sw.js');
     const pwa = readSource('resources/js/lib/pwa.ts');
+    const bible = readSource('resources/js/pages/Library/Bible.vue');
 
     assert.match(serviceWorker, /INERTIA_CACHE/);
     assert.match(serviceWorker, /networkFirstInertia/);
     assert.match(serviceWorker, /isInertiaResponse/);
+    assert.match(serviceWorker, /cleanResponse/);
+    assert.match(serviceWorker, /broadcastMessage/);
     assert.match(pwa, /navigator\.serviceWorker[\s\S]*register\('\/sw\.js'/);
     assert.doesNotMatch(pwa, /if \(!isPortalOrigin\(\)\) \{\s*return;\s*\}/);
+    assert.match(bible, /checkOfflineStatus/);
+    assert.match(bible, /typeof caches/);
 });
 
 test('public mobile navigation owns the account action', () => {

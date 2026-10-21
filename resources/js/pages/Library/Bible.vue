@@ -668,11 +668,59 @@ const serviceWorker = async (): Promise<ServiceWorker | null> => {
     return navigator.serviceWorker.controller ?? registration.active;
 };
 
+const bibleMarkerUrl = (id: string): string =>
+    `/api/bible/${encodeURIComponent(id)}/offline-ready`;
+
 const checkOfflineStatus = async (): Promise<void> => {
+    if (
+        typeof window !== 'undefined' &&
+        typeof caches !== 'undefined' &&
+        downloadableVersions.value.length
+    ) {
+        try {
+            const cacheKeys = await caches.keys();
+            const bibleCacheKeys = cacheKeys.filter((k) =>
+                k.includes('-bible-'),
+            );
+            const found: string[] = [];
+
+            for (const cacheKey of bibleCacheKeys) {
+                const cache = await caches.open(cacheKey);
+                for (const item of downloadableVersions.value) {
+                    if (found.includes(item.id)) {
+                        continue;
+                    }
+                    const marker = await cache.match(bibleMarkerUrl(item.id));
+                    const books = await cache.match(
+                        `/api/bible/${encodeURIComponent(item.id)}/books`,
+                    );
+                    if (marker || books) {
+                        found.push(item.id);
+                    }
+                }
+            }
+
+            if (found.length) {
+                readyOfflineVersions.value = Array.from(
+                    new Set([...readyOfflineVersions.value, ...found]),
+                );
+                if (
+                    offlineReadyCount.value === downloadableVersions.value.length
+                ) {
+                    offlineState.value = 'ready';
+                }
+            }
+        } catch {
+            // Silently fall back to service worker messaging
+        }
+    }
+
     const worker = await serviceWorker();
 
     if (!worker || !downloadableVersions.value.length) {
-        offlineState.value = 'idle';
+        if (!readyOfflineVersions.value.length) {
+            offlineState.value = 'idle';
+        }
 
         return;
     }
@@ -770,9 +818,31 @@ const ensureSelectableVersion = async (): Promise<void> => {
         return;
     }
 
-    const availableVersions = selectableVersions.value;
+    let availableVersions = selectableVersions.value;
 
     if (!availableVersions.length) {
+        await checkOfflineStatus();
+        availableVersions = selectableVersions.value;
+    }
+
+    if (version.value && books.value.length > 0) {
+        error.value = '';
+
+        return;
+    }
+
+    if (!availableVersions.length) {
+        if (selectedVersion.value?.offline_available) {
+            error.value = '';
+            try {
+                await loadBooks();
+
+                return;
+            } catch {
+                // Fall through to offline error
+            }
+        }
+
         version.value = '';
         books.value = [];
         chapters.value = [];
@@ -853,11 +923,13 @@ const handleOnline = (): void => {
 
 const handleOffline = (): void => {
     isOnline.value = false;
-    void ensureSelectableVersion();
-    void checkOfflineStatus();
+    void (async () => {
+        await checkOfflineStatus();
+        await ensureSelectableVersion();
+    })();
 };
 
-onMounted(() => {
+onMounted(async () => {
     restoreReadingPosition();
     loadTextHighlights();
     document.addEventListener('selectionchange', queueTextSelectionCapture);
@@ -872,13 +944,17 @@ onMounted(() => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    await checkOfflineStatus();
+
     if (version.value && isOnline.value) {
         void loadBooks();
-    } else if (!isOnline.value) {
-        void ensureSelectableVersion();
+    } else {
+        await ensureSelectableVersion();
     }
 
-    void checkOfflineStatus();
+    if (isOnline.value) {
+        void downloadMissingOpenVersions();
+    }
 });
 
 onBeforeUnmount(() => {
