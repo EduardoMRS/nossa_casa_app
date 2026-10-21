@@ -188,15 +188,9 @@ export const initializePwa = (): void => {
     });
 
     if ('serviceWorker' in navigator && window.isSecureContext) {
-        const registerServiceWorker = (): void => {
+        window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js', { scope: '/' });
-        };
-
-        if (document.readyState === 'complete') {
-            registerServiceWorker();
-        } else {
-            window.addEventListener('load', registerServiceWorker);
-        }
+        });
     }
 
     window.addEventListener('click', handleStandaloneExternalNavigation, true);
@@ -204,20 +198,6 @@ export const initializePwa = (): void => {
     router.on('before', (event) => {
         if (!isStandalonePwa()) {
             return;
-        }
-
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            const visit = event.detail.visit as typeof event.detail.visit & {
-                url?: URL;
-            };
-            const targetUrl = visit.url ? visit.url.toString() : null;
-
-            if (targetUrl) {
-                event.preventDefault();
-                window.location.assign(targetUrl);
-
-                return false;
-            }
         }
 
         const churchId = currentPwaChurchId();
