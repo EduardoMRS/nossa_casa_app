@@ -6,7 +6,7 @@ const OPEN_ACTION = __OPEN_ACTION__;
 const OFFLINE_TITLE = __OFFLINE_TITLE__;
 const OFFLINE_MESSAGE = __OFFLINE_MESSAGE__;
 const CACHE_ROOT = 'nossa-casa';
-const CACHE_SCHEMA_VERSION = '3';
+const CACHE_SCHEMA_VERSION = '4';
 const CACHE_PREFIX = `${CACHE_ROOT}-v${CACHE_SCHEMA_VERSION}-${CACHE_SCOPE}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const BIBLE_CACHE = `${CACHE_PREFIX}-bible-${CACHE_VERSION}`;
@@ -642,15 +642,18 @@ async function networkFirstInertia(request) {
             strippedPath,
             `/pt${strippedPath}`,
             `/en${strippedPath}`,
-            '/library/bible',
-            '/biblioteca/biblia',
-            '/pt/library/bible',
-            '/pt/biblioteca/biblia',
-            '/?pwa=1',
-            '/',
-            '/pt?pwa=1',
-            '/pt',
         ];
+
+        if (path.includes('bible') || path.includes('biblia')) {
+            fallbackUrls.push(
+                '/library/bible',
+                '/biblioteca/biblia',
+                '/pt/library/bible',
+                '/pt/biblioteca/biblia',
+                '/en/library/bible',
+                '/en/biblioteca/biblia',
+            );
+        }
 
         for (const fallbackUrl of fallbackUrls) {
             const matched = await cache.match(fallbackUrl);
@@ -659,24 +662,11 @@ async function networkFirstInertia(request) {
             }
         }
 
-        // Fall back to the page cache for any cached HTML shell
-        const pageCache = await caches.open(PAGE_CACHE);
-        const pageFallbackUrls = [
-            '/?pwa=1',
-            '/',
-            '/pt?pwa=1',
-            '/pt',
-            '/en?pwa=1',
-            '/en',
-        ];
-        for (const fallbackUrl of pageFallbackUrls) {
-            const htmlFallback = await cachedHtmlPage(pageCache, fallbackUrl);
-            if (htmlFallback) {
-                return await cleanResponse(htmlFallback);
-            }
-        }
-
-        return offlineFallbackResponse();
+        // Never return HTML or 503 to an Inertia XHR request. Inertia expects JSON
+        // with X-Inertia: true; returning non-Inertia HTML makes Inertia open its error modal.
+        // Returning a network error allows Inertia to cleanly trigger its networkError event,
+        // which our application handles with a friendly toast notification.
+        return Response.error();
     }
 }
 

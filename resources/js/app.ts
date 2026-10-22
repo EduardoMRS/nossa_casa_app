@@ -6,6 +6,7 @@ import ChurchDistancePrompt from '@/components/ChurchDistancePrompt.vue';
 import ConfirmDialogHost from '@/components/ConfirmDialogHost.vue';
 import PwaBottomNavigation from '@/components/PwaBottomNavigation.vue';
 import PwaChurchPrompt from '@/components/PwaChurchPrompt.vue';
+import { Toaster } from '@/components/ui/sonner';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
@@ -14,6 +15,7 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { applyBranding } from '@/lib/branding';
 import { initializeFlashToast } from '@/lib/flashToast';
 import { installI18n, supportedLocales } from '@/lib/i18n';
+import { initializeInertiaErrorHandler } from '@/lib/inertiaErrors';
 import { initializePwa } from '@/lib/pwa';
 import { setUrlDefaults } from '@/wayfinder';
 
@@ -121,6 +123,7 @@ createInertiaApp({
             render: () =>
                 h(Fragment, [
                     h(App, props),
+                    h(Toaster),
                     h(PwaBottomNavigation),
                     h(PwaChurchPrompt),
                     h(ChurchDistancePrompt),
@@ -141,3 +144,6 @@ initializeTheme();
 
 // This will listen for flash toast data from the server...
 initializeFlashToast();
+
+// This will handle Inertia network and HTTP errors gracefully without showing debug dialog modals...
+initializeInertiaErrorHandler();

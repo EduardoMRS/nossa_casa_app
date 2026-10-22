@@ -134,6 +134,11 @@ export const installI18n = (app: App, locale: unknown): void => {
 
 export const useI18n = (): I18nContext => inject(i18nKey, fallbackContext);
 
+export const t = (
+    key: string,
+    replacements?: Record<string, string | number>,
+): string => fallbackContext.t(key, replacements);
+
 export const localizedPath = (nextLocale: SupportedLocale): string => {
     if (typeof window === 'undefined') {
         return `/${nextLocale}`;

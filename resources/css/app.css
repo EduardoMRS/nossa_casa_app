@@ -828,4 +828,10 @@ label {
 body:has(div[role="dialog"][data-state="open"]) {
     overflow: hidden;
 }
+
+dialog#inertia-error-dialog,
+dialog#inertia-error-dialog::backdrop {
+    display: none !important;
+}
+
  

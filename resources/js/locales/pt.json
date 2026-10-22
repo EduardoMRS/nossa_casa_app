@@ -115,7 +115,9 @@
         "install": "Instalar app",
         "notifications": "Ativar notificações",
         "ios_title": "Instalar no iPhone ou iPad",
-        "ios_instructions": "Abra o menu de compartilhamento do navegador e escolha Adicionar à Tela inicial."
+        "ios_instructions": "Abra o menu de compartilhamento do navegador e escolha Adicionar à Tela inicial.",
+        "offline_page_unavailable": "Você está offline. Esta página não está disponível sem conexão.",
+        "network_error": "Não foi possível carregar a página. Verifique sua conexão."
     },
     "nav": {
         "classrooms": "Salas",

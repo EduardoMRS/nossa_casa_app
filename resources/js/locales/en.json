@@ -115,7 +115,9 @@
         "install": "Install app",
         "notifications": "Enable notifications",
         "ios_title": "Install on iPhone or iPad",
-        "ios_instructions": "Open the browser share menu and choose Add to Home Screen."
+        "ios_instructions": "Open the browser share menu and choose Add to Home Screen.",
+        "offline_page_unavailable": "You are offline. This page is not available without a connection.",
+        "network_error": "Unable to load page. Check your internet connection."
     },
     "nav": {
         "classrooms": "Classrooms",

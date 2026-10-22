@@ -66,16 +66,24 @@ test('PWA caches and handles Inertia requests offline', () => {
     const serviceWorker = readSource('resources/pwa/sw.js');
     const pwa = readSource('resources/js/lib/pwa.ts');
     const bible = readSource('resources/js/pages/Library/Bible.vue');
+    const inertiaErrors = readSource('resources/js/lib/inertiaErrors.ts');
+    const app = readSource('resources/js/app.ts');
+    const css = readSource('resources/css/app.css');
 
     assert.match(serviceWorker, /INERTIA_CACHE/);
     assert.match(serviceWorker, /networkFirstInertia/);
     assert.match(serviceWorker, /isInertiaResponse/);
     assert.match(serviceWorker, /cleanResponse/);
     assert.match(serviceWorker, /broadcastMessage/);
+    assert.match(serviceWorker, /Response\.error\(\)/);
     assert.match(pwa, /navigator\.serviceWorker[\s\S]*register\('\/sw\.js'/);
     assert.doesNotMatch(pwa, /if \(!isPortalOrigin\(\)\) \{\s*return;\s*\}/);
     assert.match(bible, /checkOfflineStatus/);
     assert.match(bible, /typeof caches/);
+    assert.match(inertiaErrors, /router\.on\('httpException'/);
+    assert.match(inertiaErrors, /router\.on\('networkError'/);
+    assert.match(app, /initializeInertiaErrorHandler/);
+    assert.match(css, /dialog#inertia-error-dialog/);
 });
 
 test('public mobile navigation owns the account action', () => {
