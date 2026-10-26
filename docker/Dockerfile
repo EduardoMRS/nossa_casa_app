@@ -4,6 +4,8 @@ ARG USER=laravel
 ARG UID=1000
 ARG GID=1000
 
+# The Alpine release behind php:8.5.12-fpm-alpine only ships Node 24 (LTS) and
+# npm depends on that package, so pinning an older Node major breaks apk.
 RUN apk add --no-cache \
     curl \
     libpng-dev \
@@ -17,7 +19,7 @@ RUN apk add --no-cache \
     zip \
     unzip \
     git \
-    nodejs=~22 \
+    nodejs=~24 \
     npm
 
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp && \
