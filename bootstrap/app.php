@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureLocaleInUrl;
 use App\Http\Middleware\EnsureMediaWorkerToken;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LogPublicAccess;
 use App\Http\Middleware\RedirectWwwHost;
 use App\Http\Middleware\ResolveApiChurchContext;
 use App\Http\Middleware\ResolveChurchDomain;
@@ -50,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             EnsureHttpsInProduction::class,
+            LogPublicAccess::class,
         ]);
 
         $middleware->api(append: [

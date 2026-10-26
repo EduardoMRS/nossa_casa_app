@@ -11,6 +11,7 @@ return [
             'forms' => 'Formulários',
             'library' => 'Biblioteca',
             'media' => 'Mídias',
+            'groups' => 'Grupos',
             'posts' => 'Publicações',
         ],
     ],

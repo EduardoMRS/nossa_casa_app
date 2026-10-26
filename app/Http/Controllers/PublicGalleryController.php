@@ -27,6 +27,7 @@ final class PublicGalleryController extends Controller
             $churchId,
             $request->string('view')->toString(),
             $request->user() !== null && $churchId !== null,
+            $request->string('media')->toString() ?: null,
         )->toArray());
     }
 

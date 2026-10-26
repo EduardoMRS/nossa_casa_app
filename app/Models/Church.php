@@ -178,6 +178,18 @@ class Church extends Model
         return $this->hasMany(Library::class);
     }
 
+    /** @return HasOne<TreasurySetting, $this> */
+    public function treasurySetting(): HasOne
+    {
+        return $this->hasOne(TreasurySetting::class);
+    }
+
+    /** @return HasMany<Contribution, $this> */
+    public function contributions(): HasMany
+    {
+        return $this->hasMany(Contribution::class);
+    }
+
     public function getRtmpUrlAttribute(): ?string
     {
         $configuredUrl = rtrim((string) config('media.mediamtx.public_rtmp_url'), '/');

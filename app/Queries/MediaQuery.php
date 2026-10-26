@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class MediaQuery
 {
-    public function index(?string $churchId, string $view, bool $canInteract): CanonicalData
+    public function index(?string $churchId, string $view, bool $canInteract, ?string $focusMediaId = null): CanonicalData
     {
         $view = $view === 'transmissions' ? 'transmissions' : 'gallery';
         $media = Media::query()
@@ -50,11 +50,35 @@ final class MediaQuery
                 'type' => $category->type,
             ])->all();
 
+        $focusedMedia = null;
+
+        if ($focusMediaId !== null && $focusMediaId !== '') {
+            $focused = Media::query()
+                ->visible()
+                ->where('gallery', true)
+                ->when($churchId, fn (Builder $query): Builder => $query->where('church_id', $churchId))
+                ->with([
+                    'church:id,domain',
+                    'uploader:id,first_name,last_name',
+                    'categories:id,name,slug',
+                    'comments' => fn ($query) => $query
+                        ->with(['user:id,first_name,last_name', 'reactions.user:id,first_name,last_name'])
+                        ->latest(),
+                    'reactions.user:id,first_name,last_name',
+                ])
+                ->find($focusMediaId);
+
+            if ($focused !== null) {
+                $focusedMedia = $this->item($focused);
+            }
+        }
+
         return new CanonicalData([
             'media' => $media->toArray(),
             'categories' => $categories,
             'canInteract' => $canInteract,
             'view' => $view,
+            'focusedMedia' => $focusedMedia,
         ]);
     }
 

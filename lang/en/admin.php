@@ -12,6 +12,7 @@ return [
             'library' => 'Library',
             'media' => 'Media',
             'posts' => 'Posts',
+            'groups' => 'Groups',
         ],
     ],
     'media' => [

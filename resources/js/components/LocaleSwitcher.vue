@@ -19,15 +19,16 @@ const selectedLocale = computed({
 
 <template>
     <label
-        class="cursor-pointer inline-flex items-center gap-1 rounded-lg border border-[#c5d3df] bg-white px-2 py-1 text-xs font-semibold text-[#21364b] sm:gap-2 sm:rounded-full sm:px-3 sm:py-1.5"
+        class="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#c5d3df] bg-white px-2 py-1 text-xs font-semibold text-[#21364b] sm:gap-2 sm:rounded-full sm:px-3 sm:py-1.5"
     >
         <span class="sr-only sm:not-sr-only">{{ t('locale.switcher') }}</span>
         <select
             v-model="selectedLocale"
-            class="min-w-0 rounded bg-transparent border-0 py-0 pr-4 pl-0 text-base font-semibold text-[#21364b] outline-none sm:text-xs"
+            class="min-w-0 rounded border-0 bg-transparent py-0 pr-4 pl-0 text-base font-semibold text-[#21364b] outline-none sm:text-xs"
         >
             <option value="pt">{{ t('locale.pt_short') }}</option>
             <option value="en">{{ t('locale.en_short') }}</option>
+            <option value="es">{{ t('locale.es_short') }}</option>
         </select>
     </label>
 </template>

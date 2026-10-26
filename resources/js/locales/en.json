@@ -104,7 +104,8 @@
     "locale": {
         "switcher": "Language",
         "pt_short": "PT",
-        "en_short": "EN"
+        "en_short": "EN",
+        "es_short": "ES"
     },
     "notifications": {
         "title": "Notices",
@@ -137,7 +138,9 @@
         "news": "News",
         "profile": "Profile",
         "pwa_navigation": "Main app navigation",
-        "network": "Network"
+        "network": "Network",
+        "groups": "Groups",
+        "give": "Give"
     },
     "navigation": {
         "menu": "Navigation menu",
@@ -876,7 +879,14 @@
                 "processing": "Maintenance mode active...",
                 "error": "The backup operation could not be completed."
             },
-            "stats": ["Users", "Events", "Posts", "Comments", "Media", "Forms"]
+            "stats": [
+                "Users",
+                "Events",
+                "Posts",
+                "Comments",
+                "Media",
+                "Forms"
+            ]
         },
         "live_streams": {
             "title": "Live stream control",
@@ -947,7 +957,10 @@
             "anonymous": "Anonymous request",
             "mine": "My request",
             "send_anonymously": "Send anonymously",
-            "stats": ["Requests sent", "Church requests"]
+            "stats": [
+                "Requests sent",
+                "Church requests"
+            ]
         },
         "wall": {
             "title": "Moderate wall",
@@ -997,7 +1010,11 @@
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
-            "stats": ["Churches", "Communities", "Headquarters/branch links"],
+            "stats": [
+                "Churches",
+                "Communities",
+                "Headquarters/branch links"
+            ],
             "status": {
                 "active": "Active",
                 "inactive": "Inactive",
@@ -1019,7 +1036,11 @@
             "reset_password": "Send password reset",
             "protected": "Protected account",
             "delete_confirm": "Delete user \"{name}\"?",
-            "stats": ["Total users", "Administrators", "Members"]
+            "stats": [
+                "Total users",
+                "Administrators",
+                "Members"
+            ]
         },
         "media": {
             "title": "Moderate gallery",
@@ -1051,8 +1072,16 @@
             "approve": "Approve",
             "reject": "Reject",
             "empty": "No media registered yet.",
-            "actions": ["Open public gallery", "Go to dashboard"],
-            "stats": ["Media submitted", "Pending", "Approved", "Rejected"],
+            "actions": [
+                "Open public gallery",
+                "Go to dashboard"
+            ],
+            "stats": [
+                "Media submitted",
+                "Pending",
+                "Approved",
+                "Rejected"
+            ],
             "status": {
                 "pending": "Pending",
                 "approved": "Approved",
@@ -1178,7 +1207,11 @@
                     "Published posts",
                     "Published events"
                 ],
-                "actions": ["Manage posts", "Open events", "Church settings"]
+                "actions": [
+                    "Manage posts",
+                    "Open events",
+                    "Church settings"
+                ]
             },
             "library": {
                 "title": "Library and verse",
@@ -1189,7 +1222,10 @@
                     "Registered verses",
                     "Content categories"
                 ],
-                "actions": ["Open public home", "Review highlights"]
+                "actions": [
+                    "Open public home",
+                    "Review highlights"
+                ]
             },
             "prayer_requests": {
                 "title": "Intercession requests",
@@ -1200,7 +1236,10 @@
                     "Anonymous requests",
                     "Identified requests"
                 ],
-                "actions": ["Open my prayers", "Go to dashboard"]
+                "actions": [
+                    "Open my prayers",
+                    "Go to dashboard"
+                ]
             }
         },
         "church_network": {
@@ -1219,6 +1258,43 @@
             "hierarchy_description": "The complete structure reporting to the current unit.",
             "empty": "No approved {branch} has been linked yet.",
             "branch_count": "{count} {unit}"
+        },
+        "groups": {
+            "kicker": "Ministries and members",
+            "title": "Groups",
+            "description": "Create and manage cells, Bible studies and other groups, their meeting place and leaders.",
+            "new": "New group",
+            "edit": "Edit group",
+            "empty": "No groups registered yet.",
+            "name": "Name",
+            "description_field": "Description",
+            "category": "Categories",
+            "responsibles": "Leaders",
+            "location": "Meeting place",
+            "visibility": "Visible on the public portal",
+            "delete_confirm": "Delete the group \"{name}\"?",
+            "responsibles_count": "{count} leader(s)",
+            "no_category": "No category"
+        },
+        "treasury": {
+            "kicker": "Finance",
+            "title": "Treasury",
+            "description": "Configure how your church receives tithes and offerings and review the monthly report.",
+            "pix_key_type": "Pix key type",
+            "pix_key": "Pix key",
+            "bank_name": "Bank",
+            "bank_account": "Account",
+            "account_holder": "Account holder",
+            "instructions": "Instructions",
+            "accepts": "Accept contributions",
+            "save": "Save settings",
+            "report": "Monthly report",
+            "month": "Month",
+            "tithes": "Tithes",
+            "offerings": "Offerings",
+            "total": "Total",
+            "count": "Records",
+            "export": "Export CSV"
         }
     },
     "library": {
@@ -1349,7 +1425,8 @@
         "visit": {
             "kicker": "Come visit us",
             "title": "Location and contact",
-            "map_title": "Church location map"
+            "map_title": "Church location map",
+            "directions": "Get directions"
         },
         "schedule": {
             "title": "Schedule",
@@ -1658,6 +1735,33 @@
             "workspace": "Platform administration",
             "title": "General settings",
             "description": "Manage churches, communities, users, live streams, logs, and global platform operations."
+        },
+        "shortcuts": {
+            "title": "Quick actions",
+            "new_post": "New post",
+            "new_event": "New event",
+            "gallery": "Open gallery",
+            "treasury": "Treasury"
+        },
+        "insights": {
+            "recent_activity": "Recent activity",
+            "most_liked": "Most liked",
+            "access_map": "Visitor map (30 days)",
+            "no_activity": "No recent activity.",
+            "no_likes": "No reactions yet.",
+            "no_access": "No visits recorded yet.",
+            "visits": "{count} visits",
+            "likes": "{count} likes",
+            "type_post": "Post",
+            "type_event": "Event",
+            "type_media": "Media",
+            "recent_prayers": "Latest prayer requests",
+            "no_prayers": "No prayer requests yet.",
+            "anonymous": "Anonymous",
+            "treasury": "Treasury this month",
+            "tithes": "Tithes",
+            "offerings": "Offerings",
+            "total": "Total"
         }
     },
     "membership": {
@@ -1945,5 +2049,31 @@
         "current": "Current unit",
         "branch_count": "{count} {unit}",
         "empty": "No approved {branchPlural} are linked yet."
+    },
+    "groups": {
+        "title": "Groups",
+        "subtitle": "Cells, Bible studies and gatherings",
+        "empty": "No groups available yet.",
+        "leaders": "Leaders",
+        "location": "Meeting place",
+        "learn_more": "Learn more"
+    },
+    "treasury": {
+        "title": "Give",
+        "subtitle": "Tithes and offerings",
+        "type": "Contribution type",
+        "amount": "Amount",
+        "name": "Your name (optional)",
+        "message": "Message (optional)",
+        "submit": "Register contribution",
+        "how_to": "How to contribute",
+        "pix": "Pix",
+        "bank": "Bank account",
+        "closed": "This church is not accepting contributions right now.",
+        "thanks": "Thank you for your contribution.",
+        "types": {
+            "tithe": "Tithe",
+            "offering": "Offering"
+        }
     }
 }

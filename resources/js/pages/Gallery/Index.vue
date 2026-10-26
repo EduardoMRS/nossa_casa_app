@@ -12,7 +12,14 @@ import {
     Share2,
     X,
 } from '@lucide/vue';
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import {
+    computed,
+    onBeforeUnmount,
+    onMounted,
+    reactive,
+    ref,
+    watch,
+} from 'vue';
 import { toast } from 'vue-sonner';
 import AppModal from '@/components/AppModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
@@ -80,6 +87,7 @@ const props = defineProps<{
     categories: CategoryOption[];
     canInteract: boolean;
     view: 'gallery' | 'transmissions';
+    focusedMedia?: MediaItem | null;
 }>();
 const { locale, t } = useI18n();
 const { gallery: galleryRepository, interactions } = useRepositories();
@@ -228,6 +236,18 @@ const closeMedia = (): void => {
     interactionError.value = '';
 };
 
+const mediaAccessUrl = (item: MediaItem): string => {
+    const path = galleryIndex(undefined, {
+        query: { media: item.id },
+    }).url;
+
+    if (typeof window === 'undefined') {
+        return path;
+    }
+
+    return new URL(path, window.location.origin).toString();
+};
+
 const shareMedia = async (): Promise<void> => {
     if (!selectedMedia.value) {
         return;
@@ -239,7 +259,7 @@ const shareMedia = async (): Promise<void> => {
             selectedMedia.value.description ??
             selectedMedia.value.title ??
             undefined,
-        url: selectedMedia.value.url,
+        url: mediaAccessUrl(selectedMedia.value),
     };
 
     try {
@@ -257,6 +277,32 @@ const shareMedia = async (): Promise<void> => {
         }
     }
 };
+
+const focusSharedMedia = (): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const requestedId = new URLSearchParams(window.location.search).get(
+        'media',
+    );
+
+    if (!requestedId) {
+        return;
+    }
+
+    const match =
+        mediaItems.value.find((item) => item.id === requestedId) ??
+        (props.focusedMedia && props.focusedMedia.id === requestedId
+            ? props.focusedMedia
+            : undefined);
+
+    if (match) {
+        openMedia(match);
+    }
+};
+
+onMounted(focusSharedMedia);
 
 const reactToMedia = async (content: string): Promise<void> => {
     if (!selectedMedia.value || !props.canInteract) {
@@ -538,7 +584,11 @@ onBeforeUnmount(() => {
                     {{ t('gallery.gallery_view') }}
                 </Link>
                 <Link
-                    :href="galleryIndex(undefined, { query: { view: 'transmissions' } })"
+                    :href="
+                        galleryIndex(undefined, {
+                            query: { view: 'transmissions' },
+                        })
+                    "
                     class="rounded-lg px-4 py-2 text-sm font-bold transition"
                     :class="
                         props.view === 'transmissions'
@@ -704,9 +754,7 @@ onBeforeUnmount(() => {
                 content-class="gap-0 overflow-hidden border-0 p-0 sm:max-w-6xl"
                 @update:open="(value) => !value && closeMedia()"
             >
-                <section
-                    class="relative flex h-full w-full bg-white"
-                >
+                <section class="relative flex h-full w-full bg-white">
                     <button
                         type="button"
                         class="absolute top-3 right-3 z-10 grid size-9 place-items-center rounded-full bg-slate-950/70 text-white backdrop-blur hover:bg-slate-950"
@@ -716,10 +764,10 @@ onBeforeUnmount(() => {
                         <X class="size-5" />
                     </button>
 
-                    <div class="flex flex-col md:flex-row gap-2 w-full overflow-y-auto md:overflow-hidden">
-                        <div
-                            class="flex place-items-center bg-slate-950"
-                        >
+                    <div
+                        class="flex w-full flex-col gap-2 overflow-y-auto md:flex-row md:overflow-hidden"
+                    >
+                        <div class="flex place-items-center bg-slate-950">
                             <video
                                 v-if="isVideo(selectedMedia)"
                                 :src="selectedMedia.url"
@@ -740,8 +788,8 @@ onBeforeUnmount(() => {
                                 class="h-full w-full object-contain"
                             />
                         </div>
-    
-                        <div class="flex flex-1 min-w-[40%] flex-col bg-white">
+
+                        <div class="flex min-w-[40%] flex-1 flex-col bg-white">
                             <header class="border-b border-slate-200 p-5 pr-14">
                                 <h2
                                     v-if="selectedMedia.title"
@@ -819,13 +867,17 @@ onBeforeUnmount(() => {
                                         }}
                                     </span>
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-sm leading-5 text-slate-700">
+                                        <p
+                                            class="text-sm leading-5 text-slate-700"
+                                        >
                                             <strong class="mr-1 text-slate-950"
                                                 >{{
-                                                    comment.user_details?.first_name
+                                                    comment.user_details
+                                                        ?.first_name
                                                 }}
                                                 {{
-                                                    comment.user_details?.last_name
+                                                    comment.user_details
+                                                        ?.last_name
                                                 }}</strong
                                             >
                                             {{ comment.content }}
@@ -881,7 +933,7 @@ onBeforeUnmount(() => {
                                     {{ t('gallery.no_comments') }}
                                 </div>
                             </div>
-    
+
                             <footer class="border-t border-slate-200 p-4">
                                 <div
                                     class="flex flex-wrap items-center justify-between gap-2"
@@ -897,19 +949,23 @@ onBeforeUnmount(() => {
                                             "
                                             class="rounded-lg px-2 py-1.5 text-lg transition hover:bg-slate-100 disabled:opacity-40"
                                             :class="
-                                                ownMediaReaction?.content === emoji
+                                                ownMediaReaction?.content ===
+                                                emoji
                                                     ? 'bg-slate-100 ring-2 ring-slate-200'
                                                     : ''
                                             "
                                             :aria-pressed="
-                                                ownMediaReaction?.content === emoji
+                                                ownMediaReaction?.content ===
+                                                emoji
                                             "
                                             @click="reactToMedia(emoji)"
                                         >
                                             {{ emoji }}
                                         </button>
                                     </div>
-                                    <div class="flex gap-1 text-xs text-slate-500">
+                                    <div
+                                        class="flex gap-1 text-xs text-slate-500"
+                                    >
                                         <span
                                             v-for="reaction in groupedMediaReactions"
                                             :key="reaction.emoji"
@@ -920,7 +976,7 @@ onBeforeUnmount(() => {
                                         </span>
                                     </div>
                                 </div>
-    
+
                                 <form
                                     v-if="canInteract"
                                     class="mt-3 flex gap-2"
@@ -944,7 +1000,9 @@ onBeforeUnmount(() => {
                                             backgroundColor:
                                                 'var(--church-primary)',
                                         }"
-                                        :aria-label="t('gallery.comment_submit')"
+                                        :aria-label="
+                                            t('gallery.comment_submit')
+                                        "
                                     >
                                         <Send class="size-4" />
                                     </button>

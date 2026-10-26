@@ -45,6 +45,10 @@ return [
             'default' => 'ministry_leader',
             'options' => ['leader', 'ministry_leader', 'coordinator', 'deacon'],
         ],
+        'treasurer' => [
+            'default' => 'treasurer',
+            'options' => ['treasurer', 'finance'],
+        ],
         'media' => [
             'default' => 'media_team',
             'options' => ['media', 'media_team', 'communications', 'creative_team'],

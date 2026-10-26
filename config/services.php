@@ -47,6 +47,12 @@ return [
         'user_agent' => env('GEOCODING_USER_AGENT', env('APP_NAME', 'Laravel').'/geocoder'),
     ],
 
+    'ip_geolocation' => [
+        'enabled' => env('IP_GEOLOCATION_ENABLED', false),
+        'url' => env('IP_GEOLOCATION_URL', 'http://ip-api.com/json'),
+        'cache_ttl' => (int) env('IP_GEOLOCATION_CACHE_TTL', 86400),
+    ],
+
     'native_push' => [
         'default' => env('NATIVE_PUSH_PROVIDER', 'null'),
         'fcm' => [

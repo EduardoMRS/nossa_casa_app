@@ -104,7 +104,8 @@
     "locale": {
         "switcher": "Idioma",
         "pt_short": "PT",
-        "en_short": "EN"
+        "en_short": "EN",
+        "es_short": "ES"
     },
     "notifications": {
         "title": "Avisos",
@@ -137,7 +138,9 @@
         "news": "Notícias",
         "profile": "Perfil",
         "pwa_navigation": "Navegação principal do aplicativo",
-        "network": "Rede"
+        "network": "Rede",
+        "groups": "Grupos",
+        "give": "Contribuir"
     },
     "navigation": {
         "menu": "Menu de navegação",
@@ -954,7 +957,10 @@
             "anonymous": "Pedido anônimo",
             "mine": "Meu pedido",
             "send_anonymously": "Enviar anonimamente",
-            "stats": ["Pedidos enviados", "Pedidos da igreja"]
+            "stats": [
+                "Pedidos enviados",
+                "Pedidos da igreja"
+            ]
         },
         "wall": {
             "title": "Moderar parede",
@@ -1004,7 +1010,11 @@
             "no_community": "Nenhuma comunidade",
             "members": "{count} membros",
             "empty_networks": "Nenhum link registrado.",
-            "stats": ["Igrejas", "Comunidades", "Vínculos de sede/filial"],
+            "stats": [
+                "Igrejas",
+                "Comunidades",
+                "Vínculos de sede/filial"
+            ],
             "status": {
                 "active": "Ativo",
                 "inactive": "Inativo",
@@ -1026,7 +1036,11 @@
             "reset_password": "Enviar redefinição de senha",
             "protected": "Conta protegida",
             "delete_confirm": "Excluir usuário \"{name}\"?",
-            "stats": ["Total de usuários", "Administradores", "Membros"]
+            "stats": [
+                "Total de usuários",
+                "Administradores",
+                "Membros"
+            ]
         },
         "media": {
             "title": "Moderar galeria",
@@ -1058,8 +1072,16 @@
             "approve": "Aprovar",
             "reject": "Rejeitar",
             "empty": "Nenhuma mídia registrada ainda.",
-            "actions": ["Abrir galeria pública", "Ir para o painel"],
-            "stats": ["Mídia submetida", "Pendente", "Aprovado", "Rejeitado"],
+            "actions": [
+                "Abrir galeria pública",
+                "Ir para o painel"
+            ],
+            "stats": [
+                "Mídia submetida",
+                "Pendente",
+                "Aprovado",
+                "Rejeitado"
+            ],
             "status": {
                 "pending": "Pendente",
                 "approved": "Aprovado",
@@ -1200,7 +1222,10 @@
                     "Versículos registrados",
                     "Categorias de conteúdo"
                 ],
-                "actions": ["Abrir página pública", "Revisar destaques"]
+                "actions": [
+                    "Abrir página pública",
+                    "Revisar destaques"
+                ]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercessão",
@@ -1211,7 +1236,10 @@
                     "Solicitações anônimas",
                     "Solicitações identificadas"
                 ],
-                "actions": ["Abrir minhas orações", "Ir para o painel"]
+                "actions": [
+                    "Abrir minhas orações",
+                    "Ir para o painel"
+                ]
             }
         },
         "church_network": {
@@ -1230,6 +1258,43 @@
             "hierarchy_description": "A estrutura completa subordinada à unidade atual.",
             "empty": "Nenhuma {branch} aprovada foi vinculada ainda.",
             "branch_count": "{count} {unit}"
+        },
+        "groups": {
+            "kicker": "Ministérios e membros",
+            "title": "Grupos",
+            "description": "Crie e gerencie células, estudos bíblicos e outros grupos, seu local de encontro e responsáveis.",
+            "new": "Novo grupo",
+            "edit": "Editar grupo",
+            "empty": "Nenhum grupo cadastrado ainda.",
+            "name": "Nome",
+            "description_field": "Descrição",
+            "category": "Categorias",
+            "responsibles": "Responsáveis",
+            "location": "Local de encontro",
+            "visibility": "Visível no portal público",
+            "delete_confirm": "Remover o grupo \"{name}\"?",
+            "responsibles_count": "{count} responsável(is)",
+            "no_category": "Sem categoria"
+        },
+        "treasury": {
+            "kicker": "Financeiro",
+            "title": "Tesouraria",
+            "description": "Configure como sua igreja recebe dízimos e ofertas e acompanhe o relatório mensal.",
+            "pix_key_type": "Tipo de chave Pix",
+            "pix_key": "Chave Pix",
+            "bank_name": "Banco",
+            "bank_account": "Conta",
+            "account_holder": "Titular da conta",
+            "instructions": "Instruções",
+            "accepts": "Aceitar contribuições",
+            "save": "Salvar configurações",
+            "report": "Relatório mensal",
+            "month": "Mês",
+            "tithes": "Dízimos",
+            "offerings": "Ofertas",
+            "total": "Total",
+            "count": "Registros",
+            "export": "Exportar CSV"
         }
     },
     "library": {
@@ -1360,7 +1425,8 @@
         "visit": {
             "kicker": "Venha nos visitar",
             "title": "Localização e contato",
-            "map_title": "Mapa de localização da igreja"
+            "map_title": "Mapa de localização da igreja",
+            "directions": "Como chegar"
         },
         "schedule": {
             "title": "Agenda",
@@ -1669,6 +1735,33 @@
             "workspace": "Administração da plataforma",
             "title": "Configurações gerais",
             "description": "Gerencie igrejas, comunidades, usuários, transmissões, logs e a operação global da plataforma."
+        },
+        "shortcuts": {
+            "title": "Ações rápidas",
+            "new_post": "Nova publicação",
+            "new_event": "Novo evento",
+            "gallery": "Abrir galeria",
+            "treasury": "Tesouraria"
+        },
+        "insights": {
+            "recent_activity": "Atividades recentes",
+            "most_liked": "Mais curtidos",
+            "access_map": "Mapa de visitantes (30 dias)",
+            "no_activity": "Nenhuma atividade recente.",
+            "no_likes": "Nenhuma reação ainda.",
+            "no_access": "Nenhum acesso registrado ainda.",
+            "visits": "{count} acessos",
+            "likes": "{count} curtidas",
+            "type_post": "Publicação",
+            "type_event": "Evento",
+            "type_media": "Mídia",
+            "recent_prayers": "Últimos pedidos de oração",
+            "no_prayers": "Nenhum pedido de oração ainda.",
+            "anonymous": "Anônimo",
+            "treasury": "Tesouraria no mês",
+            "tithes": "Dízimos",
+            "offerings": "Ofertas",
+            "total": "Total"
         }
     },
     "membership": {
@@ -1956,5 +2049,31 @@
         "current": "Unidade atual",
         "branch_count": "{count} {unit}",
         "empty": "Nenhuma {branchPlural} aprovada está vinculada ainda."
+    },
+    "groups": {
+        "title": "Grupos",
+        "subtitle": "Células, estudos bíblicos e encontros",
+        "empty": "Nenhum grupo disponível ainda.",
+        "leaders": "Responsáveis",
+        "location": "Local de encontro",
+        "learn_more": "Saiba mais"
+    },
+    "treasury": {
+        "title": "Contribuir",
+        "subtitle": "Dízimos e ofertas",
+        "type": "Tipo de contribuição",
+        "amount": "Valor",
+        "name": "Seu nome (opcional)",
+        "message": "Mensagem (opcional)",
+        "submit": "Registrar contribuição",
+        "how_to": "Como contribuir",
+        "pix": "Pix",
+        "bank": "Conta bancária",
+        "closed": "Esta igreja não está recebendo contribuições no momento.",
+        "thanks": "Obrigado pela sua contribuição.",
+        "types": {
+            "tithe": "Dízimo",
+            "offering": "Oferta"
+        }
     }
 }

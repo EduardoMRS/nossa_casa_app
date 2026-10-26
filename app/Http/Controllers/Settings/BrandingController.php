@@ -156,7 +156,8 @@ class BrandingController extends Controller
         $address = Arr::pull($validated, 'address', []);
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
         Arr::forget($validated, 'logo');
-        $validated['map_embed'] = $this->sanitizeMapEmbed($validated['map_embed'] ?? null);
+        $submittedMapEmbed = $this->sanitizeMapEmbed($validated['map_embed'] ?? null);
+        Arr::forget($validated, 'map_embed');
         $validated['weekly_schedule'] = $validated['weekly_schedule'] ?? [];
 
         $setting = Setting::query()->firstOrCreate(
@@ -204,6 +205,8 @@ class BrandingController extends Controller
             is_array($address) ? $address : [],
         );
 
+        $coordinates = ['latitude' => null, 'longitude' => null];
+
         if (collect($addressData)->contains(fn (mixed $value): bool => filled($value))) {
             if (blank($addressData['latitude'] ?? null) || blank($addressData['longitude'] ?? null)) {
                 $addressData = array_merge($addressData, $this->addressGeocoder->coordinates($addressData) ?? []);
@@ -212,8 +215,30 @@ class BrandingController extends Controller
             $addressModel = $church->address()->first() ?? $church->address()->make();
             $addressModel->fill($addressData);
             $addressModel->save();
+
+            $coordinates = [
+                'latitude' => $addressModel->latitude,
+                'longitude' => $addressModel->longitude,
+            ];
         } else {
             $church->address()->delete();
+        }
+
+        // Map embed resolution: a custom provider embed (e.g. Google Maps)
+        // supplied by the user is always kept. Otherwise the embed is generated
+        // from the address coordinates (OpenStreetMap) so it reflects the saved
+        // location, and is cleared when there is no location.
+        $existingEmbed = (string) ($currentBranding['map_embed'] ?? '');
+
+        if ($submittedMapEmbed !== '' && ! $this->isOpenStreetMapEmbed($submittedMapEmbed)) {
+            $options['branding']['map_embed'] = $submittedMapEmbed;
+        } elseif ($existingEmbed !== '' && ! $this->isOpenStreetMapEmbed($existingEmbed)) {
+            $options['branding']['map_embed'] = $existingEmbed;
+        } else {
+            $options['branding']['map_embed'] = $this->buildOpenStreetMapEmbed(
+                $coordinates['latitude'],
+                $coordinates['longitude'],
+            );
         }
 
         $church->update(['domain' => $domain]);
@@ -313,6 +338,41 @@ class BrandingController extends Controller
         if (is_string($logoPath) && $logoPath !== '') {
             Storage::disk((string) config('media.disk'))->delete($logoPath);
         }
+    }
+
+    private function isOpenStreetMapEmbed(string $mapEmbed): bool
+    {
+        $host = mb_strtolower((string) parse_url($mapEmbed, PHP_URL_HOST));
+
+        return $host === 'openstreetmap.org' || str_ends_with($host, '.openstreetmap.org');
+    }
+
+    /**
+     * Build an OpenStreetMap embed URL from coordinates, or an empty string
+     * when the location is unknown.
+     */
+    private function buildOpenStreetMapEmbed(mixed $latitude, mixed $longitude): string
+    {
+        $lat = filter_var($latitude, FILTER_VALIDATE_FLOAT);
+        $lon = filter_var($longitude, FILTER_VALIDATE_FLOAT);
+
+        if ($lat === false || $lon === false) {
+            return '';
+        }
+
+        $delta = 0.01;
+        $bbox = implode(',', [
+            $lon - $delta,
+            $lat - $delta,
+            $lon + $delta,
+            $lat + $delta,
+        ]);
+
+        return 'https://www.openstreetmap.org/export/embed.html?'.http_build_query([
+            'bbox' => $bbox,
+            'layer' => 'mapnik',
+            'marker' => $lat.','.$lon,
+        ]);
     }
 
     private function sanitizeMapEmbed(?string $mapEmbed): string

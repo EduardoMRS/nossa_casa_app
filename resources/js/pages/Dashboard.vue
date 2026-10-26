@@ -15,11 +15,37 @@ type ModuleItem = {
     href: string;
 };
 
+type ActivityItem = { type: string; title: string; at: string | null };
+type LikedItem = { type: string; title: string; likes: number };
+type AccessRegion = {
+    country_code: string | null;
+    country: string | null;
+    region: string | null;
+    visits: number;
+};
+type Shortcut = { label_key: string; href: string };
+type PrayerItem = { content: string; is_anonymous: boolean; at: string | null };
+type TreasurySummary = {
+    month: string;
+    tithe_total: string;
+    offering_total: string;
+    total: string;
+};
+type DashboardInsights = {
+    recent_activity: ActivityItem[];
+    most_liked: LikedItem[];
+    access_map: AccessRegion[];
+    recent_prayers: PrayerItem[];
+    treasury: TreasurySummary | null;
+    shortcuts: Shortcut[];
+};
+
 const props = defineProps<{
     role: string;
     context: 'church' | 'platform';
     kpis: Record<string, number>;
     modules: ModuleItem[];
+    insights?: DashboardInsights | null;
 }>();
 
 const { t } = useI18n();
@@ -109,7 +135,9 @@ defineOptions({
                         : t('dashboard.workspace')
                 }}
             </p>
-            <h1 class="text-2xl leading-tight font-black break-words sm:text-3xl md:text-4xl">
+            <h1
+                class="text-2xl leading-tight font-black break-words sm:text-3xl md:text-4xl"
+            >
                 {{
                     isPlatformDashboard
                         ? t('dashboard.platform.title')
@@ -134,11 +162,7 @@ defineOptions({
 
         <section
             class="grid gap-4 sm:grid-cols-2"
-            :class="
-                kpiItems.length > 3
-                    ? 'xl:grid-cols-4'
-                    : 'xl:grid-cols-3'
-            "
+            :class="kpiItems.length > 3 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'"
         >
             <article
                 v-for="item in kpiItems"
@@ -156,7 +180,175 @@ defineOptions({
             </article>
         </section>
 
-        <section>
+        <section
+            v-if="insights && insights.shortcuts.length"
+            class="flex flex-wrap gap-3"
+        >
+            <Link
+                v-for="shortcut in insights.shortcuts"
+                :key="shortcut.label_key"
+                :href="shortcut.href"
+                class="inline-flex items-center rounded-full px-4 py-2 text-xs font-bold text-white shadow-sm"
+                :style="{ backgroundColor: 'var(--dashboard-primary)' }"
+            >
+                {{ t(shortcut.label_key) }}
+            </Link>
+        </section>
+
+        <section v-if="insights" class="grid gap-4 lg:grid-cols-3">
+            <article
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+            >
+                <h3 class="mb-3 text-sm font-black">
+                    {{ t('dashboard.insights.recent_activity') }}
+                </h3>
+                <ul v-if="insights.recent_activity.length" class="space-y-2">
+                    <li
+                        v-for="(item, index) in insights.recent_activity"
+                        :key="index"
+                        class="flex items-center justify-between gap-2 text-sm"
+                    >
+                        <span class="truncate text-card-foreground">{{
+                            item.title
+                        }}</span>
+                        <span
+                            class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase"
+                            >{{
+                                t(`dashboard.insights.type_${item.type}`)
+                            }}</span
+                        >
+                    </li>
+                </ul>
+                <p v-else class="text-sm text-muted-foreground">
+                    {{ t('dashboard.insights.no_activity') }}
+                </p>
+            </article>
+
+            <article
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+            >
+                <h3 class="mb-3 text-sm font-black">
+                    {{ t('dashboard.insights.most_liked') }}
+                </h3>
+                <ul v-if="insights.most_liked.length" class="space-y-2">
+                    <li
+                        v-for="(item, index) in insights.most_liked"
+                        :key="index"
+                        class="flex items-center justify-between gap-2 text-sm"
+                    >
+                        <span class="truncate text-card-foreground">{{
+                            item.title
+                        }}</span>
+                        <span
+                            class="shrink-0 text-xs font-bold text-muted-foreground"
+                            >{{
+                                t('dashboard.insights.likes', {
+                                    count: item.likes,
+                                })
+                            }}</span
+                        >
+                    </li>
+                </ul>
+                <p v-else class="text-sm text-muted-foreground">
+                    {{ t('dashboard.insights.no_likes') }}
+                </p>
+            </article>
+
+            <article
+                v-if="insights.access_map.length || role !== 'media'"
+                class="min-w-0 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+            >
+                <h3 class="mb-3 text-sm font-black">
+                    {{ t('dashboard.insights.access_map') }}
+                </h3>
+                <ul v-if="insights.access_map.length" class="space-y-2">
+                    <li
+                        v-for="(region, index) in insights.access_map"
+                        :key="index"
+                        class="flex items-center justify-between gap-2 text-sm"
+                    >
+                        <span class="truncate text-card-foreground">{{
+                            region.region ||
+                            region.country ||
+                            region.country_code
+                        }}</span>
+                        <span
+                            class="shrink-0 text-xs font-bold text-muted-foreground"
+                            >{{
+                                t('dashboard.insights.visits', {
+                                    count: region.visits,
+                                })
+                            }}</span
+                        >
+                    </li>
+                </ul>
+                <p v-else class="text-sm text-muted-foreground">
+                    {{ t('dashboard.insights.no_access') }}
+                </p>
+            </article>
+        </section>
+
+        <section
+            v-if="insights && insights.treasury"
+            class="grid gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm sm:grid-cols-3"
+        >
+            <div class="sm:col-span-3">
+                <p
+                    class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
+                >
+                    {{ t('dashboard.insights.treasury') }}
+                </p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground">
+                    {{ t('dashboard.insights.tithes') }}
+                </p>
+                <p class="text-xl font-black">
+                    {{ insights.treasury.tithe_total }}
+                </p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground">
+                    {{ t('dashboard.insights.offerings') }}
+                </p>
+                <p class="text-xl font-black">
+                    {{ insights.treasury.offering_total }}
+                </p>
+            </div>
+            <div>
+                <p class="text-xs text-muted-foreground">
+                    {{ t('dashboard.insights.total') }}
+                </p>
+                <p class="text-xl font-black">{{ insights.treasury.total }}</p>
+            </div>
+        </section>
+
+        <section
+            v-if="insights && insights.recent_prayers.length"
+            class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+        >
+            <h3 class="mb-3 text-sm font-black">
+                {{ t('dashboard.insights.recent_prayers') }}
+            </h3>
+            <ul class="space-y-2">
+                <li
+                    v-for="(prayer, index) in insights.recent_prayers"
+                    :key="index"
+                    class="flex items-start justify-between gap-3 text-sm"
+                >
+                    <span class="text-card-foreground">{{
+                        prayer.content
+                    }}</span>
+                    <span
+                        v-if="prayer.is_anonymous"
+                        class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase"
+                        >{{ t('dashboard.insights.anonymous') }}</span
+                    >
+                </li>
+            </ul>
+        </section>
+
+        <section v-if="isPlatformDashboard">
             <div class="mb-3">
                 <p
                     class="text-xs tracking-[0.2em] text-muted-foreground uppercase"

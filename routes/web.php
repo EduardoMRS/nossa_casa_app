@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminWorkspaceController;
 use App\Http\Controllers\Admin\ClassroomContentController;
 use App\Http\Controllers\Admin\EventContentController;
 use App\Http\Controllers\Admin\EventRegistrationController;
+use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\LibraryVerseController;
 use App\Http\Controllers\Admin\LiveStreamControlController;
 use App\Http\Controllers\Admin\StopLiveStreamController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\ClassroomPortalController;
 use App\Http\Controllers\ContentEmbedController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\EventPrivateAreaController;
+use App\Http\Controllers\GroupPortalController;
 use App\Http\Controllers\PortalCommunityController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PublicChurchNetworkController;
@@ -30,6 +32,7 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\PwaController;
 use App\Http\Controllers\SearchIndexController;
 use App\Http\Controllers\Settings\BrandingController;
+use App\Http\Controllers\TreasuryController;
 use App\Models\Category;
 use App\Models\Church;
 use App\Models\Community;
@@ -42,6 +45,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Queries\EventQuery;
 use App\Queries\PostQuery;
+use App\Services\DashboardInsights;
 use App\Support\ChurchDomainContext;
 use App\Support\ContentEmbedRenderer;
 use Illuminate\Http\Request;
@@ -168,6 +172,11 @@ Route::group([
     Route::view('/privacy-and-terms', 'legal.privacy')->name('legal.privacy');
     Route::get('/communities/{community:slug}', PortalCommunityController::class)->name('communities.show');
     Route::get('/network', PublicChurchNetworkController::class)->name('church.network');
+    Route::get('/groups', [GroupPortalController::class, 'index'])->name('groups.index');
+    Route::get('/give', [TreasuryController::class, 'show'])->name('treasury.show');
+    Route::post('/give', [TreasuryController::class, 'contribute'])
+        ->middleware('throttle:10,1')
+        ->name('treasury.contribute');
     Route::middleware('auth')->group(function () {
         Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('portal.classrooms.index');
         Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('portal.classrooms.show');
@@ -418,8 +427,11 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             'context' => $isPlatformDashboard ? 'platform' : 'church',
             'kpis' => $kpis,
             'modules' => $modules,
+            'insights' => $isPlatformDashboard || $user === null
+                ? null
+                : app(DashboardInsights::class)->forChurch($dashboardChurch, $user),
         ]);
-    })->middleware('role:leader|media|church_leader|superadmin|system')->name('dashboard');
+    })->middleware('role:leader|treasurer|media|church_leader|superadmin|system')->name('dashboard');
 
     Route::get('/my-prayers', [AdminWorkspaceController::class, 'myPrayers'])
         ->middleware('role:member|leader|media|church_leader|superadmin|system')
@@ -474,6 +486,11 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::get('/church-network', [BrandingController::class, 'network'])->name('churchNetwork.index');
             Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
+            Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+            Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+            Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+            Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+
             Route::get('/highlights', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');
             Route::get('/events', [AdminWorkspaceController::class, 'events'])->name('events.index');
             Route::get('/gallery-moderation', [AdminWorkspaceController::class, 'galleryModeration'])->name('galleryModeration.index');
@@ -510,6 +527,15 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     Route::get('/dashboard/classrooms/attendances/{presence}/labels', [ClassroomController::class, 'labels'])
         ->middleware('role:leader|church_leader|superadmin|system')
         ->name('admin.classrooms.labels');
+
+    Route::middleware('role:treasurer|church_leader|superadmin|system')
+        ->prefix('dashboard/treasury')
+        ->name('admin.treasury.')
+        ->group(function () {
+            Route::get('/', [TreasuryController::class, 'settings'])->name('settings');
+            Route::put('/', [TreasuryController::class, 'updateSettings'])->name('settings.update');
+            Route::get('/export', [TreasuryController::class, 'export'])->name('export');
+        });
 
     // // Churches (Igrejas)
     // Route::get('/churches', function () { return Inertia::render('Churches/Index'); })->name('churches.index');

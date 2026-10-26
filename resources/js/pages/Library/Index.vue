@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Download, Edit, ExternalLink, Share2 } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
 import { useI18n } from '@/lib/i18n';
 import { index as adminLibraryIndex } from '@/routes/admin/libraryVerse';
+import { index as libraryIndex } from '@/routes/library';
 type Item = {
     id: string;
     kind: 'resource';
@@ -57,8 +58,36 @@ const shareLibraryItem = async (
         }
     }
 };
-const currentPageUrl = (): string =>
-    typeof window === 'undefined' ? '' : window.location.href;
+const focusedItemId = ref<string | null>(null);
+
+const itemAccessUrl = (itemId: string): string => {
+    const path = libraryIndex(undefined, { query: { item: itemId } }).url;
+
+    if (typeof window === 'undefined') {
+        return path;
+    }
+
+    return new URL(path, window.location.origin).toString();
+};
+
+onMounted(() => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const requestedId = new URLSearchParams(window.location.search).get('item');
+
+    if (!requestedId) {
+        return;
+    }
+
+    focusedItemId.value = requestedId;
+    void nextTick(() => {
+        document
+            .getElementById(`library-item-${requestedId}`)
+            ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+});
 </script>
 <template>
     <div
@@ -156,8 +185,14 @@ const currentPageUrl = (): string =>
                 </article>
                 <article
                     v-for="item in items.data"
+                    :id="`library-item-${item.id}`"
                     :key="item.id"
-                    class="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+                    class="flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+                    :class="
+                        focusedItemId === item.id
+                            ? 'border-indigo-500 ring-2 ring-indigo-300'
+                            : 'border-slate-200'
+                    "
                 >
                     <div
                         class="flex aspect-[3/2] w-full flex-col justify-between rounded-xl border border-l-4 border-indigo-200 border-l-indigo-600 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-4 text-indigo-700"
@@ -195,7 +230,7 @@ const currentPageUrl = (): string =>
                             shareLibraryItem(
                                 item.title,
                                 item.description ?? item.title,
-                                item.file_url ?? currentPageUrl(),
+                                itemAccessUrl(item.id),
                             )
                         "
                     >

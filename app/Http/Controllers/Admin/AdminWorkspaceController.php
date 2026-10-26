@@ -152,6 +152,7 @@ class AdminWorkspaceController extends Controller
                 ['value' => CategoryType::FORM->value, 'label' => __('admin.categories.types.forms')],
                 ['value' => CategoryType::LIBRARY->value, 'label' => __('admin.categories.types.library')],
                 ['value' => CategoryType::CLASSROOM->value, 'label' => __('admin.categories.types.classrooms')],
+                ['value' => CategoryType::GROUP->value, 'label' => __('admin.categories.types.groups')],
             ],
             'categories' => $this->availableChurchCategories($churchId, CategoryType::POST->value)
                 ->merge($this->availableChurchCategories($churchId, CategoryType::EVENT->value))
@@ -159,6 +160,7 @@ class AdminWorkspaceController extends Controller
                 ->merge($this->availableChurchCategories($churchId, CategoryType::FORM->value))
                 ->merge($this->availableChurchCategories($churchId, CategoryType::LIBRARY->value))
                 ->merge($this->availableChurchCategories($churchId, CategoryType::CLASSROOM->value))
+                ->merge($this->availableChurchCategories($churchId, CategoryType::GROUP->value))
                 ->values(),
         ]);
     }

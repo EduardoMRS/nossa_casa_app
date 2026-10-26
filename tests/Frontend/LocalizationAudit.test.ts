@@ -44,27 +44,35 @@ const vueFiles = (directory: string): string[] =>
     });
 
 test('frontend translation catalogs have matching keys and placeholders', () => {
-    const en = flattenCatalog(
-        JSON.parse(
-            readFileSync(
-                join(projectRoot, 'resources/js/locales/en.json'),
-                'utf8',
-            ),
-        ) as Catalog,
-    );
-    const pt = flattenCatalog(
-        JSON.parse(
-            readFileSync(
-                join(projectRoot, 'resources/js/locales/pt.json'),
-                'utf8',
-            ),
-        ) as Catalog,
-    );
+    const loadCatalog = (locale: string): Record<string, string> =>
+        flattenCatalog(
+            JSON.parse(
+                readFileSync(
+                    join(projectRoot, `resources/js/locales/${locale}.json`),
+                    'utf8',
+                ),
+            ) as Catalog,
+        );
 
-    assert.deepEqual(Object.keys(pt).sort(), Object.keys(en).sort());
+    const en = loadCatalog('en');
+    const targetLocales = ['pt', 'es'];
 
-    for (const key of Object.keys(en)) {
-        assert.deepEqual(placeholders(pt[key]), placeholders(en[key]), key);
+    for (const locale of targetLocales) {
+        const catalog = loadCatalog(locale);
+
+        assert.deepEqual(
+            Object.keys(catalog).sort(),
+            Object.keys(en).sort(),
+            `catalog keys mismatch for locale "${locale}"`,
+        );
+
+        for (const key of Object.keys(en)) {
+            assert.deepEqual(
+                placeholders(catalog[key]),
+                placeholders(en[key]),
+                `${locale}: ${key}`,
+            );
+        }
     }
 });
 

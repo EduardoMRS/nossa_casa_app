@@ -1,6 +1,7 @@
 import { computed, inject, ref } from 'vue';
 import type { App, ComputedRef, InjectionKey, Ref } from 'vue';
 import en from '@/locales/en.json';
+import es from '@/locales/es.json';
 import pt from '@/locales/pt.json';
 
 interface Catalog {
@@ -13,9 +14,9 @@ interface I18nContext {
     t: (key: string, replacements?: Record<string, string | number>) => string;
 }
 
-export type SupportedLocale = 'en' | 'pt';
+export type SupportedLocale = 'en' | 'pt' | 'es';
 
-export const supportedLocales: readonly SupportedLocale[] = ['pt', 'en'];
+export const supportedLocales: readonly SupportedLocale[] = ['pt', 'en', 'es'];
 
 const localeStorageKey = 'ncapp.locale';
 const localeCookieKey = 'ncapp_locale';
@@ -24,6 +25,7 @@ const i18nKey: InjectionKey<I18nContext> = Symbol('ncapp-i18n');
 const catalogs: Record<SupportedLocale, Catalog> = {
     en: en as unknown as Catalog,
     pt: pt as unknown as Catalog,
+    es: es as unknown as Catalog,
 };
 
 const normalizeLocale = (locale: unknown): SupportedLocale | null => {

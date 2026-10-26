@@ -96,6 +96,8 @@ type BrandingData = {
     logo_url?: string;
     address?: string;
     map_embed?: string;
+    latitude?: number | string | null;
+    longitude?: number | string | null;
     contact_phone?: string;
     contact_email?: string;
     weekly_schedule?: WeeklySchedule[];
@@ -138,6 +140,28 @@ const { locale, t } = useI18n();
 const publicTemplate = usePublicTemplate('home');
 const page = usePage();
 const branding = computed(() => page.props.branding as BrandingData);
+
+const directionsUrl = computed<string | null>(() => {
+    const lat = branding.value.latitude;
+    const lon = branding.value.longitude;
+
+    if (
+        lat !== null &&
+        lat !== undefined &&
+        lon !== null &&
+        lon !== undefined &&
+        !Number.isNaN(Number(lat)) &&
+        !Number.isNaN(Number(lon))
+    ) {
+        return `https://www.google.com/maps/dir/?api=1&destination=${Number(lat)},${Number(lon)}`;
+    }
+
+    if (branding.value.address) {
+        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(branding.value.address)}`;
+    }
+
+    return null;
+});
 const nextEvent = computed(() => props.featuredEvents[0] ?? null);
 const brandInitials = computed(() =>
     (branding.value.brand_name || t('portal.brand_name'))
@@ -290,7 +314,9 @@ const scheduleRepeatLabel = (schedule: WeeklySchedule): string => {
 
     if (monthlyRule === 'weekday_occurrence') {
         return t('home.schedule.monthly_weekday', {
-            ordinal: t(`admin.branding.schedule_ordinals.${schedule.monthly_ordinal ?? 'first'}`).toLowerCase(),
+            ordinal: t(
+                `admin.branding.schedule_ordinals.${schedule.monthly_ordinal ?? 'first'}`,
+            ).toLowerCase(),
             weekday: weekdayLabel(Number(schedule.day_of_week ?? 0)),
         });
     }
@@ -302,7 +328,7 @@ const scheduleRepeatLabel = (schedule: WeeklySchedule): string => {
     }
 
     const position = t(
-        `admin.branding.schedule_ordinals.${monthlyRule === 'business_day' ? schedule.monthly_business_position ?? 'first' : schedule.monthly_after_position ?? 'first'}`,
+        `admin.branding.schedule_ordinals.${monthlyRule === 'business_day' ? (schedule.monthly_business_position ?? 'first') : (schedule.monthly_after_position ?? 'first')}`,
     ).toLowerCase();
 
     return monthlyRule === 'business_day'
@@ -705,9 +731,9 @@ const submitPrayer = async (): Promise<void> => {
                     </div>
                     <Link
                         :href="
-                                galleryIndex(undefined, {
-                                    query: { view: 'transmissions' },
-                                })
+                            galleryIndex(undefined, {
+                                query: { view: 'transmissions' },
+                            })
                         "
                         class="text-xs font-bold text-indigo-600"
                     >
@@ -741,9 +767,11 @@ const submitPrayer = async (): Promise<void> => {
                             </span>
                         </span>
                         <span class="block p-4">
-                            <strong v-if="recording.title" class="block truncate text-sm">{{
-                                recording.title
-                            }}</strong>
+                            <strong
+                                v-if="recording.title"
+                                class="block truncate text-sm"
+                                >{{ recording.title }}</strong
+                            >
                             <small class="mt-1 block text-slate-500">{{
                                 formatDate(recording.created_at)
                             }}</small>
@@ -1134,7 +1162,7 @@ const submitPrayer = async (): Promise<void> => {
 
                 <article
                     v-if="branding.map_embed"
-                    class="min-h-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                    class="relative min-h-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
                 >
                     <iframe
                         :src="String(branding.map_embed)"
@@ -1144,6 +1172,17 @@ const submitPrayer = async (): Promise<void> => {
                         referrerpolicy="no-referrer-when-downgrade"
                         allowfullscreen
                     />
+                    <a
+                        v-if="directionsUrl"
+                        :href="directionsUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="absolute right-3 bottom-3 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white shadow-md hover:bg-indigo-700"
+                    >
+                        <MapPin class="size-4" />{{
+                            t('home.visit.directions')
+                        }}
+                    </a>
                 </article>
             </section>
         </main>
@@ -1167,7 +1206,10 @@ const submitPrayer = async (): Promise<void> => {
                             class="flex items-center justify-between gap-4 p-4 text-white"
                         >
                             <div class="min-w-0">
-                                <p v-if="selectedRecording.title" class="truncate font-bold">
+                                <p
+                                    v-if="selectedRecording.title"
+                                    class="truncate font-bold"
+                                >
                                     {{ selectedRecording.title }}
                                 </p>
                                 <p class="mt-0.5 text-xs text-slate-400">

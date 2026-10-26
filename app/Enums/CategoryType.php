@@ -10,4 +10,5 @@ enum CategoryType: string
     case MEDIA = 'media';
     case FORM = 'form';
     case LIBRARY = 'library';
+    case GROUP = 'group';
 }
