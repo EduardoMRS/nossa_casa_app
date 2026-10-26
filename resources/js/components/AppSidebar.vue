@@ -62,6 +62,7 @@ const brandingSection = (section: string): string =>
     `${brandingEdit().url}#settings-${section}`;
 
 const page = usePage<{
+    portalUrl?: string;
     auth?: {
         user?: {
             role?: string | { value?: string };
@@ -97,6 +98,14 @@ const isPlatformDashboard = computed(
     () =>
         page.props.churchContext?.isMainDomain === true &&
         ['superadmin', 'system'].includes(role.value),
+);
+
+// On the portal (main domain) the logo must return to the portal, not to a
+// church home — otherwise it would open a church that is not the user's own.
+const homeHref = computed(() =>
+    page.props.churchContext?.isMainDomain === true
+        ? (page.props.portalUrl ?? home().url)
+        : home().url,
 );
 
 const canManageWorkspace = computed(
@@ -298,7 +307,7 @@ const footerNavItems = computed<NavItem[]>(() => [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="home()">
+                        <Link :href="homeHref">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

@@ -88,6 +88,7 @@ class ChurchContext
             if (blank($requestedChurchId)
                 && $request->is('dashboard', 'dashboard/*')
                 && $request->user() instanceof User
+                && $request->user()->role !== UserRole::SUPERADMIN
                 && blank($request->user()->church?->domain)) {
                 $requestedChurchId = $request->user()->church?->id;
                 $this->source = 'membership';
