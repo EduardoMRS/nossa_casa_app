@@ -25,7 +25,7 @@ class GroupController extends Controller
      * @var array<int, UserRole>
      */
     private const MANAGER_ROLES = [
-        UserRole::LEADER, UserRole::CHURCH_LEADER,
+        UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER,
     ];
 
     public function __construct(private readonly UniqueSlugger $slugs) {}

@@ -486,11 +486,6 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::get('/church-network', [BrandingController::class, 'network'])->name('churchNetwork.index');
             Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
-            Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
-            Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
-            Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
-            Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
-
             Route::get('/highlights', [AdminWorkspaceController::class, 'highlights'])->name('highlights.index');
             Route::get('/events', [AdminWorkspaceController::class, 'events'])->name('events.index');
             Route::get('/gallery-moderation', [AdminWorkspaceController::class, 'galleryModeration'])->name('galleryModeration.index');
@@ -527,6 +522,18 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
     Route::get('/dashboard/classrooms/attendances/{presence}/labels', [ClassroomController::class, 'labels'])
         ->middleware('role:leader|church_leader|superadmin|system')
         ->name('admin.classrooms.labels');
+
+    // Groups (cells, Bible studies): media, leader, pastor and above manage;
+    // the controller still scopes every action to the user's church hierarchy.
+    Route::middleware('role:leader|media|church_leader|superadmin|system')
+        ->prefix('dashboard/groups')
+        ->name('admin.groups.')
+        ->group(function () {
+            Route::get('/', [GroupController::class, 'index'])->name('index');
+            Route::post('/', [GroupController::class, 'store'])->name('store');
+            Route::put('/{group}', [GroupController::class, 'update'])->name('update');
+            Route::delete('/{group}', [GroupController::class, 'destroy'])->name('destroy');
+        });
 
     Route::middleware('role:treasurer|church_leader')
         ->prefix('dashboard/treasury')

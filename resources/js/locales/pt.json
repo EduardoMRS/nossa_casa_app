@@ -1761,7 +1761,9 @@
             "treasury": "Tesouraria no mês",
             "tithes": "Dízimos",
             "offerings": "Ofertas",
-            "total": "Total"
+            "total": "Total",
+            "treasury_manage": "Gerenciar",
+            "read_only": "Somente leitura"
         }
     },
     "membership": {

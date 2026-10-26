@@ -145,4 +145,36 @@ final class ChurchAccess
             && in_array($user->role, self::TREASURY_ROLES, true)
             && self::homeChurchId($user) === $churchId;
     }
+
+    /**
+     * Who may SEE treasury figures (read-only). The treasurer and the pastor of
+     * the church itself can always see it; roles above the pastor (community
+     * and system) may monitor the figures of a church in their reach, but they
+     * can never change settings nor export (see canManageTreasury).
+     */
+    public function canViewTreasury(?User $user, ?string $churchId): bool
+    {
+        if ($this->canManageTreasury($user, $churchId)) {
+            return true;
+        }
+
+        return $user !== null
+            && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
+            && (self::isSystem($user) || $this->managesCommunityChurch($user, $churchId));
+    }
+
+    /**
+     * Whether the user's community contains the given church (for superadmin
+     * read-only monitoring).
+     */
+    private function managesCommunityChurch(?User $user, ?string $churchId): bool
+    {
+        if (! is_string($churchId) || $churchId === '') {
+            return false;
+        }
+
+        $communityId = Church::query()->whereKey($churchId)->value('community_id');
+
+        return $this->managesCommunity($user, is_string($communityId) ? $communityId : null);
+    }
 }

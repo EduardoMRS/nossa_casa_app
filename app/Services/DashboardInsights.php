@@ -57,7 +57,9 @@ class DashboardInsights
             'most_liked' => $this->mostLiked($churchId),
             'access_map' => $this->canSeeAccessMap($user) ? $this->accessMap($churchId) : [],
             'recent_prayers' => $this->canSeePrayers($user) ? $this->recentPrayers($churchId) : [],
-            'treasury' => $this->canSeeTreasury($user, $church) ? $this->treasurySummary($church) : null,
+            'treasury' => app(ChurchAccess::class)->canViewTreasury($user, $church->id)
+                ? $this->treasurySummary($church, app(ChurchAccess::class)->canManageTreasury($user, $church->id))
+                : null,
             'shortcuts' => $this->shortcuts($user->role),
         ];
     }
@@ -193,7 +195,7 @@ class DashboardInsights
      *
      * @return array{month: string, tithe_total: string, offering_total: string, total: string}
      */
-    private function treasurySummary(?Church $church): array
+    private function treasurySummary(?Church $church, bool $canManage): array
     {
         $month = Carbon::now()->startOfMonth();
         $query = Contribution::query()
@@ -208,6 +210,7 @@ class DashboardInsights
             'tithe_total' => number_format((float) $tithe, 2, '.', ''),
             'offering_total' => number_format((float) $offering, 2, '.', ''),
             'total' => number_format((float) $tithe + (float) $offering, 2, '.', ''),
+            'can_manage' => $canManage,
         ];
     }
 
@@ -219,15 +222,6 @@ class DashboardInsights
         return in_array($user->role, [
             UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM,
         ], true);
-    }
-
-    /**
-     * Billing is not bypassed by SYSTEM: only the treasurer/leadership of the
-     * church itself sees the totals.
-     */
-    private function canSeeTreasury(User $user, Church $church): bool
-    {
-        return app(ChurchAccess::class)->canManageTreasury($user, $church->id);
     }
 
     /**

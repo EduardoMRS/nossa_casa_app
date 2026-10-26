@@ -30,6 +30,7 @@ type TreasurySummary = {
     tithe_total: string;
     offering_total: string;
     total: string;
+    can_manage: boolean;
 };
 type DashboardInsights = {
     recent_activity: ActivityItem[];
@@ -292,12 +293,25 @@ defineOptions({
             v-if="insights && insights.treasury"
             class="grid gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm sm:grid-cols-3"
         >
-            <div class="sm:col-span-3">
+            <div class="flex items-center justify-between sm:col-span-3">
                 <p
                     class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
                 >
                     {{ t('dashboard.insights.treasury') }}
                 </p>
+                <Link
+                    v-if="insights.treasury.can_manage"
+                    href="/dashboard/treasury"
+                    class="text-xs font-bold text-[color:var(--dashboard-primary)]"
+                >
+                    {{ t('dashboard.insights.treasury_manage') }}
+                </Link>
+                <span
+                    v-else
+                    class="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase"
+                >
+                    {{ t('dashboard.insights.read_only') }}
+                </span>
             </div>
             <div>
                 <p class="text-xs text-muted-foreground">

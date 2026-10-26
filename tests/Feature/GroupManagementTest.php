@@ -163,3 +163,23 @@ test('the public portal lists only public groups', function (): void {
     expect($visible)->toHaveCount(1)
         ->and($visible->first()->name)->toBe('Público');
 });
+
+test('media, leader and pastor can manage groups; members cannot', function (): void {
+    $church = Church::create(['name' => 'Casa', 'slug' => 'casa-'.uniqid(), 'status' => 'active']);
+
+    foreach ([UserRole::MEDIA, UserRole::LEADER, UserRole::CHURCH_LEADER] as $role) {
+        $manager = User::factory()->create(['role' => $role]);
+        $church->assignMember($manager);
+
+        groupController()->store(groupRequest($manager->fresh(), [
+            'name' => 'Grupo '.$role->value,
+        ]));
+    }
+
+    expect(Group::query()->where('church_id', $church->id)->count())->toBe(3);
+
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+    expect(fn () => groupController()->store(groupRequest($member->fresh(), ['name' => 'Proibido'])))
+        ->toThrow(HttpException::class);
+});

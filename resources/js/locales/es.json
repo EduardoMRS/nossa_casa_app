@@ -957,7 +957,10 @@
             "anonymous": "Pedido anónimo",
             "mine": "Mi pedido",
             "send_anonymously": "Enviar de forma anónima",
-            "stats": ["Pedidos enviados", "Pedidos de la iglesia"]
+            "stats": [
+                "Pedidos enviados",
+                "Pedidos de la iglesia"
+            ]
         },
         "wall": {
             "title": "Moderar muro",
@@ -1007,7 +1010,11 @@
             "no_community": "Sin comunidad",
             "members": "{count} miembros",
             "empty_networks": "No hay vínculos registrados.",
-            "stats": ["Iglesias", "Comunidades", "Vínculos sede/filial"],
+            "stats": [
+                "Iglesias",
+                "Comunidades",
+                "Vínculos sede/filial"
+            ],
             "status": {
                 "active": "Activa",
                 "inactive": "Inactiva",
@@ -1029,7 +1036,11 @@
             "reset_password": "Enviar restablecimiento de contraseña",
             "protected": "Cuenta protegida",
             "delete_confirm": "¿Eliminar al usuario \"{name}\"?",
-            "stats": ["Total de usuarios", "Administradores", "Miembros"]
+            "stats": [
+                "Total de usuarios",
+                "Administradores",
+                "Miembros"
+            ]
         },
         "media": {
             "title": "Moderar galería",
@@ -1061,7 +1072,10 @@
             "approve": "Aprobar",
             "reject": "Rechazar",
             "empty": "Todavía no hay medios registrados.",
-            "actions": ["Abrir galería pública", "Ir al panel"],
+            "actions": [
+                "Abrir galería pública",
+                "Ir al panel"
+            ],
             "stats": [
                 "Medios enviados",
                 "Pendientes",
@@ -1208,7 +1222,10 @@
                     "Versículos registrados",
                     "Categorías de contenido"
                 ],
-                "actions": ["Abrir inicio público", "Revisar destacados"]
+                "actions": [
+                    "Abrir inicio público",
+                    "Revisar destacados"
+                ]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercesión",
@@ -1219,7 +1236,10 @@
                     "Pedidos anónimos",
                     "Pedidos identificados"
                 ],
-                "actions": ["Abrir mis oraciones", "Ir al panel"]
+                "actions": [
+                    "Abrir mis oraciones",
+                    "Ir al panel"
+                ]
             }
         },
         "church_network": {
@@ -1741,7 +1761,9 @@
             "treasury": "Tesorería del mes",
             "tithes": "Diezmos",
             "offerings": "Ofrendas",
-            "total": "Total"
+            "total": "Total",
+            "treasury_manage": "Gestionar",
+            "read_only": "Solo lectura"
         }
     },
     "membership": {

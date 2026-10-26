@@ -5,12 +5,14 @@ use App\Enums\UserRole;
 use App\Http\Controllers\GroupPortalController;
 use App\Http\Controllers\TreasuryController;
 use App\Models\Church;
+use App\Models\Community;
 use App\Models\Contribution;
 use App\Models\Group;
 use App\Models\Post;
 use App\Models\PrayerRequest;
 use App\Models\User;
 use App\Services\DashboardInsights;
+use App\Support\ChurchAccess;
 use App\Support\ChurchContext;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
@@ -100,18 +102,27 @@ test('a church leader cannot manage the treasury of another church', function ()
         ->and($otherChurch->treasurySetting()->firstOrFail()->pix_key)->toBe('hijack');
 });
 
-test('system users have no access to billing', function (): void {
+test('system users may view billing read-only but never manage or export it', function (): void {
     $church = Church::factory()->create();
     $system = User::factory()->create(['role' => UserRole::SYSTEM]);
     $church->assignMember($system);
     ($this->bindChurch)($church);
 
+    // Editing is blocked for SYSTEM...
     $request = Request::create('/dashboard/treasury', 'PUT', ['pix_key' => 'system']);
     $request->setUserResolver(fn () => $system->fresh());
-
     expect(fn () => (new TreasuryController)->updateSettings($request))->toThrow(HttpException::class);
-    expect($church->treasurySetting()->exists())->toBeFalse()
-        ->and(app(DashboardInsights::class)->forChurch($church, $system->fresh())['treasury'])->toBeNull();
+    expect($church->treasurySetting()->exists())->toBeFalse();
+
+    // ...and exporting too.
+    $export = Request::create('/dashboard/treasury/export', 'GET');
+    $export->setUserResolver(fn () => $system->fresh());
+    expect(fn () => (new TreasuryController)->export($export))->toThrow(HttpException::class);
+
+    // ...but the dashboard shows the figures read-only (can_manage = false).
+    $treasury = app(DashboardInsights::class)->forChurch($church, $system->fresh())['treasury'];
+    expect($treasury)->not->toBeNull()
+        ->and($treasury['can_manage'])->toBeFalse();
 });
 
 test('the public groups page requires a resolved church', function (): void {
@@ -131,4 +142,42 @@ test('the public groups page only lists groups of the resolved church', function
     $props = (new ReflectionProperty($response, 'props'))->getValue($response);
 
     expect(collect($props['groups'])->pluck('name')->all())->toBe(['Nossa célula']);
+});
+
+test('community leadership sees treasury of its churches read-only, outsiders see nothing', function (): void {
+    $community = Community::factory()->create();
+    $church = Church::factory()->for($community)->create();
+    Contribution::factory()->for($church)->tithe()->create(['amount' => 90, 'contributed_at' => now()]);
+
+    $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $superadmin->profile()->updateOrCreate(['user_id' => $superadmin->id], ['community_id' => $community->id]);
+
+    $otherSuperadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $otherSuperadmin->profile()->updateOrCreate(
+        ['user_id' => $otherSuperadmin->id],
+        ['community_id' => Community::factory()->create()->id],
+    );
+
+    $access = app(ChurchAccess::class);
+
+    expect($access->canViewTreasury($superadmin->fresh(), $church->id))->toBeTrue()
+        ->and($access->canManageTreasury($superadmin->fresh(), $church->id))->toBeFalse()
+        ->and($access->canViewTreasury($otherSuperadmin->fresh(), $church->id))->toBeFalse();
+
+    $treasury = app(DashboardInsights::class)->forChurch($church, $superadmin->fresh())['treasury'];
+    expect($treasury['tithe_total'])->toBe('90.00')
+        ->and($treasury['can_manage'])->toBeFalse();
+});
+
+test('the pastor of the church manages treasury while a plain member sees nothing', function (): void {
+    $church = Church::factory()->create();
+    $pastor = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church->assignMember($pastor);
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+
+    $access = app(ChurchAccess::class);
+
+    expect($access->canManageTreasury($pastor->fresh(), $church->id))->toBeTrue()
+        ->and($access->canViewTreasury($member->fresh(), $church->id))->toBeFalse();
 });

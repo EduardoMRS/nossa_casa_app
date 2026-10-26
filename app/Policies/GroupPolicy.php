@@ -22,7 +22,7 @@ class GroupPolicy
     public function create(User $user): bool
     {
         return in_array($user->role, [
-            UserRole::LEADER, UserRole::CHURCH_LEADER, UserRole::SYSTEM,
+            UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SYSTEM,
         ], true);
     }
 
@@ -43,7 +43,7 @@ class GroupPolicy
         }
 
         return app(ChurchAccess::class)->canManageChurch($user, $group->church_id, [
-            UserRole::LEADER, UserRole::CHURCH_LEADER,
+            UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER,
         ]);
     }
 }

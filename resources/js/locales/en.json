@@ -1761,7 +1761,9 @@
             "treasury": "Treasury this month",
             "tithes": "Tithes",
             "offerings": "Offerings",
-            "total": "Total"
+            "total": "Total",
+            "treasury_manage": "Manage",
+            "read_only": "View only"
         }
     },
     "membership": {
