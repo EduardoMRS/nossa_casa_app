@@ -108,7 +108,7 @@ test('media user cannot create a transmission for another church', function () {
     Http::assertNothingSent();
 });
 
-test('global administrators can create a transmission for any church', function (UserRole $role) {
+test('system users can create a transmission for any church', function (UserRole $role) {
     $user = User::factory()->create(['role' => $role]);
     $targetChurch = Church::query()->create([
         'name' => 'Selected Church',
@@ -124,9 +124,21 @@ test('global administrators can create a transmission for any church', function 
 
     expect(LiveStream::query()->sole()->church_id)->toBe($targetChurch->id);
 })->with([
-    'superadmin' => UserRole::SUPERADMIN,
     'system' => UserRole::SYSTEM,
 ]);
+
+test('community leadership cannot create a transmission for a church', function () {
+    $user = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+    $targetChurch = Church::factory()->create();
+
+    $this->actingAs($user)->postJson('/api/live-streams', [
+        'name' => 'Blocked transmission',
+        'mode' => 'publisher',
+        'church_id' => $targetChurch->id,
+    ])->assertForbidden();
+
+    expect(LiveStream::query()->count())->toBe(0);
+});
 
 test('a church can reserve two live streams but not a third one', function () {
     $user = User::factory()->create(['role' => UserRole::MEDIA]);
@@ -189,7 +201,7 @@ test('only media administrators and system users can open transmission control',
             ->has('churches', 2));
 });
 
-test('global administrators can select any church even from another church domain', function (UserRole $role) {
+test('system users can select any church even from another church domain', function (UserRole $role) {
     $this->withoutVite();
     $currentDomainChurch = Church::query()->create([
         'name' => 'Current Domain Church',
@@ -211,7 +223,6 @@ test('global administrators can select any church even from another church domai
             ->where('church.id', $selectedChurch->id)
             ->has('churches', 2));
 })->with([
-    'superadmin' => UserRole::SUPERADMIN,
     'system' => UserRole::SYSTEM,
 ]);
 
@@ -322,7 +333,7 @@ test('media user can create a private transmission', function () {
             ->where('streams.0.is_public', false));
 });
 
-test('only superadmin and system users can delete transmissions', function (UserRole $role, int $status) {
+test('only church leadership and system users can delete transmissions', function (UserRole $role, int $status) {
     $user = User::factory()->create(['role' => $role]);
     $church = Church::query()->create([
         'name' => 'Deletion Church',
@@ -343,7 +354,7 @@ test('only superadmin and system users can delete transmissions', function (User
         ->toBe($status !== 204);
 })->with([
     'media' => [UserRole::MEDIA, 403],
-    'church leader' => [UserRole::CHURCH_LEADER, 403],
-    'superadmin' => [UserRole::SUPERADMIN, 204],
+    'church leader' => [UserRole::CHURCH_LEADER, 204],
+    'superadmin' => [UserRole::SUPERADMIN, 403],
     'system' => [UserRole::SYSTEM, 204],
 ]);

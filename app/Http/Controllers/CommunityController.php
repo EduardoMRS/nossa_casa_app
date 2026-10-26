@@ -52,7 +52,8 @@ class CommunityController extends Controller
 
     public function show(string $id)
     {
-        $community = Community::with(['churches', 'members'])->findOrFail($id);
+        // Public endpoint: never expose the community member list (PII).
+        $community = Community::with(['churches'])->findOrFail($id);
 
         $community->localize(relations: ['churches']);
 

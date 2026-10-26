@@ -3,54 +3,84 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 
 abstract class Controller
 {
-    protected function ensureChurchAccess(Request $request, string $churchId): void
+    /**
+     * Roles that moderate content written by other users of a church.
+     *
+     * @var array<int, UserRole>
+     */
+    private const MODERATOR_ROLES = [
+        UserRole::LEADER,
+        UserRole::MEDIA,
+        UserRole::CHURCH_LEADER,
+    ];
+
+    protected function churchAccess(): ChurchAccess
     {
-        $role = $request->user()->role;
+        return app(ChurchAccess::class);
+    }
 
-        if (in_array($role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
-            return;
-        }
+    /**
+     * The church must be the user's own church or one of its descendants.
+     * SYSTEM bypasses; nobody else (including SUPERADMIN) gets a global pass.
+     */
+    protected function ensureChurchAccess(Request $request, ?string $churchId): void
+    {
+        abort_unless($this->churchAccess()->canReachChurch($request->user(), $churchId), 403);
+    }
 
-        abort_unless($request->user()->church?->id === $churchId, 403);
+    /**
+     * Resolve the church a write operation targets (current context or the
+     * user's own church) and make sure the user may manage it. Prevents
+     * creating resources in another church through a forged X-Church-ID,
+     * ?church_id or PWA cookie.
+     *
+     * @param  array<int, UserRole>|null  $roles
+     */
+    protected function managedChurchId(Request $request, ?array $roles = null, ?string $missingMessage = null): string
+    {
+        $churchId = app(ChurchDomainContext::class)->churchId()
+            ?? ChurchAccess::homeChurchId($request->user());
+
+        abort_unless(is_string($churchId) && $churchId !== '', 422, $missingMessage ?? __('church.context.required'));
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $churchId, $roles), 403);
+
+        return $churchId;
     }
 
     protected function ensurePublicChurchResource(string $churchId): void
     {
-        $domainChurchId = app(ChurchDomainContext::class)->churchId();
-
-        // if ($domainChurchId !== null && app(ChurchDomainContext::class)->source() !== 'membership') {
-        //     abort_if($domainChurchId !== $churchId, 404);
-
-        //     return;
-        // } // TODO: Corrigir não esta validando alunos corretamente
-
-        $user = request()->user();
-
-        abort_unless($user?->role === UserRole::SYSTEM || $user?->church?->id === $churchId, 403);
+        abort_unless($this->churchAccess()->canReachChurch(request()->user(), $churchId), 403);
     }
 
-    protected function ensureOwnerOrChurchModerator(Request $request, string $ownerId, string $churchId): void
+    protected function ensureOwnerOrChurchModerator(Request $request, string $ownerId, ?string $churchId): void
     {
-        $role = $request->user()->role;
-        $isChurchModerator = $request->user()->church?->id === $churchId
-            && in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true);
+        $user = $request->user();
 
-        abort_unless($request->user()->id === $ownerId || $isChurchModerator || $role === UserRole::SYSTEM, 403);
-    }
-
-    protected function ensureOwnerOrModerator(Request $request, string $ownerId): void
-    {
-        $role = $request->user()->role;
-
-        if (in_array($role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if ($user?->id === $ownerId || ChurchAccess::isSystem($user)) {
             return;
         }
 
-        abort_unless($request->user()->id === $ownerId, 403);
+        abort_unless($this->churchAccess()->canManageChurch($user, $churchId, self::MODERATOR_ROLES), 403);
+    }
+
+    /**
+     * Owner or a moderator role. Always pair with ensureChurchAccess, since
+     * this check is role-only.
+     */
+    protected function ensureOwnerOrModerator(Request $request, string $ownerId): void
+    {
+        $user = $request->user();
+
+        if ($user?->id === $ownerId || ChurchAccess::isSystem($user)) {
+            return;
+        }
+
+        abort_unless(in_array($user?->role, self::MODERATOR_ROLES, true), 403);
     }
 }

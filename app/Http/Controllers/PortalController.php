@@ -120,10 +120,10 @@ class PortalController extends Controller
             $ownedCommunityIds = Community::query()->where('owner_id', $user->id)->pluck('id');
             $reviewableRequests = ChurchRegistrationRequest::query()
                 ->where('status', 'pending')
-                ->when(! in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), function ($query) use ($user, $communityId, $ownedCommunityIds): void {
+                ->when($user->role !== UserRole::SYSTEM, function ($query) use ($user, $communityId, $ownedCommunityIds): void {
                     $allowedCommunityIds = $ownedCommunityIds;
 
-                    if ($communityId && $user->role === UserRole::CHURCH_LEADER) {
+                    if ($communityId && in_array($user->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)) {
                         $allowedCommunityIds = $allowedCommunityIds->push($communityId);
                     }
 

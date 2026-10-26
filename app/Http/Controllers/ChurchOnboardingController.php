@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\AddressGeocoder;
 use App\Services\ChurchIdentity;
 use App\Services\UniqueSlugger;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -150,7 +151,8 @@ class ChurchOnboardingController extends Controller
             'status' => 'pending',
         ]);
 
-        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        // Auto-approval only for SYSTEM or the leadership of that community.
+        if (app(ChurchAccess::class)->managesCommunity($request->user(), $registrationRequest->community_id)) {
             return $this->approve($request, $registrationRequest);
         }
 
@@ -315,7 +317,7 @@ class ChurchOnboardingController extends Controller
 
     private function ensureCanReview(Request $request, ChurchRegistrationRequest $registrationRequest): void
     {
-        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if (app(ChurchAccess::class)->managesCommunity($request->user(), $registrationRequest->community_id)) {
             return;
         }
 
@@ -331,7 +333,7 @@ class ChurchOnboardingController extends Controller
         $sameCommunity = $request->user()->profile?->community_id === $registrationRequest->community_id
             || $request->user()->church?->community_id === $registrationRequest->community_id;
         $ownsCommunity = $registrationRequest->community()->where('owner_id', $request->user()->id)->exists();
-        abort_unless($ownsCommunity || ($sameCommunity && in_array($request->user()->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true)), 403);
+        abort_unless($ownsCommunity || ($sameCommunity && $request->user()->role === UserRole::CHURCH_LEADER), 403);
     }
 
     private function notifyRegistrationReviewers(ChurchRegistrationRequest $registrationRequest): void

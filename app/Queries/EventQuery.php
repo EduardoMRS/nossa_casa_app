@@ -6,6 +6,7 @@ use App\Data\CanonicalData;
 use App\Enums\UserRole;
 use App\Models\Event;
 use App\Models\User;
+use App\Support\ChurchAccess;
 use App\Support\ContentEmbedRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -43,10 +44,7 @@ final class EventQuery
             ? $event->registrations()->where('user_id', $user->id)->first()
             : null;
         $role = $user?->role?->value ?? (string) $user?->role;
-        $canEdit = $user !== null
-            && (in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
-                || ($user->church?->id === $event->church_id
-                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true)));
+        $canEdit = app(ChurchAccess::class)->canManageChurch($user, $event->church_id, [UserRole::LEADER, UserRole::CHURCH_LEADER]);
 
         return new CanonicalData([
             'event' => [

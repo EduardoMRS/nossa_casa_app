@@ -215,7 +215,7 @@ Route::group([
         $domainChurchId = app(ChurchDomainContext::class)->churchId();
         abort_if($domainChurchId && $domainChurchId !== $church_id, 404);
         $filePathFull = "church/{$church_id}/library/{$file_path}";
-        $library = Church::find($church_id)->library()->where('file_path', $filePathFull)
+        $library = Church::query()->findOrFail($church_id)->library()->where('file_path', $filePathFull)
             ->firstOrFail();
 
         $library->localize();
@@ -512,12 +512,12 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::get('/classrooms', [AdminWorkspaceController::class, 'classrooms'])->name('classrooms.index');
             Route::put('/classrooms/settings', [AdminWorkspaceController::class, 'updateClassroomSettings'])->name('classrooms.settings.update');
             Route::post('/user-management/{user}/password-reset', [AdminWorkspaceController::class, 'sendPasswordReset'])->name('userManagement.passwordReset');
-            Route::get('/logs-metrics', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:superadmin|system')->name('logsMetrics.index');
+            Route::get('/logs-metrics', [AdminWorkspaceController::class, 'logsMetrics'])->middleware('role:system')->name('logsMetrics.index');
             Route::get('/logs-metrics/backup/export', [AdminWorkspaceController::class, 'exportBackup'])
-                ->middleware('role:superadmin|system')
+                ->middleware('role:system')
                 ->name('logsMetrics.backup.export');
             Route::post('/logs-metrics/backup/import', [AdminWorkspaceController::class, 'importBackup'])
-                ->middleware('role:superadmin|system')
+                ->middleware('role:system')
                 ->name('logsMetrics.backup.import');
             Route::post('/logs-metrics/live-streams/{liveStream}/stop', StopLiveStreamController::class)
                 ->middleware('role:system')
@@ -528,7 +528,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         ->middleware('role:leader|church_leader|superadmin|system')
         ->name('admin.classrooms.labels');
 
-    Route::middleware('role:treasurer|church_leader|superadmin|system')
+    Route::middleware('role:treasurer|church_leader')
         ->prefix('dashboard/treasury')
         ->name('admin.treasury.')
         ->group(function () {

@@ -29,11 +29,19 @@ test('roles above member can visit the dashboard', function () {
     $this->actingAs($user)->get('http://platform.test/dashboard')->assertOk();
 });
 
-test('superadmin can access any church dashboard and manage its settings', function () {
-    $church = Church::factory()->create(['domain' => 'visited.test']);
+test('community leadership cannot open the dashboard of a church', function () {
+    Church::factory()->create(['domain' => 'visited.test']);
     $superadmin = User::factory()->create(['role' => UserRole::SUPERADMIN]);
 
-    $this->actingAs($superadmin)
+    $this->actingAs($superadmin)->get('http://visited.test/dashboard')->assertForbidden();
+    $this->actingAs($superadmin)->get('http://visited.test/dashboard/configuracoes-church')->assertForbidden();
+});
+
+test('system can access any church dashboard and manage its settings', function () {
+    $church = Church::factory()->create(['domain' => 'visited.test']);
+    $system = User::factory()->create(['role' => UserRole::SYSTEM]);
+
+    $this->actingAs($system)
         ->get('http://visited.test/dashboard')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page

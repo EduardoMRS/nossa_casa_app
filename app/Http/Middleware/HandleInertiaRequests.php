@@ -8,6 +8,7 @@ use App\Models\Classroom;
 use App\Models\LiveStream;
 use App\Models\Network;
 use App\Models\Setting;
+use App\Support\ChurchAccess;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
@@ -53,19 +54,23 @@ class HandleInertiaRequests extends Middleware
         $role = $user?->role?->value ?? (string) $user?->role;
         $domainContext = app(ChurchDomainContext::class);
         $currentChurch = $domainContext->church();
-        $isGlobalAdministrator = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        // Only SYSTEM is a global administrator; everybody else (community
+        // leadership included) acts on its own church and the branches below it.
+        $isGlobalAdministrator = $user?->role === UserRole::SYSTEM;
+        $canReachCurrentChurch = $currentChurch !== null
+            && app(ChurchAccess::class)->canReachChurch($user, $currentChurch->id);
         $isForeignChurch = $currentChurch !== null
             && $user !== null
             && ! $isGlobalAdministrator
-            && $user->profile?->church_id !== $currentChurch->id;
+            && ! $canReachCurrentChurch;
+        $isCommunityDashboard = $role === 'superadmin'
+            && $currentChurch === null
+            && $domainContext->isMainDomain();
         $isUnassignedChurchDashboard = $currentChurch === null
             && $user?->profile?->church_id !== null
             && blank($user->church?->domain)
             && $request->is('dashboard', 'dashboard/*');
-        $isOwnChurch = ($currentChurch !== null
-            && $user !== null
-            && $user->profile?->church_id === $currentChurch->id)
-            || $isUnassignedChurchDashboard;
+        $isOwnChurch = $canReachCurrentChurch || $isUnassignedChurchDashboard;
         $classroomChurchId = $currentChurch?->id ?? $user?->profile?->church_id ?? $user?->church?->id;
         $hasAccessibleClassrooms = $user !== null && Classroom::query()
             ->where('portal_enabled', true)
@@ -75,8 +80,8 @@ class HandleInertiaRequests extends Middleware
 
                 if ($user->role->value === 'system') {
                     $query->orWhereNotNull('id');
-                } elseif (in_array($user->role->value, ['leader', 'church_leader', 'superadmin'], true)) {
-                    $query->orWhere('church_id', $user->church?->id);
+                } elseif (in_array($user->role->value, ['leader', 'church_leader'], true)) {
+                    $query->orWhereIn('church_id', app(ChurchAccess::class)->scopeChurchIds($user));
                 }
             })
             ->exists();
@@ -207,23 +212,24 @@ class HandleInertiaRequests extends Middleware
                 'publicKey' => config('services.webpush.public_key'),
             ],
             'permissions' => [
-                'accessDashboard' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true),
+                'accessDashboard' => (($isGlobalAdministrator || $isOwnChurch)
+                    && in_array($role, ['leader', 'treasurer', 'media', 'church_leader', 'system'], true))
+                    || $isCommunityDashboard,
                 'manageBranding' => ($currentChurch !== null || $isUnassignedChurchDashboard)
                     && ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['church_leader', 'system'], true),
                 'managePosts' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['leader', 'media', 'church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['leader', 'media', 'church_leader', 'system'], true),
                 'manageEvents' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['leader', 'church_leader', 'system'], true),
                 'manageMedia' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['media', 'church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['media', 'church_leader', 'system'], true),
                 'manageLibrary' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['church_leader', 'system'], true),
                 'manageClassrooms' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['leader', 'church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['leader', 'church_leader', 'system'], true),
                 'manageLiveStreams' => ($isGlobalAdministrator || $isOwnChurch)
-                    && in_array($role, ['media', 'church_leader', 'superadmin', 'system'], true),
+                    && in_array($role, ['media', 'church_leader', 'system'], true),
             ],
             'classrooms' => [
                 'hasAccess' => $hasAccessibleClassrooms,

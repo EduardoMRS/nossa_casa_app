@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ContributionType;
-use App\Enums\UserRole;
 use App\Models\Church;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,16 +16,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TreasuryController extends Controller
 {
-    /**
-     * Roles allowed to manage the treasury within their church (treasurer,
-     * pastor/church leadership) plus global system/superadmin.
-     *
-     * @var array<int, UserRole>
-     */
-    private const TREASURY_ROLES = [
-        UserRole::TREASURER, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN,
-    ];
-
     /**
      * Public page where anyone (logged in or not) can see how to contribute
      * and declare a tithe or offering.
@@ -186,25 +176,21 @@ class TreasuryController extends Controller
 
     private function currentChurch(Request $request): Church
     {
-        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
+        // Treasury always operates on the user's own church, never on a
+        // church selected through the request context.
+        $churchId = ChurchAccess::homeChurchId($request->user());
         abort_if($churchId === null, 422, __('church.context.required'));
 
         return Church::query()->findOrFail($churchId);
     }
 
+    /**
+     * Billing is the one area SYSTEM does not bypass: only the treasurer or the
+     * leadership of the church itself may access it.
+     */
     private function ensureCanManageTreasury(Request $request, Church $church): void
     {
-        $user = $request->user();
-
-        if ($user?->role === UserRole::SYSTEM) {
-            return;
-        }
-
-        abort_unless(
-            $user?->church?->id === $church->id
-                && in_array($user->role, self::TREASURY_ROLES, true),
-            403
-        );
+        abort_unless(app(ChurchAccess::class)->canManageTreasury($request->user(), $church->id), 403);
     }
 
     private function resolveMonth(Request $request): Carbon

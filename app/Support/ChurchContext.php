@@ -49,7 +49,7 @@ class ChurchContext
         if ($this->mainDomain) {
 
             $isGlobalAdministrator = $request->user() instanceof User
-                && in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+                && $request->user()->role === UserRole::SYSTEM;
             $requestedChurchId = $request->header('X-Church-ID')
                 ?? (($isPwaRequest || $isGlobalAdministrator)
                     ? $request->query('church_id')
@@ -60,6 +60,29 @@ class ChurchContext
             if ($isGlobalAdministrator && blank($requestedChurchId) && $request->is('dashboard', 'dashboard/*')) {
                 $requestedChurchId = $this->activeChurchQuery()->value('id');
                 $this->source = 'dashboard-default';
+            }
+
+            // Headquarters leadership may switch the dashboard to one of its
+            // branches; the choice is only honored inside the user's scope.
+            if (! $isGlobalAdministrator
+                && blank($requestedChurchId)
+                && $request->user() instanceof User
+                && $request->is('dashboard', 'dashboard/*')) {
+                $scopedChurchId = $request->query('church_id')
+                    ?? ($request->hasSession() ? $request->session()->get('scoped_church_id') : null);
+
+                if (is_string($scopedChurchId)
+                    && $scopedChurchId !== ChurchAccess::homeChurchId($request->user())
+                    && app(ChurchAccess::class)->canReachChurch($request->user(), $scopedChurchId)) {
+                    $requestedChurchId = $scopedChurchId;
+                    $this->source = 'scoped';
+
+                    if ($request->hasSession()) {
+                        $request->session()->put('scoped_church_id', $scopedChurchId);
+                    }
+                } elseif ($request->hasSession() && $request->query('church_id') !== null) {
+                    $request->session()->forget('scoped_church_id');
+                }
             }
 
             if (blank($requestedChurchId)
@@ -101,7 +124,7 @@ class ChurchContext
         $this->mainDomain = self::normalizeDomain($request->getHost()) === $this->mainHost();
         $requestedChurchId = $request->header('X-Church-ID');
         $isGlobalAdministrator = $request->user() instanceof User
-            && in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+            && $request->user()->role === UserRole::SYSTEM;
 
         if (blank($requestedChurchId) && $this->mainDomain && $isGlobalAdministrator) {
             $requestedChurchId = $request->query('church_id')
@@ -228,11 +251,12 @@ class ChurchContext
 
     private function ensureUserMaySelect(?User $user, bool $public): void
     {
-        if ($public || ! $user || in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if ($public || ! $user || $user->role === UserRole::SYSTEM) {
             return;
         }
 
-        if (! $user->churches()->whereKey($this->church?->id)->exists()) {
+        if (! $user->churches()->whereKey($this->church?->id)->exists()
+            && ! app(ChurchAccess::class)->canReachChurch($user, $this->church?->id)) {
             throw new ChurchContextException('FORBIDDEN', 'church.context.membership_required', 403);
         }
     }

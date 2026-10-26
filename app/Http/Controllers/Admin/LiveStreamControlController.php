@@ -17,20 +17,23 @@ class LiveStreamControlController extends Controller
 
     public function index(Request $request): Response
     {
-        $isGlobalAdministrator = in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
-        $church = $isGlobalAdministrator && $request->filled('church_id')
-            ? Church::query()->findOrFail($request->string('church_id')->toString())
+        $user = $request->user();
+        $isGlobalAdministrator = $user?->role === UserRole::SYSTEM;
+        $managerRoles = [UserRole::MEDIA, UserRole::CHURCH_LEADER];
+        $requestedChurchId = $request->string('church_id')->toString();
+        // A requested church is honored only inside the user's scope
+        // (own church or branches); SYSTEM may pick any church.
+        $church = $requestedChurchId !== ''
+            && $this->churchAccess()->canManageChurch($user, $requestedChurchId, $managerRoles)
+            ? Church::query()->findOrFail($requestedChurchId)
             : $this->domainContext->church();
 
-        $church ??= $request->user()?->church;
+        $church ??= $user?->church;
         $church ??= $isGlobalAdministrator ? Church::query()->orderBy('name')->first() : null;
 
         abort_unless($church instanceof Church, 422, __('church.context_required'));
-        abort_unless(
-            $isGlobalAdministrator
-                || $request->user()?->profile?->church_id === $church->id,
-            403,
-        );
+        abort_unless($this->churchAccess()->canManageChurch($user, $church->id, $managerRoles), 403);
+        $scopeChurchIds = $this->churchAccess()->scopeChurchIds($user);
 
         $streams = LiveStream::query()
             ->where('church_id', $church->id)
@@ -44,10 +47,12 @@ class LiveStreamControlController extends Controller
             'church' => $church->only(['id', 'name']),
             'churches' => $isGlobalAdministrator
                 ? Church::query()->orderBy('name')->get(['id', 'name'])
-                : [],
+                : (count($scopeChurchIds) > 1
+                    ? Church::query()->whereIn('id', $scopeChurchIds)->orderBy('name')->get(['id', 'name'])
+                    : []),
             'streams' => $streams,
             'canCreate' => $streams->where('active', true)->count() < 2,
-            'canDelete' => $isGlobalAdministrator,
+            'canDelete' => $this->churchAccess()->canManageChurch($user, $church->id, [UserRole::CHURCH_LEADER]),
         ]);
     }
 

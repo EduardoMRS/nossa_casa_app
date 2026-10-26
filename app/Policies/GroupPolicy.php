@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\UserRole;
 use App\Models\Group;
 use App\Models\User;
+use App\Support\ChurchAccess;
 
 class GroupPolicy
 {
@@ -21,7 +22,7 @@ class GroupPolicy
     public function create(User $user): bool
     {
         return in_array($user->role, [
-            UserRole::LEADER, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM,
+            UserRole::LEADER, UserRole::CHURCH_LEADER, UserRole::SYSTEM,
         ], true);
     }
 
@@ -41,9 +42,8 @@ class GroupPolicy
             return true;
         }
 
-        return $user->church?->id === $group->church_id
-            && in_array($user->role, [
-                UserRole::LEADER, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN,
-            ], true);
+        return app(ChurchAccess::class)->canManageChurch($user, $group->church_id, [
+            UserRole::LEADER, UserRole::CHURCH_LEADER,
+        ]);
     }
 }

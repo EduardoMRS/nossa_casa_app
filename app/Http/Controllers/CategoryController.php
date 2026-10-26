@@ -25,7 +25,10 @@ class CategoryController extends Controller
 
         $categories = Category::query()
             ->when($churchId, fn ($query) => $query->where('church_id', $churchId))
-            ->when($request->church_id, fn ($query, $churchId) => $query->where('church_id', $churchId))
+            ->when(
+                is_string($request->church_id) && $this->churchAccess()->canReachChurch($request->user(), $request->church_id),
+                fn ($query) => $query->where('church_id', $request->church_id),
+            )
             ->when($request->type, fn ($query, $type) => $query->where('type', $type))
             ->paginate(15)
             ->through(fn (Category $category): Category => $category->localize());
@@ -40,8 +43,7 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $churchId = app(ChurchDomainContext::class)->churchId() ?? $request->user()?->church?->id;
-        abort_unless($churchId !== null, 422, __('church.membership_category_manage_required'));
+        $churchId = $this->managedChurchId($request, missingMessage: __('church.membership_category_manage_required'));
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],

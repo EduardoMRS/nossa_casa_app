@@ -4,6 +4,7 @@ namespace App\Http\Requests\Settings;
 
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,8 +15,8 @@ class UpdateChurchSettingsRequest extends FormRequest
     {
         $church = $this->churchForRequest();
 
-        return $church !== null && ($this->user()?->profile?->church_id === $church->id
-            || in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true));
+        return $church !== null
+            && app(ChurchAccess::class)->canManageChurch($this->user(), $church->id, [UserRole::CHURCH_LEADER]);
     }
 
     /**
@@ -145,7 +146,7 @@ class UpdateChurchSettingsRequest extends FormRequest
         $context = app(ChurchDomainContext::class);
         $church = $context->church();
 
-        if ($church || in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if ($church || $this->user()?->role === UserRole::SYSTEM) {
             return $church;
         }
 

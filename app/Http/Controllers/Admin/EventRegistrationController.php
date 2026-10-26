@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\EventUser;
 use App\Models\Form;
 use App\Models\FormResponse;
+use App\Support\ChurchAccess;
 use App\Support\EventRegistrationExporter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -391,15 +392,12 @@ class EventRegistrationController extends Controller
     private function ensureAccess(Request $request, Event $event): void
     {
         $user = $request->user();
-        $isChurchLeader = $user?->role === UserRole::CHURCH_LEADER
-            && $user->profile?->church_id === $event->church_id;
+        $isChurchLeader = app(ChurchAccess::class)->canManageChurch($user, $event->church_id, [UserRole::CHURCH_LEADER]);
+        $isResponsible = $user !== null
+            && app(ChurchAccess::class)->canReachChurch($user, $event->church_id)
+            && ($event->author_id === $user->id
+                || $event->responsibleUsers()->whereKey($user->id)->exists());
 
-        abort_unless(
-            in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
-                || $isChurchLeader
-                || $event->author_id === $user?->id
-                || $event->responsibleUsers()->whereKey($user?->id)->exists(),
-            403,
-        );
+        abort_unless($isChurchLeader || $isResponsible, 403);
     }
 }

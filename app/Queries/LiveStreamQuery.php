@@ -3,10 +3,10 @@
 namespace App\Queries;
 
 use App\Data\CanonicalData;
-use App\Enums\UserRole;
 use App\Models\Comment;
 use App\Models\LiveStream;
 use App\Models\User;
+use App\Support\ChurchAccess;
 
 final class LiveStreamQuery
 {
@@ -14,8 +14,9 @@ final class LiveStreamQuery
     {
         abort_unless($liveStream->church_id === $churchId, 404);
         $role = $user?->role;
-        $hasChurchAccess = in_array($role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
-            || $user?->churches()->whereKey($churchId)->exists();
+        $hasChurchAccess = $user !== null
+            && ($user->churches()->whereKey($churchId)->exists()
+                || app(ChurchAccess::class)->canReachChurch($user, $churchId));
 
         abort_unless($liveStream->is_public || $hasChurchAccess, 404);
 
@@ -49,13 +50,7 @@ final class LiveStreamQuery
             'realtimePrivate' => ! $liveStream->is_public,
             'comments' => $comments,
             'canComment' => $user !== null,
-            'canModerate' => $hasChurchAccess && in_array($role, [
-                UserRole::LEADER,
-                UserRole::MEDIA,
-                UserRole::CHURCH_LEADER,
-                UserRole::SUPERADMIN,
-                UserRole::SYSTEM,
-            ], true),
+            'canModerate' => app(ChurchAccess::class)->canManageChurch($user, $churchId),
         ]);
     }
 }

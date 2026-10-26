@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\UserRole;
 use App\Models\Church;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -12,8 +13,7 @@ class StoreChurchNetworkRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->actorChurch() !== null
-            && in_array($this->user()?->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        return app(ChurchAccess::class)->canManageChurch($this->user(), $this->actorChurch()?->id, [UserRole::CHURCH_LEADER]);
     }
 
     /** @return array<string, array<int, mixed>> */

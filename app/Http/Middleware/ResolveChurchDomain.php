@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\UserRole;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchMailManager;
 use Closure;
@@ -15,6 +16,7 @@ class ResolveChurchDomain
     public function __construct(
         private readonly ChurchDomainContext $context,
         private readonly ChurchMailManager $mailManager,
+        private readonly ChurchAccess $access,
     ) {}
 
     /**
@@ -42,27 +44,27 @@ class ResolveChurchDomain
             : $this->mailManager->reset();
         $user = $request->user();
 
-        $isGlobalAdministrator = $user && in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $isSystem = $user?->role === UserRole::SYSTEM;
+        $canReachChurch = $church !== null && $this->access->canReachChurch($user, $church->id);
 
-        if ($user && ! $isGlobalAdministrator && $this->isDashboardRequest($request)) {
+        if ($user && ! $isSystem && $this->isDashboardRequest($request)) {
             $isUnassignedChurchDashboard = $church === null
                 && $user->profile?->church_id !== null
                 && blank($user->church?->domain);
+            // Community leadership has a dashboard on the portal for community
+            // tools only; it never selects a church there.
+            $isCommunityDashboard = $church === null
+                && $this->context->isMainDomain()
+                && $user->role === UserRole::SUPERADMIN;
 
             abort_unless(
-                ($church && $user->profile?->church_id === $church->id) || $isUnassignedChurchDashboard,
+                $canReachChurch || $isUnassignedChurchDashboard || $isCommunityDashboard,
                 403,
                 __('auth.church_membership_required'),
             );
         }
 
-        if (! $church || ! $user || $isGlobalAdministrator) {
-            return $next($request);
-        }
-
-        $userChurchId = $user->profile?->church_id;
-
-        if ($userChurchId === $church->id) {
+        if (! $church || ! $user || $isSystem || $canReachChurch) {
             return $next($request);
         }
 

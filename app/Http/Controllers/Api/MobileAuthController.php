@@ -204,7 +204,7 @@ final class MobileAuthController extends Controller
             ? $this->churchContext->churchId()
             : $user->profile?->church_id;
 
-        $isGlobalAdministrator = in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $isGlobalAdministrator = $user->role === UserRole::SYSTEM;
 
         if (! $isGlobalAdministrator && ! $memberships->contains('id', $selectedChurchId)) {
             $selectedChurchId = $memberships->count() === 1 ? $memberships->first()?->id : null;

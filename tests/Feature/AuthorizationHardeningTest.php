@@ -93,8 +93,25 @@ test('a church leader cannot manage the treasury of another church', function ()
     $request = Request::create('/dashboard/treasury', 'PUT', ['pix_key' => 'hijack']);
     $request->setUserResolver(fn () => $foreignLeader->fresh());
 
+    // The treasury ignores the request context and always uses the user's own church.
+    (new TreasuryController)->updateSettings($request);
+
+    expect($church->treasurySetting()->exists())->toBeFalse()
+        ->and($otherChurch->treasurySetting()->firstOrFail()->pix_key)->toBe('hijack');
+});
+
+test('system users have no access to billing', function (): void {
+    $church = Church::factory()->create();
+    $system = User::factory()->create(['role' => UserRole::SYSTEM]);
+    $church->assignMember($system);
+    ($this->bindChurch)($church);
+
+    $request = Request::create('/dashboard/treasury', 'PUT', ['pix_key' => 'system']);
+    $request->setUserResolver(fn () => $system->fresh());
+
     expect(fn () => (new TreasuryController)->updateSettings($request))->toThrow(HttpException::class);
-    expect($church->treasurySetting()->exists())->toBeFalse();
+    expect($church->treasurySetting()->exists())->toBeFalse()
+        ->and(app(DashboardInsights::class)->forChurch($church, $system->fresh())['treasury'])->toBeNull();
 });
 
 test('the public groups page requires a resolved church', function (): void {

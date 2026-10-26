@@ -6,7 +6,6 @@ use App\Enums\CategoryType;
 use App\Models\Form;
 use App\Models\Post;
 use App\Services\UniqueSlugger;
-use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -59,9 +58,7 @@ class PostController extends Controller
         ]);
 
         $validated['author_id'] = $request->user()->id;
-        $validated['church_id'] = app(ChurchDomainContext::class)->churchId()
-            ?? $request->user()->church?->id;
-        abort_unless($validated['church_id'], 422, __('church.membership_post_create_required'));
+        $validated['church_id'] = $this->managedChurchId($request, missingMessage: __('church.membership_post_create_required'));
         $validated['slug'] = $this->slugs->make($validated['title'], 'posts');
 
         $post = Post::create($validated);

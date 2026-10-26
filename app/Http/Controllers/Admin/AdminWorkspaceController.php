@@ -21,10 +21,12 @@ use App\Models\PrayerRequest;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\SystemBackupService;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchTerminology;
 use App\Support\SystemMetricsSnapshot;
 use App\Traits\ManagesChurchCategories;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -185,9 +187,9 @@ class AdminWorkspaceController extends Controller
         return Inertia::render('Admin/WallModeration', [
             'comments' => $comments,
             'stats' => [
-                ['label' => __('admin.wall.stats.0'), 'value' => Comment::query()->count()],
-                ['label' => __('admin.wall.stats.1'), 'value' => Post::has('comments')->count()],
-                ['label' => __('admin.wall.stats.2'), 'value' => Comment::query()->where('commentable_type', Event::class)->distinct('commentable_id')->count('commentable_id')],
+                ['label' => __('admin.wall.stats.0'), 'value' => $comments->total()],
+                ['label' => __('admin.wall.stats.1'), 'value' => Post::query()->where('church_id', $churchId)->has('comments')->count()],
+                ['label' => __('admin.wall.stats.2'), 'value' => Comment::query()->where('commentable_type', Event::class)->whereHasMorph('commentable', [Event::class], fn ($query) => $query->where('church_id', $churchId))->distinct('commentable_id')->count('commentable_id')],
             ],
         ]);
     }
@@ -309,7 +311,7 @@ class AdminWorkspaceController extends Controller
         $hasPrayerTable = Schema::hasTable('prayer_requests');
         $role = $request->user()->role?->value ?? (string) $request->user()->role;
         $churchId = $this->currentChurchId();
-        $canSeeAnonymous = in_array($role, ['church_leader', 'superadmin', 'system'], true);
+        $canSeeAnonymous = in_array($role, ['church_leader', 'system'], true);
         $myRequests = $hasPrayerTable
             ? PrayerRequest::query()
                 ->where('church_id', $churchId)
@@ -348,13 +350,17 @@ class AdminWorkspaceController extends Controller
         $actor = request()->user();
         $role = $actor?->role?->value ?? (string) $actor?->role;
         $churchId = $this->currentChurchId();
+        $isSystem = $role === 'system';
+        $scopeChurchIds = app(ChurchAccess::class)->scopeChurchIds($actor);
         $users = User::query()
-            ->when($role === 'church_leader', fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->where('church_id', $churchId)))
+            ->when(! $isSystem, fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->whereIn('church_id', $scopeChurchIds)))
             ->with(['profile', 'church' => fn ($query) => $query->select(['churches.id', 'churches.name'])])
             ->latest()
             ->paginate(20);
         $users->getCollection()->each(fn (User $user) => $user->church?->makeHidden('translations'));
-        $churches = Church::query()->orderBy('name')->get(['id', 'name'])->each->makeHidden('translations');
+        $churches = Church::query()
+            ->when(! $isSystem, fn ($query) => $query->whereIn('id', $scopeChurchIds))
+            ->orderBy('name')->get(['id', 'name'])->each->makeHidden('translations');
         $setting = $churchId ? Setting::query()->where('church_id', $churchId)->first() : null;
         $savedTerminology = is_array($setting?->options['terminology'] ?? null)
             ? $setting->options['terminology']
@@ -366,16 +372,16 @@ class AdminWorkspaceController extends Controller
             'users' => $users,
             'churches' => $churches,
             'roles' => collect(UserRole::cases())
-                ->reject(fn (UserRole $availableRole) => $role !== 'system' && $availableRole === UserRole::SYSTEM)
+                ->reject(fn (UserRole $availableRole) => ! $isSystem && in_array($availableRole, [UserRole::SYSTEM, UserRole::SUPERADMIN], true))
                 ->map(fn (UserRole $availableRole) => [
                     'value' => $availableRole->value,
                     'label' => $resolvedTerminology['roles'][$availableRole->value]['label'],
                 ])
                 ->values(),
             'stats' => [
-                ['label' => __('admin.users.stats.0'), 'value' => User::query()->count()],
-                ['label' => __('admin.users.stats.1'), 'value' => User::query()->whereIn('role', ['church_leader', 'superadmin', 'system'])->count()],
-                ['label' => __('admin.users.stats.2'), 'value' => User::query()->where('role', 'member')->count()],
+                ['label' => __('admin.users.stats.0'), 'value' => $users->total()],
+                ['label' => __('admin.users.stats.1'), 'value' => $this->scopedUsers($isSystem, $scopeChurchIds)->whereIn('role', ['church_leader', 'superadmin', 'system'])->count()],
+                ['label' => __('admin.users.stats.2'), 'value' => $this->scopedUsers($isSystem, $scopeChurchIds)->where('role', 'member')->count()],
             ],
         ]);
     }
@@ -384,7 +390,8 @@ class AdminWorkspaceController extends Controller
     {
         $user = $request->user();
         $isSystem = $user?->role === UserRole::SYSTEM;
-        $canChangeChurchCommunity = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        // Community leadership only sees its own community; SYSTEM sees all.
+        $canChangeChurchCommunity = $isSystem;
         $hasPlatformScope = $canChangeChurchCommunity && app(ChurchDomainContext::class)->isMainDomain();
         $communityId = $user?->profile?->community_id ?? $user?->church?->community_id;
 
@@ -606,16 +613,29 @@ class AdminWorkspaceController extends Controller
 
     private function ensureBackupAccess(Request $request): void
     {
-        abort_unless(in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
+        // Backups contain every church: platform operators only.
+        abort_unless($request->user()?->role === UserRole::SYSTEM, 403);
     }
 
     private function ensureManagedUser(Request $request, User $user): void
     {
-        $role = $request->user()?->role?->value ?? (string) $request->user()?->role;
+        $actor = $request->user();
 
-        if ($role === 'church_leader') {
-            abort_unless($user->church?->id === $request->user()?->church?->id, 403);
+        if (ChurchAccess::isSystem($actor)) {
+            return;
         }
+
+        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403);
+        abort_unless(app(ChurchAccess::class)->canManageChurch($actor, ChurchAccess::homeChurchId($user), [UserRole::CHURCH_LEADER]), 403);
+    }
+
+    /**
+     * @param  list<string>  $scopeChurchIds
+     * @return Builder<User>
+     */
+    private function scopedUsers(bool $isSystem, array $scopeChurchIds): Builder
+    {
+        return User::query()->when(! $isSystem, fn ($query) => $query->whereHas('profile', fn ($profile) => $profile->whereIn('church_id', $scopeChurchIds)));
     }
 
     /**

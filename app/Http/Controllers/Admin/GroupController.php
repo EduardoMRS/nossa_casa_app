@@ -25,7 +25,7 @@ class GroupController extends Controller
      * @var array<int, UserRole>
      */
     private const MANAGER_ROLES = [
-        UserRole::LEADER, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN,
+        UserRole::LEADER, UserRole::CHURCH_LEADER,
     ];
 
     public function __construct(private readonly UniqueSlugger $slugs) {}
@@ -67,9 +67,7 @@ class GroupController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $churchId = $this->currentChurchId($request);
-        abort_unless($churchId !== null, 422, __('church.context.required'));
-        $this->ensureCanCreate($request);
+        $churchId = $this->managedChurchId($request, self::MANAGER_ROLES);
 
         $validated = $this->validateGroup($request, $churchId);
 
@@ -119,12 +117,6 @@ class GroupController extends Controller
         return back();
     }
 
-    private function ensureCanCreate(Request $request): void
-    {
-        abort_unless(in_array($request->user()?->role, self::MANAGER_ROLES, true)
-            || $request->user()?->role === UserRole::SYSTEM, 403);
-    }
-
     private function ensureCanManage(Request $request, Group $group): void
     {
         $user = $request->user();
@@ -133,11 +125,7 @@ class GroupController extends Controller
             return;
         }
 
-        abort_unless(
-            $user?->church?->id === $group->church_id
-                && in_array($user->role, self::MANAGER_ROLES, true),
-            403
-        );
+        abort_unless($this->churchAccess()->canManageChurch($user, $group->church_id, self::MANAGER_ROLES), 403);
     }
 
     /**
@@ -209,7 +197,7 @@ class GroupController extends Controller
     {
         return User::query()
             ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
-            ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN])
+            ->whereIn('role', [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER])
             ->orderBy('first_name')
             ->get(['id', 'first_name', 'last_name'])
             ->map(fn (User $user): array => ['id' => $user->id, 'name' => $user->name]);

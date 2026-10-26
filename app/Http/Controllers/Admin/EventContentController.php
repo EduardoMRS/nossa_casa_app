@@ -12,6 +12,7 @@ use App\Models\Form;
 use App\Models\Media;
 use App\Models\Post;
 use App\Services\UniqueSlugger;
+use App\Support\ChurchAccess;
 use App\Traits\ManagesChurchCategories;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -204,13 +205,13 @@ class EventContentController extends Controller
     private function ensureCanManage(Request $request, Event $event): void
     {
         $user = $request->user();
-        $isGlobalAdministrator = in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
-        $isChurchLeader = $user?->role === UserRole::CHURCH_LEADER
-            && $user->profile?->church_id === $event->church_id;
-        $isResponsible = $event->author_id === $user?->id
-            || $event->responsibleUsers()->whereKey($user?->id)->exists();
+        $isChurchLeader = app(ChurchAccess::class)->canManageChurch($user, $event->church_id, [UserRole::CHURCH_LEADER]);
+        $isResponsible = $user !== null
+            && app(ChurchAccess::class)->canReachChurch($user, $event->church_id)
+            && ($event->author_id === $user->id
+                || $event->responsibleUsers()->whereKey($user->id)->exists());
 
-        abort_unless($isGlobalAdministrator || $isChurchLeader || $isResponsible, 403);
+        abort_unless($isChurchLeader || $isResponsible, 403);
     }
 
     /** @return array<string, mixed> */

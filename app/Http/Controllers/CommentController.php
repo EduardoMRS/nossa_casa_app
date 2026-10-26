@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
 use App\Models\Comment;
 use App\Models\Event;
 use App\Models\LiveStream;
@@ -79,8 +78,7 @@ class CommentController extends Controller
 
     public function pin(Request $request, Comment $comment): JsonResponse
     {
-        abort_unless(in_array($request->user()->role, [UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
-        $this->ensureChurchAccess($request, $this->commentableChurchId($comment));
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $this->commentableChurchId($comment)), 403);
         $validated = $request->validate(['is_pinned' => ['required', 'boolean']]);
         $comment->update([
             'is_pinned' => $validated['is_pinned'],

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\UserRole;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\ChurchAccess;
 
 class PostPolicy
 {
@@ -56,7 +57,7 @@ class PostPolicy
     {
         return in_array($user->role, [
             UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER,
-            UserRole::SUPERADMIN, UserRole::SYSTEM,
+            UserRole::SYSTEM,
         ], true);
     }
 
@@ -79,8 +80,7 @@ class PostPolicy
     {
         return $post->isAuthor($user)
             || $user->role === UserRole::SYSTEM
-            || ($user->church?->id === $post->church_id
-                && in_array($user->role, [UserRole::CHURCH_LEADER, UserRole::SUPERADMIN], true));
+            || app(ChurchAccess::class)->canManageChurch($user, $post->church_id, [UserRole::CHURCH_LEADER]);
     }
 
     private function canManage(User $user, Post $post): bool
@@ -89,9 +89,8 @@ class PostPolicy
             return true;
         }
 
-        return $user->church?->id === $post->church_id
-            && in_array($user->role, [
-                UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN,
-            ], true);
+        return app(ChurchAccess::class)->canManageChurch($user, $post->church_id, [
+            UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER,
+        ]);
     }
 }

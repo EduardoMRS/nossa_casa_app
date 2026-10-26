@@ -8,6 +8,7 @@ use App\Actions\Media\StopLiveStream;
 use App\Enums\UserRole;
 use App\Http\Requests\Media\StoreLiveStreamRequest;
 use App\Models\LiveStream;
+use App\Support\ChurchAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,12 +20,12 @@ class LiveStreamController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $churchId = $request->user()?->church()->first()?->getKey();
+        $user = $request->user();
 
         $liveStreams = LiveStream::query()
             ->when(
-                ! in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true),
-                fn ($query) => $query->where('church_id', $churchId),
+                ! ChurchAccess::isSystem($user),
+                fn ($query) => $query->whereIn('church_id', $this->churchAccess()->scopeChurchIds($user)),
             )
             ->withCount('recordings')
             ->latest()
@@ -68,7 +69,7 @@ class LiveStreamController extends Controller
      */
     public function destroy(Request $request, LiveStream $liveStream, StopLiveStream $stopLiveStream): Response
     {
-        abort_unless(in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true), 403);
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $liveStream->church_id, [UserRole::CHURCH_LEADER]), 403);
 
         $stopLiveStream->handle($liveStream);
         $liveStream->delete();
@@ -97,12 +98,6 @@ class LiveStreamController extends Controller
 
     private function ensureAccess(Request $request, LiveStream $liveStream): void
     {
-        $churchId = $request->user()?->church()->first()?->getKey();
-
-        abort_unless(
-            in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
-                || $liveStream->church_id === $churchId,
-            403,
-        );
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $liveStream->church_id, [UserRole::MEDIA, UserRole::CHURCH_LEADER]), 403);
     }
 }

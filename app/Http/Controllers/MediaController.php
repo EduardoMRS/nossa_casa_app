@@ -7,6 +7,7 @@ use App\Enums\MediaStatus;
 use App\Http\Requests\Media\StoreMediaRequest;
 use App\Http\Requests\Media\UpdateMediaRequest;
 use App\Http\Requests\Media\UpdateMediaStatusRequest;
+use App\Models\Church;
 use App\Models\Media;
 use App\Support\ChurchDomainContext;
 use App\Traits\ManagesChurchCategories;
@@ -51,8 +52,7 @@ class MediaController extends Controller
     {
         $validated = $request->validated();
 
-        $church = app(ChurchDomainContext::class)->church() ?? $request->user()->church;
-        abort_unless($church && $church->exists(), 422, __('church.membership_upload_media_required'));
+        $church = Church::query()->findOrFail($this->managedChurchId($request, missingMessage: __('church.membership_upload_media_required')));
 
         $fileInput = $request->file('file') ?? $request->file('file_path') ?? $request->input('file_path');
 

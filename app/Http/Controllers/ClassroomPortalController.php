@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\Post;
+use App\Support\ChurchAccess;
 use App\Support\ContentEmbedRenderer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,10 +18,11 @@ class ClassroomPortalController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $isGlobalAdministrator = in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        $isGlobalAdministrator = $user->role === UserRole::SYSTEM;
+        $scopeChurchIds = app(ChurchAccess::class)->scopeChurchIds($user);
         $classrooms = Classroom::query()
             ->with(['church:id,name,slug', 'teacher:id,first_name,last_name'])
-            ->where(function ($query) use ($user, $isGlobalAdministrator): void {
+            ->where(function ($query) use ($user, $isGlobalAdministrator, $scopeChurchIds): void {
                 if ($isGlobalAdministrator) {
                     return;
                 }
@@ -33,8 +35,8 @@ class ClassroomPortalController extends Controller
                         });
                 });
 
-                if (in_array($user->role->value, ['leader', 'church_leader', 'superadmin'], true)) {
-                    $query->orWhere('church_id', $user->church?->id);
+                if (in_array($user->role->value, ['leader', 'church_leader'], true)) {
+                    $query->orWhereIn('church_id', $scopeChurchIds);
                 }
             })
             ->orderBy('name')

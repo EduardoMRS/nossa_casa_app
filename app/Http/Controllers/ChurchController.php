@@ -9,6 +9,7 @@ use App\Models\Network;
 use App\Models\Setting;
 use App\Services\AddressGeocoder;
 use App\Services\ChurchIdentity;
+use App\Support\ChurchAccess;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,7 +92,8 @@ class ChurchController extends Controller
 
         $church = Church::create($validated);
         $this->storeAddress($church, $validated);
-        if ($parentChurchId && $this->canChangeCommunity($request)) {
+        if ($parentChurchId && ($this->canChangeCommunity($request)
+            || $this->churchAccess()->canManageChurch($request->user(), $parentChurchId, [UserRole::CHURCH_LEADER]))) {
             Network::query()->create([
                 'parent_church_id' => $parentChurchId,
                 'child_church_id' => $church->id,
@@ -106,7 +108,7 @@ class ChurchController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $church = Church::findOrFail($id);
-        $this->ensureCommunityAccess($request, $church);
+        $this->ensureCanManageChurch($request, $church);
 
         if ($request->has('domain')) {
             $request->merge([
@@ -160,19 +162,36 @@ class ChurchController extends Controller
     public function destroy(Request $request, string $id): JsonResponse
     {
         $church = Church::findOrFail($id);
-        $this->ensureCommunityAccess($request, $church);
+        $this->ensureCanDeleteChurch($request, $church);
         $church->delete();
 
         return response()->json(null, 204);
     }
 
-    private function ensureCommunityAccess(Request $request, Church $church): void
+    /**
+     * Church leadership manages its own church and the branches below it;
+     * a branch never manages its headquarters and community leadership
+     * (superadmin) never manages churches. SYSTEM bypasses.
+     */
+    private function ensureCanManageChurch(Request $request, Church $church): void
     {
-        if (in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $church->id, [UserRole::CHURCH_LEADER]), 403);
+    }
+
+    /**
+     * Only SYSTEM or the leadership of an ancestor church may delete a church;
+     * a leader cannot delete its own home church.
+     */
+    private function ensureCanDeleteChurch(Request $request, Church $church): void
+    {
+        $user = $request->user();
+
+        if ($user?->role === UserRole::SYSTEM) {
             return;
         }
 
-        abort_unless($church->community_id === $this->managedCommunityId($request), 403);
+        abort_if($church->id === ChurchAccess::homeChurchId($user), 403);
+        $this->ensureCanManageChurch($request, $church);
     }
 
     /** @return array<int, string> */
@@ -199,7 +218,7 @@ class ChurchController extends Controller
 
     private function canChangeCommunity(Request $request): bool
     {
-        return in_array($request->user()->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
+        return $request->user()->role === UserRole::SYSTEM;
     }
 
     /** @return array<string, array<int, string>> */

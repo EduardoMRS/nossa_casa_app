@@ -4,15 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Support\ChurchAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    /** @var array<int, UserRole> */
+    private const USER_MANAGER_ROLES = [UserRole::CHURCH_LEADER];
+
+    public function index(Request $request)
     {
-        $users = User::with(['profile', 'church'])->paginate(15);
+        $user = $request->user();
+
+        $users = User::with(['profile', 'church'])
+            ->when(
+                ! ChurchAccess::isSystem($user),
+                fn ($query) => $query->whereHas(
+                    'profile',
+                    fn ($profile) => $profile->whereIn('church_id', $this->churchAccess()->scopeChurchIds($user)),
+                ),
+            )
+            ->paginate(15);
         $users->getCollection()->each(fn (User $user) => $user->church?->localize());
 
         return response()->json($users);
@@ -35,6 +49,10 @@ class UserController extends Controller
             'location_lang' => ['nullable', 'string', 'max:10'],
         ]);
 
+        // A user is always created inside a church the actor manages.
+        $validated['church_id'] ??= ChurchAccess::homeChurchId($request->user());
+        $this->ensureCanManageChurchUsers($request, $validated['church_id']);
+
         $validated['password'] = Hash::make($validated['password']);
         $profile = collect($validated)->only(['church_id', 'phone', 'gender', 'location_lang'])->all();
         unset($validated['church_id'], $validated['phone'], $validated['gender'], $validated['location_lang']);
@@ -45,9 +63,10 @@ class UserController extends Controller
         return response()->json($user->load(['profile', 'church']), 201);
     }
 
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $user = User::with(['profile', 'church'])->findOrFail($id);
+        $this->ensureCanManage($request, $user);
         $user->church?->localize();
 
         return response()->json($user);
@@ -73,6 +92,11 @@ class UserController extends Controller
 
         if (isset($validated['role'])) {
             $this->ensureRoleCanBeAssigned($request, $validated['role']);
+        }
+
+        // Moving a user is only allowed into another church the actor manages.
+        if (array_key_exists('church_id', $validated) && $validated['church_id'] !== null) {
+            $this->ensureCanManageChurchUsers($request, $validated['church_id']);
         }
 
         if (isset($validated['password'])) {
@@ -103,25 +127,38 @@ class UserController extends Controller
         return response()->json(null, 204);
     }
 
+    /**
+     * SYSTEM manages everyone. Church leadership manages users of its church
+     * and descendant churches, never SYSTEM/SUPERADMIN accounts nor itself
+     * through these endpoints.
+     */
     private function ensureCanManage(Request $request, User $user): void
     {
         $actor = $request->user();
-        $actorRole = $actor?->role?->value ?? (string) $actor?->role;
 
-        if ($actorRole === UserRole::CHURCH_LEADER->value) {
-            abort_unless($user->church?->id === $actor?->church?->id, 403);
-            abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403);
+        if (ChurchAccess::isSystem($actor)) {
+            return;
         }
 
-        if ($actorRole === UserRole::SUPERADMIN->value) {
-            abort_if($user->role === UserRole::SYSTEM, 403);
-        }
+        abort_if(in_array($user->role, [UserRole::SYSTEM, UserRole::SUPERADMIN], true), 403);
+        $this->ensureCanManageChurchUsers($request, ChurchAccess::homeChurchId($user));
     }
 
+    private function ensureCanManageChurchUsers(Request $request, ?string $churchId): void
+    {
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $churchId, self::USER_MANAGER_ROLES), 403);
+    }
+
+    /**
+     * Only SYSTEM grants SYSTEM or SUPERADMIN; nobody else may escalate.
+     */
     private function ensureRoleCanBeAssigned(Request $request, string $role): void
     {
-        $actorRole = $request->user()?->role?->value ?? (string) $request->user()?->role;
-        abort_if($role === UserRole::SYSTEM->value && $actorRole !== UserRole::SYSTEM->value, 403);
-        abort_if($role === UserRole::SUPERADMIN->value && $actorRole === UserRole::CHURCH_LEADER->value, 403);
+        $isSystem = ChurchAccess::isSystem($request->user());
+
+        abort_if(
+            in_array($role, [UserRole::SYSTEM->value, UserRole::SUPERADMIN->value], true) && ! $isSystem,
+            403,
+        );
     }
 }

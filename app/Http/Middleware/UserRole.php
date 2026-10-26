@@ -40,11 +40,15 @@ class UserRole
     }
 
     /**
+     * SYSTEM passes every role gate (billing is enforced separately in
+     * ChurchAccess::canManageTreasury). SUPERADMIN is community leadership and
+     * only passes where it is listed explicitly.
+     *
      * @param  array<int, UserRoleEnum>  $allowedRoles
      */
     private function hasRole(UserRoleEnum $userRole, array $allowedRoles): bool
     {
-        if (in_array($userRole, [UserRoleEnum::SYSTEM, UserRoleEnum::SUPERADMIN], true)) {
+        if ($userRole === UserRoleEnum::SYSTEM) {
             return true;
         }
 

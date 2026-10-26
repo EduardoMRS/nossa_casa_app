@@ -207,7 +207,7 @@ it('protects church community changes while allowing logo and icon uploads', fun
     Storage::disk((string) config('media.disk'))->assertExists($branding['icon_path']);
 });
 
-it('allows superadmin and system roles to change a registered church community', function (UserRole $role) {
+it('allows only system users to change a registered church community', function (UserRole $role, int $status) {
     $community = Community::factory()->create();
     $otherCommunity = Community::factory()->create();
     $church = Church::factory()->for($community)->create();
@@ -216,10 +216,14 @@ it('allows superadmin and system roles to change a registered church community',
 
     $this->actingAs($administrator)
         ->putJson("/api/church/{$church->id}", ['community_id' => $otherCommunity->id])
-        ->assertSuccessful();
+        ->assertStatus($status);
 
-    expect($church->refresh()->community_id)->toBe($otherCommunity->id);
-})->with([UserRole::SUPERADMIN, UserRole::SYSTEM]);
+    // Community leadership (superadmin) never manipulates churches.
+    expect($church->refresh()->community_id)->toBe($status === 200 ? $otherCommunity->id : $community->id);
+})->with([
+    'superadmin' => [UserRole::SUPERADMIN, 403],
+    'system' => [UserRole::SYSTEM, 200],
+]);
 
 it('allows only system users to manage communities', function () {
     $admin = managementUser();

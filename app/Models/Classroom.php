@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Support\ChurchAccess;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
@@ -132,19 +133,13 @@ class Classroom extends Model
 
     public function canBeManagedBy(User $user): bool
     {
-        if (in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
-            return true;
-        }
-
         if ($this->teacher_id === $user->id) {
             return true;
         }
 
-        return $user->church?->id === $this->church_id
-            && in_array($user->role, [
-                UserRole::LEADER,
-                UserRole::CHURCH_LEADER,
-                UserRole::SUPERADMIN,
-            ], true);
+        return app(ChurchAccess::class)->canManageChurch($user, $this->church_id, [
+            UserRole::LEADER,
+            UserRole::CHURCH_LEADER,
+        ]);
     }
 }

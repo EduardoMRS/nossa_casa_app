@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserRelationships;
-use App\Enums\UserRole;
 use App\Http\Requests\Classroom\CheckInClassroomRequest;
 use App\Http\Requests\Classroom\CheckOutClassroomRequest;
 use App\Http\Requests\Classroom\StoreClassroomRequest;
@@ -239,14 +238,7 @@ class ClassroomController extends Controller
             return;
         }
 
-        $this->ensureChurchAccess($request, $classroom->church_id);
-        abort_unless(in_array($request->user()->role, [
-            UserRole::LEADER,
-            UserRole::MEDIA,
-            UserRole::CHURCH_LEADER,
-            UserRole::SUPERADMIN,
-            UserRole::SYSTEM,
-        ], true), 403);
+        abort_unless($this->churchAccess()->canManageChurch($request->user(), $classroom->church_id), 403);
     }
 
     /** @return array<string, string|null> */

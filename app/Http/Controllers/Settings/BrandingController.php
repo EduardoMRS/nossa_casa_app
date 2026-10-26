@@ -408,7 +408,7 @@ class BrandingController extends Controller
     {
         $church = $this->domainContext->church();
 
-        if ($church || in_array($request->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if ($church || $request->user()?->role === UserRole::SYSTEM) {
             return $church;
         }
 

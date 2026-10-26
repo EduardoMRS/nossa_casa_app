@@ -69,19 +69,26 @@ test('public api context accepts an active church without authentication', funct
         ->assertSuccessful();
 });
 
-test('global administrators may select any active church', function (UserRole $role) {
+test('only system users may select any active church', function () {
     $church = Church::factory()->create();
-    $user = User::factory()->create(['role' => $role]);
+    $user = User::factory()->create(['role' => UserRole::SYSTEM]);
 
     $this->withToken($user->createToken('context-test')->plainTextToken)
         ->withHeader('X-Church-ID', $church->id)
         ->getJson('/api/auth/me')
         ->assertSuccessful()
         ->assertJsonPath('data.selected_church_id', $church->id);
-})->with([
-    'superadmin' => UserRole::SUPERADMIN,
-    'system' => UserRole::SYSTEM,
-]);
+});
+
+test('community leadership cannot select a church outside its membership', function () {
+    $church = Church::factory()->create();
+    $user = User::factory()->create(['role' => UserRole::SUPERADMIN]);
+
+    $this->withToken($user->createToken('context-test')->plainTextToken)
+        ->withHeader('X-Church-ID', $church->id)
+        ->getJson('/api/auth/me')
+        ->assertForbidden();
+});
 
 test('a user with no memberships has no automatic church', function () {
     $user = User::factory()->create();

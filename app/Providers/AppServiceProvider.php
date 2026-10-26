@@ -9,6 +9,7 @@ use App\Services\Push\FcmPushProvider;
 use App\Services\Push\NullPushProvider;
 use App\Services\Push\UnifiedPushProvider;
 use App\Services\Push\WebPushProvider;
+use App\Support\ChurchAccess;
 use App\Support\ChurchContext;
 use App\Support\ChurchDomainContext;
 use Carbon\CarbonImmutable;
@@ -35,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->scoped(ChurchDomainContext::class);
         $this->app->alias(ChurchDomainContext::class, ChurchContext::class);
+        $this->app->scoped(ChurchAccess::class);
         $this->app->singleton(NativePushService::class, fn ($app): NativePushService => new NativePushService([
             $app->make(ApnsPushProvider::class),
             $app->make(FcmPushProvider::class),

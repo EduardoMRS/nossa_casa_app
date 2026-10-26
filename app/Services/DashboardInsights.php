@@ -12,6 +12,7 @@ use App\Models\Post;
 use App\Models\PrayerRequest;
 use App\Models\Reaction;
 use App\Models\User;
+use App\Support\ChurchAccess;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -56,7 +57,7 @@ class DashboardInsights
             'most_liked' => $this->mostLiked($churchId),
             'access_map' => $this->canSeeAccessMap($user) ? $this->accessMap($churchId) : [],
             'recent_prayers' => $this->canSeePrayers($user) ? $this->recentPrayers($churchId) : [],
-            'treasury' => $this->canSeeTreasury($user) ? $this->treasurySummary($church) : null,
+            'treasury' => $this->canSeeTreasury($user, $church) ? $this->treasurySummary($church) : null,
             'shortcuts' => $this->shortcuts($user->role),
         ];
     }
@@ -220,11 +221,13 @@ class DashboardInsights
         ], true);
     }
 
-    private function canSeeTreasury(User $user): bool
+    /**
+     * Billing is not bypassed by SYSTEM: only the treasurer/leadership of the
+     * church itself sees the totals.
+     */
+    private function canSeeTreasury(User $user, Church $church): bool
     {
-        return in_array($user->role, [
-            UserRole::TREASURER, UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM,
-        ], true);
+        return app(ChurchAccess::class)->canManageTreasury($user, $church->id);
     }
 
     /**
@@ -241,7 +244,8 @@ class DashboardInsights
             UserRole::MEDIA => [$createPost, $openGallery],
             UserRole::LEADER => [$createEvent, $createPost],
             UserRole::TREASURER => [$openTreasury],
-            UserRole::CHURCH_LEADER, UserRole::SUPERADMIN, UserRole::SYSTEM => [$createPost, $createEvent, $openGallery, $openTreasury],
+            UserRole::CHURCH_LEADER => [$createPost, $createEvent, $openGallery, $openTreasury],
+            UserRole::SUPERADMIN, UserRole::SYSTEM => [$createPost, $createEvent, $openGallery],
             default => [$openGallery],
         };
     }

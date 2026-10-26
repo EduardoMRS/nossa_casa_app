@@ -8,6 +8,7 @@ use App\Models\Church;
 use App\Models\LiveStream;
 use App\Models\User;
 use App\Services\Media\MediaMtxClient;
+use App\Support\ChurchAccess;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -23,7 +24,9 @@ class CreateLiveStream
      */
     public function handle(User $user, array $data): LiveStream
     {
-        $church = in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true) && isset($data['church_id'])
+        // An explicit church is only honored inside the user's scope (SYSTEM: any).
+        $church = isset($data['church_id'])
+            && app(ChurchAccess::class)->canManageChurch($user, $data['church_id'], [UserRole::MEDIA, UserRole::CHURCH_LEADER])
             ? Church::query()->find($data['church_id'])
             : $user->church()->first();
 

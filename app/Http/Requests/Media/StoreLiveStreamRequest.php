@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Media;
 
 use App\Enums\UserRole;
+use App\Support\ChurchAccess;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -16,14 +17,13 @@ class StoreLiveStreamRequest extends FormRequest
     {
         $user = $this->user();
 
-        if (in_array($user?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)) {
+        if ($user?->role === UserRole::SYSTEM) {
             return true;
         }
 
         return $user !== null && in_array($user->role, [
             UserRole::MEDIA,
             UserRole::CHURCH_LEADER,
-            UserRole::SUPERADMIN,
         ], true) && $user->church()->exists();
     }
 
@@ -34,8 +34,8 @@ class StoreLiveStreamRequest extends FormRequest
      */
     public function rules(): array
     {
-        $isGlobalAdministrator = in_array($this->user()?->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true);
-        $userChurchId = $this->user()?->profile?->church_id;
+        $isGlobalAdministrator = $this->user()?->role === UserRole::SYSTEM;
+        $scopeChurchIds = app(ChurchAccess::class)->scopeChurchIds($this->user());
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -50,7 +50,7 @@ class StoreLiveStreamRequest extends FormRequest
                 'nullable',
                 'string',
                 'exists:churches,id',
-                Rule::when(! $isGlobalAdministrator, Rule::in([$userChurchId])),
+                Rule::when(! $isGlobalAdministrator, Rule::in($scopeChurchIds)),
             ],
         ];
     }

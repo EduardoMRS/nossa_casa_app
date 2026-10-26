@@ -17,7 +17,6 @@ class StoreEventRegistrationRequest extends FormRequest
         return in_array($this->user()?->role, [
             UserRole::LEADER,
             UserRole::CHURCH_LEADER,
-            UserRole::SUPERADMIN,
             UserRole::SYSTEM,
         ], true);
     }

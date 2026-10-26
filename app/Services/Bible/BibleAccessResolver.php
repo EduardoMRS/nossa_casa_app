@@ -2,10 +2,10 @@
 
 namespace App\Services\Bible;
 
-use App\Enums\UserRole;
 use App\Models\Church;
 use App\Models\Network;
 use App\Models\User;
+use App\Support\ChurchAccess;
 
 class BibleAccessResolver
 {
@@ -38,8 +38,7 @@ class BibleAccessResolver
 
     public function canManageCommunity(User $user, Church $church): bool
     {
-        return in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
-            || $church->community?->owner_id === $user->id;
+        return app(ChurchAccess::class)->managesCommunity($user, $church->community_id);
     }
 
     /** @return list<string> */
