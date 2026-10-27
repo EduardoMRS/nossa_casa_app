@@ -140,7 +140,8 @@
         "pwa_navigation": "Main app navigation",
         "network": "Network",
         "groups": "Groups",
-        "give": "Give"
+        "give": "Give",
+        "treasury": "Treasury"
     },
     "navigation": {
         "menu": "Navigation menu",

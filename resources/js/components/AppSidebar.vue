@@ -20,6 +20,7 @@ import {
     School,
     PanelsTopLeft,
     Radio,
+    Wallet,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -127,6 +128,14 @@ const canManageGroups = computed(
         Boolean(page.props.churchContext?.church),
 );
 
+// Billing is managed only by the treasurer or the pastor of the church itself
+// (never community/system). The route still enforces this server-side.
+const canManageTreasury = computed(
+    () =>
+        ['treasurer', 'church_leader'].includes(role.value) &&
+        Boolean(page.props.churchContext?.church),
+);
+
 const mainNavItems = computed<NavItem[]>(() => {
     if (isPlatformDashboard.value) {
         return [
@@ -184,6 +193,15 @@ const mainNavItems = computed<NavItem[]>(() => {
                       title: t('nav.groups'),
                       href: '/dashboard/groups',
                       icon: Users,
+                  },
+              ]
+            : []),
+        ...(canManageTreasury.value
+            ? [
+                  {
+                      title: t('nav.treasury'),
+                      href: '/dashboard/treasury',
+                      icon: Wallet,
                   },
               ]
             : []),

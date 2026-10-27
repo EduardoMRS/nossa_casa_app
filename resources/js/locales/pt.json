@@ -140,7 +140,8 @@
         "pwa_navigation": "Navegação principal do aplicativo",
         "network": "Rede",
         "groups": "Grupos",
-        "give": "Contribuir"
+        "give": "Contribuir",
+        "treasury": "Tesouraria"
     },
     "navigation": {
         "menu": "Menu de navegação",
