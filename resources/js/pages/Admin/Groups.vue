@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2, Users } from '@lucide/vue';
 import { reactive, ref } from 'vue';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import AppModal from '@/components/AppModal.vue';
+import CategorySelector from '@/components/CategorySelector.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
 
@@ -231,7 +232,7 @@ const responsibleNames = (group: GroupItem): string =>
             :title="editingId ? t('admin.groups.edit') : t('admin.groups.new')"
             scrollable
         >
-            <form id="group-form" class="space-y-4" @submit.prevent="save">
+            <form class="space-y-4" @submit.prevent="save">
                 <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.groups.name')
                     }}<input
@@ -265,22 +266,19 @@ const responsibleNames = (group: GroupItem): string =>
                     {{ errors.social_link }}
                 </p>
 
-                <label class="block text-xs font-bold text-foreground"
-                    >{{ t('admin.groups.category')
-                    }}<select
+                <div class="space-y-1">
+                    <CategorySelector
                         v-model="form.category_ids"
-                        multiple
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        :categories="categories"
+                        :label="t('admin.groups.category')"
+                    />
+                    <a
+                        href="/dashboard/categories"
+                        class="inline-block text-xs font-bold text-[color:var(--dashboard-primary,#4338ca)] underline"
                     >
-                        <option
-                            v-for="category in categories"
-                            :key="category.id"
-                            :value="category.id"
-                        >
-                            {{ category.name }}
-                        </option>
-                    </select></label
-                >
+                        {{ t('admin.groups.manage_categories') }}
+                    </a>
+                </div>
 
                 <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.groups.responsibles')
@@ -338,25 +336,23 @@ const responsibleNames = (group: GroupItem): string =>
                     <input v-model="form.is_public" type="checkbox" />
                     {{ t('admin.groups.visibility') }}
                 </label>
-            </form>
 
-            <template #footer>
-                <button
-                    type="button"
-                    class="rounded-lg px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
-                    @click="modalOpen = false"
-                >
-                    {{ t('actions.cancel') }}
-                </button>
-                <button
-                    type="submit"
-                    form="group-form"
-                    :disabled="processing"
-                    class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
-                >
-                    {{ t('actions.save') }}
-                </button>
-            </template>
+                <div class="flex justify-end gap-2">
+                    <button
+                        type="button"
+                        class="rounded-lg px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
+                        @click="modalOpen = false"
+                    >
+                        {{ t('actions.cancel') }}
+                    </button>
+                    <button
+                        :disabled="processing"
+                        class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                    >
+                        {{ t('actions.save') }}
+                    </button>
+                </div>
+            </form>
         </AppModal>
     </main>
 </template>

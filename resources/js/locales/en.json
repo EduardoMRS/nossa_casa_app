@@ -1276,7 +1276,8 @@
             "delete_confirm": "Delete the group \"{name}\"?",
             "responsibles_count": "{count} leader(s)",
             "no_category": "No category",
-            "social_link": "Social media / group chat link"
+            "social_link": "Social media / group chat link",
+            "manage_categories": "Manage group categories"
         },
         "treasury": {
             "kicker": "Finance",

@@ -1276,7 +1276,8 @@
             "delete_confirm": "Remover o grupo \"{name}\"?",
             "responsibles_count": "{count} responsável(is)",
             "no_category": "Sem categoria",
-            "social_link": "Link de rede social / grupo de conversa"
+            "social_link": "Link de rede social / grupo de conversa",
+            "manage_categories": "Gerenciar categorias de grupos"
         },
         "treasury": {
             "kicker": "Financeiro",
