@@ -140,6 +140,13 @@ class GroupController extends Controller
      */
     private function validateGroup(Request $request, string $churchId): array
     {
+        // Treat blank optional fields as null so an empty social link doesn't
+        // trip the url validation and stays truly optional.
+        $request->merge([
+            'social_link' => filled($request->input('social_link')) ? trim((string) $request->input('social_link')) : null,
+            'description' => filled($request->input('description')) ? $request->input('description') : null,
+        ]);
+
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],

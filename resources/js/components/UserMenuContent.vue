@@ -76,6 +76,11 @@ const hasClassroomAccess = computed(
         (page.props.classrooms as { hasAccess?: boolean } | undefined)
             ?.hasAccess === true,
 );
+// Chat only works inside a resolved church the user belongs to; showing it
+// elsewhere leads to a redirect/404 on a route the context can't serve.
+const canUseChat = computed(
+    () => Boolean(churchContext.value?.id) && !isForeignChurch.value,
+);
 
 const transferMembership = async (): Promise<void> => {
     if (
@@ -197,8 +202,8 @@ const transferMembership = async (): Promise<void> => {
                 {{ t('nav.classrooms') }}
             </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem :as-child="true">
-            <Link class="block w-full cursor-pointer" href="/chat" prefetch>
+        <DropdownMenuItem v-if="canUseChat" :as-child="true">
+            <Link class="block w-full cursor-pointer" href="/chat">
                 <MessageCircle class="mr-2 size-4" />
                 {{ t('nav.chat') }}
             </Link>

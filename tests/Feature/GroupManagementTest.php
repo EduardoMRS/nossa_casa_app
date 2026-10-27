@@ -203,6 +203,43 @@ test('a group stores a social media link and rejects an invalid url', function (
     ])))->toThrow(ValidationException::class);
 });
 
+test('an empty social link is optional and stored as null', function (): void {
+    [$church, $leader] = makeChurchWithLeader();
+    $this->actingAs($leader);
+
+    // Mirrors the real payload from the UI: blank social link and an empty
+    // address object. It must not trip url validation nor fail.
+    groupController()->store(groupRequest($leader, [
+        'name' => 'Teste',
+        'description' => '',
+        'social_link' => '',
+        'is_public' => true,
+        'category_ids' => [],
+        'responsible_ids' => [],
+        'address' => [
+            'country' => '', 'state' => '', 'city' => '', 'neighborhood' => '',
+            'street' => '', 'number' => '', 'complement' => '', 'zipcode' => '',
+        ],
+    ]));
+
+    $group = Group::query()->firstOrFail();
+    expect($group->name)->toBe('Teste')
+        ->and($group->social_link)->toBeNull()
+        ->and($group->address()->exists())->toBeFalse();
+});
+
+test('a group accepts a wa.me chat link', function (): void {
+    [$church, $leader] = makeChurchWithLeader();
+    $this->actingAs($leader);
+
+    groupController()->store(groupRequest($leader, [
+        'name' => 'Grupo WhatsApp',
+        'social_link' => 'https://wa.me/5511999999999',
+    ]));
+
+    expect(Group::query()->firstOrFail()->social_link)->toBe('https://wa.me/5511999999999');
+});
+
 test('the public portal groups by category and computes distance to the nearest group', function (): void {
     $church = Church::factory()->create();
 

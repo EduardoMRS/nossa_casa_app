@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash2, Users } from '@lucide/vue';
+import { Pencil, Plus, Tags, Trash2, Users } from '@lucide/vue';
 import { reactive, ref } from 'vue';
 import AdminPageHeader from '@/components/AdminPageHeader.vue';
 import AppModal from '@/components/AppModal.vue';
+import CategoryManagerModal from '@/components/CategoryManagerModal.vue';
 import CategorySelector from '@/components/CategorySelector.vue';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useI18n } from '@/lib/i18n';
@@ -45,6 +46,7 @@ const modalOpen = ref(false);
 const editingId = ref<string | null>(null);
 const processing = ref(false);
 const errors = ref<Record<string, string>>({});
+const categoriesOpen = ref(false);
 
 const emptyAddress = (): GroupAddress => ({
     country: '',
@@ -150,6 +152,12 @@ const responsibleNames = (group: GroupItem): string =>
             :title="t('admin.groups.title')"
             :description="t('admin.groups.description')"
         >
+            <button
+                class="inline-flex items-center justify-center gap-2 rounded-lg border border-primary-foreground/30 px-4 py-2.5 text-xs font-black text-primary-foreground"
+                @click="categoriesOpen = true"
+            >
+                <Tags class="size-4" />{{ t('admin.categories.title') }}
+            </button>
             <button
                 class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-foreground px-4 py-2.5 text-xs font-black text-primary"
                 @click="openEditor()"
@@ -354,5 +362,11 @@ const responsibleNames = (group: GroupItem): string =>
                 </div>
             </form>
         </AppModal>
+        <CategoryManagerModal
+            :open="categoriesOpen"
+            category-type="group"
+            :categories="categories"
+            @close="categoriesOpen = false"
+        />
     </main>
 </template>

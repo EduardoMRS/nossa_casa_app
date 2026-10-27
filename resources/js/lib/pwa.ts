@@ -362,19 +362,6 @@ export const preloadPwaEssentials = (): void => {
             // 1. Preload Bible page and its offline bundle
             const currentPath = window.location.pathname;
             const currentLocale = currentPath.split('/')[1] || 'pt';
-            // The current Inertia asset version; sending it avoids a 409 version
-            // conflict on the X-Inertia prefetch below.
-            let inertiaVersion = '';
-
-            try {
-                const pageEl = document.getElementById('app')?.dataset.page
-                    ?? document
-                        .querySelector<HTMLElement>('[data-page]')
-                        ?.getAttribute('data-page');
-                inertiaVersion = pageEl ? (JSON.parse(pageEl).version ?? '') : '';
-            } catch {
-                inertiaVersion = '';
-            }
 
             const bibleUrls = [
                 `/${currentLocale}/library/bible`,
@@ -390,10 +377,11 @@ export const preloadPwaEssentials = (): void => {
 
             for (const bibleUrl of bibleUrls) {
                 try {
+                    // Fetch the plain document (no X-Inertia header) so the
+                    // server never answers 409 on a version mismatch. We then
+                    // read the Inertia props from the embedded data-page JSON.
                     const response = await fetch(bibleUrl, {
                         headers: {
-                            'X-Inertia': 'true',
-                            'X-Inertia-Version': inertiaVersion,
                             'X-PWA-APP': '1',
                             Accept: 'text/html, application/xhtml+xml',
                         },
@@ -401,7 +389,22 @@ export const preloadPwaEssentials = (): void => {
                     });
 
                     if (response.ok) {
-                        const data = await response.json();
+                        const html = await response.text();
+                        const match = html.match(
+                            /data-page="([^"]*)"/,
+                        );
+
+                        if (!match) {
+                            continue;
+                        }
+
+                        const decoded = match[1]
+                            .replace(/&quot;/g, '"')
+                            .replace(/&#039;/g, "'")
+                            .replace(/&amp;/g, '&')
+                            .replace(/&lt;/g, '<')
+                            .replace(/&gt;/g, '>');
+                        const data = JSON.parse(decoded);
                         versions = data?.props?.versions ?? [];
                         defaultVersionId = data?.props?.defaultVersion;
 
