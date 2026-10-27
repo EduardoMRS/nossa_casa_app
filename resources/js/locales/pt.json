@@ -1274,7 +1274,8 @@
             "visibility": "Visível no portal público",
             "delete_confirm": "Remover o grupo \"{name}\"?",
             "responsibles_count": "{count} responsável(is)",
-            "no_category": "Sem categoria"
+            "no_category": "Sem categoria",
+            "social_link": "Link de rede social / grupo de conversa"
         },
         "treasury": {
             "kicker": "Financeiro",
@@ -1741,7 +1742,8 @@
             "new_post": "Nova publicação",
             "new_event": "Novo evento",
             "gallery": "Abrir galeria",
-            "treasury": "Tesouraria"
+            "treasury": "Tesouraria",
+            "groups": "Grupos"
         },
         "insights": {
             "recent_activity": "Atividades recentes",
@@ -2058,7 +2060,15 @@
         "empty": "Nenhum grupo disponível ainda.",
         "leaders": "Responsáveis",
         "location": "Local de encontro",
-        "learn_more": "Saiba mais"
+        "learn_more": "Saiba mais",
+        "find_nearby": "Encontrar grupos perto de mim",
+        "nearest": "Grupo mais próximo",
+        "distance_away": "a {distance} km",
+        "join": "Entrar no grupo",
+        "join_social": "Entrar no grupo de conversa",
+        "locating": "Localizando…",
+        "location_denied": "Não foi possível obter sua localização.",
+        "away": "a {distance} km de você"
     },
     "treasury": {
         "title": "Contribuir",

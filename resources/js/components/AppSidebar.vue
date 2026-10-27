@@ -121,6 +121,12 @@ const canControlLiveStreams = computed(
         ) && Boolean(page.props.churchContext?.church),
 );
 
+const canManageGroups = computed(
+    () =>
+        ['leader', 'media', 'church_leader', 'system'].includes(role.value) &&
+        Boolean(page.props.churchContext?.church),
+);
+
 const mainNavItems = computed<NavItem[]>(() => {
     if (isPlatformDashboard.value) {
         return [
@@ -169,6 +175,15 @@ const mainNavItems = computed<NavItem[]>(() => {
                       title: t('dashboard.module.live_streams.title'),
                       href: '/dashboard/live-streams',
                       icon: Radio,
+                  },
+              ]
+            : []),
+        ...(canManageGroups.value
+            ? [
+                  {
+                      title: t('nav.groups'),
+                      href: '/dashboard/groups',
+                      icon: Users,
                   },
               ]
             : []),

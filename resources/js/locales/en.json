@@ -1274,7 +1274,8 @@
             "visibility": "Visible on the public portal",
             "delete_confirm": "Delete the group \"{name}\"?",
             "responsibles_count": "{count} leader(s)",
-            "no_category": "No category"
+            "no_category": "No category",
+            "social_link": "Social media / group chat link"
         },
         "treasury": {
             "kicker": "Finance",
@@ -1741,7 +1742,8 @@
             "new_post": "New post",
             "new_event": "New event",
             "gallery": "Open gallery",
-            "treasury": "Treasury"
+            "treasury": "Treasury",
+            "groups": "Groups"
         },
         "insights": {
             "recent_activity": "Recent activity",
@@ -2058,7 +2060,15 @@
         "empty": "No groups available yet.",
         "leaders": "Leaders",
         "location": "Meeting place",
-        "learn_more": "Learn more"
+        "learn_more": "Learn more",
+        "find_nearby": "Find groups near me",
+        "nearest": "Nearest group",
+        "distance_away": "{distance} km away",
+        "join": "Join the group",
+        "join_social": "Enter group chat",
+        "locating": "Locating…",
+        "location_denied": "We could not get your location.",
+        "away": "{distance} km from you"
     },
     "treasury": {
         "title": "Give",

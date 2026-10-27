@@ -129,7 +129,8 @@ test('the public groups page requires a resolved church', function (): void {
     Group::factory()->create(['is_public' => true]);
     ($this->bindChurch)(null);
 
-    expect(fn () => app(GroupPortalController::class)->index())->toThrow(HttpException::class);
+    expect(fn () => app(GroupPortalController::class)->index(Request::create('/groups')))
+        ->toThrow(HttpException::class);
 });
 
 test('the public groups page only lists groups of the resolved church', function (): void {
@@ -138,10 +139,11 @@ test('the public groups page only lists groups of the resolved church', function
     Group::factory()->create(['name' => 'Célula alheia', 'is_public' => true]);
     ($this->bindChurch)($church);
 
-    $response = app(GroupPortalController::class)->index();
+    $response = app(GroupPortalController::class)->index(Request::create('/groups'));
     $props = (new ReflectionProperty($response, 'props'))->getValue($response);
+    $names = collect($props['categories'])->flatMap(fn (array $section) => collect($section['groups'])->pluck('name'))->all();
 
-    expect(collect($props['groups'])->pluck('name')->all())->toBe(['Nossa célula']);
+    expect($names)->toBe(['Nossa célula']);
 });
 
 test('community leadership sees treasury of its churches read-only, outsiders see nothing', function (): void {

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug');
             $table->text('description')->nullable();
+            $table->string('social_link', 2048)->nullable();
             $table->boolean('is_public')->default(true);
             $table->timestamps();
 

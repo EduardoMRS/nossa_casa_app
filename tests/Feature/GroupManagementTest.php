@@ -3,11 +3,13 @@
 use App\Enums\CategoryType;
 use App\Enums\UserRole;
 use App\Http\Controllers\Admin\GroupController;
+use App\Http\Controllers\GroupPortalController;
 use App\Models\Category;
 use App\Models\Church;
 use App\Models\Group;
 use App\Models\User;
-use App\Services\UniqueSlugger;
+use App\Support\ChurchContext;
+use App\Support\ChurchDomainContext;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -26,7 +28,7 @@ function makeChurchWithLeader(): array
 
 function groupController(): GroupController
 {
-    return new GroupController(app(UniqueSlugger::class));
+    return app(GroupController::class);
 }
 
 /**
@@ -182,4 +184,50 @@ test('media, leader and pastor can manage groups; members cannot', function (): 
     $church->assignMember($member);
     expect(fn () => groupController()->store(groupRequest($member->fresh(), ['name' => 'Proibido'])))
         ->toThrow(HttpException::class);
+});
+
+test('a group stores a social media link and rejects an invalid url', function (): void {
+    [$church, $leader] = makeChurchWithLeader();
+    $this->actingAs($leader);
+
+    groupController()->store(groupRequest($leader, [
+        'name' => 'Célula WhatsApp',
+        'social_link' => 'https://chat.whatsapp.com/abc123',
+    ]));
+
+    expect(Group::query()->firstOrFail()->social_link)->toBe('https://chat.whatsapp.com/abc123');
+
+    expect(fn () => groupController()->store(groupRequest($leader, [
+        'name' => 'Inválida',
+        'social_link' => 'não-é-url',
+    ])))->toThrow(ValidationException::class);
+});
+
+test('the public portal groups by category and computes distance to the nearest group', function (): void {
+    $church = Church::factory()->create();
+
+    $cell = Category::query()->create(['church_id' => $church->id, 'name' => 'Célula', 'slug' => 'celula', 'type' => CategoryType::GROUP->value]);
+    $study = Category::query()->create(['church_id' => $church->id, 'name' => 'Estudo', 'slug' => 'estudo', 'type' => CategoryType::GROUP->value]);
+
+    $near = Group::factory()->for($church)->create(['name' => 'Perto', 'is_public' => true]);
+    $near->categories()->attach($cell->id);
+    $near->address()->create(['state' => 'SP', 'city' => 'SP', 'street' => 'A', 'zipcode' => '01000-000', 'latitude' => -23.56, 'longitude' => -46.64]);
+
+    $far = Group::factory()->for($church)->create(['name' => 'Longe', 'is_public' => true]);
+    $far->categories()->attach($study->id);
+    $far->address()->create(['state' => 'RJ', 'city' => 'RJ', 'street' => 'B', 'zipcode' => '20000-000', 'latitude' => -22.90, 'longitude' => -43.20]);
+
+    $context = app(ChurchDomainContext::class);
+    foreach (['church' => $church, 'resolved' => true, 'source' => 'test'] as $property => $value) {
+        (new ReflectionProperty(ChurchContext::class, $property))->setValue($context, $value);
+    }
+
+    $request = Request::create('/groups', 'GET', ['latitude' => -23.55, 'longitude' => -46.63]);
+    $response = app(GroupPortalController::class)->index($request);
+    $props = (new ReflectionProperty($response, 'props'))->getValue($response);
+
+    expect(collect($props['categories'])->pluck('category')->all())->toBe(['Célula', 'Estudo'])
+        ->and($props['nearest']['name'])->toBe('Perto')
+        ->and($props['nearest']['distance_km'])->toBeLessThan(5.0)
+        ->and($props['hasLocation'])->toBeTrue();
 });

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Group;
 use App\Models\User;
+use App\Services\AddressGeocoder;
 use App\Services\UniqueSlugger;
 use App\Support\ChurchDomainContext;
 use Illuminate\Http\RedirectResponse;
@@ -28,7 +29,10 @@ class GroupController extends Controller
         UserRole::LEADER, UserRole::MEDIA, UserRole::CHURCH_LEADER,
     ];
 
-    public function __construct(private readonly UniqueSlugger $slugs) {}
+    public function __construct(
+        private readonly UniqueSlugger $slugs,
+        private readonly AddressGeocoder $geocoder,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -45,6 +49,7 @@ class GroupController extends Controller
                 'name' => $group->name,
                 'slug' => $group->slug,
                 'description' => $group->description,
+                'social_link' => $group->social_link,
                 'is_public' => $group->is_public,
                 'category_ids' => $group->categories->pluck('id')->all(),
                 'responsible_ids' => $group->responsibleUsers->pluck('id')->all(),
@@ -76,6 +81,7 @@ class GroupController extends Controller
             'name' => $validated['name'],
             'slug' => $this->slugs->make($validated['name'], 'groups', scope: ['church_id' => $churchId]),
             'description' => $validated['description'] ?? null,
+            'social_link' => $validated['social_link'] ?? null,
             'is_public' => $validated['is_public'] ?? true,
         ]);
 
@@ -94,6 +100,7 @@ class GroupController extends Controller
         $group->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'social_link' => $validated['social_link'] ?? null,
             'is_public' => $validated['is_public'] ?? true,
         ]);
 
@@ -136,6 +143,7 @@ class GroupController extends Controller
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
+            'social_link' => ['nullable', 'url', 'max:2048'],
             'is_public' => ['boolean'],
             'category_ids' => ['array'],
             'category_ids.*' => [
@@ -182,7 +190,10 @@ class GroupController extends Controller
             return;
         }
 
-        $group->address()->updateOrCreate([], $address);
+        // Resolve coordinates so the public listing can compute distances.
+        $coordinates = $this->geocoder->coordinates($address) ?? [];
+
+        $group->address()->updateOrCreate([], [...$address, ...$coordinates]);
     }
 
     private function currentChurchId(Request $request): ?string

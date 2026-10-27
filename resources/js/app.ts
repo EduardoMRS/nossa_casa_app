@@ -98,6 +98,8 @@ createInertiaApp({
             'Gallery/Index',
             'Library/Index',
             'LiveStreams/Show',
+            'Groups/Index',
+            'Treasury/Contribute',
         ];
 
         switch (true) {

@@ -233,12 +233,13 @@ class DashboardInsights
         $createEvent = ['label_key' => 'dashboard.shortcuts.new_event', 'href' => route('events.create')];
         $openGallery = ['label_key' => 'dashboard.shortcuts.gallery', 'href' => route('gallery.index')];
         $openTreasury = ['label_key' => 'dashboard.shortcuts.treasury', 'href' => route('admin.treasury.settings')];
+        $openGroups = ['label_key' => 'dashboard.shortcuts.groups', 'href' => route('admin.groups.index')];
 
         return match ($role) {
-            UserRole::MEDIA => [$createPost, $openGallery],
-            UserRole::LEADER => [$createEvent, $createPost],
+            UserRole::MEDIA => [$createPost, $openGallery, $openGroups],
+            UserRole::LEADER => [$createEvent, $createPost, $openGroups],
             UserRole::TREASURER => [$openTreasury],
-            UserRole::CHURCH_LEADER => [$createPost, $createEvent, $openGallery, $openTreasury],
+            UserRole::CHURCH_LEADER => [$createPost, $createEvent, $openGallery, $openGroups, $openTreasury],
             UserRole::SUPERADMIN, UserRole::SYSTEM => [$createPost, $createEvent, $openGallery],
             default => [$openGallery],
         };

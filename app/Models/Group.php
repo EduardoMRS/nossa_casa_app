@@ -26,6 +26,7 @@ class Group extends Model
         'name',
         'slug',
         'description',
+        'social_link',
         'is_public',
     ];
 

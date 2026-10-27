@@ -24,6 +24,7 @@ type GroupItem = {
     name: string;
     slug: string;
     description: string | null;
+    social_link: string | null;
     is_public: boolean;
     category_ids: string[];
     responsible_ids: string[];
@@ -58,6 +59,7 @@ const emptyAddress = (): GroupAddress => ({
 const form = reactive<{
     name: string;
     description: string;
+    social_link: string;
     is_public: boolean;
     category_ids: string[];
     responsible_ids: string[];
@@ -65,6 +67,7 @@ const form = reactive<{
 }>({
     name: '',
     description: '',
+    social_link: '',
     is_public: true,
     category_ids: [],
     responsible_ids: [],
@@ -75,6 +78,7 @@ const openEditor = (group?: GroupItem): void => {
     editingId.value = group?.id ?? null;
     form.name = group?.name ?? '';
     form.description = group?.description ?? '';
+    form.social_link = group?.social_link ?? '';
     form.is_public = group?.is_public ?? true;
     form.category_ids = [...(group?.category_ids ?? [])];
     form.responsible_ids = [...(group?.responsible_ids ?? [])];
@@ -227,7 +231,7 @@ const responsibleNames = (group: GroupItem): string =>
             :title="editingId ? t('admin.groups.edit') : t('admin.groups.new')"
             scrollable
         >
-            <form class="space-y-4" @submit.prevent="save">
+            <form id="group-form" class="space-y-4" @submit.prevent="save">
                 <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.groups.name')
                     }}<input
@@ -247,6 +251,19 @@ const responsibleNames = (group: GroupItem): string =>
                         class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
                     ></textarea>
                 </label>
+
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.groups.social_link')
+                    }}<input
+                        v-model="form.social_link"
+                        type="url"
+                        inputmode="url"
+                        placeholder="https://chat.whatsapp.com/..."
+                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                /></label>
+                <p v-if="errors.social_link" class="text-xs text-rose-600">
+                    {{ errors.social_link }}
+                </p>
 
                 <label class="block text-xs font-bold text-foreground"
                     >{{ t('admin.groups.category')
@@ -308,6 +325,11 @@ const responsibleNames = (group: GroupItem): string =>
                         v-model="form.address.state"
                         class="rounded-lg border-input bg-background text-sm text-foreground"
                     />
+                    <input
+                        v-model="form.address.zipcode"
+                        placeholder="CEP"
+                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                    />
                 </fieldset>
 
                 <label
@@ -316,23 +338,25 @@ const responsibleNames = (group: GroupItem): string =>
                     <input v-model="form.is_public" type="checkbox" />
                     {{ t('admin.groups.visibility') }}
                 </label>
-
-                <div class="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        class="rounded-lg px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
-                        @click="modalOpen = false"
-                    >
-                        {{ t('actions.cancel') }}
-                    </button>
-                    <button
-                        :disabled="processing"
-                        class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
-                    >
-                        {{ t('actions.save') }}
-                    </button>
-                </div>
             </form>
+
+            <template #footer>
+                <button
+                    type="button"
+                    class="rounded-lg px-4 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
+                    @click="modalOpen = false"
+                >
+                    {{ t('actions.cancel') }}
+                </button>
+                <button
+                    type="submit"
+                    form="group-form"
+                    :disabled="processing"
+                    class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+                >
+                    {{ t('actions.save') }}
+                </button>
+            </template>
         </AppModal>
     </main>
 </template>
