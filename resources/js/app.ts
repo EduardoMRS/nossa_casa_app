@@ -100,6 +100,7 @@ createInertiaApp({
             'LiveStreams/Show',
             'Groups/Index',
             'Treasury/Contribute',
+            'Chat/Index',
         ];
 
         switch (true) {

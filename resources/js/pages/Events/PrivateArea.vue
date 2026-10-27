@@ -10,6 +10,7 @@ import {
     MapPin,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import ChatPanel from '@/components/ChatPanel.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
 import { usePublicTemplate } from '@/composables/usePublicTemplate';
@@ -22,6 +23,8 @@ const props = defineProps<{
     event: {
         title: string;
         slug: string;
+        id: string;
+        chat_enabled: boolean;
         description_html: string;
         start_time: string;
         end_time: string;
@@ -345,6 +348,10 @@ const formatPublishedAt = (value: string): string =>
                         {{ t('events.private.empty') }}
                     </p>
                 </div>
+            </section>
+
+            <section class="mt-8 h-[70vh]">
+                <ChatPanel context-type="event" :context-id="event.id" />
             </section>
         </main>
         <PublicFooter show-locale />

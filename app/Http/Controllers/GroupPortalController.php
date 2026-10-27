@@ -42,6 +42,7 @@ class GroupPortalController extends Controller
                 'slug' => $group->slug,
                 'description' => $group->description,
                 'social_link' => $group->social_link,
+                'chat_enabled' => $group->chat_enabled,
                 'categories' => $group->categories->pluck('name')->values()->all(),
                 'responsibles' => $group->responsibleUsers->map(fn ($user): string => $user->name)->all(),
                 'location' => $group->address?->to_string,

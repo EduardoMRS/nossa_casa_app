@@ -141,7 +141,8 @@
         "network": "Network",
         "groups": "Groups",
         "give": "Give",
-        "treasury": "Treasury"
+        "treasury": "Treasury",
+        "chat": "Chat"
     },
     "navigation": {
         "menu": "Navigation menu",
@@ -2106,6 +2107,9 @@
         "link_open": "Open link",
         "sending": "Sending…",
         "attachment_too_large": "File is too large (max 50 MB).",
-        "error": "Could not send the message."
+        "error": "Could not send the message.",
+        "my_conversations": "My conversations",
+        "select_conversation": "Select a conversation",
+        "no_conversations": "You have no conversations yet."
     }
 }

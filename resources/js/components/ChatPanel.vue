@@ -6,10 +6,18 @@ import type { ChatConversation, ChatMessage } from '@/composables/useChat';
 import { useChat } from '@/composables/useChat';
 import { useI18n } from '@/lib/i18n';
 
-const props = defineProps<{
-    contextType: 'event' | 'group' | 'classroom';
-    contextId: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        contextType?: 'event' | 'group' | 'classroom';
+        contextId?: string;
+        conversationId?: string;
+    }>(),
+    {
+        contextType: undefined,
+        contextId: undefined,
+        conversationId: undefined,
+    },
+);
 
 const { t } = useI18n();
 const chat = useChat();
@@ -59,11 +67,20 @@ const load = async (): Promise<void> => {
     errorMessage.value = '';
 
     try {
-        const payload = await chat.openContext(props.contextType, props.contextId);
+        const payload =
+            props.conversationId !== undefined
+                ? await chat.loadMessages(props.conversationId)
+                : await chat.openContext(
+                      props.contextType as string,
+                      props.contextId as string,
+                  );
         conversation.value = payload.conversation;
         canModerate.value = payload.can_moderate;
         canPost.value = payload.can_post;
-        chatEnabled.value = payload.conversation.context?.chat_enabled ?? false;
+        chatEnabled.value =
+            payload.conversation.type === 'direct'
+                ? true
+                : (payload.conversation.context?.chat_enabled ?? false);
         messages.value = [...payload.messages.data].reverse();
         nextPage.value = payload.messages.next_page_url ? 2 : null;
         scrollToBottom();
@@ -147,12 +164,18 @@ const remove = async (message: ChatMessage): Promise<void> => {
 };
 
 const toggleChat = async (): Promise<void> => {
+    if (props.contextType === undefined || props.contextId === undefined) {
+        return;
+    }
+
     const next = !chatEnabled.value;
     const result = await chat.toggleContext(props.contextType, props.contextId, next);
     chatEnabled.value = result.chat_enabled;
     canPost.value = result.chat_enabled && canPost.value;
     await load();
 };
+
+const isContextChat = props.contextType !== undefined;
 
 const senderName = (message: ChatMessage): string =>
     message.is_mine
@@ -208,7 +231,7 @@ onUnmounted(leaveRealtime);
                 {{ conversation?.title ?? t('chat.title') }}
             </h2>
             <button
-                v-if="canModerate"
+                v-if="canModerate && isContextChat"
                 type="button"
                 class="rounded-lg border border-border px-3 py-1.5 text-xs font-bold"
                 :class="

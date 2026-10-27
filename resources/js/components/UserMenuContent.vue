@@ -8,6 +8,7 @@ import {
     House,
     LayoutDashboard,
     LogOut,
+    MessageCircle,
     Settings,
     Undo2,
 } from '@lucide/vue';
@@ -194,6 +195,12 @@ const transferMembership = async (): Promise<void> => {
             >
                 <BookOpen class="mr-2 size-4" />
                 {{ t('nav.classrooms') }}
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full cursor-pointer" href="/chat" prefetch>
+                <MessageCircle class="mr-2 size-4" />
+                {{ t('nav.chat') }}
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem :as-child="true">

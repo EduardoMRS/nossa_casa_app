@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { ExternalLink, MapPin, Navigation, Users } from '@lucide/vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ExternalLink, MapPin, MessageCircle, Navigation, Users } from '@lucide/vue';
 import { ref } from 'vue';
 import PublicFooter from '@/components/PublicFooter.vue';
 import PublicHeader from '@/components/PublicHeader.vue';
@@ -12,6 +12,7 @@ type PublicGroup = {
     slug: string;
     description: string | null;
     social_link: string | null;
+    chat_enabled: boolean;
     categories: string[];
     responsibles: string[];
     location: string | null;
@@ -167,6 +168,15 @@ const findNearby = (): void => {
                                     t('groups.join_social')
                                 }}
                             </a>
+                            <Link
+                                v-if="group.chat_enabled"
+                                href="/chat"
+                                class="mt-2 inline-flex items-center justify-center gap-2 self-start rounded-lg border border-border px-3 py-2 text-xs font-bold text-foreground hover:bg-muted"
+                            >
+                                <MessageCircle class="size-4" />{{
+                                    t('chat.title')
+                                }}
+                            </Link>
                         </li>
                     </ul>
                 </section>

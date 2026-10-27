@@ -178,6 +178,7 @@ Route::group([
         ->middleware('throttle:10,1')
         ->name('treasury.contribute');
     Route::middleware('auth')->group(function () {
+        Route::get('/chat', fn () => Inertia::render('Chat/Index'))->name('chat.index');
         Route::get('/classrooms', [ClassroomPortalController::class, 'index'])->name('portal.classrooms.index');
         Route::get('/classrooms/{classroom:slug}', [ClassroomPortalController::class, 'show'])->name('portal.classrooms.show');
         Route::post('/classrooms/{classroom:slug}/activities/{activity}/submissions', [ClassroomActivitySubmissionController::class, 'store'])->name('classrooms.activities.submit');

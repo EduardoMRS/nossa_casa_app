@@ -141,7 +141,8 @@
         "network": "Red",
         "groups": "Grupos",
         "give": "Contribuir",
-        "treasury": "Tesorería"
+        "treasury": "Tesorería",
+        "chat": "Chat"
     },
     "navigation": {
         "menu": "Menú de navegación",
@@ -2106,6 +2107,9 @@
         "link_open": "Abrir enlace",
         "sending": "Enviando…",
         "attachment_too_large": "El archivo es demasiado grande (máx. 50 MB).",
-        "error": "No se pudo enviar el mensaje."
+        "error": "No se pudo enviar el mensaje.",
+        "my_conversations": "Mis conversaciones",
+        "select_conversation": "Selecciona una conversación",
+        "no_conversations": "Aún no tienes conversaciones."
     }
 }

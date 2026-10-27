@@ -37,6 +37,7 @@ class EventPrivateAreaController extends Controller
                 'id' => $event->id,
                 'title' => $event->title,
                 'slug' => $event->slug,
+                'chat_enabled' => $event->chat_enabled,
                 'description_html' => $this->embedRenderer->render($event->description ?? '', $event->church_id),
                 'start_time' => $event->start_time,
                 'end_time' => $event->end_time,
