@@ -36,7 +36,7 @@ const handleLogout = () => {
 };
 
 defineProps<Props>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { confirm } = useConfirmDialog();
 const page = usePage<{
     auth?: {
@@ -57,7 +57,7 @@ const churchContext = computed(
             | {
                   id?: string;
                   isForeignChurch?: boolean;
-                  church?: { name: string } | null;
+                  church?: { id?: string; name: string } | null;
                   userChurch?: { name: string; url: string; id: string; } | null;
               }
             | undefined,
@@ -79,7 +79,7 @@ const hasClassroomAccess = computed(
 // Chat only works inside a resolved church the user belongs to; showing it
 // elsewhere leads to a redirect/404 on a route the context can't serve.
 const canUseChat = computed(
-    () => Boolean(churchContext.value?.id) && !isForeignChurch.value,
+    () => Boolean(churchContext.value?.church?.id) && !isForeignChurch.value,
 );
 
 const transferMembership = async (): Promise<void> => {
@@ -203,7 +203,10 @@ const transferMembership = async (): Promise<void> => {
             </Link>
         </DropdownMenuItem>
         <DropdownMenuItem v-if="canUseChat" :as-child="true">
-            <Link class="block w-full cursor-pointer" href="/chat">
+            <Link
+                class="block w-full cursor-pointer"
+                :href="`/${locale}/chat`"
+            >
                 <MessageCircle class="mr-2 size-4" />
                 {{ t('nav.chat') }}
             </Link>

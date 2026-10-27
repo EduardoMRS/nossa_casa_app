@@ -10,6 +10,7 @@ import {
     LibraryBig,
     ListChecks,
     Megaphone,
+    MessageCircle,
     MessageSquareWarning,
     Network as NetworkIcon,
     Settings2,
@@ -57,7 +58,7 @@ import { index as postsIndex } from '@/routes/posts';
 import { ui as apiDocs } from '@/routes/scramble/docs';
 import type { NavItem } from '@/types';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { unitLabel } = useTerminology();
 const brandingSection = (section: string): string =>
     `${brandingEdit().url}#settings-${section}`;
@@ -72,6 +73,7 @@ const page = usePage<{
     separateKidsMinistry?: boolean;
     churchContext?: {
         isMainDomain?: boolean;
+        isForeignChurch?: boolean;
         church?: { id: string } | null;
     };
     permissions?: { manageBranding?: boolean };
@@ -134,6 +136,15 @@ const canManageTreasury = computed(
     () =>
         ['treasurer', 'church_leader'].includes(role.value) &&
         Boolean(page.props.churchContext?.church),
+);
+
+// Chat is available to any member within their resolved church (not on the
+// platform dashboard and not while visiting another church).
+const canUseChat = computed(
+    () =>
+        Boolean(page.props.churchContext?.church) &&
+        page.props.churchContext?.isForeignChurch !== true &&
+        !isPlatformDashboard.value,
 );
 
 const mainNavItems = computed<NavItem[]>(() => {
@@ -202,6 +213,15 @@ const mainNavItems = computed<NavItem[]>(() => {
                       title: t('nav.treasury'),
                       href: '/dashboard/treasury',
                       icon: Wallet,
+                  },
+              ]
+            : []),
+        ...(canUseChat.value
+            ? [
+                  {
+                      title: t('nav.chat'),
+                      href: `/${locale.value}/chat`,
+                      icon: MessageCircle,
                   },
               ]
             : []),

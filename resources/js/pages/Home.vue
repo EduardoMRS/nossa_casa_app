@@ -492,7 +492,7 @@ const startChurchChat = async (): Promise<void> => {
             return;
         }
 
-        router.visit('/chat');
+        router.visit(`/${locale.value}/chat`);
     } catch {
         chatError.value = t('home.chat.unavailable');
     } finally {
@@ -1087,6 +1087,7 @@ const startChurchChat = async (): Promise<void> => {
                 </article>
 
                 <article
+                    v-if="authenticatedUser"
                     class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
                 >
                     <div class="flex items-start gap-3">
@@ -1110,7 +1111,6 @@ const startChurchChat = async (): Promise<void> => {
                     </p>
 
                     <button
-                        v-if="authenticatedUser"
                         :disabled="chatStarting"
                         class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
                         :style="{ backgroundColor: 'var(--church-primary)' }"
@@ -1119,14 +1119,6 @@ const startChurchChat = async (): Promise<void> => {
                         <MessageCircle class="size-4" />
                         {{ t('home.chat.button') }}
                     </button>
-                    <Link
-                        v-else
-                        href="/login"
-                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700 hover:bg-slate-50"
-                    >
-                        <MessageCircle class="size-4" />
-                        {{ t('home.chat.login') }}
-                    </Link>
                 </article>
             </section>
 
