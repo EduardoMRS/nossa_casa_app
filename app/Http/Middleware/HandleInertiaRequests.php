@@ -128,6 +128,11 @@ class HandleInertiaRequests extends Middleware
             if (is_array($savedBranding)) {
                 $branding = array_merge($branding, $savedBranding);
             }
+            // The banner should default to the church identity, not the generic
+            // platform name, when no custom branding text was saved.
+            if (blank($branding['brand_name']) || $branding['brand_name'] === config('app.name')) {
+                $branding['brand_name'] = $brandingChurch->name;
+            }
             $branding['address'] = $addressModel?->to_string ?? $branding['address'];
             $branding['latitude'] = $addressModel?->latitude ?? $branding['latitude'];
             $branding['longitude'] = $addressModel?->longitude ?? $branding['longitude'];

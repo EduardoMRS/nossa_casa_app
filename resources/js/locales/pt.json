@@ -1446,6 +1446,12 @@
             "button": "Iniciar conversa",
             "login": "Entre para falar com a igreja",
             "unavailable": "Nenhum contato disponível no momento."
+        },
+        "latest_media": {
+            "kicker": "Galeria",
+            "title": "Últimas mídias",
+            "view_all": "Abrir galeria",
+            "empty": "Nenhuma mídia publicada ainda."
         }
     },
     "weekdays": {

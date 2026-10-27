@@ -156,6 +156,39 @@
         letter-spacing: -0.025em;
     }
 
+    /* Editorial: magazine feel — accent rule under headings, roomier cards and
+       a stronger first section. */
+    .public-template-page[data-public-template='editorial'] main > section h2 {
+        position: relative;
+        padding-bottom: 0.5rem;
+    }
+
+    .public-template-page[data-public-template='editorial'] main > section h2::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 2.5rem;
+        height: 3px;
+        border-radius: 9999px;
+        background: var(--church-accent, var(--church-primary, #342f87));
+    }
+
+    .public-template-page[data-public-template='editorial'] main > section:first-of-type {
+        --public-section-radius: 2.25rem;
+    }
+
+    .public-template-page[data-public-template='editorial'] main article {
+        border-radius: 1.1rem;
+        transition:
+            transform 0.25s ease,
+            box-shadow 0.25s ease;
+    }
+
+    .public-template-page[data-public-template='editorial'] main article:hover {
+        transform: translateY(-3px);
+    }
+
     .public-template-page[data-public-template='minimal'] {
         --public-content-width: 64rem;
         background: #fff !important;
@@ -173,6 +206,26 @@
     .public-template-page[data-public-template='minimal'] main article,
     .public-template-page[data-public-template='minimal'] main section {
         box-shadow: none !important;
+    }
+
+    /* Minimal: flat, airy, monochrome — thin borders instead of shadows and
+       more breathing room between blocks. */
+    .public-template-page[data-public-template='minimal'] main {
+        gap: 2.75rem;
+    }
+
+    .public-template-page[data-public-template='minimal'] main article,
+    .public-template-page[data-public-template='minimal'] main section {
+        border-color: color-mix(in srgb, var(--church-primary, #342f87) 14%, #e2e8f0);
+    }
+
+    .public-template-page[data-public-template='minimal'] main h2 {
+        font-weight: 800;
+        letter-spacing: -0.01em;
+    }
+
+    .public-template-page[data-public-template='minimal'] main [class*='rounded-'] {
+        border-radius: 0.75rem;
     }
 }
 

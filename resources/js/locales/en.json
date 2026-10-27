@@ -1446,6 +1446,12 @@
             "button": "Start conversation",
             "login": "Sign in to talk to the church",
             "unavailable": "No contact is available right now."
+        },
+        "latest_media": {
+            "kicker": "Gallery",
+            "title": "Latest media",
+            "view_all": "Open gallery",
+            "empty": "No media published yet."
         }
     },
     "weekdays": {

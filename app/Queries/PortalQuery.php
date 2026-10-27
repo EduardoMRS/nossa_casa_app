@@ -117,6 +117,23 @@ final readonly class PortalQuery
                 'mimetype' => $media->mimetype,
                 'created_at' => $media->created_at?->toISOString(),
             ])->all();
+        $latestMedia = Media::query()
+            ->where('church_id', $churchId)
+            ->visible()
+            ->where('gallery', true)
+            ->whereDoesntHave('recording')
+            ->with('church:id,domain')
+            ->latest()
+            ->limit(8)
+            ->get()
+            ->map(fn (Media $media): array => [
+                'id' => $media->id,
+                'title' => $media->title,
+                'url' => $media->preview_url,
+                'full_url' => $media->url,
+                'mimetype' => $media->mimetype,
+                'created_at' => $media->created_at?->toISOString(),
+            ])->all();
         $verse = data_get($church->settings?->options, 'bible.daily_verse');
         $dailyVerse = is_array($verse)
             && in_array($verse['version'] ?? null, $this->bibleAccess->forChurch($church)['versions'], true)
@@ -140,6 +157,7 @@ final readonly class PortalQuery
             'featuredEvents' => $featuredEvents,
             'latestPosts' => $latestPosts,
             'latestRecordings' => $latestRecordings,
+            'latestMedia' => $latestMedia,
             'calendarEvents' => $calendarEvents,
             'dailyVerse' => $dailyVerse,
             'liveStream' => $liveStream ? [

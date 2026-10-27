@@ -61,6 +61,15 @@ type RecordingCard = {
     created_at: string;
 };
 
+type MediaCard = {
+    id: string;
+    title: string | null;
+    url: string;
+    full_url: string;
+    mimetype: string;
+    created_at: string;
+};
+
 type CalendarEvent = {
     id: string;
     title: string;
@@ -131,6 +140,7 @@ const props = defineProps<{
     featuredEvents: EventCard[];
     latestPosts: PostCard[];
     latestRecordings: RecordingCard[];
+    latestMedia?: MediaCard[];
     calendarEvents: CalendarEvent[];
     dailyVerse: DailyVerse | null;
 }>();
@@ -164,13 +174,19 @@ const directionsUrl = computed<string | null>(() => {
     return null;
 });
 const nextEvent = computed(() => props.featuredEvents[0] ?? null);
-const brandInitials = computed(() =>
-    (branding.value.brand_name || t('portal.brand_name'))
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join(''),
+
+// Banner identity: church name as the title and its slogan (tagline) as the
+// kicker, with no generic fallbacks. The subtitle is only shown when the church
+// defined one, avoiding redundancy with the header (logo + name + slogan).
+const heroTitle = computed(
+    () =>
+        branding.value.banner_title?.trim() ||
+        branding.value.brand_name?.trim() ||
+        t('portal.brand_name'),
+);
+const heroKicker = computed(() => branding.value.tagline?.trim() || '');
+const heroSubtitle = computed(
+    () => branding.value.banner_subtitle?.trim() || '',
 );
 const weeklySchedule = computed<WeeklySchedule[]>(() =>
     Array.isArray(branding.value.weekly_schedule)
@@ -217,6 +233,8 @@ const selectedDateKey = ref('');
 const calendarDialogOpen = ref(false);
 const selectedRecording = ref<RecordingCard | null>(null);
 const featuredRecordings = computed(() => props.latestRecordings.slice(0, 4));
+const galleryItems = computed(() => (props.latestMedia ?? []).slice(0, 8));
+const isImageMedia = (mime: string): boolean => mime.startsWith('image/');
 const socialLinks = computed(() =>
     Object.entries(branding.value.social_links ?? {})
         .filter((entry): entry is [string, string] => Boolean(entry[1]))
@@ -519,49 +537,22 @@ const startChurchChat = async (): Promise<void> => {
                     class="relative z-10 flex flex-col justify-center"
                     :class="{ 'md:col-span-2': !nextEvent }"
                 >
-                    <div
-                        class="mb-3 flex items-center gap-2.5 sm:mb-7 sm:gap-3"
-                    >
-                        <span
-                            class="grid size-10 place-items-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-base font-black shadow-lg backdrop-blur sm:size-12 sm:rounded-2xl sm:text-lg"
-                        >
-                            <img
-                                v-if="branding.logo_url"
-                                :src="branding.logo_url"
-                                :alt="
-                                    branding.brand_name ||
-                                    t('portal.brand_name')
-                                "
-                                class="h-full w-full bg-white object-contain p-1.5"
-                            />
-                            <template v-else>{{ brandInitials }}</template>
-                        </span>
-                        <span>
-                            <strong class="block text-sm font-black">{{
-                                branding.brand_name || t('portal.brand_name')
-                            }}</strong>
-                            <small class="text-xs text-white/65">{{
-                                branding.tagline || t('home.hero.kicker')
-                            }}</small>
-                        </span>
-                    </div>
                     <p
+                        v-if="heroKicker"
                         class="mb-2 font-mono text-[9px] font-bold tracking-[0.2em] text-amber-300 uppercase sm:mb-3 sm:text-[10px] sm:tracking-[0.22em]"
                     >
-                        {{ t('home.hero.kicker') }}
+                        {{ heroKicker }}
                     </p>
                     <h1
                         class="max-w-3xl text-[1.75rem] leading-[1.08] font-black tracking-tight text-balance sm:text-4xl lg:text-5xl"
                     >
-                        {{ branding.banner_title || t('home.hero.title') }}
+                        {{ heroTitle }}
                     </h1>
                     <p
+                        v-if="heroSubtitle"
                         class="mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:mt-5 sm:text-base sm:leading-7"
                     >
-                        {{
-                            branding.banner_subtitle ||
-                            t('home.hero.description')
-                        }}
+                        {{ heroSubtitle }}
                     </p>
 
                     <div
@@ -817,6 +808,56 @@ const startChurchChat = async (): Promise<void> => {
                             }}</small>
                         </span>
                     </button>
+                </div>
+            </section>
+
+            <section v-if="galleryItems.length">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p
+                            class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"
+                        >
+                            {{ t('home.latest_media.kicker') }}
+                        </p>
+                        <h2
+                            class="[font-family:Manrope,ui-sans-serif] text-2xl font-black"
+                        >
+                            {{ t('home.latest_media.title') }}
+                        </h2>
+                    </div>
+                    <Link
+                        :href="galleryIndex()"
+                        class="text-xs font-bold text-indigo-600"
+                    >
+                        {{ t('home.latest_media.view_all') }}
+                    </Link>
+                </div>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    <Link
+                        v-for="item in galleryItems"
+                        :key="item.id"
+                        :href="galleryIndex(undefined, { query: { media: item.id } })"
+                        class="group relative block aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm"
+                    >
+                        <img
+                            v-if="isImageMedia(item.mimetype)"
+                            :src="item.url"
+                            :alt="item.title ?? ''"
+                            loading="lazy"
+                            class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                        <span
+                            v-else
+                            class="absolute inset-0 grid place-items-center bg-slate-950 text-white"
+                        >
+                            <Play class="size-7 fill-current" />
+                        </span>
+                        <span
+                            v-if="item.title"
+                            class="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/70 to-transparent px-2 py-2 text-[11px] font-semibold text-white"
+                            >{{ item.title }}</span
+                        >
+                    </Link>
                 </div>
             </section>
 
