@@ -53,6 +53,11 @@ return [
         'cache_ttl' => (int) env('IP_GEOLOCATION_CACHE_TTL', 86400),
     ],
 
+    'link_preview' => [
+        'enabled' => env('LINK_PREVIEW_ENABLED', true),
+        'user_agent' => env('LINK_PREVIEW_USER_AGENT', env('APP_NAME', 'Laravel').'/link-preview'),
+    ],
+
     'native_push' => [
         'default' => env('NATIVE_PUSH_PROVIDER', 'null'),
         'fcm' => [

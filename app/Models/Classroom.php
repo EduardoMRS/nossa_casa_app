@@ -31,6 +31,7 @@ class Classroom extends Model
         'max_members',
         'church_id',
         'teacher_id',
+        'chat_enabled',
     ];
 
     protected $appends = [
@@ -44,6 +45,7 @@ class Classroom extends Model
             'is_kids' => 'boolean',
             'portal_enabled' => 'boolean',
             'portal_settings' => 'array',
+            'chat_enabled' => 'boolean',
         ];
     }
 

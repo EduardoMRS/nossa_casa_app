@@ -28,6 +28,7 @@ class Group extends Model
         'description',
         'social_link',
         'is_public',
+        'chat_enabled',
     ];
 
     protected $appends = [
@@ -41,6 +42,7 @@ class Group extends Model
     {
         return [
             'is_public' => 'boolean',
+            'chat_enabled' => 'boolean',
         ];
     }
 

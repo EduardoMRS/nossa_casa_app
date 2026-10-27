@@ -2089,5 +2089,23 @@
             "tithe": "Diezmo",
             "offering": "Ofrenda"
         }
+    },
+    "chat": {
+        "title": "Chat",
+        "disabled": "El chat está desactivado en este momento.",
+        "enable": "Activar chat",
+        "disable": "Desactivar chat",
+        "placeholder": "Escribe un mensaje…",
+        "send": "Enviar",
+        "attach": "Adjuntar archivo",
+        "remove": "Eliminar",
+        "removed": "Mensaje eliminado",
+        "empty": "Aún no hay mensajes. ¡Empieza la conversación!",
+        "load_more": "Cargar mensajes anteriores",
+        "you": "Tú",
+        "link_open": "Abrir enlace",
+        "sending": "Enviando…",
+        "attachment_too_large": "El archivo es demasiado grande (máx. 50 MB).",
+        "error": "No se pudo enviar el mensaje."
     }
 }

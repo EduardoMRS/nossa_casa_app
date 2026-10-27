@@ -2089,5 +2089,23 @@
             "tithe": "Dízimo",
             "offering": "Oferta"
         }
+    },
+    "chat": {
+        "title": "Chat",
+        "disabled": "O chat está desativado neste momento.",
+        "enable": "Ativar chat",
+        "disable": "Desativar chat",
+        "placeholder": "Escreva uma mensagem…",
+        "send": "Enviar",
+        "attach": "Anexar arquivo",
+        "remove": "Remover",
+        "removed": "Mensagem removida",
+        "empty": "Nenhuma mensagem ainda. Comece a conversa!",
+        "load_more": "Carregar mensagens anteriores",
+        "you": "Você",
+        "link_open": "Abrir link",
+        "sending": "Enviando…",
+        "attachment_too_large": "Arquivo muito grande (máx. 50 MB).",
+        "error": "Não foi possível enviar a mensagem."
     }
 }

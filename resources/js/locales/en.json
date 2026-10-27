@@ -2089,5 +2089,23 @@
             "tithe": "Tithe",
             "offering": "Offering"
         }
+    },
+    "chat": {
+        "title": "Chat",
+        "disabled": "Chat is disabled right now.",
+        "enable": "Enable chat",
+        "disable": "Disable chat",
+        "placeholder": "Write a message…",
+        "send": "Send",
+        "attach": "Attach file",
+        "remove": "Remove",
+        "removed": "Message removed",
+        "empty": "No messages yet. Start the conversation!",
+        "load_more": "Load earlier messages",
+        "you": "You",
+        "link_open": "Open link",
+        "sending": "Sending…",
+        "attachment_too_large": "File is too large (max 50 MB).",
+        "error": "Could not send the message."
     }
 }

@@ -23,6 +23,7 @@ class Event extends Model
         'cover_path',
         'church_id',
         'author_id',
+        'chat_enabled',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Event extends Model
         'end_time' => 'datetime',
         'tags' => 'array',
         'price' => 'decimal:2',
+        'chat_enabled' => 'boolean',
     ];
 
     protected $appends = [

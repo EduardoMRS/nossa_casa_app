@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Conversation;
 use App\Models\LiveStream;
 use App\Models\User;
+use App\Support\ChatAccess;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -20,4 +22,10 @@ Broadcast::channel('live-stream.{liveStreamId}', function (User $user, string $l
         in_array($user->role, [UserRole::SUPERADMIN, UserRole::SYSTEM], true)
         || $user->churches()->where('churches.id', $liveStream->church_id)->exists()
     );
+}, ['guards' => ['sanctum']]);
+
+Broadcast::channel('chat.conversation.{conversationId}', function (User $user, string $conversationId): bool {
+    $conversation = Conversation::query()->find($conversationId);
+
+    return $conversation !== null && app(ChatAccess::class)->canView($user, $conversation);
 }, ['guards' => ['sanctum']]);

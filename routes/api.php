@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\PublicContentController;
 use App\Http\Controllers\Api\PushGatewayController;
 use App\Http\Controllers\BibleController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ChurchController;
 use App\Http\Controllers\ChurchProximityController;
 use App\Http\Controllers\ClassroomController;
@@ -141,6 +142,18 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
     Route::middleware('role:member|leader|media|church_leader|superadmin|system')->group(function () {
         // Histórico de pedidos de oração do usuário logado
         Route::get('prayer-requests', [PrayerRequestController::class, 'index']);
+
+        // Chat: conversas diretas (membro <-> liderança/financeiro) e de
+        // contexto (evento/grupo/sala). Autorização fina no ChatController/ChatAccess.
+        Route::get('chat/conversations', [ChatController::class, 'index'])->name('api.chat.index');
+        Route::post('chat/direct', [ChatController::class, 'openDirect'])->name('api.chat.direct');
+        Route::get('chat/contexts/{contextType}/{contextId}', [ChatController::class, 'showContext'])->name('api.chat.context.show');
+        Route::put('chat/contexts/{contextType}/{contextId}/toggle', [ChatController::class, 'toggleContext'])->name('api.chat.context.toggle');
+        Route::get('chat/conversations/{conversation}/messages', [ChatController::class, 'messages'])->name('api.chat.messages');
+        Route::post('chat/conversations/{conversation}/messages', [ChatController::class, 'send'])
+            ->middleware('throttle:60,1')
+            ->name('api.chat.send');
+        Route::delete('chat/conversations/{conversation}/messages/{message}', [ChatController::class, 'destroyMessage'])->name('api.chat.message.destroy');
     });
 
     // Acesso de Liderança (Líder ou superior)

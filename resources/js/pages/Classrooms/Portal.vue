@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { BookOpen, ClipboardCheck, Download, FileText, Lock, MessageSquare, Pin, Send, Settings, Users } from '@lucide/vue';
+import { BookOpen, ClipboardCheck, Download, FileText, Lock, MessageCircle, MessageSquare, Pin, Send, Settings, Users } from '@lucide/vue';
 import { computed, reactive, ref } from 'vue';
+import ChatPanel from '@/components/ChatPanel.vue';
 import DynamicFormRenderer from '@/components/forms/DynamicFormRenderer.vue';
 import PostArticle from '@/components/PostArticle.vue';
 import PublicFooter from '@/components/PublicFooter.vue';
@@ -27,6 +28,7 @@ const tabs = computed(() => [
     { id: 'activities', label: t('classrooms.portal.tabs.activities'), icon: ClipboardCheck },
     { id: 'materials', label: t('classrooms.portal.tabs.materials'), icon: FileText },
     { id: 'forum', label: t('classrooms.portal.tabs.forum'), icon: Users },
+    { id: 'chat', label: t('chat.title'), icon: MessageCircle },
 ]);
 const active = ref('wall');
 const answers = reactive<Record<string, Record<string, unknown>>>({});
@@ -105,7 +107,7 @@ const formatDate = (value: string): string => new Date(value).toLocaleString(loc
                 <p v-if="!materials.length" class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500 sm:col-span-2 lg:col-span-3">{{ t('classrooms.portal.materials_empty') }}</p>
             </section>
 
-            <section v-else class="mt-6 space-y-5">
+            <section v-else-if="active === 'forum'" class="mt-6 space-y-5">
                 <form v-if="canUseForum" class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-7" @submit.prevent="createTopic">
                     <h2 class="text-xl font-black">{{ t('classrooms.portal.start_discussion') }}</h2>
                     <div class="mt-4 grid gap-3"><input v-model="topic.title" required maxlength="180" class="rounded-xl border-slate-300"  :placeholder="t('classrooms.portal.subject')" /><textarea v-model="topic.content" required maxlength="10000" rows="4" class="rounded-xl border-slate-300"  :placeholder="t('classrooms.portal.discussion_placeholder')" /></div>
@@ -118,6 +120,10 @@ const formatDate = (value: string): string => new Date(value).toLocaleString(loc
                     <form v-if="canUseForum && !discussion.is_locked" class="mt-4 flex gap-2" @submit.prevent="reply(discussion)"><input v-model="replies[discussion.id]" required class="min-w-0 flex-1 rounded-xl border-slate-300 text-sm"  :placeholder="t('classrooms.portal.reply_placeholder')" /><button class="grid size-11 place-items-center rounded-xl text-white" :style="{ backgroundColor: accent }"><Send class="size-4" /></button></form>
                 </article>
                 <p v-if="!discussions.length" class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">{{ t('classrooms.portal.forum_empty') }}</p>
+            </section>
+
+            <section v-else-if="active === 'chat'" class="mt-6 h-[70vh]">
+                <ChatPanel context-type="classroom" :context-id="classroom.id" />
             </section>
         </main>
         <PublicFooter show-locale />
