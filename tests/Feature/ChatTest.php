@@ -187,3 +187,31 @@ test('a message with a link gets an OpenGraph preview', function (): void {
         ->assertJsonPath('message.type', 'link')
         ->assertJsonPath('message.link_preview.title', 'Um título');
 });
+
+test('a member opens a direct conversation with the church contact', function (): void {
+    $church = Church::factory()->create();
+    $pastor = User::factory()->create(['role' => UserRole::CHURCH_LEADER]);
+    $church->assignMember($pastor);
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+
+    $conversationId = chatApiAs($member->fresh(), $church)
+        ->postJson('/api/chat/church-contact')
+        ->assertSuccessful()
+        ->json('conversation.id');
+
+    $conversation = Conversation::query()->findOrFail($conversationId);
+    expect($conversation->type->value)->toBe('direct')
+        ->and($conversation->participants()->pluck('users.id')->sort()->values()->all())
+        ->toBe(collect([$member->id, $pastor->id])->sort()->values()->all());
+});
+
+test('church contact returns 404 when the church has no leadership', function (): void {
+    $church = Church::factory()->create();
+    $member = User::factory()->create(['role' => UserRole::MEMBER]);
+    $church->assignMember($member);
+
+    chatApiAs($member->fresh(), $church)
+        ->postJson('/api/chat/church-contact')
+        ->assertNotFound();
+});

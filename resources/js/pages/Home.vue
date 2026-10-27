@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     ArrowRight,
     CalendarDays,
@@ -9,6 +9,7 @@ import {
     HeartHandshake,
     Mail,
     MapPin,
+    MessageCircle,
     Network as NetworkIcon,
     Play,
     Phone,
@@ -439,6 +440,45 @@ const submitPrayer = async (): Promise<void> => {
         prayerStatus.value = 'error';
     } finally {
         prayerProcessing.value = false;
+    }
+};
+
+const chatStarting = ref(false);
+const chatError = ref('');
+
+const startChurchChat = async (): Promise<void> => {
+    chatStarting.value = true;
+    chatError.value = '';
+
+    try {
+        const csrf =
+            document
+                .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+                ?.getAttribute('content') ?? '';
+        const church = (page.props.churchContext as { church?: { id?: string } | null })
+            ?.church?.id;
+        const response = await fetch('/api/chat/church-contact', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(church ? { 'X-Church-ID': church } : {}),
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            chatError.value = t('home.chat.unavailable');
+
+            return;
+        }
+
+        router.visit('/chat');
+    } catch {
+        chatError.value = t('home.chat.unavailable');
+    } finally {
+        chatStarting.value = false;
     }
 };
 </script>
@@ -1003,6 +1043,49 @@ const submitPrayer = async (): Promise<void> => {
                             }}
                         </button>
                     </form>
+                </article>
+
+                <article
+                    class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+                >
+                    <div class="flex items-start gap-3">
+                        <span
+                            class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600"
+                        >
+                            <MessageCircle class="size-5" />
+                        </span>
+                        <div>
+                            <h2 class="text-lg font-black">
+                                {{ t('home.chat.title') }}
+                            </h2>
+                            <p class="mt-1 text-sm leading-6 text-slate-500">
+                                {{ t('home.chat.description') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p v-if="chatError" class="mt-3 text-xs font-bold text-rose-600">
+                        {{ chatError }}
+                    </p>
+
+                    <button
+                        v-if="authenticatedUser"
+                        :disabled="chatStarting"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                        :style="{ backgroundColor: 'var(--church-primary)' }"
+                        @click="startChurchChat"
+                    >
+                        <MessageCircle class="size-4" />
+                        {{ t('home.chat.button') }}
+                    </button>
+                    <Link
+                        v-else
+                        href="/login"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-black text-slate-700 hover:bg-slate-50"
+                    >
+                        <MessageCircle class="size-4" />
+                        {{ t('home.chat.login') }}
+                    </Link>
                 </article>
             </section>
 

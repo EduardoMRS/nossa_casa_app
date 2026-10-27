@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ChatMessageType;
 use App\Enums\ConversationType;
+use App\Enums\UserRole;
 use App\Events\ChatMessageSent;
 use App\Models\ChatMessage;
 use App\Models\Classroom;
@@ -178,6 +179,33 @@ class ChatController extends Controller
         abort_unless($this->chat->canView($request->user(), $conversation), 403);
 
         return $this->messages($request, $conversation);
+    }
+
+    /**
+     * Open (or reuse) a DIRECT thread between the authenticated member and the
+     * church contact (its leadership/pastor), so "Talk to the church" works
+     * without the member having to pick a recipient.
+     */
+    public function openChurchContact(Request $request): JsonResponse
+    {
+        $churchId = $this->churchId($request);
+        abort_unless(is_string($churchId) && $churchId !== '', 422, __('church.context.required'));
+
+        $actor = $request->user();
+        abort_unless($this->churchAccess->canReachChurch($actor, $churchId), 403);
+
+        $contact = User::query()
+            ->whereHas('profile', fn ($query) => $query->where('church_id', $churchId))
+            ->whereIn('role', [UserRole::CHURCH_LEADER->value, UserRole::LEADER->value])
+            ->where('id', '!=', $actor->id)
+            ->orderByRaw('case when role = ? then 0 else 1 end', [UserRole::CHURCH_LEADER->value])
+            ->first();
+
+        abort_if($contact === null, 404, __('chat.no_contact'));
+
+        $conversation = $this->directConversation($churchId, $actor, $contact);
+
+        return response()->json(['conversation' => $this->conversationData($conversation, $actor)]);
     }
 
     /**

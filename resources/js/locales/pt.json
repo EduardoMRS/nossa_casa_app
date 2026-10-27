@@ -1439,6 +1439,13 @@
             "monthly_business_day": "{position} dia útil do mês",
             "monthly_business_after": "{position} dia útil após o dia {day}",
             "yearly": "{day} de {month}"
+        },
+        "chat": {
+            "title": "Fale com a igreja",
+            "description": "Inicie uma conversa privada com a liderança.",
+            "button": "Iniciar conversa",
+            "login": "Entre para falar com a igreja",
+            "unavailable": "Nenhum contato disponível no momento."
         }
     },
     "weekdays": {

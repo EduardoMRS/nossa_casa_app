@@ -1439,6 +1439,13 @@
             "monthly_business_day": "{position} business day of the month",
             "monthly_business_after": "{position} business day after day {day}",
             "yearly": "{month} {day}"
+        },
+        "chat": {
+            "title": "Talk to the church",
+            "description": "Start a private conversation with the leadership.",
+            "button": "Start conversation",
+            "login": "Sign in to talk to the church",
+            "unavailable": "No contact is available right now."
         }
     },
     "weekdays": {

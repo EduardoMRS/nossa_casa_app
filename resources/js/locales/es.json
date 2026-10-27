@@ -1439,6 +1439,13 @@
             "monthly_business_day": "{position} día hábil del mes",
             "monthly_business_after": "{position} día hábil después del día {day}",
             "yearly": "{month} {day}"
+        },
+        "chat": {
+            "title": "Habla con la iglesia",
+            "description": "Inicia una conversación privada con el liderazgo.",
+            "button": "Iniciar conversación",
+            "login": "Inicia sesión para hablar con la iglesia",
+            "unavailable": "No hay contacto disponible en este momento."
         }
     },
     "weekdays": {

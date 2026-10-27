@@ -362,11 +362,23 @@ export const preloadPwaEssentials = (): void => {
             // 1. Preload Bible page and its offline bundle
             const currentPath = window.location.pathname;
             const currentLocale = currentPath.split('/')[1] || 'pt';
+            // The current Inertia asset version; sending it avoids a 409 version
+            // conflict on the X-Inertia prefetch below.
+            let inertiaVersion = '';
+
+            try {
+                const pageEl = document.getElementById('app')?.dataset.page
+                    ?? document
+                        .querySelector<HTMLElement>('[data-page]')
+                        ?.getAttribute('data-page');
+                inertiaVersion = pageEl ? (JSON.parse(pageEl).version ?? '') : '';
+            } catch {
+                inertiaVersion = '';
+            }
+
             const bibleUrls = [
                 `/${currentLocale}/library/bible`,
-                '/library/bible',
                 `/${currentLocale}/biblioteca/biblia`,
-                '/biblioteca/biblia',
             ];
 
             let versions: Array<{
@@ -381,6 +393,7 @@ export const preloadPwaEssentials = (): void => {
                     const response = await fetch(bibleUrl, {
                         headers: {
                             'X-Inertia': 'true',
+                            'X-Inertia-Version': inertiaVersion,
                             'X-PWA-APP': '1',
                             Accept: 'text/html, application/xhtml+xml',
                         },
@@ -391,6 +404,7 @@ export const preloadPwaEssentials = (): void => {
                         const data = await response.json();
                         versions = data?.props?.versions ?? [];
                         defaultVersionId = data?.props?.defaultVersion;
+
                         if (versions.length) {
                             break;
                         }
@@ -422,13 +436,20 @@ export const preloadPwaEssentials = (): void => {
                 });
             }
 
-            // 2. Preload navigation tabs for instant fluid navigation
-            const navUrls = ['/', '/posts', '/events'];
+            // 2. Preload navigation tabs for instant fluid navigation.
+            // Use locale-prefixed paths (the routes require the {locale} prefix)
+            // and a plain document request — sending X-Inertia without a matching
+            // version makes the server answer 409 to force a full reload.
+            const navUrls = [
+                `/${currentLocale}`,
+                `/${currentLocale}/posts`,
+                `/${currentLocale}/events`,
+            ];
+
             for (const url of navUrls) {
                 try {
                     await fetch(url, {
                         headers: {
-                            'X-Inertia': 'true',
                             'X-PWA-APP': '1',
                             Accept: 'text/html, application/xhtml+xml',
                         },

@@ -6,7 +6,7 @@ const OPEN_ACTION = __OPEN_ACTION__;
 const OFFLINE_TITLE = __OFFLINE_TITLE__;
 const OFFLINE_MESSAGE = __OFFLINE_MESSAGE__;
 const CACHE_ROOT = 'nossa-casa';
-const CACHE_SCHEMA_VERSION = '4';
+const CACHE_SCHEMA_VERSION = '5';
 const CACHE_PREFIX = `${CACHE_ROOT}-v${CACHE_SCHEMA_VERSION}-${CACHE_SCOPE}`;
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${CACHE_VERSION}`;
 const BIBLE_CACHE = `${CACHE_PREFIX}-bible-${CACHE_VERSION}`;
@@ -100,8 +100,6 @@ async function precacheCoreAssets() {
         '/pt',
         '/en?pwa=1',
         '/en',
-        '/library/bible',
-        '/biblioteca/biblia',
         '/pt/library/bible',
         '/pt/biblioteca/biblia',
         '/en/library/bible',
@@ -113,17 +111,21 @@ async function precacheCoreAssets() {
                 const response = await fetch(url, {
                     credentials: 'same-origin',
                 });
-                if (response.ok && isHtmlPageResponse(response)) {
-                    const cleaned = await cleanResponse(response);
-                    await pageCache.put(url, cleaned.clone());
-                    if (response.url && response.url !== url) {
-                        await pageCache.put(response.url, cleaned.clone());
-                    }
+
+                if (!response.ok || !isHtmlPageResponse(response)) {
+                    return;
+                }
+
+                const cleaned = await cleanResponse(response);
+                await pageCache.put(url, cleaned.clone());
+                if (response.url && response.url !== url) {
+                    await pageCache.put(response.url, cleaned.clone());
                 }
 
                 const inertiaResponse = await fetch(url, {
                     headers: {
                         'X-Inertia': 'true',
+                        'X-Inertia-Version': await inertiaVersionFromHtml(response),
                         'X-PWA-APP': '1',
                         Accept: 'text/html, application/xhtml+xml',
                     },
@@ -522,11 +524,8 @@ async function cacheReaderPage(readerUrl) {
     const pathWithoutLocale = readerUrl.replace(/^\/(?:pt|en)/, '');
     const urlsToCache = new Set([
         readerUrl,
-        pathWithoutLocale,
         `/pt${pathWithoutLocale}`,
         `/en${pathWithoutLocale}`,
-        '/library/bible',
-        '/biblioteca/biblia',
         '/pt/library/bible',
         '/pt/biblioteca/biblia',
     ]);
@@ -542,17 +541,20 @@ async function cacheReaderPage(readerUrl) {
             });
             const htmlResponse = await fetch(htmlRequest);
 
-            if (isHtmlPageResponse(htmlResponse)) {
-                const cleanedHtml = await cleanResponse(htmlResponse);
-                await pageCache.put(htmlRequest, cleanedHtml.clone());
-                if (htmlResponse.url && htmlResponse.url !== htmlRequest.url) {
-                    await pageCache.put(htmlResponse.url, cleanedHtml.clone());
-                }
+            if (!isHtmlPageResponse(htmlResponse)) {
+                continue;
+            }
+
+            const cleanedHtml = await cleanResponse(htmlResponse);
+            await pageCache.put(htmlRequest, cleanedHtml.clone());
+            if (htmlResponse.url && htmlResponse.url !== htmlRequest.url) {
+                await pageCache.put(htmlResponse.url, cleanedHtml.clone());
             }
 
             const inertiaRequest = new Request(url, {
                 headers: {
                     'X-Inertia': 'true',
+                    'X-Inertia-Version': await inertiaVersionFromHtml(htmlResponse),
                     'X-PWA-APP': '1',
                     Accept: 'text/html, application/xhtml+xml',
                 },
@@ -586,6 +588,31 @@ function isHtmlPageResponse(response) {
 
 function isInertiaResponse(response) {
     return response?.ok && response.headers.get('X-Inertia') === 'true';
+}
+
+// Reads the Inertia asset version from a cached/fetched HTML page so the
+// X-Inertia prefetch below can send a matching X-Inertia-Version and avoid a
+// 409 version conflict. Returns '' when it cannot be determined.
+async function inertiaVersionFromHtml(response) {
+    try {
+        const html = await response.clone().text();
+        const match = html.match(
+            /<[^>]*data-page="([^"]*)"[^>]*>/i,
+        );
+
+        if (!match) {
+            return '';
+        }
+
+        const decoded = match[1]
+            .replace(/&quot;/g, '"')
+            .replace(/&#34;/g, '"')
+            .replace(/&amp;/g, '&');
+
+        return JSON.parse(decoded).version ?? '';
+    } catch {
+        return '';
+    }
 }
 
 async function cachedHtmlPage(cache, request, options = undefined) {

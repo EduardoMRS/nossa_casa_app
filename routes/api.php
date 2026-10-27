@@ -147,6 +147,7 @@ Route::middleware(['auth:sanctum', 'church.context:optional'])->group(function (
         // contexto (evento/grupo/sala). Autorização fina no ChatController/ChatAccess.
         Route::get('chat/conversations', [ChatController::class, 'index'])->name('api.chat.index');
         Route::post('chat/direct', [ChatController::class, 'openDirect'])->name('api.chat.direct');
+        Route::post('chat/church-contact', [ChatController::class, 'openChurchContact'])->name('api.chat.church-contact');
         Route::get('chat/contexts/{contextType}/{contextId}', [ChatController::class, 'showContext'])->name('api.chat.context.show');
         Route::put('chat/contexts/{contextType}/{contextId}/toggle', [ChatController::class, 'toggleContext'])->name('api.chat.context.toggle');
         Route::get('chat/conversations/{conversation}/messages', [ChatController::class, 'messages'])->name('api.chat.messages');

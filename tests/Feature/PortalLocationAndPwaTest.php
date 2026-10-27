@@ -87,7 +87,7 @@ test('manifest and service worker are generated dynamically for the church domai
         ->assertSee('BIBLE_CACHE_READY', escape: false)
         ->assertSee('cachedMarker', escape: false)
         ->assertSee('CACHE_SCOPE', escape: false)
-        ->assertSee("const CACHE_SCHEMA_VERSION = '4'", escape: false)
+        ->assertSee("const CACHE_SCHEMA_VERSION = '5'", escape: false)
         ->assertSee("request.headers.get('X-Inertia') === 'true'", escape: false)
         ->assertSee('isHtmlPageResponse', escape: false)
         ->assertSee("contentType.includes('text/html')", escape: false)
