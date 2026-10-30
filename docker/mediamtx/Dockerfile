@@ -1,6 +1,6 @@
-FROM bluenviron/mediamtx:1.20.1 AS mediamtx
+FROM bluenviron/mediamtx:1.21.3 AS mediamtx
 
-FROM alpine:3.24.1
+FROM alpine:3.24.3
 
 RUN apk add --no-cache curl
 
