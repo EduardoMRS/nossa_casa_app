@@ -130,18 +130,18 @@ Dashboard mostra dados relevantes **por papel do usuário** (contexto church).
 
 ---
 
-## 7. Customização do portal da church (header, seções da home, footer, CSS e herança) — 📋 planejado
+## 7. Customização do portal da church (header, seções da home, footer, CSS e herança) — ✅ concluído
 
 Permitir que a liderança da igreja configure detalhadamente a apresentação do portal público.
 
-- [ ] **Menu superior personalizável**: configurar quais links e módulos aparecem na barra superior do portal da igreja (substituindo a lista fixa atual).
-- [ ] **Seções e layout da Home**:
+- [x] **Menu superior personalizável**: configurar quais links e módulos aparecem na barra superior do portal da igreja (substituindo a lista fixa atual).
+- [x] **Seções e layout da Home**:
       - Seleção de blocos visíveis (banners, eventos, notícias/posts, grupos, ministrações/mídias, versículo, mapa).
       - Opção de layout: coluna única ou duas colunas (layout atual).
-- [ ] **Customização do rodapé (footer)**: personalização de textos, links institucionais e informações de contato adicionais.
-- [ ] **CSS personalizado**: campo para inserção de CSS customizado sanitizado e injetado no portal da igreja.
-- [ ] **Herança hierárquica (churches inferiores)**: marcador booleano para definir se as configurações de layout, menu, footer e CSS devem ser propagadas automaticamente para as congregações/filiais subordinadas na rede.
-- [ ] Testes de feature, permissões e validação de segurança.
+- [x] **Customização do rodapé (footer)**: personalização de textos, links institucionais e informações de contato adicionais.
+- [x] **CSS personalizado**: campo para inserção de CSS customizado sanitizado e injetado no portal da igreja.
+- [x] **Herança hierárquica (churches inferiores)**: marcador booleano para definir se as configurações de layout, menu, footer e CSS devem ser propagadas automaticamente para as congregações/filiais subordinadas na rede.
+- [x] Testes de feature, permissões e validação de segurança (`tests/Feature/ChurchPortalSettingsTest.php`).
 
 ## 8. Integração com gateways de pagamento — 📋 planejado
 

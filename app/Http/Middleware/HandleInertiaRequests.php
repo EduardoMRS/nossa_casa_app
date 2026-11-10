@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Support\ChurchAccess;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchPortalResolver;
 use App\Support\ChurchTerminology;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -20,6 +21,7 @@ class HandleInertiaRequests extends Middleware
     public function __construct(
         private ChurchTerminology $terminology,
         private ChurchBrandingResolver $brandingResolver,
+        private ChurchPortalResolver $portalResolver,
     ) {}
 
     /**
@@ -198,6 +200,7 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'branding' => $branding,
+            'portal' => $this->portalResolver->resolve($brandingChurch),
             'publicTemplates' => array_merge([
                 'home' => 'classic',
                 'posts_index' => 'classic',

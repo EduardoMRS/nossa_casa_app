@@ -152,6 +152,28 @@ const publicTemplate = usePublicTemplate('home');
 const page = usePage();
 const branding = computed(() => page.props.branding as BrandingData);
 
+type PortalHomeSections = {
+    banner?: boolean;
+    next_event?: boolean;
+    daily_verse?: boolean;
+    featured_events?: boolean;
+    latest_posts?: boolean;
+    latest_media?: boolean;
+    calendar?: boolean;
+    prayer_contact?: boolean;
+    location_map?: boolean;
+};
+
+type PortalData = {
+    home_layout?: 'two_columns' | 'single_column';
+    home_sections?: PortalHomeSections;
+};
+
+const portal = computed(() => page.props.portal as PortalData | undefined);
+const homeLayout = computed(() => portal.value?.home_layout ?? 'two_columns');
+const homeSections = computed<PortalHomeSections>(() => portal.value?.home_sections ?? {});
+const isSectionVisible = (key: keyof PortalHomeSections): boolean => homeSections.value[key] !== false;
+
 const directionsUrl = computed<string | null>(() => {
     const lat = branding.value.latitude;
     const lon = branding.value.longitude;
@@ -518,6 +540,7 @@ const startChurchChat = async (): Promise<void> => {
             class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-3 py-4 sm:space-y-7 sm:px-6 sm:py-7 lg:px-8 lg:py-9"
         >
             <section
+                v-if="isSectionVisible('banner')"
                 class="relative isolate grid overflow-hidden rounded-2xl border p-4 text-white shadow-xl shadow-slate-900/10 sm:rounded-[2rem] sm:p-7 md:grid-cols-[1.15fr_0.85fr] md:gap-8 md:p-9 lg:p-10"
                 :style="{
                     borderColor:
@@ -535,7 +558,7 @@ const startChurchChat = async (): Promise<void> => {
 
                 <div
                     class="relative z-10 flex flex-col justify-center"
-                    :class="{ 'md:col-span-2': !nextEvent }"
+                    :class="{ 'md:col-span-2': !nextEvent || !isSectionVisible('next_event') }"
                 >
                     <p
                         v-if="heroKicker"
@@ -575,7 +598,7 @@ const startChurchChat = async (): Promise<void> => {
                 </div>
 
                 <Link
-                    v-if="nextEvent"
+                    v-if="nextEvent && isSectionVisible('next_event')"
                     :href="eventsShow({ event: nextEvent.slug })"
                     class="group relative z-10 mt-4 min-h-44 overflow-hidden rounded-2xl border border-white/20 bg-slate-950/25 shadow-2xl backdrop-blur sm:mt-6 sm:min-h-64 sm:rounded-3xl md:mt-0 md:min-h-72"
                 >
@@ -617,7 +640,7 @@ const startChurchChat = async (): Promise<void> => {
             </section>
 
             <section
-                v-if="dailyVerse"
+                v-if="dailyVerse && isSectionVisible('daily_verse')"
                 class="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-6 text-center shadow-sm"
             >
                 <p
@@ -638,8 +661,23 @@ const startChurchChat = async (): Promise<void> => {
                 </p>
             </section>
 
-            <section class="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-                <div v-if="props.featuredEvents.length">
+            <section
+                v-if="
+                    (props.featuredEvents.length && isSectionVisible('featured_events')) ||
+                    (props.latestPosts.length && isSectionVisible('latest_posts'))
+                "
+                class="grid gap-8"
+                :class="[
+                    homeLayout === 'single_column' ||
+                    !isSectionVisible('featured_events') ||
+                    !isSectionVisible('latest_posts') ||
+                    !props.featuredEvents.length ||
+                    !props.latestPosts.length
+                        ? 'grid-cols-1'
+                        : 'lg:grid-cols-[1.4fr_1fr]',
+                ]"
+            >
+                <div v-if="props.featuredEvents.length && isSectionVisible('featured_events')">
                     <div class="mb-4 flex items-end justify-between">
                         <div>
                             <p
@@ -711,7 +749,7 @@ const startChurchChat = async (): Promise<void> => {
                     </div>
                 </div>
 
-                <div v-if="props.latestPosts.length">
+                <div v-if="props.latestPosts.length && isSectionVisible('latest_posts')">
                     <div class="mb-4">
                         <p
                             class="font-mono text-[10px] font-bold tracking-[0.16em] text-indigo-500 uppercase"
@@ -748,7 +786,7 @@ const startChurchChat = async (): Promise<void> => {
                 </div>
             </section>
 
-            <section v-if="props.latestRecordings.length">
+            <section v-if="props.latestRecordings.length && isSectionVisible('latest_media')">
                 <div class="mb-4 flex items-end justify-between gap-4">
                     <div>
                         <p
@@ -811,7 +849,7 @@ const startChurchChat = async (): Promise<void> => {
                 </div>
             </section>
 
-            <section v-if="galleryItems.length">
+            <section v-if="galleryItems.length && isSectionVisible('latest_media')">
                 <div class="mb-4 flex items-end justify-between gap-4">
                     <div>
                         <p
@@ -862,9 +900,18 @@ const startChurchChat = async (): Promise<void> => {
             </section>
 
             <section
-                class="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.7fr)]"
+                v-if="isSectionVisible('calendar') || isSectionVisible('prayer_contact')"
+                class="grid gap-6"
+                :class="[
+                    homeLayout === 'single_column' ||
+                    !isSectionVisible('calendar') ||
+                    !isSectionVisible('prayer_contact')
+                        ? 'grid-cols-1'
+                        : 'lg:grid-cols-[minmax(0,1.4fr)_minmax(20rem,0.7fr)]',
+                ]"
             >
                 <article
+                    v-if="isSectionVisible('calendar')"
                     class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
                 >
                     <div
@@ -1004,122 +1051,127 @@ const startChurchChat = async (): Promise<void> => {
                     </div>
                 </article>
 
-                <article
-                    class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+                <div
+                    v-if="isSectionVisible('prayer_contact')"
+                    class="space-y-6"
                 >
-                    <div class="flex items-start gap-3">
-                        <span
-                            class="grid size-10 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600"
-                        >
-                            <HeartHandshake class="size-5" />
-                        </span>
-                        <div>
-                            <h2 class="text-lg font-black">
-                                {{ t('home.prayer.title') }}
-                            </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                {{ t('home.prayer.description') }}
-                            </p>
+                    <article
+                        class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
+                    >
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="grid size-10 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600"
+                            >
+                                <HeartHandshake class="size-5" />
+                            </span>
+                            <div>
+                                <h2 class="text-lg font-black">
+                                    {{ t('home.prayer.title') }}
+                                </h2>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    {{ t('home.prayer.description') }}
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div
-                        v-if="authenticatedUser"
-                        class="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600"
-                    >
-                        {{
-                            t('home.prayer.sending_as', {
-                                name: authenticatedUser.name,
-                            })
-                        }}
-                    </div>
-
-                    <form
-                        class="mt-4 grid gap-3"
-                        @submit.prevent="submitPrayer"
-                    >
-                        <textarea
-                            v-model="prayerContent"
-                            required
-                            maxlength="2000"
-                            rows="6"
-                            class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm"
-                            :placeholder="t('home.prayer.placeholder')"
-                        />
-                        <label
+                        <div
                             v-if="authenticatedUser"
-                            class="flex items-center gap-2 text-xs text-slate-600"
+                            class="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600"
                         >
-                            <input
-                                v-model="prayerAnonymous"
-                                type="checkbox"
-                                class="rounded border-slate-300"
-                            />
-                            {{ t('home.prayer.anonymous') }}
-                        </label>
-                        <p
-                            v-if="prayerStatus === 'success'"
-                            class="text-xs font-bold text-emerald-600"
-                        >
-                            {{ t('home.prayer.success') }}
-                        </p>
-                        <p
-                            v-if="prayerStatus === 'error'"
-                            class="text-xs font-bold text-rose-600"
-                        >
-                            {{ t('home.prayer.error') }}
-                        </p>
-                        <button
-                            :disabled="prayerProcessing"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
-                            :style="{
-                                backgroundColor: 'var(--church-primary)',
-                            }"
-                        >
-                            <Send class="size-4" />
                             {{
-                                prayerProcessing
-                                    ? t('home.prayer.sending')
-                                    : t('home.prayer.submit')
+                                t('home.prayer.sending_as', {
+                                    name: authenticatedUser.name,
+                                })
                             }}
-                        </button>
-                    </form>
-                </article>
-
-                <article
-                    v-if="authenticatedUser"
-                    class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
-                >
-                    <div class="flex items-start gap-3">
-                        <span
-                            class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600"
-                        >
-                            <MessageCircle class="size-5" />
-                        </span>
-                        <div>
-                            <h2 class="text-lg font-black">
-                                {{ t('home.chat.title') }}
-                            </h2>
-                            <p class="mt-1 text-sm leading-6 text-slate-500">
-                                {{ t('home.chat.description') }}
-                            </p>
                         </div>
-                    </div>
 
-                    <p v-if="chatError" class="mt-3 text-xs font-bold text-rose-600">
-                        {{ chatError }}
-                    </p>
+                        <form
+                            class="mt-4 grid gap-3"
+                            @submit.prevent="submitPrayer"
+                        >
+                            <textarea
+                                v-model="prayerContent"
+                                required
+                                maxlength="2000"
+                                rows="6"
+                                class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm"
+                                :placeholder="t('home.prayer.placeholder')"
+                            />
+                            <label
+                                v-if="authenticatedUser"
+                                class="flex items-center gap-2 text-xs text-slate-600"
+                            >
+                                <input
+                                    v-model="prayerAnonymous"
+                                    type="checkbox"
+                                    class="rounded border-slate-300"
+                                />
+                                {{ t('home.prayer.anonymous') }}
+                            </label>
+                            <p
+                                v-if="prayerStatus === 'success'"
+                                class="text-xs font-bold text-emerald-600"
+                            >
+                                {{ t('home.prayer.success') }}
+                            </p>
+                            <p
+                                v-if="prayerStatus === 'error'"
+                                class="text-xs font-bold text-rose-600"
+                            >
+                                {{ t('home.prayer.error') }}
+                            </p>
+                            <button
+                                :disabled="prayerProcessing"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                                :style="{
+                                    backgroundColor: 'var(--church-primary)',
+                                }"
+                            >
+                                <Send class="size-4" />
+                                {{
+                                    prayerProcessing
+                                        ? t('home.prayer.sending')
+                                        : t('home.prayer.submit')
+                                }}
+                            </button>
+                        </form>
+                    </article>
 
-                    <button
-                        :disabled="chatStarting"
-                        class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
-                        :style="{ backgroundColor: 'var(--church-primary)' }"
-                        @click="startChurchChat"
+                    <article
+                        v-if="authenticatedUser"
+                        class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"
                     >
-                        <MessageCircle class="size-4" />
-                        {{ t('home.chat.button') }}
-                    </button>
-                </article>
+                        <div class="flex items-start gap-3">
+                            <span
+                                class="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600"
+                            >
+                                <MessageCircle class="size-5" />
+                            </span>
+                            <div>
+                                <h2 class="text-lg font-black">
+                                    {{ t('home.chat.title') }}
+                                </h2>
+                                <p class="mt-1 text-sm leading-6 text-slate-500">
+                                    {{ t('home.chat.description') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p v-if="chatError" class="mt-3 text-xs font-bold text-rose-600">
+                            {{ chatError }}
+                        </p>
+
+                        <button
+                            :disabled="chatStarting"
+                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                            :style="{ backgroundColor: 'var(--church-primary)' }"
+                            @click="startChurchChat"
+                        >
+                            <MessageCircle class="size-4" />
+                            {{ t('home.chat.button') }}
+                        </button>
+                    </article>
+                </div>
             </section>
 
             <AppModal
@@ -1164,7 +1216,13 @@ const startChurchChat = async (): Promise<void> => {
             </AppModal>
 
             <section
-                class="grid gap-6 lg:grid-cols-[minmax(20rem,0.75fr)_minmax(0,1.25fr)]"
+                v-if="isSectionVisible('location_map')"
+                class="grid gap-6"
+                :class="[
+                    homeLayout === 'single_column' || !branding.map_embed
+                        ? 'grid-cols-1'
+                        : 'lg:grid-cols-[minmax(20rem,0.75fr)_minmax(0,1.25fr)]',
+                ]"
             >
                 <article
                     class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6"

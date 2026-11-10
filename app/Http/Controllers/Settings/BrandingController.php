@@ -11,6 +11,7 @@ use App\Services\AddressGeocoder;
 use App\Services\ChurchNetworkSettingsData;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchPortalResolver;
 use App\Support\ChurchTerminology;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class BrandingController extends Controller
     public function __construct(
         private ChurchTerminology $terminology,
         private ChurchBrandingResolver $brandingResolver,
+        private ChurchPortalResolver $portalResolver,
         private ChurchDomainContext $domainContext,
         private ChurchNetworkSettingsData $networkSettings,
         private AddressGeocoder $addressGeocoder,
@@ -101,6 +103,7 @@ class BrandingController extends Controller
                 'from_name' => $mailSetting?->from_name ?? $church->name,
                 'has_password' => filled($mailSetting?->password),
             ],
+            'portal' => $this->portalResolver->resolve($church),
             'registrationProof' => $this->registrationProofData($church),
         ]);
     }
@@ -148,6 +151,7 @@ class BrandingController extends Controller
         abort_unless($church, 403);
         $validated = $request->validated();
         $domain = Arr::pull($validated, 'domain');
+        $portal = Arr::pull($validated, 'portal');
         $templates = Arr::pull($validated, 'templates', []);
         $terminology = Arr::pull($validated, 'terminology', []);
         $currency = Arr::pull($validated, 'currency');
@@ -193,6 +197,12 @@ class BrandingController extends Controller
 
         $options['branding'] = array_merge($currentBranding, $validated);
         $options['templates'] = array_merge($this->defaultTemplates(), $templates);
+        if (is_array($portal)) {
+            if (isset($portal['custom_css'])) {
+                $portal['custom_css'] = strip_tags((string) $portal['custom_css']);
+            }
+            $options['portal'] = $this->portalResolver->mergeWithDefaults($portal);
+        }
         $options['terminology'] = $this->terminology->selections($terminology);
         $options['terminology_source'] = 'church';
         $options['currency'] = $currency ?? $options['currency'] ?? 'BRL';

@@ -41,3 +41,29 @@ export const applyBranding = (branding: unknown): void => {
     root.setProperty('--church-font', fontFamily);
     root.setProperty('--font-sans', fontFamily);
 };
+
+export const applyCustomCss = (css: unknown): void => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    const styleId = 'church-custom-css';
+    const styleTag = document.getElementById(styleId);
+
+    if (typeof css !== 'string' || !css.trim()) {
+        if (styleTag) {
+            styleTag.remove();
+        }
+
+        return;
+    }
+
+    const targetTag = styleTag ?? document.createElement('style');
+
+    if (!styleTag) {
+        targetTag.id = styleId;
+        document.head.appendChild(targetTag);
+    }
+
+    targetTag.textContent = css;
+};

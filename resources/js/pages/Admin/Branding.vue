@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import {
+    ArrowDown,
+    ArrowUp,
     Check,
     Clock3,
     Globe2,
     ImageUp,
+    Info,
     Languages,
     LayoutTemplate,
     MapPinned,
+    PanelTop,
     Plus,
     Trash2,
 } from '@lucide/vue';
@@ -136,6 +140,43 @@ type MailSettings = {
     has_password: boolean;
 };
 
+type PortalHeaderMenuItem = {
+    key: string;
+    enabled: boolean;
+};
+
+type PortalFooterLink = {
+    label: string;
+    url: string;
+};
+
+type PortalHomeSections = {
+    banner: boolean;
+    next_event: boolean;
+    daily_verse: boolean;
+    featured_events: boolean;
+    latest_posts: boolean;
+    latest_media: boolean;
+    calendar: boolean;
+    prayer_contact: boolean;
+    location_map: boolean;
+};
+
+type PortalSettingsData = {
+    header_menu: PortalHeaderMenuItem[];
+    home_layout: 'two_columns' | 'single_column';
+    home_sections: PortalHomeSections;
+    footer: {
+        message: string;
+        links: PortalFooterLink[];
+    };
+    custom_css: string;
+    propagate_to_branches: boolean;
+    is_inherited?: boolean;
+    source_church_id?: number | string | null;
+    source_church_name?: string | null;
+};
+
 const props = defineProps<{
     branding: BrandingData;
     templates: Record<TemplateSection, TemplateVariant>;
@@ -147,6 +188,7 @@ const props = defineProps<{
     mailSettings: MailSettings;
     networkSettings: ChurchNetworkSettingsData;
     registrationProof: { name: string; url: string } | null;
+    portal?: PortalSettingsData;
 }>();
 const useOwnMailServer = ref(props.mailSettings.enabled);
 const colors = ref({
@@ -294,6 +336,74 @@ const resolvedDomain = computed(() =>
         ? `${normalizedDomainInput.value}.${props.mainDomain}`
         : normalizedDomainInput.value,
 );
+
+const portalForm = ref<PortalSettingsData>({
+    header_menu: props.portal?.header_menu
+        ? props.portal.header_menu.map((item) => ({ ...item }))
+        : [
+            { key: 'home', enabled: true },
+            { key: 'posts', enabled: true },
+            { key: 'events', enabled: true },
+            { key: 'groups', enabled: true },
+            { key: 'gallery', enabled: true },
+            { key: 'library', enabled: true },
+            { key: 'give', enabled: true },
+            { key: 'network', enabled: true },
+        ],
+    home_layout: props.portal?.home_layout ?? 'two_columns',
+    home_sections: {
+        banner: props.portal?.home_sections?.banner ?? true,
+        next_event: props.portal?.home_sections?.next_event ?? true,
+        daily_verse: props.portal?.home_sections?.daily_verse ?? true,
+        featured_events: props.portal?.home_sections?.featured_events ?? true,
+        latest_posts: props.portal?.home_sections?.latest_posts ?? true,
+        latest_media: props.portal?.home_sections?.latest_media ?? true,
+        calendar: props.portal?.home_sections?.calendar ?? true,
+        prayer_contact: props.portal?.home_sections?.prayer_contact ?? true,
+        location_map: props.portal?.home_sections?.location_map ?? true,
+    },
+    footer: {
+        message: props.portal?.footer?.message ?? '',
+        links: props.portal?.footer?.links
+            ? props.portal.footer.links.map((link) => ({ ...link }))
+            : [],
+    },
+    custom_css: props.portal?.custom_css ?? '',
+    propagate_to_branches: props.portal?.propagate_to_branches ?? false,
+    is_inherited: props.portal?.is_inherited,
+    source_church_name: props.portal?.source_church_name,
+});
+
+const moveHeaderMenuItem = (index: number, direction: -1 | 1): void => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= portalForm.value.header_menu.length) {
+        return;
+    }
+    const [item] = portalForm.value.header_menu.splice(index, 1);
+    portalForm.value.header_menu.splice(targetIndex, 0, item);
+};
+
+const addFooterLink = (): void => {
+    if (portalForm.value.footer.links.length < 10) {
+        portalForm.value.footer.links.push({ label: '', url: '' });
+    }
+};
+
+const removeFooterLink = (index: number): void => {
+    portalForm.value.footer.links.splice(index, 1);
+};
+
+const homeSectionKeys: Array<keyof PortalHomeSections> = [
+    'banner',
+    'next_event',
+    'daily_verse',
+    'featured_events',
+    'latest_posts',
+    'latest_media',
+    'calendar',
+    'prayer_contact',
+    'location_map',
+];
 </script>
 
 <template>
@@ -318,6 +428,7 @@ const resolvedDomain = computed(() =>
                     'location',
                     'templates',
                     'schedule',
+                    'portal',
                 ]"
                 :key="section"
                 :href="`#settings-${section}`"
@@ -1601,6 +1712,364 @@ const resolvedDomain = computed(() =>
                         {{ t('admin.branding.schedule_empty') }}
                     </p>
                     <InputError :message="errors.weekly_schedule" />
+                </section>
+
+                <section
+                    id="settings-portal"
+                    class="grid scroll-mt-36 gap-6 border-t border-border pt-6"
+                >
+                    <div class="flex items-start gap-3">
+                        <PanelTop class="mt-0.5 size-5 text-primary" />
+                        <div>
+                            <h2 class="text-base font-black">
+                                {{ t('admin.branding.portal.title') }}
+                            </h2>
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.portal.description') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="props.portal?.is_inherited"
+                        class="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-200"
+                    >
+                        <Info class="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <p>
+                            {{
+                                t('admin.branding.portal.inherited_from', {
+                                    name: props.portal?.source_church_name ?? '',
+                                })
+                            }}
+                        </p>
+                    </div>
+
+                    <!-- Propagate to branches checkbox -->
+                    <div class="rounded-xl border border-border bg-muted/30 p-4">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input
+                                v-model="portalForm.propagate_to_branches"
+                                type="checkbox"
+                                class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                            />
+                            <input
+                                type="hidden"
+                                name="portal[propagate_to_branches]"
+                                :value="portalForm.propagate_to_branches ? '1' : '0'"
+                            />
+                            <div class="grid gap-0.5">
+                                <strong class="text-sm font-semibold">{{
+                                    t('admin.branding.portal.propagate_to_branches')
+                                }}</strong>
+                                <p class="text-xs text-muted-foreground">
+                                    {{
+                                        t(
+                                            'admin.branding.portal.propagate_to_branches_hint',
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </label>
+                        <InputError :message="errors['portal.propagate_to_branches']" />
+                    </div>
+
+                    <!-- Header Navigation Menu -->
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="text-sm font-bold">
+                                {{ t('admin.branding.portal.header_menu') }}
+                            </h3>
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.portal.header_menu_hint') }}
+                            </p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div
+                                v-for="(item, index) in portalForm.header_menu"
+                                :key="item.key"
+                                class="flex items-center justify-between gap-3 rounded-xl border border-border bg-background p-3 transition hover:border-primary/40"
+                            >
+                                <input
+                                    type="hidden"
+                                    :name="`portal[header_menu][${index}][key]`"
+                                    :value="item.key"
+                                />
+                                <input
+                                    type="hidden"
+                                    :name="`portal[header_menu][${index}][enabled]`"
+                                    :value="item.enabled ? '1' : '0'"
+                                />
+                                <label class="flex flex-1 cursor-pointer items-center gap-3">
+                                    <input
+                                        v-model="item.enabled"
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                                    />
+                                    <span
+                                        class="text-sm font-semibold"
+                                        :class="{ 'text-muted-foreground line-through': !item.enabled }"
+                                    >
+                                        {{ t(`nav.${item.key}`) }}
+                                    </span>
+                                </label>
+
+                                <div class="flex items-center gap-1">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        :disabled="index === 0"
+                                        :aria-label="t('admin.branding.portal.move_up')"
+                                        class="size-8"
+                                        @click="moveHeaderMenuItem(index, -1)"
+                                    >
+                                        <ArrowUp class="size-4" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        :disabled="index === portalForm.header_menu.length - 1"
+                                        :aria-label="t('admin.branding.portal.move_down')"
+                                        class="size-8"
+                                        @click="moveHeaderMenuItem(index, 1)"
+                                    >
+                                        <ArrowDown class="size-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                        <InputError :message="errors['portal.header_menu']" />
+                    </div>
+
+                    <!-- Home Page Layout -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold">
+                            {{ t('admin.branding.portal.home_layout') }}
+                        </h3>
+                        <input
+                            type="hidden"
+                            name="portal[home_layout]"
+                            :value="portalForm.home_layout"
+                        />
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <label
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition"
+                                :class="[
+                                    portalForm.home_layout === 'two_columns'
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                        : 'border-border bg-background hover:bg-muted/50',
+                                ]"
+                            >
+                                <input
+                                    v-model="portalForm.home_layout"
+                                    type="radio"
+                                    value="two_columns"
+                                    class="sr-only"
+                                />
+                                <div class="grid gap-1">
+                                    <span class="text-sm font-bold">{{
+                                        t('admin.branding.portal.layout_two_columns')
+                                    }}</span>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            t(
+                                                'admin.branding.portal.layout_two_columns_desc',
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition"
+                                :class="[
+                                    portalForm.home_layout === 'single_column'
+                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                        : 'border-border bg-background hover:bg-muted/50',
+                                ]"
+                            >
+                                <input
+                                    v-model="portalForm.home_layout"
+                                    type="radio"
+                                    value="single_column"
+                                    class="sr-only"
+                                />
+                                <div class="grid gap-1">
+                                    <span class="text-sm font-bold">{{
+                                        t('admin.branding.portal.layout_single_column')
+                                    }}</span>
+                                    <p class="text-xs text-muted-foreground">
+                                        {{
+                                            t(
+                                                'admin.branding.portal.layout_single_column_desc',
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                        <InputError :message="errors['portal.home_layout']" />
+                    </div>
+
+                    <!-- Home Sections Visibility -->
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="text-sm font-bold">
+                                {{ t('admin.branding.portal.home_sections') }}
+                            </h3>
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.portal.home_sections_hint') }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                            <label
+                                v-for="secKey in homeSectionKeys"
+                                :key="secKey"
+                                class="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background p-3 transition hover:border-primary/40"
+                            >
+                                <input
+                                    v-model="portalForm.home_sections[secKey]"
+                                    type="checkbox"
+                                    class="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                                />
+                                <input
+                                    type="hidden"
+                                    :name="`portal[home_sections][${secKey}]`"
+                                    :value="portalForm.home_sections[secKey] ? '1' : '0'"
+                                />
+                                <span class="text-xs font-semibold">
+                                    {{ t(`admin.branding.portal.sections.${secKey}`) }}
+                                </span>
+                            </label>
+                        </div>
+                        <InputError :message="errors['portal.home_sections']" />
+                    </div>
+
+                    <!-- Footer Customization -->
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-bold">
+                                {{ t('admin.branding.portal.footer') }}
+                            </h3>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="portal_footer_message">{{
+                                t('admin.branding.portal.footer_message')
+                            }}</Label>
+                            <textarea
+                                id="portal_footer_message"
+                                v-model="portalForm.footer.message"
+                                name="portal[footer][message]"
+                                rows="3"
+                                maxlength="1000"
+                                class="w-full rounded-md border border-input bg-background p-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+                                :placeholder="
+                                    t(
+                                        'admin.branding.portal.footer_message_placeholder',
+                                    )
+                                "
+                            />
+                            <InputError :message="errors['portal.footer.message']" />
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <Label>{{
+                                    t('admin.branding.portal.footer_links')
+                                }}</Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    :disabled="portalForm.footer.links.length >= 10"
+                                    @click="addFooterLink"
+                                >
+                                    <Plus class="mr-1.5 size-3.5" />
+                                    {{ t('admin.branding.portal.add_link') }}
+                                </Button>
+                            </div>
+
+                            <div
+                                v-if="portalForm.footer.links.length"
+                                class="space-y-2"
+                            >
+                                <div
+                                    v-for="(link, lIndex) in portalForm.footer.links"
+                                    :key="lIndex"
+                                    class="flex items-center gap-2"
+                                >
+                                    <Input
+                                        v-model="link.label"
+                                        :name="`portal[footer][links][${lIndex}][label]`"
+                                        :placeholder="
+                                            t('admin.branding.portal.link_label')
+                                        "
+                                        maxlength="60"
+                                        required
+                                        class="flex-1"
+                                    />
+                                    <Input
+                                        v-model="link.url"
+                                        :name="`portal[footer][links][${lIndex}][url]`"
+                                        :placeholder="
+                                            t('admin.branding.portal.link_url')
+                                        "
+                                        type="url"
+                                        maxlength="255"
+                                        required
+                                        class="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        class="shrink-0 text-destructive"
+                                        :aria-label="
+                                            t('admin.branding.portal.remove_link')
+                                        "
+                                        @click="removeFooterLink(lIndex)"
+                                    >
+                                        <Trash2 class="size-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <p
+                                v-else
+                                class="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground"
+                            >
+                                {{ t('admin.branding.portal.no_links') }}
+                            </p>
+                            <InputError :message="errors['portal.footer.links']" />
+                        </div>
+                    </div>
+
+                    <!-- Custom CSS -->
+                    <div class="space-y-2">
+                        <div>
+                            <h3 class="text-sm font-bold">
+                                {{ t('admin.branding.portal.custom_css') }}
+                            </h3>
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.portal.custom_css_hint') }}
+                            </p>
+                        </div>
+                        <textarea
+                            id="portal_custom_css"
+                            v-model="portalForm.custom_css"
+                            name="portal[custom_css]"
+                            rows="6"
+                            maxlength="20000"
+                            class="w-full rounded-md border border-input bg-background p-3 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary"
+                            :placeholder="
+                                t('admin.branding.portal.custom_css_placeholder')
+                            "
+                        />
+                        <InputError :message="errors['portal.custom_css']" />
+                    </div>
                 </section>
 
                 <div class="flex items-center gap-4 pt-2">

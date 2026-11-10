@@ -4,12 +4,14 @@ import {
     BookOpen,
     CalendarDays,
     CircleAlert,
+    HandCoins,
     Image,
     LibraryBig,
     Menu,
     Newspaper,
     Network as NetworkIcon,
     Radio,
+    Users,
     X,
 } from '@lucide/vue';
 import { computed, ref, watchEffect } from 'vue';
@@ -23,21 +25,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
-import { applyBranding } from '@/lib/branding';
+import { applyBranding, applyCustomCss } from '@/lib/branding';
 import { useI18n } from '@/lib/i18n';
 import { home, login } from '@/routes';
 import { index as eventsIndex } from '@/routes/events';
 import { index as galleryIndex } from '@/routes/gallery';
+import { index as groupsIndex } from '@/routes/groups';
 import { index as libraryIndex } from '@/routes/library';
 import { index as publicPostsIndex } from '@/routes/posts/public';
+import { show as treasuryShow } from '@/routes/treasury';
 
 type PublicNavKey =
     | 'home'
     | 'network'
     | 'posts'
     | 'events'
+    | 'groups'
     | 'gallery'
     | 'library'
+    | 'give'
     | 'classrooms';
 
 const props = withDefaults(
@@ -91,56 +97,105 @@ const brandInitials = computed(() =>
         .join(''),
 );
 
+const portal = computed(
+    () =>
+        page.props.portal as
+            | {
+                  header_menu?: Array<{ key: string; enabled: boolean }>;
+                  custom_css?: string;
+              }
+            | undefined,
+);
+
 watchEffect(() => {
     if (typeof document === 'undefined') {
         return;
     }
 
     applyBranding(branding.value);
+    applyCustomCss(portal.value?.custom_css);
 });
 
-const navItems = computed(() => [
-    {
+const allNavCatalog = computed(() => ({
+    home: {
         key: 'home' as const,
         label: t('nav.home'),
         href: home(),
         icon: BookOpen,
     },
-    ...(hasNetworkConnections.value
-        ? [
-              {
-                  key: 'network' as const,
-                  label: t('nav.network'),
-                  href: PublicChurchNetworkController.url(),
-                  icon: NetworkIcon,
-              },
-          ]
-        : []),
-    {
+    network: {
+        key: 'network' as const,
+        label: t('nav.network'),
+        href: PublicChurchNetworkController.url(),
+        icon: NetworkIcon,
+    },
+    posts: {
         key: 'posts' as const,
         label: t('nav.posts'),
         href: publicPostsIndex(),
         icon: Newspaper,
     },
-    {
+    events: {
         key: 'events' as const,
         label: t('nav.events'),
         href: eventsIndex(),
         icon: CalendarDays,
     },
-    {
+    groups: {
+        key: 'groups' as const,
+        label: t('groups.title'),
+        href: groupsIndex(),
+        icon: Users,
+    },
+    gallery: {
         key: 'gallery' as const,
         label: t('nav.gallery'),
         href: galleryIndex(),
         icon: Image,
     },
-    {
+    library: {
         key: 'library' as const,
         label: t('nav.library'),
         href: libraryIndex(),
         icon: LibraryBig,
     },
-]);
+    give: {
+        key: 'give' as const,
+        label: t('treasury.title'),
+        href: treasuryShow(),
+        icon: HandCoins,
+    },
+}));
+
+const navItems = computed(() => {
+    const catalog = allNavCatalog.value;
+    const configuredMenu = portal.value?.header_menu;
+
+    if (Array.isArray(configuredMenu) && configuredMenu.length > 0) {
+        return configuredMenu
+            .filter((item) => {
+                if (!item.enabled) {
+                    return false;
+                }
+
+                if (item.key === 'network' && !hasNetworkConnections.value) {
+                    return false;
+                }
+
+                return item.key in catalog;
+            })
+            .map((item) => catalog[item.key as keyof typeof catalog]);
+    }
+
+    return [
+        catalog.home,
+        ...(hasNetworkConnections.value ? [catalog.network] : []),
+        catalog.posts,
+        catalog.events,
+        catalog.gallery,
+        catalog.library,
+    ];
+});
 const desktopNavItems = computed(() =>
     navItems.value.filter((item) => item.key !== 'network'),
 );
