@@ -35,8 +35,8 @@ const toggleCategory = (categoryId: string) => {
 <template>
     <div class="space-y-2">
         <div class="flex items-center justify-between gap-3">
-            <label class="text-sm font-bold text-[#22374d]">{{ label }}</label>
-            <span v-if="hint" class="text-xs text-[#678096]">{{ hint }}</span>
+            <label class="text-xs font-bold text-foreground">{{ label }}</label>
+            <span v-if="hint" class="text-xs text-muted-foreground">{{ hint }}</span>
         </div>
 
         <div
@@ -47,34 +47,34 @@ const toggleCategory = (categoryId: string) => {
                 v-for="category in categories"
                 :key="category.id"
                 type="button"
-                class="flex items-center gap-2 rounded-2xl border px-3 py-3 text-left text-sm transition"
+                class="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm transition"
                 :class="
                     selectedIds.has(category.id)
-                        ? 'border-[#2b6e7d] bg-[#eaf6f8] text-[#173c47]'
-                        : 'border-[#d4e0ea] bg-white text-[#334155]'
+                        ? 'border-primary bg-primary/10 text-primary font-semibold shadow-xs'
+                        : 'border-input bg-card text-card-foreground hover:bg-muted/60'
                 "
                 @click="toggleCategory(category.id)"
             >
                 <span
-                    class="inline-flex h-4 w-4 items-center justify-center rounded border"
+                    class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
                     :class="
                         selectedIds.has(category.id)
-                            ? 'border-[#2b6e7d] bg-[#2b6e7d]'
-                            : 'border-slate-300 bg-white'
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-input bg-background'
                     "
                 >
                     <span
                         v-if="selectedIds.has(category.id)"
-                        class="h-1.5 w-1.5 rounded-full bg-white"
+                        class="h-1.5 w-1.5 rounded-full bg-primary-foreground"
                     />
                 </span>
-                <span class="font-semibold">{{ category.name }}</span>
+                <span class="truncate">{{ category.name }}</span>
             </button>
         </div>
 
         <div
             v-else
-            class="rounded-2xl border border-dashed border-[#d4e0ea] bg-[#f8fbfd] px-4 py-3 text-sm text-[#678096]"
+            class="rounded-xl border border-dashed border-input bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
         >
             {{ t('admin.categories.none_available') }}
         </div>

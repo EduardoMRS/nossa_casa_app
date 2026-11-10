@@ -51,8 +51,8 @@ services:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
       interval: 5s
       timeout: 3s
-      retries: 12
-      start_period: 10s
+      retries: 20
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -293,6 +293,7 @@ services:
 
   minio:
     image: cgr.dev/chainguard/minio:latest-dev
+    user: root
     command: server /data --console-address ":9001"
     expose:
       - "9000"

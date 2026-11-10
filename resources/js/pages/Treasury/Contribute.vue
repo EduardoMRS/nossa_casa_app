@@ -104,10 +104,10 @@ const submit = (): void => {
                     @submit.prevent="submit"
                 >
                     <label class="block text-xs font-bold text-foreground"
-                        >{{ t('treasury.type')
-                        }}<select
+                        >{{ t('treasury.type') }}
+                        <select
                             v-model="form.type"
-                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                            class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                         >
                             <option
                                 v-for="option in types"
@@ -119,35 +119,35 @@ const submit = (): void => {
                         </select></label
                     >
                     <label class="block text-xs font-bold text-foreground"
-                        >{{ t('treasury.amount')
-                        }}<input
+                        >{{ t('treasury.amount') }}
+                        <input
                             v-model="form.amount"
                             type="number"
                             step="0.01"
                             min="0.01"
                             required
-                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                            class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     /></label>
-                    <p v-if="form.errors.amount" class="text-xs text-rose-600">
+                    <p v-if="form.errors.amount" class="text-xs text-destructive">
                         {{ form.errors.amount }}
                     </p>
                     <label class="block text-xs font-bold text-foreground"
-                        >{{ t('treasury.name')
-                        }}<input
+                        >{{ t('treasury.name') }}
+                        <input
                             v-model="form.contributor_name"
-                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                            class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     /></label>
                     <label class="block text-xs font-bold text-foreground"
-                        >{{ t('treasury.message')
-                        }}<textarea
+                        >{{ t('treasury.message') }}
+                        <textarea
                             v-model="form.message"
                             rows="2"
-                            class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                            class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                         ></textarea>
                     </label>
                     <button
                         :disabled="form.processing"
-                        class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50"
+                        class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                         {{ t('treasury.submit') }}
                     </button>

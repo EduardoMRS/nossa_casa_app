@@ -1278,7 +1278,8 @@
             "responsibles_count": "{count} leader(s)",
             "no_category": "No category",
             "social_link": "Social media / group chat link",
-            "manage_categories": "Manage group categories"
+            "manage_categories": "Manage group categories",
+            "categories_optional_hint": "Optional: groups can be created without a category"
         },
         "treasury": {
             "kicker": "Finance",

@@ -242,58 +242,65 @@ const responsibleNames = (group: GroupItem): string =>
         >
             <form class="space-y-4" @submit.prevent="save">
                 <label class="block text-xs font-bold text-foreground"
-                    >{{ t('admin.groups.name')
-                    }}<input
+                    >{{ t('admin.groups.name') }}
+                    <input
                         v-model="form.name"
                         required
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <p v-if="errors.name" class="text-xs text-rose-600">
+                <p v-if="errors.name" class="text-xs text-destructive">
                     {{ errors.name }}
                 </p>
 
                 <label class="block text-xs font-bold text-foreground"
-                    >{{ t('admin.groups.description_field')
-                    }}<textarea
+                    >{{ t('admin.groups.description_field') }}
+                    <textarea
                         v-model="form.description"
                         rows="3"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     ></textarea>
                 </label>
 
                 <label class="block text-xs font-bold text-foreground"
-                    >{{ t('admin.groups.social_link')
-                    }}<input
+                    >{{ t('admin.groups.social_link') }}
+                    <input
                         v-model="form.social_link"
                         type="url"
                         inputmode="url"
                         placeholder="https://chat.whatsapp.com/..."
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <p v-if="errors.social_link" class="text-xs text-rose-600">
+                <p v-if="errors.social_link" class="text-xs text-destructive">
                     {{ errors.social_link }}
                 </p>
 
-                <div class="space-y-1">
+                <div class="space-y-1.5">
                     <CategorySelector
                         v-model="form.category_ids"
                         :categories="categories"
                         :label="t('admin.groups.category')"
                     />
-                    <a
-                        href="/dashboard/categories"
-                        class="inline-block text-xs font-bold text-[color:var(--dashboard-primary,#4338ca)] underline"
-                    >
-                        {{ t('admin.groups.manage_categories') }}
-                    </a>
+                    <div class="flex items-center justify-between pt-1">
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                            @click="categoriesOpen = true"
+                        >
+                            <Tags class="size-3.5" />
+                            {{ t('admin.groups.manage_categories') }}
+                        </button>
+                        <span class="text-[11px] text-muted-foreground">
+                            {{ t('admin.groups.categories_optional_hint') }}
+                        </span>
+                    </div>
                 </div>
 
                 <label class="block text-xs font-bold text-foreground"
-                    >{{ t('admin.groups.responsibles')
-                    }}<select
+                    >{{ t('admin.groups.responsibles') }}
+                    <select
                         v-model="form.responsible_ids"
                         multiple
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     >
                         <option
                             v-for="option in responsibleOptions"
@@ -312,36 +319,40 @@ const responsibleNames = (group: GroupItem): string =>
                     <input
                         v-model="form.address.street"
                         :placeholder="t('admin.groups.location')"
-                        class="col-span-2 rounded-lg border-input bg-background text-sm text-foreground"
+                        class="col-span-2 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                     <input
                         v-model="form.address.number"
                         placeholder="Nº"
-                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                        class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                     <input
                         v-model="form.address.neighborhood"
-                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                        class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                     <input
                         v-model="form.address.city"
-                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                        class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                     <input
                         v-model="form.address.state"
-                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                        class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                     <input
                         v-model="form.address.zipcode"
                         placeholder="CEP"
-                        class="rounded-lg border-input bg-background text-sm text-foreground"
+                        class="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     />
                 </fieldset>
 
                 <label
-                    class="flex items-center gap-2 text-xs font-bold text-foreground"
+                    class="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer"
                 >
-                    <input v-model="form.is_public" type="checkbox" />
+                    <input
+                        v-model="form.is_public"
+                        type="checkbox"
+                        class="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                    />
                     {{ t('admin.groups.visibility') }}
                 </label>
 

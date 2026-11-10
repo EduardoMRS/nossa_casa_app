@@ -127,3 +127,56 @@ Dashboard mostra dados relevantes **por papel do usuário** (contexto church).
 - [x] Botão "Como chegar" na home (`directionsUrl`) abrindo rota em apps
       externos (Google Maps dir API a partir de coordenadas ou endereço).
 - [x] Teste `ChurchMapEmbedTest` (3/3) dos helpers + Pint.
+
+---
+
+## 7. Customização do portal da church (header, seções da home, footer, CSS e herança) — 📋 planejado
+
+Permitir que a liderança da igreja configure detalhadamente a apresentação do portal público.
+
+- [ ] **Menu superior personalizável**: configurar quais links e módulos aparecem na barra superior do portal da igreja (substituindo a lista fixa atual).
+- [ ] **Seções e layout da Home**:
+      - Seleção de blocos visíveis (banners, eventos, notícias/posts, grupos, ministrações/mídias, versículo, mapa).
+      - Opção de layout: coluna única ou duas colunas (layout atual).
+- [ ] **Customização do rodapé (footer)**: personalização de textos, links institucionais e informações de contato adicionais.
+- [ ] **CSS personalizado**: campo para inserção de CSS customizado sanitizado e injetado no portal da igreja.
+- [ ] **Herança hierárquica (churches inferiores)**: marcador booleano para definir se as configurações de layout, menu, footer e CSS devem ser propagadas automaticamente para as congregações/filiais subordinadas na rede.
+- [ ] Testes de feature, permissões e validação de segurança.
+
+## 8. Integração com gateways de pagamento — 📋 planejado
+
+Integrar provedores de pagamento para processamento online de dízimos/ofertas, inscrições em eventos e vendas de produtos.
+
+- [ ] Gateways suportados inicialmente: **Stripe**, **PayPal**, **Asaas** e **PagSeguro**.
+- [ ] Armazenamento seguro de credenciais e chaves de API por igreja (chaves criptografadas no banco).
+- [ ] Endpoint unificado de webhook para confirmação e conciliação de transações (cartão de crédito, Pix, boleto).
+- [ ] Integração com o módulo de Tesouraria para baixa automática de doações processadas por gateway.
+- [ ] Testes de integração (mocks de API e webhooks) + Pint.
+
+## 9. Sistema de loja para venda de produtos da church — 📋 planejado
+
+Módulo para comercialização de itens da igreja (livros, camisetas, materiais de estudo, ingressos físicos, etc.).
+
+- [ ] Modelagem de dados: `Product`, imagens, variações, categorias de produto.
+- [ ] Preço normal e **preço promocional** (com toggle para ativar/desativar promoção).
+- [ ] **Controle de estoque**: quantidade disponível, baixa automática na compra aprovada e devolução em caso de cancelamento.
+- [ ] **Limite de compra por documento**: trava opcional configurável por produto limitando o número de unidades adquiridas por CPF/documento.
+- [ ] **Reserva temporária de estoque**: retenção de itens no carrinho/checkout durante o fluxo de pagamento com expiração (TTL) para evitar concorrência e venda de itens esgotados.
+- [ ] Vitrine pública no portal e checkout integrado aos gateways de pagamento.
+- [ ] Painel administrativo de pedidos e gestão de estoque.
+- [ ] Testes de feature (estoque concorrente, expiração de reserva, limites por documento) + Pint.
+
+## 10. Sistema de cupons de desconto (loja e eventos) — 📋 planejado
+
+Mecanismo flexível de cupons promocionais ou isenções aplicável a itens da loja e inscrições de eventos.
+
+- [ ] Aplicação unificada: suporte a cupons tanto na compra de produtos da loja quanto em inscrições de eventos (ex.: isentar voluntários/obreiros).
+- [ ] Tipos de desconto: percentual (%), valor fixo monetário ou isenção total (100% gratuito).
+- [ ] Regras e restrições de uso:
+      - Limite máximo de utilizações global ou por usuário.
+      - Período de vigência: data de início e término, ou validade indeterminada (ilimitado/sem expiração).
+- [ ] Controle de acesso para criação: restrito a usuários do financeiro (`treasurer`), líderes (`leader`), pastores (`church_leader`) e administradores (`system`).
+- [ ] Transparência contábil e auditoria:
+      - Em casos de 100% de desconto, explicitar no checkout, comprovante e inscrição que o valor foi R$ 0,00 (isenção total).
+      - Destacar o percentual e valor nominal reduzido no detalhamento do pedido e nos relatórios de fechamento para não distorcer a contagem contábil.
+- [ ] Testes de feature (regras de validação, expiração, aplicação cruzada loja/evento, permissões) + Pint.

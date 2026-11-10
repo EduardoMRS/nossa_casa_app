@@ -1278,7 +1278,8 @@
             "responsibles_count": "{count} responsable(s)",
             "no_category": "Sin categoría",
             "social_link": "Enlace de red social / grupo de chat",
-            "manage_categories": "Gestionar categorías de grupos"
+            "manage_categories": "Gestionar categorías de grupos",
+            "categories_optional_hint": "Opcional: el grupo se puede crear sin categoría"
         },
         "treasury": {
             "kicker": "Finanzas",

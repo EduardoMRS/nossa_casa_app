@@ -92,14 +92,14 @@ const exportCsv = (): void => {
             class="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-5 shadow-sm"
         >
             <label class="text-xs font-bold text-foreground"
-                >{{ t('admin.treasury.month')
-                }}<input
+                >{{ t('admin.treasury.month') }}
+                <input
                     v-model="exportMonth"
                     type="month"
-                    class="mt-1 block rounded-lg border-input bg-background text-foreground"
+                    class="mt-1 block rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
             /></label>
             <button
-                class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+                class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 @click="exportCsv"
             >
                 <Download class="size-4" />{{ t('admin.treasury.export') }}
@@ -113,51 +113,52 @@ const exportCsv = (): void => {
                 }}
             </div>
             <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="save">
-                <label class="text-xs font-bold text-foreground"
-                    >{{ t('admin.treasury.pix_key_type')
-                    }}<input
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.treasury.pix_key_type') }}
+                    <input
                         v-model="form.pix_key_type"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <label class="text-xs font-bold text-foreground"
-                    >{{ t('admin.treasury.pix_key')
-                    }}<input
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.treasury.pix_key') }}
+                    <input
                         v-model="form.pix_key"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <label class="text-xs font-bold text-foreground"
-                    >{{ t('admin.treasury.bank_name')
-                    }}<input
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.treasury.bank_name') }}
+                    <input
                         v-model="form.bank_name"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <label class="text-xs font-bold text-foreground"
-                    >{{ t('admin.treasury.bank_account')
-                    }}<input
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.treasury.bank_account') }}
+                    <input
                         v-model="form.bank_account"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
-                <label class="text-xs font-bold text-foreground"
-                    >{{ t('admin.treasury.account_holder')
-                    }}<input
+                <label class="block text-xs font-bold text-foreground"
+                    >{{ t('admin.treasury.account_holder') }}
+                    <input
                         v-model="form.account_holder"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 /></label>
                 <label
-                    class="flex items-center gap-2 text-xs font-bold text-foreground sm:col-span-2"
+                    class="flex items-center gap-2 text-xs font-bold text-foreground sm:col-span-2 cursor-pointer"
                 >
                     <input
                         v-model="form.accepts_contributions"
                         type="checkbox"
+                        class="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                     />
                     {{ t('admin.treasury.accepts') }}
                 </label>
-                <label class="text-xs font-bold text-foreground sm:col-span-2"
-                    >{{ t('admin.treasury.instructions')
-                    }}<textarea
+                <label class="block text-xs font-bold text-foreground sm:col-span-2"
+                    >{{ t('admin.treasury.instructions') }}
+                    <textarea
                         v-model="form.instructions"
                         rows="3"
-                        class="mt-1 w-full rounded-lg border-input bg-background text-foreground"
+                        class="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     ></textarea>
                 </label>
                 <div class="sm:col-span-2">
