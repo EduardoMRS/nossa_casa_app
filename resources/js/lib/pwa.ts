@@ -360,8 +360,11 @@ export const preloadPwaEssentials = (): void => {
             }
 
             // 1. Preload Bible page and its offline bundle
-            const currentPath = window.location.pathname;
-            const currentLocale = currentPath.split('/')[1] || 'pt';
+            const firstSegment = (window.location.pathname.split('/')[1] || '').toLowerCase();
+            const knownLocales = ['pt', 'en', 'es'];
+            const currentLocale = knownLocales.includes(firstSegment)
+                ? firstSegment
+                : (document.documentElement.lang?.split('-')[0]?.toLowerCase() || 'pt');
 
             const bibleUrls = [
                 `/${currentLocale}/library/bible`,

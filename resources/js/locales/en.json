@@ -703,6 +703,8 @@
                 "footer_link_label": "Link label",
                 "footer_link_url": "URL (https://...)",
                 "footer_add_link": "Add footer link",
+                "footer_remove_link": "Remove link",
+                "footer_no_links": "No additional footer links configured.",
                 "custom_css_title": "Custom CSS",
                 "custom_css_description": "Inject custom styling applied across public portal pages.",
                 "custom_css_placeholder": "/* Custom CSS for this church */\n.public-template-page {\n  /* ... */\n}",

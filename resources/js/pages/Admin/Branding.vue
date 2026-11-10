@@ -1764,7 +1764,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 <p class="text-xs text-muted-foreground">
                                     {{
                                         t(
-                                            'admin.branding.portal.propagate_to_branches_hint',
+                                            'admin.branding.portal.propagate_to_branches_desc',
                                         )
                                     }}
                                 </p>
@@ -1777,10 +1777,10 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <div class="space-y-3">
                         <div>
                             <h3 class="text-sm font-bold">
-                                {{ t('admin.branding.portal.header_menu') }}
+                                {{ t('admin.branding.portal.menu_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.header_menu_hint') }}
+                                {{ t('admin.branding.portal.menu_description') }}
                             </p>
                         </div>
 
@@ -1810,7 +1810,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         class="text-sm font-semibold"
                                         :class="{ 'text-muted-foreground line-through': !item.enabled }"
                                     >
-                                        {{ t(`nav.${item.key}`) }}
+                                        {{ t(`admin.branding.portal.menu_items.${item.key}`) }}
                                     </span>
                                 </label>
 
@@ -1846,7 +1846,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <!-- Home Page Layout -->
                     <div class="space-y-3">
                         <h3 class="text-sm font-bold">
-                            {{ t('admin.branding.portal.home_layout') }}
+                            {{ t('admin.branding.portal.layout_title') }}
                         </h3>
                         <input
                             type="hidden"
@@ -1917,10 +1917,10 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <div class="space-y-3">
                         <div>
                             <h3 class="text-sm font-bold">
-                                {{ t('admin.branding.portal.home_sections') }}
+                                {{ t('admin.branding.portal.sections_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.home_sections_hint') }}
+                                {{ t('admin.branding.portal.sections_description') }}
                             </p>
                         </div>
 
@@ -1952,8 +1952,11 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <div class="space-y-4">
                         <div>
                             <h3 class="text-sm font-bold">
-                                {{ t('admin.branding.portal.footer') }}
+                                {{ t('admin.branding.portal.footer_title') }}
                             </h3>
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.portal.footer_description') }}
+                            </p>
                         </div>
 
                         <div class="grid gap-2">
@@ -1979,7 +1982,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <Label>{{
-                                    t('admin.branding.portal.footer_links')
+                                    t('admin.branding.portal.footer_links_title')
                                 }}</Label>
                                 <Button
                                     type="button"
@@ -1989,7 +1992,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     @click="addFooterLink"
                                 >
                                     <Plus class="mr-1.5 size-3.5" />
-                                    {{ t('admin.branding.portal.add_link') }}
+                                    {{ t('admin.branding.portal.footer_add_link') }}
                                 </Button>
                             </div>
 
@@ -2006,7 +2009,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         v-model="link.label"
                                         :name="`portal[footer][links][${lIndex}][label]`"
                                         :placeholder="
-                                            t('admin.branding.portal.link_label')
+                                            t('admin.branding.portal.footer_link_label')
                                         "
                                         maxlength="60"
                                         required
@@ -2016,7 +2019,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         v-model="link.url"
                                         :name="`portal[footer][links][${lIndex}][url]`"
                                         :placeholder="
-                                            t('admin.branding.portal.link_url')
+                                            t('admin.branding.portal.footer_link_url')
                                         "
                                         type="url"
                                         maxlength="255"
@@ -2029,7 +2032,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         size="icon"
                                         class="shrink-0 text-destructive"
                                         :aria-label="
-                                            t('admin.branding.portal.remove_link')
+                                            t('admin.branding.portal.footer_remove_link')
                                         "
                                         @click="removeFooterLink(lIndex)"
                                     >
@@ -2041,7 +2044,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 v-else
                                 class="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground"
                             >
-                                {{ t('admin.branding.portal.no_links') }}
+                                {{ t('admin.branding.portal.footer_no_links') }}
                             </p>
                             <InputError :message="errors['portal.footer.links']" />
                         </div>
@@ -2051,10 +2054,10 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <div class="space-y-2">
                         <div>
                             <h3 class="text-sm font-bold">
-                                {{ t('admin.branding.portal.custom_css') }}
+                                {{ t('admin.branding.portal.custom_css_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.custom_css_hint') }}
+                                {{ t('admin.branding.portal.custom_css_description') }}
                             </p>
                         </div>
                         <textarea

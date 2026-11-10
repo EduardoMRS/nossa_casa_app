@@ -703,6 +703,8 @@
                 "footer_link_label": "Título del enlace",
                 "footer_link_url": "URL (https://...)",
                 "footer_add_link": "Agregar enlace al pie de página",
+                "footer_remove_link": "Eliminar enlace",
+                "footer_no_links": "Ningún enlace adicional configurado.",
                 "custom_css_title": "CSS personalizado",
                 "custom_css_description": "Inserta reglas CSS personalizadas aplicadas en las páginas públicas del portal.",
                 "custom_css_placeholder": "/* CSS personalizado para esta iglesia */\n.public-template-page {\n  /* ... */\n}",

@@ -143,7 +143,27 @@ Permitir que a liderança da igreja configure detalhadamente a apresentação do
 - [x] **Herança hierárquica (churches inferiores)**: marcador booleano para definir se as configurações de layout, menu, footer e CSS devem ser propagadas automaticamente para as congregações/filiais subordinadas na rede.
 - [x] Testes de feature, permissões e validação de segurança (`tests/Feature/ChurchPortalSettingsTest.php`).
 
-## 8. Integração com gateways de pagamento — 📋 planejado
+## 8. Definição de Storage próprio da church nas configurações (SFTP, S3, R2, MinIO, B2, Supabase, OneDrive, Padrão) e herança de rede — 📋 planejado
+
+Permitir que a igreja defina um provedor de armazenamento (storage) próprio para salvamento de mídias, transmissões, gravações, livros, anexos e demais conteúdos enviados ou gerados na igreja e em suas filiais.
+
+- [ ] **Drivers suportados**:
+      - **Padrão**: fallback para o storage default do sistema / plataforma quando nenhum provedor customizado estiver ativo.
+      - **S3 e compatíveis**: AWS S3, Cloudflare R2, MinIO, Supabase Storage, Backblaze B2 (endpoint customizado, bucket, região, key/secret, path style).
+      - **SFTP / FTP**: host, porta, usuário, senha ou chave privada, diretório raiz (`root`).
+      - **OneDrive**: integração OAuth2 / Graph API para armazenamento de arquivos e mídias.
+- [ ] **Interface de configuração e teste de conexão**:
+      - Seção no painel de configurações da church (`/dashboard/configuracoes-church`).
+      - Formulário reativo com campos específicos por driver selecionado.
+      - Ação de teste de conexão com feedback em tempo real (validação de leitura/escrita antes de salvar).
+- [ ] **Herança hierárquica na rede**:
+      - Marcador booleano `propagate_to_branches` para definir se as filiais/congregações subordinadas devem utilizar o storage da matriz ou manter configuração própria/padrão.
+- [ ] **Resolução dinâmica de disco/filesystem**:
+      - Service/Factory para instanciar o disco do Flysystem sob demanda com as credenciais resolvidas (próprias ou herdadas da matriz).
+      - Roteamento transparente das operações de upload de mídias, gravações do media-worker, biblioteca digital e anexos de formulários.
+- [ ] **Testes de integração e feature** (resolução de disco, herança na rede, validação de drivers) + Pint.
+
+## 9. Integração com gateways de pagamento — 📋 planejado
 
 Integrar provedores de pagamento para processamento online de dízimos/ofertas, inscrições em eventos e vendas de produtos.
 
@@ -153,7 +173,7 @@ Integrar provedores de pagamento para processamento online de dízimos/ofertas, 
 - [ ] Integração com o módulo de Tesouraria para baixa automática de doações processadas por gateway.
 - [ ] Testes de integração (mocks de API e webhooks) + Pint.
 
-## 9. Sistema de loja para venda de produtos da church — 📋 planejado
+## 10. Sistema de loja para venda de produtos da church — 📋 planejado
 
 Módulo para comercialização de itens da igreja (livros, camisetas, materiais de estudo, ingressos físicos, etc.).
 
@@ -166,7 +186,7 @@ Módulo para comercialização de itens da igreja (livros, camisetas, materiais 
 - [ ] Painel administrativo de pedidos e gestão de estoque.
 - [ ] Testes de feature (estoque concorrente, expiração de reserva, limites por documento) + Pint.
 
-## 10. Sistema de cupons de desconto (loja e eventos) — 📋 planejado
+## 11. Sistema de cupons de desconto (loja e eventos) — 📋 planejado
 
 Mecanismo flexível de cupons promocionais ou isenções aplicável a itens da loja e inscrições de eventos.
 
