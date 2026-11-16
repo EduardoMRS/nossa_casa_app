@@ -80,9 +80,9 @@ class HandleInertiaRequests extends Middleware
                 $query->where('teacher_id', $user->id)
                     ->orWhereHas('members', fn ($members) => $members->whereKey($user->id));
 
-                if ($user->role->value === 'system') {
+                if ($user->role === UserRole::SYSTEM) {
                     $query->orWhereNotNull('id');
-                } elseif (in_array($user->role->value, ['leader', 'church_leader'], true)) {
+                } elseif (in_array($user->role, [UserRole::LEADER, UserRole::CHURCH_LEADER], true)) {
                     $query->orWhereIn('church_id', app(ChurchAccess::class)->scopeChurchIds($user));
                 }
             })

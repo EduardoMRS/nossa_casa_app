@@ -32,6 +32,12 @@ class PortalController extends Controller
 
     public function index(Request $request): Response
     {
+        $isPwa = $request->boolean('pwa') || $request->header('X-PWA-APP') === '1';
+
+        if ($this->context->isMainDomain() && ! $isPwa) {
+            return $this->platformHome($request);
+        }
+
         return $this->context->church()
             ? $this->churchHome()
             : $this->platformHome($request);

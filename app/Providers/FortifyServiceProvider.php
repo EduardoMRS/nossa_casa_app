@@ -58,6 +58,14 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(function (Request $request) {
             $redirect = $request->string('redirect')->toString();
 
+            if ($redirect === '' && $request->session()->has('url.intended')) {
+                $intended = (string) $request->session()->get('url.intended');
+                $parts = parse_url($intended);
+                if ($parts !== false && ! empty($parts['path'])) {
+                    $redirect = $parts['path'].(isset($parts['query']) ? '?'.$parts['query'] : '');
+                }
+            }
+
             if ($redirect !== '') {
                 $request->session()->put('auth.login_redirect', $redirect);
             } else {

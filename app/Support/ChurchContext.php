@@ -47,17 +47,18 @@ class ChurchContext
         }
 
         if ($this->mainDomain) {
-
             $isGlobalAdministrator = $request->user() instanceof User
                 && $request->user()->role === UserRole::SYSTEM;
-            $requestedChurchId = $request->header('X-Church-ID')
-                ?? (($isPwaRequest || $isGlobalAdministrator)
-                    ? $request->query('church_id')
-                        ?? ($isGlobalAdministrator ? $request->hasSession() ? $request->session()->get('admin_church_id') : null : null)
-                        ?? $request->cookie('ncapp_pwa_church_id')
-                    : null);
+            $isDashboardRequest = $request->is('dashboard', 'dashboard/*');
 
-            if ($isGlobalAdministrator && blank($requestedChurchId) && $request->is('dashboard', 'dashboard/*')) {
+            $requestedChurchId = $request->header('X-Church-ID')
+                ?? ($isPwaRequest
+                    ? ($request->query('church_id') ?? $request->cookie('ncapp_pwa_church_id'))
+                    : ($isGlobalAdministrator && $isDashboardRequest
+                        ? ($request->query('church_id') ?? ($request->hasSession() ? $request->session()->get('admin_church_id') : null))
+                        : null));
+
+            if ($isGlobalAdministrator && blank($requestedChurchId) && $isDashboardRequest) {
                 $requestedChurchId = $this->activeChurchQuery()->value('id');
                 $this->source = 'dashboard-default';
             }
@@ -204,9 +205,16 @@ class ChurchContext
             return rtrim((string) config('app.url'), '/').'/'.ltrim($path, '/');
         }
 
+        $domain = $church->domain;
+        $mainPort = parse_url((string) config('app.url'), PHP_URL_PORT);
+
+        if ($mainPort && ! Str::contains($domain, ':') && Str::contains($domain, ['localhost', '127.0.0.1'])) {
+            $domain .= ':'.$mainPort;
+        }
+
         $scheme = Str::contains($church->domain, ['localhost', '127.0.0.1']) ? 'http' : 'https';
 
-        return $scheme.'://'.$church->domain.'/'.ltrim($path, '/');
+        return $scheme.'://'.$domain.'/'.ltrim($path, '/');
     }
 
     public static function normalizeDomain(?string $domain): string

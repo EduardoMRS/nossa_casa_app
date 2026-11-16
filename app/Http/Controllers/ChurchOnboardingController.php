@@ -278,7 +278,14 @@ class ChurchOnboardingController extends Controller
         $request->validate(['token' => ['required', 'string', 'size:64']]);
         $payload = Cache::pull('church-auth-handoff:'.$request->string('token')->toString());
         abort_unless(is_array($payload), 403);
-        abort_unless($this->context->churchId() === ($payload['church_id'] ?? null), 403);
+
+        $targetChurchId = $payload['church_id'] ?? null;
+        if ($targetChurchId === null) {
+            abort_unless($this->context->isMainDomain(), 403);
+        } else {
+            abort_unless($this->context->churchId() === $targetChurchId, 403);
+        }
+
         abort_unless(hash_equals((string) ($payload['user_agent'] ?? ''), hash('sha256', (string) $request->userAgent())), 403);
         Auth::guard('web')->loginUsingId($payload['user_id']);
         $request->session()->regenerate();
@@ -286,11 +293,24 @@ class ChurchOnboardingController extends Controller
 
         $canAccessDashboard = in_array($request->user()?->role, [
             UserRole::LEADER,
+            UserRole::TREASURER,
             UserRole::MEDIA,
             UserRole::CHURCH_LEADER,
             UserRole::SUPERADMIN,
             UserRole::SYSTEM,
         ], true);
+
+        $redirect = $payload['redirect'] ?? null;
+        if (is_string($redirect) && str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+            $parts = parse_url($redirect);
+            if ($parts !== false && ! isset($parts['scheme']) && ! isset($parts['host'])) {
+                if (! $canAccessDashboard && (str_starts_with($redirect, '/dashboard') || $redirect === '/dashboard')) {
+                    return redirect()->route('home');
+                }
+
+                return redirect()->to($redirect);
+            }
+        }
 
         return redirect()->route($canAccessDashboard ? 'dashboard' : 'home');
     }
