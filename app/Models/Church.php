@@ -126,6 +126,18 @@ class Church extends Model
         return $this->hasOne(ChurchMailSetting::class);
     }
 
+    /** @return HasOne<ChurchStorageSetting, $this> */
+    public function storageSetting(): HasOne
+    {
+        return $this->hasOne(ChurchStorageSetting::class);
+    }
+
+    /** @return HasMany<ChurchStorageBackup, $this> */
+    public function storageBackups(): HasMany
+    {
+        return $this->hasMany(ChurchStorageBackup::class);
+    }
+
     /** @return HasOne<Network, $this> */
     public function parentNetwork(): HasOne
     {

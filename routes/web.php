@@ -329,9 +329,13 @@ Route::get('/d/{encryptedFile}', function (string $encryptedFile, Request $reque
         404,
     );
 
-    abort_unless(in_array($diskName, config('filesystems.temporary_url_disks', []), true), 404);
+    $disk = app(\App\Support\ChurchStorageManager::class)->resolveDiskByName($diskName);
 
-    $disk = Storage::disk($diskName);
+    if (! $disk) {
+        abort_unless(in_array($diskName, config('filesystems.temporary_url_disks', []), true), 404);
+        $disk = Storage::disk($diskName);
+    }
+
     abort_unless($disk->exists($filePath), 404);
 
     $headers = [
@@ -484,6 +488,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
             Route::get('/church-settings', [BrandingController::class, 'edit'])->name('branding.edit');
             Route::put('/church-settings', [BrandingController::class, 'update'])->name('branding.update');
             Route::get('/church-settings/registration-proof', [BrandingController::class, 'registrationProof'])->name('branding.registrationProof');
+            Route::post('/church-settings/test-storage', [BrandingController::class, 'testStorage'])->name('branding.testStorage');
             Route::get('/church-network', [BrandingController::class, 'network'])->name('churchNetwork.index');
             Route::get('/categories', [AdminWorkspaceController::class, 'categories'])->name('categories.index');
 
@@ -673,6 +678,7 @@ Route::middleware(['auth', 'verified'])->group(function () use ($isWayfinderGene
         Route::middleware('role:church_leader|superadmin|system')->group(function () {
             Route::get('/dashboard/configuracoes-church', [BrandingController::class, 'edit']);
             Route::put('/dashboard/configuracoes-church', [BrandingController::class, 'update']);
+            Route::post('/dashboard/configuracoes-church/test-storage', [BrandingController::class, 'testStorage']);
             Route::get('/dashboard/categorias', [AdminWorkspaceController::class, 'categories']);
             Route::get('/dashboard/destaques', [AdminWorkspaceController::class, 'highlights']);
             Route::get('/dashboard/eventos', [AdminWorkspaceController::class, 'events']);

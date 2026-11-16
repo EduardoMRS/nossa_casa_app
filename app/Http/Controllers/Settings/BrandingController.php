@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\UpdateChurchSettingsRequest;
+use App\Jobs\MigrateChurchStorageJob;
 use App\Models\Church;
 use App\Models\Setting;
 use App\Services\AddressGeocoder;
@@ -12,7 +13,9 @@ use App\Services\ChurchNetworkSettingsData;
 use App\Support\ChurchBrandingResolver;
 use App\Support\ChurchDomainContext;
 use App\Support\ChurchPortalResolver;
+use App\Support\ChurchStorageManager;
 use App\Support\ChurchTerminology;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -31,6 +34,7 @@ class BrandingController extends Controller
         private ChurchDomainContext $domainContext,
         private ChurchNetworkSettingsData $networkSettings,
         private AddressGeocoder $addressGeocoder,
+        private ChurchStorageManager $storageManager,
     ) {}
 
     public function edit(Request $request): Response
@@ -60,6 +64,8 @@ class BrandingController extends Controller
         }
         $address = $church->address()->first();
         $mailSetting = $church->mailSetting()->first();
+        $storageSetting = $church->storageSetting()->first();
+        $storageResolved = $this->storageManager->resolveFor($church);
 
         return Inertia::render('Admin/Branding', [
             'branding' => array_merge(
@@ -102,6 +108,16 @@ class BrandingController extends Controller
                 'from_address' => $mailSetting?->from_address ?? '',
                 'from_name' => $mailSetting?->from_name ?? $church->name,
                 'has_password' => filled($mailSetting?->password),
+            ],
+            'storageSettings' => [
+                'enabled' => $storageSetting?->enabled ?? false,
+                'allow_branches' => $storageSetting?->allow_branches ?? false,
+                'driver' => $storageSetting?->driver ?? 'default',
+                'config' => $storageSetting?->publicConfig() ?? [],
+                'is_inherited' => $storageResolved ? $storageResolved['is_inherited'] : false,
+                'source_church_name' => $storageResolved && $storageResolved['is_inherited']
+                    ? $storageResolved['source_church']?->name
+                    : null,
             ],
             'portal' => $this->portalResolver->resolve($church),
             'registrationProof' => $this->registrationProofData($church),
@@ -157,6 +173,7 @@ class BrandingController extends Controller
         $currency = Arr::pull($validated, 'currency');
         $defaultLocale = Arr::pull($validated, 'default_locale');
         $mail = Arr::pull($validated, 'mail');
+        $storage = Arr::pull($validated, 'storage');
         $address = Arr::pull($validated, 'address', []);
         $removeLogo = (bool) Arr::pull($validated, 'remove_logo', false);
         Arr::forget($validated, 'logo');
@@ -265,9 +282,92 @@ class BrandingController extends Controller
             $mailSetting->save();
         }
 
+        if (is_array($storage)) {
+            $existingStorage = $church->storageSetting()->first();
+            $oldDriver = $existingStorage && $existingStorage->enabled ? $existingStorage->driver : 'default';
+
+            $storageSetting = $existingStorage ?? $church->storageSetting()->make();
+            $newEnabled = (bool) ($storage['enabled'] ?? false);
+            $newDriver = $newEnabled ? (string) ($storage['driver'] ?? 'default') : 'default';
+
+            $storageSetting->fill([
+                'enabled' => $newEnabled,
+                'allow_branches' => (bool) ($storage['allow_branches'] ?? false),
+                'driver' => (string) ($storage['driver'] ?? 'default'),
+            ]);
+
+            $incomingConfig = (array) ($storage['config'] ?? []);
+            $existingConfig = (array) ($storageSetting->config ?? []);
+
+            // Preserve existing secrets when incoming value is empty/absent
+            $secretKeys = ['secret', 'password', 'private_key', 'client_secret', 'refresh_token'];
+            foreach ($secretKeys as $key) {
+                if (blank($incomingConfig[$key] ?? null) && filled($existingConfig[$key] ?? null)) {
+                    $incomingConfig[$key] = $existingConfig[$key];
+                }
+            }
+
+            $storageSetting->config = array_filter($incomingConfig, fn (mixed $v): bool => $v !== null && $v !== '');
+            $storageSetting->save();
+
+            // Trigger file migration if storage driver changed
+            if ($oldDriver !== $newDriver) {
+                MigrateChurchStorageJob::dispatch($church->id, $oldDriver);
+            }
+        }
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('common.notifications.church_settings_updated')]);
 
         return back();
+    }
+
+    public function testStorage(Request $request): JsonResponse
+    {
+        $church = $this->churchForRequest($request);
+        abort_unless($church, 403);
+
+        $validated = $request->validate([
+            'driver' => ['required', 'in:default,s3,ftp,sftp,google_drive,onedrive'],
+            'config' => ['nullable', 'array'],
+            'config.key' => ['nullable', 'string'],
+            'config.secret' => ['nullable', 'string'],
+            'config.region' => ['nullable', 'string'],
+            'config.bucket' => ['nullable', 'string'],
+            'config.endpoint' => ['nullable', 'string'],
+            'config.url' => ['nullable', 'string'],
+            'config.root' => ['nullable', 'string'],
+            'config.use_path_style_endpoint' => ['nullable', 'boolean'],
+            'config.host' => ['nullable', 'string'],
+            'config.port' => ['nullable', 'integer'],
+            'config.username' => ['nullable', 'string'],
+            'config.password' => ['nullable', 'string'],
+            'config.passive' => ['nullable', 'boolean'],
+            'config.ssl' => ['nullable', 'boolean'],
+            'config.private_key' => ['nullable', 'string'],
+            'config.client_id' => ['nullable', 'string'],
+            'config.client_secret' => ['nullable', 'string'],
+            'config.refresh_token' => ['nullable', 'string'],
+            'config.tenant_id' => ['nullable', 'string'],
+            'config.folder_id' => ['nullable', 'string'],
+        ]);
+
+        $driver = (string) $validated['driver'];
+        $incomingConfig = (array) ($validated['config'] ?? []);
+
+        // When a secret field is omitted/blank, fall back to the saved value
+        // so the user does not have to re-enter credentials just to test.
+        $existing = $church->storageSetting()?->first();
+        $existingConfig = (array) ($existing?->config ?? []);
+        $secretKeys = ['secret', 'password', 'private_key', 'client_secret', 'refresh_token'];
+        foreach ($secretKeys as $key) {
+            if (blank($incomingConfig[$key] ?? null) && filled($existingConfig[$key] ?? null)) {
+                $incomingConfig[$key] = $existingConfig[$key];
+            }
+        }
+
+        $result = $this->storageManager->testConnection($driver, $incomingConfig);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     /**

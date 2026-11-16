@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import {
+    AlertCircle,
     ArrowDown,
     ArrowUp,
     Check,
     Clock3,
     Globe2,
+    HardDrive,
     ImageUp,
     Info,
     Languages,
     LayoutTemplate,
+    Loader2,
     MapPinned,
     PanelTop,
     Plus,
@@ -177,6 +180,46 @@ type PortalSettingsData = {
     source_church_name?: string | null;
 };
 
+type StorageDriver =
+    'default' | 's3' | 'ftp' | 'sftp' | 'google_drive' | 'onedrive';
+
+type StorageConfig = {
+    key?: string;
+    secret?: string;
+    has_secret?: boolean;
+    region?: string;
+    bucket?: string;
+    endpoint?: string;
+    url?: string;
+    root?: string;
+    use_path_style_endpoint?: boolean;
+    host?: string;
+    port?: number | string;
+    username?: string;
+    password?: string;
+    has_password?: boolean;
+    passive?: boolean;
+    ssl?: boolean;
+    private_key?: string;
+    has_private_key?: boolean;
+    client_id?: string;
+    client_secret?: string;
+    has_client_secret?: boolean;
+    refresh_token?: string;
+    has_refresh_token?: boolean;
+    tenant_id?: string;
+    folder_id?: string;
+};
+
+type StorageSettingsData = {
+    enabled: boolean;
+    allow_branches: boolean;
+    driver: StorageDriver;
+    config: StorageConfig;
+    is_inherited?: boolean;
+    source_church_name?: string | null;
+};
+
 const props = defineProps<{
     branding: BrandingData;
     templates: Record<TemplateSection, TemplateVariant>;
@@ -186,6 +229,7 @@ const props = defineProps<{
     defaultLocale: 'pt' | 'en';
     mainDomain: string;
     mailSettings: MailSettings;
+    storageSettings?: StorageSettingsData;
     networkSettings: ChurchNetworkSettingsData;
     registrationProof: { name: string; url: string } | null;
     portal?: PortalSettingsData;
@@ -288,7 +332,13 @@ const scheduleMonthlyRules = [
     'business_day',
     'business_day_after',
 ] as const;
-const scheduleOrdinals = ['first', 'second', 'third', 'fourth', 'last'] as const;
+const scheduleOrdinals = [
+    'first',
+    'second',
+    'third',
+    'fourth',
+    'last',
+] as const;
 const scheduleMonths = Array.from({ length: 12 }, (_, index) => index + 1);
 const templateSections: TemplateSection[] = [
     'home',
@@ -341,15 +391,15 @@ const portalForm = ref<PortalSettingsData>({
     header_menu: props.portal?.header_menu
         ? props.portal.header_menu.map((item) => ({ ...item }))
         : [
-            { key: 'home', enabled: true },
-            { key: 'posts', enabled: true },
-            { key: 'events', enabled: true },
-            { key: 'groups', enabled: true },
-            { key: 'gallery', enabled: true },
-            { key: 'library', enabled: true },
-            { key: 'give', enabled: true },
-            { key: 'network', enabled: true },
-        ],
+              { key: 'home', enabled: true },
+              { key: 'posts', enabled: true },
+              { key: 'events', enabled: true },
+              { key: 'groups', enabled: true },
+              { key: 'gallery', enabled: true },
+              { key: 'library', enabled: true },
+              { key: 'give', enabled: true },
+              { key: 'network', enabled: true },
+          ],
     home_layout: props.portal?.home_layout ?? 'two_columns',
     home_sections: {
         banner: props.portal?.home_sections?.banner ?? true,
@@ -404,6 +454,76 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
     'prayer_contact',
     'location_map',
 ];
+
+const storageForm = ref<{
+    enabled: boolean;
+    allow_branches: boolean;
+    driver: StorageDriver;
+    config: StorageConfig;
+}>({
+    enabled: props.storageSettings?.enabled ?? false,
+    allow_branches: props.storageSettings?.allow_branches ?? false,
+    driver: props.storageSettings?.driver ?? 'default',
+    config: { ...(props.storageSettings?.config ?? {}) },
+});
+
+const isTestingStorage = ref(false);
+const storageTestResult = ref<{ success: boolean; message: string } | null>(
+    null,
+);
+
+const testStorageConnection = async (): Promise<void> => {
+    isTestingStorage.value = true;
+    storageTestResult.value = null;
+
+    try {
+        const token =
+            (
+                document.querySelector(
+                    'meta[name="csrf-token"]',
+                ) as HTMLMetaElement
+            )?.content || '';
+
+        const response = await fetch(
+            '/dashboard/church-settings/test-storage',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    driver: storageForm.value.driver,
+                    config: storageForm.value.config,
+                }),
+            },
+        );
+
+        const data = await response.json();
+        storageTestResult.value = {
+            success: response.ok && Boolean(data.success),
+            message:
+                data.message ||
+                (response.ok
+                    ? t('admin.branding.storage.connection_ok')
+                    : t('admin.branding.storage.connection_fail', {
+                          message: 'Error',
+                      })),
+        };
+    } catch (e: any) {
+        storageTestResult.value = {
+            success: false,
+            message:
+                e?.message ||
+                t('admin.branding.storage.connection_fail', {
+                    message: 'Network error',
+                }),
+        };
+    } finally {
+        isTestingStorage.value = false;
+    }
+};
 </script>
 
 <template>
@@ -429,6 +549,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     'templates',
                     'schedule',
                     'portal',
+                    'storage',
                 ]"
                 :key="section"
                 :href="`#settings-${section}`"
@@ -482,8 +603,12 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                         :value="props.defaultLocale"
                         class="h-10 rounded-md border border-input bg-background px-3 text-sm"
                     >
-                        <option value="pt">{{ t('portal.fields.language_pt') }}</option>
-                        <option value="en">{{ t('portal.fields.language_en') }}</option>
+                        <option value="pt">
+                            {{ t('portal.fields.language_pt') }}
+                        </option>
+                        <option value="en">
+                            {{ t('portal.fields.language_en') }}
+                        </option>
                     </select>
                     <InputError :message="errors.default_locale" />
                 </div>
@@ -892,11 +1017,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <label
                         class="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
                     >
-                        <input
-                            type="hidden"
-                            name="mail[enabled]"
-                            value="0"
-                        />
+                        <input type="hidden" name="mail[enabled]" value="0" />
                         <input
                             v-model="useOwnMailServer"
                             name="mail[enabled]"
@@ -943,8 +1064,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 >{{ t('admin.branding.mail_host')
                                 }}<Input
                                     name="mail[host]"
-                                    :default-value="mailSettings.host"
-                                /><InputError
+                                    :default-value="
+                                        mailSettings.host
+                                    " /><InputError
                                     :message="errors['mail.host']"
                             /></label>
                             <label class="grid min-w-0 gap-2 text-sm font-bold"
@@ -954,8 +1076,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     type="number"
                                     min="1"
                                     max="65535"
-                                    :default-value="mailSettings.port"
-                                /><InputError
+                                    :default-value="
+                                        mailSettings.port
+                                    " /><InputError
                                     :message="errors['mail.port']"
                             /></label>
                             <label class="grid min-w-0 gap-2 text-sm font-bold"
@@ -963,7 +1086,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 }}<select
                                     name="mail[scheme]"
                                     :value="mailSettings.scheme"
-                                    class="h-10 w-full min-w-0 max-w-full rounded-md border border-input bg-background px-3 text-sm font-normal"
+                                    class="h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm font-normal"
                                 >
                                     <option value="tls">TLS</option>
                                     <option value="ssl">SSL</option>
@@ -1127,9 +1250,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[street]"
                                 :default-value="props.branding.address.street"
                             />
-                            <InputError
-                                :message="errors['address.street']"
-                            />
+                            <InputError :message="errors['address.street']" />
                         </div>
 
                         <div class="grid gap-2">
@@ -1141,9 +1262,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[number]"
                                 :default-value="props.branding.address.number"
                             />
-                            <InputError
-                                :message="errors['address.number']"
-                            />
+                            <InputError :message="errors['address.number']" />
                         </div>
 
                         <div class="grid gap-2">
@@ -1187,9 +1306,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[city]"
                                 :default-value="props.branding.address.city"
                             />
-                            <InputError
-                                :message="errors['address.city']"
-                            />
+                            <InputError :message="errors['address.city']" />
                         </div>
 
                         <div class="grid gap-2">
@@ -1201,9 +1318,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[state]"
                                 :default-value="props.branding.address.state"
                             />
-                            <InputError
-                                :message="errors['address.state']"
-                            />
+                            <InputError :message="errors['address.state']" />
                         </div>
 
                         <div class="grid gap-2">
@@ -1215,9 +1330,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[zipcode]"
                                 :default-value="props.branding.address.zipcode"
                             />
-                            <InputError
-                                :message="errors['address.zipcode']"
-                            />
+                            <InputError :message="errors['address.zipcode']" />
                         </div>
 
                         <div class="grid gap-2 md:col-span-2">
@@ -1229,9 +1342,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 name="address[country]"
                                 :default-value="props.branding.address.country"
                             />
-                            <InputError
-                                :message="errors['address.country']"
-                            />
+                            <InputError :message="errors['address.country']" />
                         </div>
                     </div>
 
@@ -1251,9 +1362,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     props.branding.address.latitude ?? ''
                                 "
                             />
-                            <InputError
-                                :message="errors['address.latitude']"
-                            />
+                            <InputError :message="errors['address.latitude']" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="address_longitude">{{
@@ -1443,7 +1552,7 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                         <article
                             v-for="(schedule, index) in weeklySchedule"
                             :key="index"
-                            class="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 md:grid-cols-2 xl:grid-cols-4 md:items-end"
+                            class="grid gap-3 rounded-xl border border-border bg-muted/40 p-4 md:grid-cols-2 md:items-end xl:grid-cols-4"
                         >
                             <div class="grid gap-2">
                                 <Label :for="`schedule_title_${index}`">{{
@@ -1522,7 +1631,11 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 class="grid gap-3 rounded-lg border border-border bg-background/70 p-3 sm:grid-cols-2 xl:col-span-4"
                             >
                                 <label class="grid gap-2 text-sm font-bold">
-                                    {{ t('admin.branding.schedule_monthly_rule') }}
+                                    {{
+                                        t(
+                                            'admin.branding.schedule_monthly_rule',
+                                        )
+                                    }}
                                     <select
                                         v-model="schedule.monthly_rule"
                                         :name="`weekly_schedule[${index}][monthly_rule]`"
@@ -1568,7 +1681,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     </select>
                                 </label>
                                 <label
-                                    v-if="schedule.monthly_rule === 'day_of_month'"
+                                    v-if="
+                                        schedule.monthly_rule === 'day_of_month'
+                                    "
                                     class="grid gap-2 text-sm font-bold"
                                 >
                                     {{ t('admin.branding.schedule_month_day') }}
@@ -1581,53 +1696,91 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     />
                                 </label>
                                 <label
-                                    v-if="schedule.monthly_rule === 'business_day'"
+                                    v-if="
+                                        schedule.monthly_rule === 'business_day'
+                                    "
                                     class="grid gap-2 text-sm font-bold"
                                 >
-                                    {{ t('admin.branding.schedule_business_position') }}
+                                    {{
+                                        t(
+                                            'admin.branding.schedule_business_position',
+                                        )
+                                    }}
                                     <select
-                                        v-model="schedule.monthly_business_position"
+                                        v-model="
+                                            schedule.monthly_business_position
+                                        "
                                         :name="`weekly_schedule[${index}][monthly_business_position]`"
                                         class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
                                     >
                                         <option value="first">
-                                            {{ t('admin.branding.schedule_ordinals.first') }}
+                                            {{
+                                                t(
+                                                    'admin.branding.schedule_ordinals.first',
+                                                )
+                                            }}
                                         </option>
                                         <option value="last">
-                                            {{ t('admin.branding.schedule_ordinals.last') }}
+                                            {{
+                                                t(
+                                                    'admin.branding.schedule_ordinals.last',
+                                                )
+                                            }}
                                         </option>
                                     </select>
                                 </label>
                                 <template
-                                    v-if="schedule.monthly_rule === 'business_day_after'"
+                                    v-if="
+                                        schedule.monthly_rule ===
+                                        'business_day_after'
+                                    "
                                 >
                                     <label class="grid gap-2 text-sm font-bold">
-                                        {{ t('admin.branding.schedule_after_day') }}
-                                        <Input
-                                            v-model.number="schedule.monthly_after_day"
-                                            :name="`weekly_schedule[${index}][monthly_after_day]`"
-                                            type="number"
-                                            min="1"
-                                            max="31"
-                                        />
+                                        {{
+                                            t(
+                                                'admin.branding.schedule_after_day',
+                                            )
+                                        }}
+                                        <!-- prettier-ignore -->
+                                        <Input v-model.number="schedule.monthly_after_day" :name="`weekly_schedule[${index}][monthly_after_day]`" type="number" min="1" max="31" />
                                     </label>
                                     <label class="grid gap-2 text-sm font-bold">
-                                        {{ t('admin.branding.schedule_business_position') }}
+                                        {{
+                                            t(
+                                                'admin.branding.schedule_business_position',
+                                            )
+                                        }}
                                         <select
-                                            v-model="schedule.monthly_after_position"
+                                            v-model="
+                                                schedule.monthly_after_position
+                                            "
                                             :name="`weekly_schedule[${index}][monthly_after_position]`"
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm font-normal"
                                         >
                                             <option value="first">
-                                                {{ t('admin.branding.schedule_ordinals.first') }}
+                                                {{
+                                                    t(
+                                                        'admin.branding.schedule_ordinals.first',
+                                                    )
+                                                }}
                                             </option>
                                             <option value="last">
-                                                {{ t('admin.branding.schedule_ordinals.last') }}
+                                                {{
+                                                    t(
+                                                        'admin.branding.schedule_ordinals.last',
+                                                    )
+                                                }}
                                             </option>
                                         </select>
                                     </label>
-                                    <p class="text-xs text-muted-foreground sm:col-span-2">
-                                        {{ t('admin.branding.schedule_business_day_hint') }}
+                                    <p
+                                        class="text-xs text-muted-foreground sm:col-span-2"
+                                    >
+                                        {{
+                                            t(
+                                                'admin.branding.schedule_business_day_hint',
+                                            )
+                                        }}
                                     </p>
                                 </template>
                             </div>
@@ -1636,7 +1789,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 class="grid gap-3 rounded-lg border border-border bg-background/70 p-3 sm:grid-cols-2 xl:col-span-4"
                             >
                                 <label class="grid gap-2 text-sm font-bold">
-                                    {{ t('admin.branding.schedule_year_month') }}
+                                    {{
+                                        t('admin.branding.schedule_year_month')
+                                    }}
                                     <select
                                         v-model.number="schedule.yearly_month"
                                         :name="`weekly_schedule[${index}][yearly_month]`"
@@ -1649,9 +1804,17 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         >
                                             {{
                                                 new Intl.DateTimeFormat(
-                                                    locale === 'pt' ? 'pt-BR' : 'en-US',
+                                                    locale === 'pt'
+                                                        ? 'pt-BR'
+                                                        : 'en-US',
                                                     { month: 'long' },
-                                                ).format(new Date(2024, month - 1, 1))
+                                                ).format(
+                                                    new Date(
+                                                        2024,
+                                                        month - 1,
+                                                        1,
+                                                    ),
+                                                )
                                             }}
                                         </option>
                                     </select>
@@ -1734,18 +1897,23 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                         v-if="props.portal?.is_inherited"
                         class="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-900 dark:text-amber-200"
                     >
-                        <Info class="size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                        <Info
+                            class="size-5 shrink-0 text-amber-600 dark:text-amber-400"
+                        />
                         <p>
                             {{
                                 t('admin.branding.portal.inherited_from', {
-                                    name: props.portal?.source_church_name ?? '',
+                                    name:
+                                        props.portal?.source_church_name ?? '',
                                 })
                             }}
                         </p>
                     </div>
 
                     <!-- Propagate to branches checkbox -->
-                    <div class="rounded-xl border border-border bg-muted/30 p-4">
+                    <div
+                        class="rounded-xl border border-border bg-muted/30 p-4"
+                    >
                         <label class="flex cursor-pointer items-start gap-3">
                             <input
                                 v-model="portalForm.propagate_to_branches"
@@ -1755,11 +1923,15 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                             <input
                                 type="hidden"
                                 name="portal[propagate_to_branches]"
-                                :value="portalForm.propagate_to_branches ? '1' : '0'"
+                                :value="
+                                    portalForm.propagate_to_branches ? '1' : '0'
+                                "
                             />
                             <div class="grid gap-0.5">
                                 <strong class="text-sm font-semibold">{{
-                                    t('admin.branding.portal.propagate_to_branches')
+                                    t(
+                                        'admin.branding.portal.propagate_to_branches',
+                                    )
                                 }}</strong>
                                 <p class="text-xs text-muted-foreground">
                                     {{
@@ -1770,7 +1942,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 </p>
                             </div>
                         </label>
-                        <InputError :message="errors['portal.propagate_to_branches']" />
+                        <InputError
+                            :message="errors['portal.propagate_to_branches']"
+                        />
                     </div>
 
                     <!-- Header Navigation Menu -->
@@ -1780,7 +1954,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 {{ t('admin.branding.portal.menu_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.menu_description') }}
+                                {{
+                                    t('admin.branding.portal.menu_description')
+                                }}
                             </p>
                         </div>
 
@@ -1800,7 +1976,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     :name="`portal[header_menu][${index}][enabled]`"
                                     :value="item.enabled ? '1' : '0'"
                                 />
-                                <label class="flex flex-1 cursor-pointer items-center gap-3">
+                                <label
+                                    class="flex flex-1 cursor-pointer items-center gap-3"
+                                >
                                     <input
                                         v-model="item.enabled"
                                         type="checkbox"
@@ -1808,9 +1986,16 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     />
                                     <span
                                         class="text-sm font-semibold"
-                                        :class="{ 'text-muted-foreground line-through': !item.enabled }"
+                                        :class="{
+                                            'text-muted-foreground line-through':
+                                                !item.enabled,
+                                        }"
                                     >
-                                        {{ t(`admin.branding.portal.menu_items.${item.key}`) }}
+                                        {{
+                                            t(
+                                                `admin.branding.portal.menu_items.${item.key}`,
+                                            )
+                                        }}
                                     </span>
                                 </label>
 
@@ -1820,7 +2005,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         variant="ghost"
                                         size="icon"
                                         :disabled="index === 0"
-                                        :aria-label="t('admin.branding.portal.move_up')"
+                                        :aria-label="
+                                            t('admin.branding.portal.move_up')
+                                        "
                                         class="size-8"
                                         @click="moveHeaderMenuItem(index, -1)"
                                     >
@@ -1830,8 +2017,13 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        :disabled="index === portalForm.header_menu.length - 1"
-                                        :aria-label="t('admin.branding.portal.move_down')"
+                                        :disabled="
+                                            index ===
+                                            portalForm.header_menu.length - 1
+                                        "
+                                        :aria-label="
+                                            t('admin.branding.portal.move_down')
+                                        "
                                         class="size-8"
                                         @click="moveHeaderMenuItem(index, 1)"
                                     >
@@ -1870,7 +2062,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 />
                                 <div class="grid gap-1">
                                     <span class="text-sm font-bold">{{
-                                        t('admin.branding.portal.layout_two_columns')
+                                        t(
+                                            'admin.branding.portal.layout_two_columns',
+                                        )
                                     }}</span>
                                     <p class="text-xs text-muted-foreground">
                                         {{
@@ -1898,7 +2092,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 />
                                 <div class="grid gap-1">
                                     <span class="text-sm font-bold">{{
-                                        t('admin.branding.portal.layout_single_column')
+                                        t(
+                                            'admin.branding.portal.layout_single_column',
+                                        )
                                     }}</span>
                                     <p class="text-xs text-muted-foreground">
                                         {{
@@ -1920,7 +2116,11 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 {{ t('admin.branding.portal.sections_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.sections_description') }}
+                                {{
+                                    t(
+                                        'admin.branding.portal.sections_description',
+                                    )
+                                }}
                             </p>
                         </div>
 
@@ -1938,10 +2138,18 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 <input
                                     type="hidden"
                                     :name="`portal[home_sections][${secKey}]`"
-                                    :value="portalForm.home_sections[secKey] ? '1' : '0'"
+                                    :value="
+                                        portalForm.home_sections[secKey]
+                                            ? '1'
+                                            : '0'
+                                    "
                                 />
                                 <span class="text-xs font-semibold">
-                                    {{ t(`admin.branding.portal.sections.${secKey}`) }}
+                                    {{
+                                        t(
+                                            `admin.branding.portal.sections.${secKey}`,
+                                        )
+                                    }}
                                 </span>
                             </label>
                         </div>
@@ -1955,7 +2163,11 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 {{ t('admin.branding.portal.footer_title') }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.footer_description') }}
+                                {{
+                                    t(
+                                        'admin.branding.portal.footer_description',
+                                    )
+                                }}
                             </p>
                         </div>
 
@@ -1976,23 +2188,33 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                     )
                                 "
                             />
-                            <InputError :message="errors['portal.footer.message']" />
+                            <InputError
+                                :message="errors['portal.footer.message']"
+                            />
                         </div>
 
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <Label>{{
-                                    t('admin.branding.portal.footer_links_title')
+                                    t(
+                                        'admin.branding.portal.footer_links_title',
+                                    )
                                 }}</Label>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    :disabled="portalForm.footer.links.length >= 10"
+                                    :disabled="
+                                        portalForm.footer.links.length >= 10
+                                    "
                                     @click="addFooterLink"
                                 >
                                     <Plus class="mr-1.5 size-3.5" />
-                                    {{ t('admin.branding.portal.footer_add_link') }}
+                                    {{
+                                        t(
+                                            'admin.branding.portal.footer_add_link',
+                                        )
+                                    }}
                                 </Button>
                             </div>
 
@@ -2001,7 +2223,8 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                 class="space-y-2"
                             >
                                 <div
-                                    v-for="(link, lIndex) in portalForm.footer.links"
+                                    v-for="(link, lIndex) in portalForm.footer
+                                        .links"
                                     :key="lIndex"
                                     class="flex items-center gap-2"
                                 >
@@ -2009,7 +2232,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         v-model="link.label"
                                         :name="`portal[footer][links][${lIndex}][label]`"
                                         :placeholder="
-                                            t('admin.branding.portal.footer_link_label')
+                                            t(
+                                                'admin.branding.portal.footer_link_label',
+                                            )
                                         "
                                         maxlength="60"
                                         required
@@ -2019,7 +2244,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         v-model="link.url"
                                         :name="`portal[footer][links][${lIndex}][url]`"
                                         :placeholder="
-                                            t('admin.branding.portal.footer_link_url')
+                                            t(
+                                                'admin.branding.portal.footer_link_url',
+                                            )
                                         "
                                         type="url"
                                         maxlength="255"
@@ -2032,7 +2259,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                                         size="icon"
                                         class="shrink-0 text-destructive"
                                         :aria-label="
-                                            t('admin.branding.portal.footer_remove_link')
+                                            t(
+                                                'admin.branding.portal.footer_remove_link',
+                                            )
                                         "
                                         @click="removeFooterLink(lIndex)"
                                     >
@@ -2046,7 +2275,9 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                             >
                                 {{ t('admin.branding.portal.footer_no_links') }}
                             </p>
-                            <InputError :message="errors['portal.footer.links']" />
+                            <InputError
+                                :message="errors['portal.footer.links']"
+                            />
                         </div>
                     </div>
 
@@ -2054,10 +2285,16 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                     <div class="space-y-2">
                         <div>
                             <h3 class="text-sm font-bold">
-                                {{ t('admin.branding.portal.custom_css_title') }}
+                                {{
+                                    t('admin.branding.portal.custom_css_title')
+                                }}
                             </h3>
                             <p class="text-xs text-muted-foreground">
-                                {{ t('admin.branding.portal.custom_css_description') }}
+                                {{
+                                    t(
+                                        'admin.branding.portal.custom_css_description',
+                                    )
+                                }}
                             </p>
                         </div>
                         <textarea
@@ -2068,10 +2305,697 @@ const homeSectionKeys: Array<keyof PortalHomeSections> = [
                             maxlength="20000"
                             class="w-full rounded-md border border-input bg-background p-3 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary"
                             :placeholder="
-                                t('admin.branding.portal.custom_css_placeholder')
+                                t(
+                                    'admin.branding.portal.custom_css_placeholder',
+                                )
                             "
                         />
                         <InputError :message="errors['portal.custom_css']" />
+                    </div>
+                </section>
+
+                <!-- File Storage Section -->
+                <section
+                    id="settings-storage"
+                    class="grid min-w-0 gap-4 rounded-2xl border border-border bg-muted/30 p-4 sm:p-5"
+                >
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="flex items-center gap-2 font-bold">
+                                <HardDrive class="size-5 text-primary" />
+                                {{ t('admin.branding.storage.title') }}
+                            </h2>
+                            <p class="text-sm text-muted-foreground">
+                                {{ t('admin.branding.storage.description') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="props.storageSettings?.is_inherited"
+                        class="flex items-center gap-3 rounded-xl border border-sky-200 bg-sky-50/80 p-4 text-xs font-semibold text-sky-800"
+                    >
+                        <Info class="size-4 shrink-0 text-sky-600" />
+                        <span>
+                            {{
+                                t('admin.branding.storage.using_inherited', {
+                                    church:
+                                        props.storageSettings
+                                            ?.source_church_name || '',
+                                })
+                            }}
+                        </span>
+                    </div>
+
+                    <label
+                        class="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                    >
+                        <input
+                            type="hidden"
+                            name="storage[enabled]"
+                            value="0"
+                        />
+                        <input
+                            v-model="storageForm.enabled"
+                            name="storage[enabled]"
+                            value="1"
+                            type="checkbox"
+                        />
+                        <span class="min-w-0">
+                            {{ t('admin.branding.storage.enabled') }}
+                        </span>
+                    </label>
+
+                    <div
+                        v-if="storageForm.enabled"
+                        class="grid min-w-0 gap-5"
+                        data-test="custom-storage-options"
+                    >
+                        <p
+                            class="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                        >
+                            {{ t('admin.branding.storage.encryption_notice') }}
+                        </p>
+
+                        <label
+                            class="flex min-w-0 items-center gap-3 rounded-xl border bg-background p-4 text-sm font-bold"
+                        >
+                            <input
+                                type="hidden"
+                                name="storage[allow_branches]"
+                                value="0"
+                            />
+                            <input
+                                v-model="storageForm.allow_branches"
+                                name="storage[allow_branches]"
+                                value="1"
+                                type="checkbox"
+                            />
+                            <span class="min-w-0">
+                                {{ t('admin.branding.storage.allow_branches') }}
+                            </span>
+                        </label>
+
+                        <div class="grid gap-2">
+                            <Label for="storage_driver">{{
+                                t('admin.branding.storage.driver_label')
+                            }}</Label>
+                            <select
+                                id="storage_driver"
+                                name="storage[driver]"
+                                v-model="storageForm.driver"
+                                class="h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm font-normal"
+                            >
+                                <option value="default">
+                                    {{
+                                        t(
+                                            'admin.branding.storage.drivers.default',
+                                        )
+                                    }}
+                                </option>
+                                <option value="s3">
+                                    {{ t('admin.branding.storage.drivers.s3') }}
+                                </option>
+                                <option value="ftp">
+                                    {{
+                                        t('admin.branding.storage.drivers.ftp')
+                                    }}
+                                </option>
+                                <option value="sftp">
+                                    {{
+                                        t('admin.branding.storage.drivers.sftp')
+                                    }}
+                                </option>
+                                <option value="google_drive">
+                                    {{
+                                        t(
+                                            'admin.branding.storage.drivers.google_drive',
+                                        )
+                                    }}
+                                </option>
+                                <option value="onedrive">
+                                    {{
+                                        t(
+                                            'admin.branding.storage.drivers.onedrive',
+                                        )
+                                    }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Driver: S3 & Compatibles -->
+                        <div
+                            v-if="storageForm.driver === 's3'"
+                            class="grid min-w-0 gap-4"
+                        >
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.storage.help.endpoint') }}
+                            </p>
+                            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div class="grid gap-2">
+                                    <Label for="s3_bucket">{{
+                                        t(
+                                            'admin.branding.storage.fields.bucket',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="s3_bucket"
+                                        name="storage[config][bucket]"
+                                        v-model="storageForm.config.bucket"
+                                    />
+                                    <InputError
+                                        :message="
+                                            errors['storage.config.bucket']
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_region">{{
+                                        t(
+                                            'admin.branding.storage.fields.region',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="s3_region"
+                                        name="storage[config][region]"
+                                        v-model="storageForm.config.region"
+                                        placeholder="us-east-1"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_key">{{
+                                        t('admin.branding.storage.fields.key')
+                                    }}</Label>
+                                    <Input
+                                        id="s3_key"
+                                        name="storage[config][key]"
+                                        v-model="storageForm.config.key"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_secret">{{
+                                        t(
+                                            'admin.branding.storage.fields.secret',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="s3_secret"
+                                        name="storage[config][secret]"
+                                        v-model="storageForm.config.secret"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config?.has_secret
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_endpoint">{{
+                                        t(
+                                            'admin.branding.storage.fields.endpoint',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="s3_endpoint"
+                                        name="storage[config][endpoint]"
+                                        v-model="storageForm.config.endpoint"
+                                        placeholder="https://<account>.r2.cloudflarestorage.com"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_url">{{
+                                        t('admin.branding.storage.fields.url')
+                                    }}</Label>
+                                    <Input
+                                        id="s3_url"
+                                        name="storage[config][url]"
+                                        v-model="storageForm.config.url"
+                                        placeholder="https://cdn.example.com"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="s3_root">{{
+                                        t('admin.branding.storage.fields.root')
+                                    }}</Label>
+                                    <Input
+                                        id="s3_root"
+                                        name="storage[config][root]"
+                                        v-model="storageForm.config.root"
+                                        placeholder="church-media"
+                                    />
+                                </div>
+                                <div class="flex items-center gap-3 pt-6">
+                                    <input
+                                        type="hidden"
+                                        name="storage[config][use_path_style_endpoint]"
+                                        value="0"
+                                    />
+                                    <input
+                                        id="s3_path_style"
+                                        name="storage[config][use_path_style_endpoint]"
+                                        v-model="
+                                            storageForm.config
+                                                .use_path_style_endpoint
+                                        "
+                                        value="1"
+                                        type="checkbox"
+                                    />
+                                    <Label
+                                        for="s3_path_style"
+                                        class="text-xs font-normal"
+                                    >
+                                        {{
+                                            t(
+                                                'admin.branding.storage.fields.use_path_style_endpoint',
+                                            )
+                                        }}
+                                    </Label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver: FTP -->
+                        <div
+                            v-if="storageForm.driver === 'ftp'"
+                            class="grid min-w-0 gap-4"
+                        >
+                            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div class="grid gap-2">
+                                    <Label for="ftp_host">{{
+                                        t('admin.branding.storage.fields.host')
+                                    }}</Label>
+                                    <Input
+                                        id="ftp_host"
+                                        name="storage[config][host]"
+                                        v-model="storageForm.config.host"
+                                        placeholder="ftp.example.com"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="ftp_port">{{
+                                        t('admin.branding.storage.fields.port')
+                                    }}</Label>
+                                    <Input
+                                        id="ftp_port"
+                                        name="storage[config][port]"
+                                        v-model="storageForm.config.port"
+                                        type="number"
+                                        placeholder="21"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="ftp_username">{{
+                                        t(
+                                            'admin.branding.storage.fields.username',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="ftp_username"
+                                        name="storage[config][username]"
+                                        v-model="storageForm.config.username"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="ftp_password">{{
+                                        t(
+                                            'admin.branding.storage.fields.password',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="ftp_password"
+                                        name="storage[config][password]"
+                                        v-model="storageForm.config.password"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_password
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="ftp_root">{{
+                                        t('admin.branding.storage.fields.root')
+                                    }}</Label>
+                                    <Input
+                                        id="ftp_root"
+                                        name="storage[config][root]"
+                                        v-model="storageForm.config.root"
+                                        placeholder="/public_html/media"
+                                    />
+                                </div>
+                                <div class="flex items-center gap-6 pt-6">
+                                    <label
+                                        class="flex items-center gap-2 text-xs font-normal"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="storage[config][passive]"
+                                            value="0"
+                                        />
+                                        <input
+                                            name="storage[config][passive]"
+                                            v-model="storageForm.config.passive"
+                                            value="1"
+                                            type="checkbox"
+                                        />
+                                        {{
+                                            t(
+                                                'admin.branding.storage.fields.passive',
+                                            )
+                                        }}
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-2 text-xs font-normal"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="storage[config][ssl]"
+                                            value="0"
+                                        />
+                                        <input
+                                            name="storage[config][ssl]"
+                                            v-model="storageForm.config.ssl"
+                                            value="1"
+                                            type="checkbox"
+                                        />
+                                        {{
+                                            t(
+                                                'admin.branding.storage.fields.ssl',
+                                            )
+                                        }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver: SFTP -->
+                        <div
+                            v-if="storageForm.driver === 'sftp'"
+                            class="grid min-w-0 gap-4"
+                        >
+                            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div class="grid gap-2">
+                                    <Label for="sftp_host">{{
+                                        t('admin.branding.storage.fields.host')
+                                    }}</Label>
+                                    <Input
+                                        id="sftp_host"
+                                        name="storage[config][host]"
+                                        v-model="storageForm.config.host"
+                                        placeholder="sftp.example.com"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="sftp_port">{{
+                                        t('admin.branding.storage.fields.port')
+                                    }}</Label>
+                                    <Input
+                                        id="sftp_port"
+                                        name="storage[config][port]"
+                                        v-model="storageForm.config.port"
+                                        type="number"
+                                        placeholder="22"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="sftp_username">{{
+                                        t(
+                                            'admin.branding.storage.fields.username',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="sftp_username"
+                                        name="storage[config][username]"
+                                        v-model="storageForm.config.username"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="sftp_password">{{
+                                        t(
+                                            'admin.branding.storage.fields.password',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="sftp_password"
+                                        name="storage[config][password]"
+                                        v-model="storageForm.config.password"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_password
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2 md:col-span-2">
+                                    <Label for="sftp_root">{{
+                                        t('admin.branding.storage.fields.root')
+                                    }}</Label>
+                                    <Input
+                                        id="sftp_root"
+                                        name="storage[config][root]"
+                                        v-model="storageForm.config.root"
+                                        placeholder="/var/www/uploads"
+                                    />
+                                </div>
+                                <div class="grid gap-2 md:col-span-2">
+                                    <Label for="sftp_private_key">{{
+                                        t(
+                                            'admin.branding.storage.fields.private_key',
+                                        )
+                                    }}</Label>
+                                    <textarea
+                                        id="sftp_private_key"
+                                        name="storage[config][private_key]"
+                                        v-model="storageForm.config.private_key"
+                                        rows="3"
+                                        class="w-full rounded-md border border-input bg-background p-3 font-mono text-xs focus:border-primary focus:ring-1 focus:ring-primary"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_private_key
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : '-----BEGIN OPENSSH PRIVATE KEY-----...'
+                                        "
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver: Google Drive -->
+                        <div
+                            v-if="storageForm.driver === 'google_drive'"
+                            class="grid min-w-0 gap-4"
+                        >
+                            <p class="text-xs text-muted-foreground">
+                                {{
+                                    t(
+                                        'admin.branding.storage.help.google_drive',
+                                    )
+                                }}
+                            </p>
+                            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div class="grid gap-2">
+                                    <Label for="gdrive_client_id">{{
+                                        t(
+                                            'admin.branding.storage.fields.client_id',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="gdrive_client_id"
+                                        name="storage[config][client_id]"
+                                        v-model="storageForm.config.client_id"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="gdrive_client_secret">{{
+                                        t(
+                                            'admin.branding.storage.fields.client_secret',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="gdrive_client_secret"
+                                        name="storage[config][client_secret]"
+                                        v-model="
+                                            storageForm.config.client_secret
+                                        "
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_client_secret
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2 md:col-span-2">
+                                    <Label for="gdrive_refresh_token">{{
+                                        t(
+                                            'admin.branding.storage.fields.refresh_token',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="gdrive_refresh_token"
+                                        name="storage[config][refresh_token]"
+                                        v-model="
+                                            storageForm.config.refresh_token
+                                        "
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_refresh_token
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2 md:col-span-2">
+                                    <Label for="gdrive_folder_id">{{
+                                        t(
+                                            'admin.branding.storage.fields.folder_id',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="gdrive_folder_id"
+                                        name="storage[config][folder_id]"
+                                        v-model="storageForm.config.folder_id"
+                                        placeholder="1A2B3C4D5E6F..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Driver: OneDrive -->
+                        <div
+                            v-if="storageForm.driver === 'onedrive'"
+                            class="grid min-w-0 gap-4"
+                        >
+                            <p class="text-xs text-muted-foreground">
+                                {{ t('admin.branding.storage.help.onedrive') }}
+                            </p>
+                            <div class="grid min-w-0 gap-4 md:grid-cols-2">
+                                <div class="grid gap-2">
+                                    <Label for="onedrive_client_id">{{
+                                        t(
+                                            'admin.branding.storage.fields.client_id',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="onedrive_client_id"
+                                        name="storage[config][client_id]"
+                                        v-model="storageForm.config.client_id"
+                                        autocomplete="off"
+                                    />
+                                </div>
+                                <div class="grid gap-2">
+                                    <Label for="onedrive_client_secret">{{
+                                        t(
+                                            'admin.branding.storage.fields.client_secret',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="onedrive_client_secret"
+                                        name="storage[config][client_secret]"
+                                        v-model="
+                                            storageForm.config.client_secret
+                                        "
+                                        type="password"
+                                        autocomplete="new-password"
+                                        :placeholder="
+                                            storageSettings?.config
+                                                ?.has_client_secret
+                                                ? t(
+                                                      'admin.branding.storage.secret_placeholder',
+                                                  )
+                                                : ''
+                                        "
+                                    />
+                                </div>
+                                <div class="grid gap-2 md:col-span-2">
+                                    <Label for="onedrive_tenant_id">{{
+                                        t(
+                                            'admin.branding.storage.fields.tenant_id',
+                                        )
+                                    }}</Label>
+                                    <Input
+                                        id="onedrive_tenant_id"
+                                        name="storage[config][tenant_id]"
+                                        v-model="storageForm.config.tenant_id"
+                                        placeholder="common or directory-id"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Test Connection Action -->
+                        <div class="flex flex-col gap-3 pt-2">
+                            <div class="flex items-center gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    :disabled="isTestingStorage"
+                                    @click="testStorageConnection"
+                                >
+                                    <Loader2
+                                        v-if="isTestingStorage"
+                                        class="mr-2 size-4 animate-spin"
+                                    />
+                                    {{
+                                        isTestingStorage
+                                            ? t(
+                                                  'admin.branding.storage.testing_connection',
+                                              )
+                                            : t(
+                                                  'admin.branding.storage.test_connection',
+                                              )
+                                    }}
+                                </Button>
+                            </div>
+
+                            <div
+                                v-if="storageTestResult"
+                                :class="[
+                                    'flex items-center gap-2 rounded-lg p-3 text-xs font-semibold',
+                                    storageTestResult.success
+                                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                                        : 'border border-destructive/20 bg-destructive/10 text-destructive',
+                                ]"
+                            >
+                                <Check
+                                    v-if="storageTestResult.success"
+                                    class="size-4 shrink-0 text-emerald-600"
+                                />
+                                <AlertCircle
+                                    v-else
+                                    class="size-4 shrink-0 text-destructive"
+                                />
+                                <span>{{ storageTestResult.message }}</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

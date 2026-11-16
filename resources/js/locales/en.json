@@ -559,6 +559,7 @@
                 "templates": "Templates",
                 "schedule": "Schedule",
                 "portal": "Portal",
+                "storage": "File Storage",
                 "network": "Network"
             },
             "mail_title": "Custom email server",
@@ -710,6 +711,57 @@
                 "custom_css_placeholder": "/* Custom CSS for this church */\n.public-template-page {\n  /* ... */\n}",
                 "propagate_to_branches": "Apply portal settings to subordinate churches / branches",
                 "propagate_to_branches_desc": "Congregations and branches in your network will inherit these portal customizations."
+            },
+            "storage": {
+                "title": "File storage",
+                "description": "Configure the storage provider used for media, recordings, and attachments of this church.",
+                "driver_label": "Storage provider",
+                "driver_placeholder": "Select a provider",
+                "enabled": "Enable custom storage",
+                "allow_branches": "Share with sub-churches (branches)",
+                "inherited_from": "Inherited from {church}",
+                "using_inherited": "This church is using the storage configuration inherited from {church}.",
+                "test_connection": "Test connection",
+                "testing_connection": "Testing…",
+                "connection_ok": "Connection successful.",
+                "connection_fail": "Connection failed: {message}",
+                "encryption_notice": "Credentials are encrypted at rest and are never displayed in full after saving.",
+                "secret_placeholder": "(unchanged — leave blank to keep)",
+                "drivers": {
+                    "default": "Platform default",
+                    "s3": "S3 / Compatible (AWS S3, R2, MinIO, B2, Supabase…)",
+                    "ftp": "FTP",
+                    "sftp": "SFTP",
+                    "google_drive": "Google Drive",
+                    "onedrive": "OneDrive (Microsoft 365)"
+                },
+                "fields": {
+                    "key": "Access key (Key ID)",
+                    "secret": "Secret key",
+                    "region": "Region",
+                    "bucket": "Bucket name",
+                    "endpoint": "Custom endpoint URL",
+                    "url": "Public URL (CDN, optional)",
+                    "root": "Root path / prefix",
+                    "use_path_style_endpoint": "Use path-style endpoint (MinIO, Supabase)",
+                    "host": "Host",
+                    "port": "Port",
+                    "username": "Username",
+                    "password": "Password",
+                    "passive": "Passive mode (FTP)",
+                    "ssl": "SSL/TLS (FTP)",
+                    "private_key": "Private key (SSH)",
+                    "client_id": "Client ID (App ID)",
+                    "client_secret": "Client secret",
+                    "refresh_token": "Refresh token",
+                    "tenant_id": "Tenant ID",
+                    "folder_id": "Folder ID"
+                },
+                "help": {
+                    "google_drive": "Create a Service Account or OAuth2 application in Google Cloud Console, grant it Drive access, and paste the refresh token here.",
+                    "onedrive": "Register an app in Azure Active Directory with the Files.ReadWrite.All permission and paste the client credentials here.",
+                    "endpoint": "Only needed for S3-compatible providers (R2, MinIO, Supabase, B2). Leave blank for AWS."
+                }
             },
             "network": {
                 "title": "Headquarters and branches",
@@ -934,14 +986,7 @@
                 "processing": "Maintenance mode active...",
                 "error": "The backup operation could not be completed."
             },
-            "stats": [
-                "Users",
-                "Events",
-                "Posts",
-                "Comments",
-                "Media",
-                "Forms"
-            ]
+            "stats": ["Users", "Events", "Posts", "Comments", "Media", "Forms"]
         },
         "live_streams": {
             "title": "Live stream control",
@@ -1012,10 +1057,7 @@
             "anonymous": "Anonymous request",
             "mine": "My request",
             "send_anonymously": "Send anonymously",
-            "stats": [
-                "Requests sent",
-                "Church requests"
-            ]
+            "stats": ["Requests sent", "Church requests"]
         },
         "wall": {
             "title": "Moderate wall",
@@ -1065,11 +1107,7 @@
             "no_community": "No community",
             "members": "{count} members",
             "empty_networks": "No links registered.",
-            "stats": [
-                "Churches",
-                "Communities",
-                "Headquarters/branch links"
-            ],
+            "stats": ["Churches", "Communities", "Headquarters/branch links"],
             "status": {
                 "active": "Active",
                 "inactive": "Inactive",
@@ -1091,11 +1129,7 @@
             "reset_password": "Send password reset",
             "protected": "Protected account",
             "delete_confirm": "Delete user \"{name}\"?",
-            "stats": [
-                "Total users",
-                "Administrators",
-                "Members"
-            ]
+            "stats": ["Total users", "Administrators", "Members"]
         },
         "media": {
             "title": "Moderate gallery",
@@ -1127,16 +1161,8 @@
             "approve": "Approve",
             "reject": "Reject",
             "empty": "No media registered yet.",
-            "actions": [
-                "Open public gallery",
-                "Go to dashboard"
-            ],
-            "stats": [
-                "Media submitted",
-                "Pending",
-                "Approved",
-                "Rejected"
-            ],
+            "actions": ["Open public gallery", "Go to dashboard"],
+            "stats": ["Media submitted", "Pending", "Approved", "Rejected"],
             "status": {
                 "pending": "Pending",
                 "approved": "Approved",
@@ -1262,11 +1288,7 @@
                     "Published posts",
                     "Published events"
                 ],
-                "actions": [
-                    "Manage posts",
-                    "Open events",
-                    "Church settings"
-                ]
+                "actions": ["Manage posts", "Open events", "Church settings"]
             },
             "library": {
                 "title": "Library and verse",
@@ -1277,10 +1299,7 @@
                     "Registered verses",
                     "Content categories"
                 ],
-                "actions": [
-                    "Open public home",
-                    "Review highlights"
-                ]
+                "actions": ["Open public home", "Review highlights"]
             },
             "prayer_requests": {
                 "title": "Intercession requests",
@@ -1291,10 +1310,7 @@
                     "Anonymous requests",
                     "Identified requests"
                 ],
-                "actions": [
-                    "Open my prayers",
-                    "Go to dashboard"
-                ]
+                "actions": ["Open my prayers", "Go to dashboard"]
             }
         },
         "church_network": {
@@ -1836,6 +1852,16 @@
             "total": "Total",
             "treasury_manage": "Manage",
             "read_only": "View only"
+        },
+        "storage": {
+            "warning_title": "Storage limit exceeded",
+            "warning_message": "This church has exceeded the platform default storage limit ({used} of {limit} used). Please clean up unused media files or add a custom storage provider.",
+            "manage_action": "Configure storage",
+            "widget_title": "Platform Storage",
+            "used_of": "{used} of {limit} used",
+            "status_normal": "Normal",
+            "status_exceeded": "Limit exceeded",
+            "default_hint": "Default theoretical quota: 2 GB. Upgrading to custom storage (S3, MinIO, SFTP, Google Drive, OneDrive) removes platform quota constraints."
         }
     },
     "membership": {

@@ -30,6 +30,10 @@ return [
 
     'temporary_url_disks' => $configuredDisks,
 
+    'church_storage_limit_bytes' => (int) env('CHURCH_STORAGE_LIMIT_BYTES', 2147483648), // 2 GB
+
+    'church_storage_backup_retention_days' => (int) env('CHURCH_STORAGE_BACKUP_RETENTION_DAYS', 3), // 3 days
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

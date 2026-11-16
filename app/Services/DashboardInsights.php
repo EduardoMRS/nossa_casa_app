@@ -13,6 +13,7 @@ use App\Models\PrayerRequest;
 use App\Models\Reaction;
 use App\Models\User;
 use App\Support\ChurchAccess;
+use App\Support\ChurchStorageManager;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -23,7 +24,10 @@ use Illuminate\Support\Str;
  */
 class DashboardInsights
 {
-    public function __construct(private PublicAccessLogger $accessLogger) {}
+    public function __construct(
+        private PublicAccessLogger $accessLogger,
+        private ChurchStorageManager $storageManager,
+    ) {}
 
     /**
      * @return array{
@@ -32,6 +36,7 @@ class DashboardInsights
      *     access_map: array<int, array{country_code: string|null, country: string|null, region: string|null, latitude: float|null, longitude: float|null, visits: int}>,
      *     recent_prayers: array<int, array{content: string, is_anonymous: bool, at: string|null}>,
      *     treasury: array{month: string, tithe_total: string, offering_total: string, total: string}|null,
+     *     storage_quota: array{is_custom: bool, used_bytes: int, used_formatted: string, limit_bytes: int, limit_formatted: string, usage_percentage: float, is_exceeded: bool, should_show_warning: bool}|null,
      *     shortcuts: array<int, array{label_key: string, href: string}>
      * }
      */
@@ -46,6 +51,7 @@ class DashboardInsights
                 'access_map' => [],
                 'recent_prayers' => [],
                 'treasury' => null,
+                'storage_quota' => null,
                 'shortcuts' => $this->shortcuts($user->role),
             ];
         }
@@ -60,6 +66,7 @@ class DashboardInsights
             'treasury' => app(ChurchAccess::class)->canViewTreasury($user, $church->id)
                 ? $this->treasurySummary($church, app(ChurchAccess::class)->canManageTreasury($user, $church->id))
                 : null,
+            'storage_quota' => $this->storageManager->storageQuotaSummary($church, $user),
             'shortcuts' => $this->shortcuts($user->role),
         ];
     }

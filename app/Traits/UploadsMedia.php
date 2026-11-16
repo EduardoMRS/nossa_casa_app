@@ -15,11 +15,16 @@ trait UploadsMedia
      * @param  UploadedFile|string|null  $file  Arquivo ou caminho do arquivo a ser enviado
      * @param  string  $directory  Diretório base no Storage (ex: 'events/covers')
      * @param  string|null  $oldPath  Caminho do arquivo antigo para ser substituído (opcional)
+     * @param  string|null  $diskName  Nome do disco de destino (opcional, fallback para media.disk)
      * @return array{path: string|null, optimized_path: string|null}|string|null
      */
-    protected function handleMediaUpload(UploadedFile|string|null $file, string $directory, ?string $oldPath = null): ?string
-    {
-        $diskName = (string) config('media.disk');
+    protected function handleMediaUpload(
+        UploadedFile|string|null $file,
+        string $directory,
+        ?string $oldPath = null,
+        ?string $diskName = null,
+    ): ?string {
+        $diskName = $diskName ?: (string) config('media.disk');
         $disk = Storage::disk($diskName);
 
         // 1. Se for nulo e havia uma imagem antes, apagamos do disco (intenção de exclusão)

@@ -143,25 +143,33 @@ Permitir que a liderança da igreja configure detalhadamente a apresentação do
 - [x] **Herança hierárquica (churches inferiores)**: marcador booleano para definir se as configurações de layout, menu, footer e CSS devem ser propagadas automaticamente para as congregações/filiais subordinadas na rede.
 - [x] Testes de feature, permissões e validação de segurança (`tests/Feature/ChurchPortalSettingsTest.php`).
 
-## 8. Definição de Storage próprio da church nas configurações (SFTP, S3, R2, MinIO, B2, Supabase, OneDrive, Padrão) e herança de rede — 📋 planejado
+## 8. Definição de Storage próprio da church nas configurações (SFTP, S3, R2, MinIO, B2, Supabase, OneDrive, Google Drive, Padrão) e herança de rede — ✅ concluído
 
 Permitir que a igreja defina um provedor de armazenamento (storage) próprio para salvamento de mídias, transmissões, gravações, livros, anexos e demais conteúdos enviados ou gerados na igreja e em suas filiais.
 
-- [ ] **Drivers suportados**:
+- [x] **Drivers suportados**:
       - **Padrão**: fallback para o storage default do sistema / plataforma quando nenhum provedor customizado estiver ativo.
-      - **S3 e compatíveis**: AWS S3, Cloudflare R2, MinIO, Supabase Storage, Backblaze B2 (endpoint customizado, bucket, região, key/secret, path style).
-      - **SFTP / FTP**: host, porta, usuário, senha ou chave privada, diretório raiz (`root`).
+      - **S3 e compatíveis**: AWS S3, Cloudflare R2, MinIO, Supabase Storage, Backblaze B2 (endpoint customizado, bucket, região, key/secret, path style, CDN URL).
+      - **SFTP / FTP**: host, porta, usuário, senha ou chave privada, diretório raiz (`root`), modo passivo e SSL.
       - **OneDrive**: integração OAuth2 / Graph API para armazenamento de arquivos e mídias.
-- [ ] **Interface de configuração e teste de conexão**:
-      - Seção no painel de configurações da church (`/dashboard/configuracoes-church`).
-      - Formulário reativo com campos específicos por driver selecionado.
-      - Ação de teste de conexão com feedback em tempo real (validação de leitura/escrita antes de salvar).
-- [ ] **Herança hierárquica na rede**:
-      - Marcador booleano `propagate_to_branches` para definir se as filiais/congregações subordinadas devem utilizar o storage da matriz ou manter configuração própria/padrão.
-- [ ] **Resolução dinâmica de disco/filesystem**:
-      - Service/Factory para instanciar o disco do Flysystem sob demanda com as credenciais resolvidas (próprias ou herdadas da matriz).
-      - Roteamento transparente das operações de upload de mídias, gravações do media-worker, biblioteca digital e anexos de formulários.
-- [ ] **Testes de integração e feature** (resolução de disco, herança na rede, validação de drivers) + Pint.
+      - **Google Drive**: integração Google Drive API v3 (OAuth2 Client ID/Secret e Refresh Token).
+- [x] **Interface de configuração e teste de conexão**:
+      - Seção dedicada no painel de configurações da church (`/dashboard/configuracoes-church` / `/dashboard/church-settings`).
+      - Formulário reativo com campos específicos por driver selecionado e indicação de herança da matriz.
+      - Ação de teste de conexão em tempo real (`POST /dashboard/church-settings/test-storage`) com validação imediata e feedback de sucesso/erro.
+- [x] **Herança hierárquica na rede**:
+      - Marcador booleano `allow_branches` para propagar automaticamente o storage da igreja para suas filiais/congregações na rede.
+      - Filiais com storage próprio ativo têm precedência sobre a configuração herdada.
+- [x] **Resolução dinâmica de disco/filesystem**:
+      - `ChurchStorageManager` para resolver o storage ativo (próprio ou herdado da matriz) e instanciar/registrar o disco Flysystem sob demanda.
+      - Roteamento transparente das operações de upload de mídias (`UploadsMedia`, `MediaController`) e entrega segura de arquivos via token (`/d/{token}`).
+- [x] **Segurança e Criptografia**:
+      - Credenciais e segredos (`secret`, `password`, `private_key`, `client_secret`, `refresh_token`) criptografados em repouso com `APP_KEY` (`encrypted:array`).
+      - Ocultação dos segredos no frontend com método `publicConfig()` (`has_secret`, `has_password`, etc.).
+      - Atualizações parciais preservam as senhas e segredos existentes sem forçar reentrada.
+- [x] **Internacionalização e Testes**:
+      - Chaves completas em português, inglês e espanhol (`lang/pt/settings.php`, `lang/en/settings.php`, `lang/es/settings.php`, `resources/js/locales/*.json`).
+      - Testes de Feature (`tests/Feature/ChurchStorageSettingsTest.php`) e testes de frontend (80/80 passando).
 
 ## 9. Integração com gateways de pagamento — 📋 planejado
 

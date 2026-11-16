@@ -559,6 +559,7 @@
                 "templates": "Plantillas",
                 "schedule": "Horario",
                 "portal": "Portal",
+                "storage": "Almacenamiento",
                 "network": "Red"
             },
             "mail_title": "Servidor de correo personalizado",
@@ -710,6 +711,57 @@
                 "custom_css_placeholder": "/* CSS personalizado para esta iglesia */\n.public-template-page {\n  /* ... */\n}",
                 "propagate_to_branches": "Aplicar configuraciones del portal a las iglesias subordinadas / filiales",
                 "propagate_to_branches_desc": "Las congregaciones y filiales de su red heredarán estas personalizaciones del portal."
+            },
+            "storage": {
+                "title": "Almacenamiento de archivos",
+                "description": "Configure el proveedor de almacenamiento utilizado para medios, grabaciones y adjuntos de esta iglesia.",
+                "driver_label": "Proveedor de almacenamiento",
+                "driver_placeholder": "Seleccione un proveedor",
+                "enabled": "Habilitar almacenamiento personalizado",
+                "allow_branches": "Compartir con filiales/congregaciones",
+                "inherited_from": "Heredado de {church}",
+                "using_inherited": "Esta iglesia está usando la configuración de almacenamiento heredada de {church}.",
+                "test_connection": "Probar conexión",
+                "testing_connection": "Probando…",
+                "connection_ok": "Conexión exitosa.",
+                "connection_fail": "Error de conexión: {message}",
+                "encryption_notice": "Las credenciales se cifran en reposo y nunca se muestran completas después de guardar.",
+                "secret_placeholder": "(sin cambios — deje en blanco para mantener)",
+                "drivers": {
+                    "default": "Predeterminado de la plataforma",
+                    "s3": "S3 / Compatible (AWS S3, R2, MinIO, B2, Supabase…)",
+                    "ftp": "FTP",
+                    "sftp": "SFTP",
+                    "google_drive": "Google Drive",
+                    "onedrive": "OneDrive (Microsoft 365)"
+                },
+                "fields": {
+                    "key": "Clave de acceso (Key ID)",
+                    "secret": "Clave secreta",
+                    "region": "Región",
+                    "bucket": "Nombre del bucket",
+                    "endpoint": "URL del endpoint personalizado",
+                    "url": "URL pública (CDN, opcional)",
+                    "root": "Ruta raíz / prefijo",
+                    "use_path_style_endpoint": "Usar endpoint en path style (MinIO, Supabase)",
+                    "host": "Host",
+                    "port": "Puerto",
+                    "username": "Usuario",
+                    "password": "Contraseña",
+                    "passive": "Modo pasivo (FTP)",
+                    "ssl": "SSL/TLS (FTP)",
+                    "private_key": "Clave privada (SSH)",
+                    "client_id": "Client ID (ID de la aplicación)",
+                    "client_secret": "Client secret",
+                    "refresh_token": "Refresh token",
+                    "tenant_id": "Tenant ID",
+                    "folder_id": "ID de carpeta"
+                },
+                "help": {
+                    "google_drive": "Cree una cuenta de servicio o aplicación OAuth2 en Google Cloud Console, otorgue acceso a Drive y pegue el refresh token aquí.",
+                    "onedrive": "Registre una aplicación en Azure Active Directory con el permiso Files.ReadWrite.All y pegue las credenciales aquí.",
+                    "endpoint": "Solo necesario para proveedores compatibles con S3 (R2, MinIO, Supabase, B2). Dejar en blanco para AWS."
+                }
             },
             "network": {
                 "title": "Sede y filiales",
@@ -1012,10 +1064,7 @@
             "anonymous": "Pedido anónimo",
             "mine": "Mi pedido",
             "send_anonymously": "Enviar de forma anónima",
-            "stats": [
-                "Pedidos enviados",
-                "Pedidos de la iglesia"
-            ]
+            "stats": ["Pedidos enviados", "Pedidos de la iglesia"]
         },
         "wall": {
             "title": "Moderar muro",
@@ -1065,11 +1114,7 @@
             "no_community": "Sin comunidad",
             "members": "{count} miembros",
             "empty_networks": "No hay vínculos registrados.",
-            "stats": [
-                "Iglesias",
-                "Comunidades",
-                "Vínculos sede/filial"
-            ],
+            "stats": ["Iglesias", "Comunidades", "Vínculos sede/filial"],
             "status": {
                 "active": "Activa",
                 "inactive": "Inactiva",
@@ -1091,11 +1136,7 @@
             "reset_password": "Enviar restablecimiento de contraseña",
             "protected": "Cuenta protegida",
             "delete_confirm": "¿Eliminar al usuario \"{name}\"?",
-            "stats": [
-                "Total de usuarios",
-                "Administradores",
-                "Miembros"
-            ]
+            "stats": ["Total de usuarios", "Administradores", "Miembros"]
         },
         "media": {
             "title": "Moderar galería",
@@ -1127,10 +1168,7 @@
             "approve": "Aprobar",
             "reject": "Rechazar",
             "empty": "Todavía no hay medios registrados.",
-            "actions": [
-                "Abrir galería pública",
-                "Ir al panel"
-            ],
+            "actions": ["Abrir galería pública", "Ir al panel"],
             "stats": [
                 "Medios enviados",
                 "Pendientes",
@@ -1277,10 +1315,7 @@
                     "Versículos registrados",
                     "Categorías de contenido"
                 ],
-                "actions": [
-                    "Abrir inicio público",
-                    "Revisar destacados"
-                ]
+                "actions": ["Abrir inicio público", "Revisar destacados"]
             },
             "prayer_requests": {
                 "title": "Pedidos de intercesión",
@@ -1291,10 +1326,7 @@
                     "Pedidos anónimos",
                     "Pedidos identificados"
                 ],
-                "actions": [
-                    "Abrir mis oraciones",
-                    "Ir al panel"
-                ]
+                "actions": ["Abrir mis oraciones", "Ir al panel"]
             }
         },
         "church_network": {
@@ -1836,6 +1868,16 @@
             "total": "Total",
             "treasury_manage": "Gestionar",
             "read_only": "Solo lectura"
+        },
+        "storage": {
+            "warning_title": "Límite de almacenamiento superado",
+            "warning_message": "Esta iglesia ha superado el límite de almacenamiento predeterminado ({used} de {limit} usados). Es necesario realizar una limpieza de medios no utilizados o configurar un almacenamiento propio.",
+            "manage_action": "Configurar almacenamiento",
+            "widget_title": "Almacenamiento Predeterminado",
+            "used_of": "{used} de {limit} usados",
+            "status_normal": "Normal",
+            "status_exceeded": "Límite superado",
+            "default_hint": "Cuota teórica predeterminada: 2 GB. Configurar un almacenamiento propio (S3, MinIO, SFTP, Google Drive, OneDrive) elimina las limitaciones de cuota de la plataforma."
         }
     },
     "membership": {

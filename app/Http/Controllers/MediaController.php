@@ -10,6 +10,7 @@ use App\Http\Requests\Media\UpdateMediaStatusRequest;
 use App\Models\Church;
 use App\Models\Media;
 use App\Support\ChurchDomainContext;
+use App\Support\ChurchStorageManager;
 use App\Traits\ManagesChurchCategories;
 use App\Traits\UploadsMedia;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,8 +61,10 @@ class MediaController extends Controller
             return response()->json(['error' => __('media.no_file_provided')], 422);
         }
 
+        $storageManager = app(ChurchStorageManager::class);
+        $diskName = $storageManager->diskNameFor($church);
         $fileData = getFileMetadata($fileInput);
-        $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media");
+        $mediaPath = $this->handleMediaUpload($fileInput, "church/{$church->id}/media", null, $diskName);
         $fileName = $fileInput instanceof UploadedFile ? $fileInput->getClientOriginalName() : $fileData['name'];
         $title = filled($validated['title'] ?? null) ? $validated['title'] : null;
 
@@ -76,6 +79,7 @@ class MediaController extends Controller
             'uploader_id' => $request->user()->id,
             'church_id' => $church->id,
             'status' => MediaStatus::PENDING,
+            'disk' => $diskName,
         ]);
         $media->categories()->sync($this->syncChurchCategories($request, CategoryType::MEDIA->value, $church->id));
 

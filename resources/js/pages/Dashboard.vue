@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { usePage } from '@inertiajs/vue3';
-import { Moon, Sun } from '@lucide/vue';
+import { AlertTriangle, HardDrive, Moon, Sun } from '@lucide/vue';
 import { computed } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { useTerminology } from '@/composables/useTerminology';
@@ -32,12 +32,23 @@ type TreasurySummary = {
     total: string;
     can_manage: boolean;
 };
+type StorageQuotaSummary = {
+    is_custom: boolean;
+    used_bytes: number;
+    used_formatted: string;
+    limit_bytes: number;
+    limit_formatted: string;
+    usage_percentage: number;
+    is_exceeded: boolean;
+    should_show_warning: boolean;
+};
 type DashboardInsights = {
     recent_activity: ActivityItem[];
     most_liked: LikedItem[];
     access_map: AccessRegion[];
     recent_prayers: PrayerItem[];
     treasury: TreasurySummary | null;
+    storage_quota?: StorageQuotaSummary | null;
     shortcuts: Shortcut[];
 };
 
@@ -102,6 +113,7 @@ defineOptions({
         "
     />
 
+    <!-- prettier-ignore -->
     <div
         class="flex h-full min-w-0 max-w-full flex-1 flex-col gap-6 overflow-x-clip bg-background p-4 text-foreground md:p-8"
         :style="paletteStyle"
@@ -159,6 +171,37 @@ defineOptions({
             >
                 {{ branding.contact_email }}
             </p>
+        </section>
+
+        <!-- Storage Quota Warning Banner -->
+        <section
+            v-if="insights?.storage_quota?.should_show_warning"
+            class="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50/95 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5"
+        >
+            <div class="flex items-start gap-3">
+                <AlertTriangle class="mt-0.5 size-5 shrink-0 text-amber-600" />
+                <div>
+                    <h3 class="text-sm font-bold text-amber-950">
+                        {{ t('dashboard.storage.warning_title') }}
+                    </h3>
+                    <p class="mt-0.5 text-xs text-amber-900">
+                        {{
+                            t('dashboard.storage.warning_message', {
+                                used: insights.storage_quota.used_formatted,
+                                limit: insights.storage_quota.limit_formatted,
+                            })
+                        }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <Link
+                    href="/dashboard/church-settings#settings-storage"
+                    class="inline-flex items-center rounded-lg bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-amber-700"
+                >
+                    {{ t('dashboard.storage.manage_action') }}
+                </Link>
+            </div>
         </section>
 
         <section
@@ -360,6 +403,92 @@ defineOptions({
                     >
                 </li>
             </ul>
+        </section>
+
+        <!-- Storage Quota Widget (Platform default storage) -->
+        <section
+            v-if="insights?.storage_quota && !insights.storage_quota.is_custom"
+            class="rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+        >
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <HardDrive class="size-4 text-primary" />
+                    <p
+                        class="text-xs tracking-[0.14em] text-muted-foreground uppercase"
+                    >
+                        {{ t('dashboard.storage.widget_title') }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span
+                        :class="[
+                            'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase',
+                            insights.storage_quota.is_exceeded
+                                ? 'bg-destructive/15 text-destructive'
+                                : 'bg-emerald-100 text-emerald-800',
+                        ]"
+                    >
+                        {{
+                            insights.storage_quota.is_exceeded
+                                ? t('dashboard.storage.status_exceeded')
+                                : t('dashboard.storage.status_normal')
+                        }}
+                    </span>
+                    <Link
+                        v-if="
+                            [
+                                'media',
+                                'leader',
+                                'church_leader',
+                                'superadmin',
+                                'system',
+                            ].includes(role)
+                        "
+                        href="/dashboard/church-settings#settings-storage"
+                        class="text-xs font-bold text-[color:var(--dashboard-primary)]"
+                    >
+                        {{ t('dashboard.storage.manage_action') }}
+                    </Link>
+                </div>
+            </div>
+            <div class="mt-4 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-muted-foreground">
+                        {{
+                            t('dashboard.storage.used_of', {
+                                used: insights.storage_quota.used_formatted,
+                                limit: insights.storage_quota.limit_formatted,
+                            })
+                        }}
+                    </span>
+                    <span
+                        :class="[
+                            'font-bold',
+                            insights.storage_quota.is_exceeded
+                                ? 'text-destructive'
+                                : 'text-card-foreground',
+                        ]"
+                    >
+                        {{ insights.storage_quota.usage_percentage }}%
+                    </span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                        class="h-full transition-all"
+                        :class="
+                            insights.storage_quota.is_exceeded
+                                ? 'bg-destructive'
+                                : 'bg-primary'
+                        "
+                        :style="{
+                            width: `${Math.min(insights.storage_quota.usage_percentage, 100)}%`,
+                        }"
+                    />
+                </div>
+                <p class="pt-1 text-[11px] text-muted-foreground">
+                    {{ t('dashboard.storage.default_hint') }}
+                </p>
+            </div>
         </section>
 
         <section v-if="isPlatformDashboard">

@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\BroadcastSystemMetrics;
+use App\Console\Commands\CleanupChurchStorageBackups;
 use App\Console\Commands\OptimizeMediaFiles;
 use App\Console\Commands\ReconcileMediaMtxPaths;
 use Illuminate\Foundation\Inspiring;
@@ -24,4 +25,9 @@ Schedule::command(BroadcastSystemMetrics::class)
 Schedule::command(OptimizeMediaFiles::class, ['--limit=30'])
     ->everyFiveMinutes()
     ->withoutOverlapping(5)
+    ->onOneServer();
+
+Schedule::command(CleanupChurchStorageBackups::class)
+    ->daily()
+    ->withoutOverlapping(10)
     ->onOneServer();
